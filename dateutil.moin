@@ -1240,6 +1240,14 @@ datetime.datetime(2003, 9, 25, 10, 0)
 datetime.datetime(2003, 9, 25, 0, 0)
 }}}
 
+Everything together.
+{{{
+>>> parse("199709020900")
+datetime.datetime(1997, 9, 2, 9, 0)
+>>> parse("19970902090059")
+datetime.datetime(1997, 9, 2, 9, 0, 59)
+}}}
+
 Different date orderings:
 {{{
 >>> parse("2003-09-25")
