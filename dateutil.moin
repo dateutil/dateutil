@@ -23,9 +23,9 @@ the standard '''datetime''' module, available in Python 2.3+.
 
   * Timezone (tzinfo) implementations for tzfile(5) format
   files (/etc/localtime, /usr/share/zoneinfo, etc), TZ
-  environment string (in all known formats), given ranges
-  (with help from relative deltas), local machine timezone,
-  fixed offset timezone, and UTC timezone.
+  environment string (in all known formats), iCalendar
+  format files, given ranges (with help from relative deltas),
+  local machine timezone, fixed offset timezone, and UTC timezone.
 
   * Computing of Easter Sunday dates for any given year,
   using Western, Orthodox or Julian algorithms;
@@ -813,14 +813,178 @@ tart=parse("19970805T090000")))
 ==== rruleset type ====
 The {{{rruleset}}} type allows more complex recurrence setups, mixing
 multiple rules, dates, exclusion rules, and exclusion dates.
-The type constructor takes no parameters.
+The type constructor takes the following keyword arguments:
+
+    cache::
+    If True, caching of results will be enabled, improving performance
+    of multiple queries considerably.
 
 ==== rruleset methods ====
 The following methods are available:
 
     rruleset.rrule(rrule)::
+    Include the given {{{rrule}}} instance in the recurrence set
+    generation.
+
+    rruleset.rdate(dt)::
+    Include the given {{{datetime}}} instance in the recurrence
+    set generation.
+    
+    rruleset.exrule(rrule)::
+    Include the given {{{rrule}}} instance in the recurrence set
+    exclusion list. Dates which are part of the given recurrence
+    rules will not be generated, even if some inclusive {{{rrule}}}
+    or {{{rdate}}} matches them.
+
+    rruleset.exdate(dt)::
+    Include the given {{{datetime}}} instance in the recurrence set
+    exclusion list. Dates included that way will not be generated,
+    even if some inclusive {{{rrule}}} or {{{rdate}}} matches them.
+
+    rruleset.before(dt, inc=False)::
+    Returns the last recurrence before the given {{{datetime}}}
+    instance. The {{{inc}}} keyword defines what happens if
+    {{{dt}}} '''is''' an occurrence. With {{{inc == True}}},
+    if {{{dt}}} itself is an occurrence, it will be returned.
+
+    rruleset.after(dt, inc=False)::
+    Returns the first recurrence after the given {{{datetime}}}
+    instance. The {{{inc}}} keyword defines what happens if
+    {{{dt}}} '''is''' an occurrence. With {{{inc == True}}},
+    if {{{dt}}} itself is an occurrence, it will be returned.
+
+    rruleset.between(after, before, inc=False)::
+    Returns all the occurrences of the rrule between {{{after}}}
+    and {{{before}}}. The {{{inc}}} keyword defines what happens
+    if {{{after}}} and/or {{{before}}} are themselves occurrences.
+    With {{{inc == True}}}, they will be included in the list,
+    if they are found in the recurrence set.
+
+==== rruleset examples ====
+Daily, for 7 days, jumping Saturday and Sunday occurrences.
+{{{
+>>> set = rruleset()
+>>> set.rrule(rrule(FREQ_DAILY, count=7, dtstart=parse("19970902T090000")))
+>>> set.exrule(rrule(FREQ_YEARLY, byweekday=(SA,SU), dtstart=parse("19970902T090000")))
+>>> list(set)
+[datetime.datetime(1997, 9, 2, 9, 0),
+ datetime.datetime(1997, 9, 3, 9, 0),
+ datetime.datetime(1997, 9, 4, 9, 0),
+ datetime.datetime(1997, 9, 5, 9, 0),
+ datetime.datetime(1997, 9, 8, 9, 0)]
+}}}
+
+Weekly, for 4 weeks, plus one time on day 7, and not on day 16.
+{{{
+>>> set = rruleset()
+>>> set.rrule(rrule(FREQ_WEEKLY, count=4, dtstart=parse("19970902T090000")))
+>>> set.rdate(datetime.datetime(1997, 9, 7, 9, 0))
+>>> set.exdate(datetime.datetime(1997, 9, 16, 9, 0))
+>>> list(set)
+[datetime.datetime(1997, 9, 2, 9, 0),
+ datetime.datetime(1997, 9, 7, 9, 0),
+ datetime.datetime(1997, 9, 9, 9, 0),
+ datetime.datetime(1997, 9, 23, 9, 0)]
+}}}
 
 ==== rrulestr() function ====
+The {{{rrulestr()}}} function is a parser for ''RFC-like'' syntaxes.
+The function prototype is:
+{{{
+rrulestr(str)
+}}}
+
+The string passed as parameter may be a multiple line string, a
+single line string, or just the {{{RRULE}}} property value.
+
+Additionally, it accepts the following keyword arguments:
+
+    cache::
+    If {{{True}}}, the {{{rruleset}}} or {{{rrule}}} created instance
+    will cache its results. Default is not to cache.
+
+    dtstart::
+    If given, it must be a {{{datetime}}} instance that will be used
+    when no {{{DTSTART}}} property is found in the parsed string. If
+    it is not given, and the property is not found, {{{datetime.now()}}}
+    will be used instead.
+
+    unfold::
+    If set to {{{True}}}, lines will be unfolded following the RFC
+    specification. It defaults to {{{False}}}, meaning that spaces
+    before every line will be stripped.
+
+    forceset::
+    If set to {{{True}}} a {{{rruleset}}} instance will be returned,
+    even if only a single rule is found. The default is to return an
+    {{{rrule}}} if possible, and an {{{rruleset}}} if necessary.
+
+    compatible::
+    If set to {{{True}}}, the parser will operate in RFC-compatible
+    mode. Right now it means that {{{unfold}}} will be turned on,
+    and if a {{{DTSTART}}} is found, it will be considered the first     
+    recurrence instance, as documented in the RFC.
+
+    ignoretz::
+    If set to {{{True}}}, the date parser will ignore timezone
+    information available in the {{{DTSTART}}} property, or the
+    {{{UNTIL}}} attribute.
+
+    tzinfos::
+    If set, it will be passed to the datetime string parser to
+    resolve unknown timezone settings. For more information about
+    what could be used here, check the parser documentation.
+
+==== rrulestr() examples ====
+
+Every 10 days, 5 occurrences.
+{{{
+>>> list(rrulestr("""
+... DTSTART:19970902T090000
+... RRULE:FREQ=DAILY;INTERVAL=10;COUNT=5
+... """))
+[datetime.datetime(1997, 9, 2, 9, 0),
+ datetime.datetime(1997, 9, 12, 9, 0),
+ datetime.datetime(1997, 9, 22, 9, 0),
+ datetime.datetime(1997, 10, 2, 9, 0),
+ datetime.datetime(1997, 10, 12, 9, 0)]
+}}}
+
+Same thing, but passing only the {{{RRULE}}} value.
+{{{
+>>> list(rrulestr("FREQ=DAILY;INTERVAL=10;COUNT=5", dtstart=parse("19970902T090000")))
+[datetime.datetime(1997, 9, 2, 9, 0),
+ datetime.datetime(1997, 9, 12, 9, 0),
+ datetime.datetime(1997, 9, 22, 9, 0),
+ datetime.datetime(1997, 10, 2, 9, 0),
+ datetime.datetime(1997, 10, 12, 9, 0)]
+}}}
+
+Notice that when using a single rule, it returns an
+{{{rrule}}} instance, unless {{{forceset}}} was used.
+{{{
+>>> rrulestr("FREQ=DAILY;INTERVAL=10;COUNT=5")
+<dateutil.rrule.rrule instance at 0x30269f08>
+
+>>> rrulestr("""
+... DTSTART:19970902T090000
+... RRULE:FREQ=DAILY;INTERVAL=10;COUNT=5
+... """)
+<dateutil.rrule.rrule instance at 0x302699e0>
+
+>>> rrulestr("FREQ=DAILY;INTERVAL=10;COUNT=5", forceset=True)
+<dateutil.rrule.rruleset instance at 0x30269f08>
+}}}
+
+But when an {{{rruleset}}} is needed, it is automatically used.
+{{{
+>>> rrulestr("""
+... DTSTART:19970902T090000
+... RRULE:FREQ=DAILY;INTERVAL=10;COUNT=5
+... RRULE:FREQ=DAILY;INTERVAL=5;COUNT=3
+... """)
+<dateutil.rrule.rruleset instance at 0x302699e0>
+}}}
 
 === parser ===
 This module offers a generic date/time string parser which is
