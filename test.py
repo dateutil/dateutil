@@ -2240,6 +2240,15 @@ class RRuleTest(unittest.TestCase):
                               until=parse("19970901T090000"))),
                          [])
 
+    def testUntilWithDate(self):
+        self.assertEqual(list(rrule(FREQ_DAILY,
+                              count=3,
+                              dtstart=parse("19970902T090000"),
+                              until=date(1997, 9, 5))),
+                         [datetime(1997, 9, 2, 9, 0),
+                          datetime(1997, 9, 3, 9, 0),
+                          datetime(1997, 9, 4, 9, 0)])
+
     def testWkStIntervalMO(self):
         self.assertEqual(list(rrule(FREQ_WEEKLY,
                               count=3,

@@ -100,6 +100,8 @@ class rrule:
         self._freq = freq
         self._interval = interval
         self._count = count
+        if until and not isinstance(until, datetime.datetime):
+            until = datetime.datetime.fromordinal(until.toordinal())
         self._until = until
         if wkst is None:
             self._wkst = calendar.firstweekday()
