@@ -2784,6 +2784,13 @@ class ParserTest(unittest.TestCase):
                          datetime(2003, 9, 25, 10, 36, 28,
                                   tzinfo=self.brsttz))
 
+    def testDateCommandFormatUnicode(self):
+        self.assertEqual(parse(u"Thu Sep 25 10:36:28 BRST 2003",
+                               tzinfos=self.tzinfos),
+                         datetime(2003, 9, 25, 10, 36, 28,
+                                  tzinfo=self.brsttz))
+
+
     def testDateCommandFormatReversed(self):
         self.assertEqual(parse("2003 10:36:28 BRST 25 Sep Thu",
                                tzinfos=self.tzinfos),

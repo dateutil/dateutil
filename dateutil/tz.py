@@ -822,10 +822,10 @@ class tzical:
     def __repr__(self):
         return "%s(%s)" % (self.__class__.__name__, `self._s`)
 
+import sys, os
+
 TZFILES = ["/etc/localtime", "localtime"]
 TZPATHS = ["/usr/share/zoneinfo", "/usr/lib/zoneinfo", "/etc/zoneinfo"]
-
-import os
 
 def gettz(name=None):
     tz = None
@@ -834,7 +834,7 @@ def gettz(name=None):
             name = os.environ["TZ"]
         except KeyError:
             pass
-    if name is None:
+    if name is None or name == ":":
         for filepath in TZFILES:
             if not os.path.isabs(filepath):
                 filename = filepath
@@ -851,33 +851,42 @@ def gettz(name=None):
                 except (IOError, OSError, ValueError):
                     pass
     else:
-        if name and name[0] == ":":
+        if name.startswith(":"):
             name = name[:-1]
-        for path in TZPATHS:
-            filepath = os.path.join(path, name)
-            if not os.path.isfile(filepath):
-                filepath = filepath.replace(' ','_')
-                if not os.path.isfile(filepath):
-                    continue
-            try:
-                tz = tzfile(filepath)
-                break
-            except (IOError, OSError, ValueError):
-                pass
-        else:
-            for c in name:
-                # name must have at least one offset to be a tzstr
-                if c in "0123456789":
-                    try:
-                        tz = tzstr(name)
-                    except ValueError:
-                        pass
-                    break
+        if name.startswith("/"):
+            if os.path.isfile(name):
+                tz = tzfile(name)
             else:
-                if name in ("GMT", "UTC"):
-                    tz = tzutc()
-                elif name in time.tzname:
-                    tz = tzlocal()
+                tz = None
+        else:
+            for path in TZPATHS:
+                filepath = os.path.join(path, name)
+                if not os.path.isfile(filepath):
+                    filepath = filepath.replace(' ','_')
+                    if not os.path.isfile(filepath):
+                        continue
+                try:
+                    tz = tzfile(filepath)
+                    break
+                except (IOError, OSError, ValueError):
+                    pass
+            else:
+                from dateutil.zoneinfo import gettz
+                tz = gettz(name)
+                if not tz:
+                    for c in name:
+                        # name must have at least one offset to be a tzstr
+                        if c in "0123456789":
+                            try:
+                                tz = tzstr(name)
+                            except ValueError:
+                                pass
+                            break
+                    else:
+                        if name in ("GMT", "UTC"):
+                            tz = tzutc()
+                        elif name in time.tzname:
+                            tz = tzlocal()
     return tz
 
 # vim:ts=4:sw=4:et
