@@ -3328,6 +3328,24 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(parse("01m02h", default=self.default),
                          datetime(2003, 9, 25, 2, 1))
 
+    def testIncreasingCTime(self):
+        # This test will check 200 different years, every month, every day,
+        # every hour, every minute, severy second, and every weekday, using
+        # a delta of more or less 1 year, 1 month, 1 day, 1 minute and
+        # 1 second.
+        delta = timedelta(days=365+31+1, seconds=1+60+60*60)
+        dt = datetime(1900, 1, 1, 0, 0, 0, 0)
+        for i in range(200):
+            self.assertEqual(parse(dt.ctime()), dt)
+            dt += delta
+
+    def testIncreasingISOFormat(self):
+        delta = timedelta(days=365+31+1, seconds=1+60+60*60)
+        dt = datetime(1900, 1, 1, 0, 0, 0, 0)
+        for i in range(200):
+            self.assertEqual(parse(dt.isoformat()), dt)
+            dt += delta
+
 class EasterTest(unittest.TestCase):
     easterlist = [
                  # WESTERN            ORTHODOX
