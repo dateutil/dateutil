@@ -614,14 +614,11 @@ class _iterinfo(object):
                     last -= 1
                     for wday, n in rr._bynweekday:
                         if n < 0:
-                            i = last
-                            s = -1
+                            i = last+(n+1)*7
+                            i -= (self.wdaymask[i]-wday)%7
                         else:
-                            i = first
-                            s = 1
-                        while self.wdaymask[i] != wday:
-                            i += s
-                        i += (n-s)*7
+                            i = first+(n-1)*7
+                            i += (7-self.wdaymask[i]+wday)%7
                         if first <= i <= last:
                             self.nwdaymask[i] = 1
 
