@@ -81,7 +81,11 @@ class rrule:
         else:
             self._cache = None
         if not dtstart:
-            dtstart = datetime.datetime.now()
+            dtstart = datetime.datetime.now().replace(microsecond=0)
+        elif not isinstance(dtstart, datetime.datetime):
+            dtstart = datetime.datetime.fromordinal(dtstart.toordinal())
+        else:
+            dtstart = dtstart.replace(microsecond=0)
         self._dtstart = dtstart
         self._tzinfo = dtstart.tzinfo
         self._freq = freq

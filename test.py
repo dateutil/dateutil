@@ -2262,6 +2262,22 @@ class RRuleTest(unittest.TestCase):
                           datetime(1997, 9, 14, 9, 0),
                           datetime(1997, 9, 16, 9, 0)])
 
+    def testDTStartIsDate(self):
+        self.assertEqual(list(rrule(FREQ_DAILY,
+                              count=3,
+                              dtstart=date(1997, 9, 2))),
+                         [datetime(1997, 9, 2, 0, 0),
+                          datetime(1997, 9, 3, 0, 0),
+                          datetime(1997, 9, 4, 0, 0)])
+
+    def testDTStartWithMicroseconds(self):
+        self.assertEqual(list(rrule(FREQ_DAILY,
+                              count=3,
+                              dtstart=parse("19970902T090000.5"))),
+                         [datetime(1997, 9, 2, 9, 0),
+                          datetime(1997, 9, 3, 9, 0),
+                          datetime(1997, 9, 4, 9, 0)])
+
     def testSet(self):
         set = rruleset()
         set.rrule(rrule(FREQ_YEARLY, count=2, byweekday=TU,
