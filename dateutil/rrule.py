@@ -575,25 +575,69 @@ class _iterinfo(object):
                 self.wnomask = [0]*(self.yearlen+7)
                 #no1wkst = firstwkst = self.wdaymask.index(rr._wkst)
                 no1wkst = firstwkst = (7-self.yearweekday+rr._wkst)%7
-                if no1wkst+1 > 4:
+                if no1wkst >= 4:
                     no1wkst = 0
-                numweeks = 52+(self.yearlen-no1wkst)%7/4
+                    # Number of days in the year, plus the days we got
+                    # from last year.
+                    wyearlen = self.yearlen+(self.yearweekday-rr._wkst)%7
+                else:
+                    # Number of days in the year, minus the days we
+                    # left in last year.
+                    wyearlen = self.yearlen-no1wkst
+                div, mod = divmod(wyearlen, 7)
+                numweeks = div+mod//4
                 for n in rr._byweekno:
                     if n < 0:
                         n += numweeks+1
+                    if not (0 < n <= numweeks):
+                        continue
                     if n > 1:
                         i = no1wkst+(n-1)*7
                         if no1wkst != firstwkst:
                             i -= 7-firstwkst
-                        #while self.wdaymask[i] != rr._wkst:
-                        #    i -= 1
                     else:
-                        i = 0
+                        i = no1wkst
                     for j in range(7):
                         self.wnomask[i] = 1
                         i += 1
-                        if self.wdaymask[i] == rr._wkst or i == self.yearlen:
+                        if self.wdaymask[i] == rr._wkst:
                             break
+                if 1 in rr._byweekno:
+                    # Check week number 1 of next year as well
+                    # TODO: Check -numweeks for next year.
+                    i = no1wkst+numweeks*7
+                    if no1wkst != firstwkst:
+                        i -= 7-firstwkst
+                    if i < self.yearlen:
+                        # If week starts in next year, we
+                        # don't care about it.
+                        for j in range(7):
+                            self.wnomask[i] = 1
+                            i += 1
+                            if self.wdaymask[i] == rr._wkst:
+                                break
+                if no1wkst:
+                    # Check last week number of last year as
+                    # well. If no1wkst is 0, either the year
+                    # started on week start, or week number 1
+                    # got days from last year, so there are no
+                    # days from last year's last week number in
+                    # this year.
+                    if -1 not in rr._byweekno:
+                        lyearweekday = datetime.date(year-1,1,1).weekday()
+                        lno1wkst = (7-lyearweekday+rr._wkst)%7
+                        lyearlen = 365+calendar.isleap(year-1)
+                        if lno1wkst >= 4:
+                            lno1wkst = 0
+                            lnumweeks = 52+(lyearlen+
+                                           (lyearweekday-rr._wkst)%7)%7//4
+                        else:
+                            lnumweeks = 52+(self.yearlen-no1wkst)%7//4
+                    else:
+                        lnumweeks = -1
+                    if lnumweeks in rr._byweekno:
+                        for i in range(no1wkst):
+                            self.wnomask[i] = 1
 
         if (rr._bynweekday and
             (month != self.lastmonth or year != self.lastyear)):
