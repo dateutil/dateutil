@@ -3,6 +3,8 @@ import datetime
 import struct
 import _winreg
 
+__author__ = "Jeffrey Harris & Gustavo Niemeyer <gustavo@niemeyer.net>"
+
 __all__ = ["tzwin", "tzwinlocal"]
 
 ONEWEEK = datetime.timedelta(7)
