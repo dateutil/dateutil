@@ -213,6 +213,24 @@ class RRuleTest(unittest.TestCase):
                           datetime(1997, 9, 4, 9, 0),
                           datetime(1997, 9, 9, 9, 0)])
 
+    def testYearlyByNWeekDay(self):
+        self.assertEqual(list(rrule(FREQ_YEARLY,
+                              count=3,
+                              byweekday=(TU(1),TH(-1)),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 12, 25, 9, 0),
+                          datetime(1998, 1, 6, 9, 0),
+                          datetime(1998, 12, 31, 9, 0)])
+
+    def testYearlyByNWeekDayLarge(self):
+        self.assertEqual(list(rrule(FREQ_YEARLY,
+                              count=3,
+                              byweekday=(TU(3),TH(-3)),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 12, 11, 9, 0),
+                          datetime(1998, 1, 20, 9, 0),
+                          datetime(1998, 12, 17, 9, 0)])
+
     def testYearlyByMonthAndWeekDay(self):
         self.assertEqual(list(rrule(FREQ_YEARLY,
                               count=3,
@@ -222,6 +240,237 @@ class RRuleTest(unittest.TestCase):
                          [datetime(1998, 1, 1, 9, 0),
                           datetime(1998, 1, 6, 9, 0),
                           datetime(1998, 1, 8, 9, 0)])
+
+    def testYearlyByMonthAndNWeekDay(self):
+        self.assertEqual(list(rrule(FREQ_YEARLY,
+                              count=3,
+                              bymonth=(1,3),
+                              byweekday=(TU(1),TH(-1)),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 1, 6, 9, 0),
+                          datetime(1998, 1, 29, 9, 0),
+                          datetime(1998, 3, 3, 9, 0)])
+
+    def testYearlyByMonthAndNWeekDayLarge(self):
+        # This is interesting because the TH(-3) ends up before
+        # the TU(3).
+        self.assertEqual(list(rrule(FREQ_YEARLY,
+                              count=3,
+                              bymonth=(1,3),
+                              byweekday=(TU(3),TH(-3)),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 1, 15, 9, 0),
+                          datetime(1998, 1, 20, 9, 0),
+                          datetime(1998, 3, 12, 9, 0)])
+
+    def testYearlyByMonthDayAndWeekDay(self):
+        self.assertEqual(list(rrule(FREQ_YEARLY,
+                              count=3,
+                              bymonthday=(1,3),
+                              byweekday=(TU,TH),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 1, 1, 9, 0),
+                          datetime(1998, 2, 3, 9, 0),
+                          datetime(1998, 3, 3, 9, 0)])
+
+    def testYearlyByMonthAndMonthDayAndWeekDay(self):
+        self.assertEqual(list(rrule(FREQ_YEARLY,
+                              count=3,
+                              bymonth=(1,3),
+                              bymonthday=(1,3),
+                              byweekday=(TU,TH),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 1, 1, 9, 0),
+                          datetime(1998, 3, 3, 9, 0),
+                          datetime(2001, 3, 1, 9, 0)])
+
+    def testYearlyByYearDay(self):
+        self.assertEqual(list(rrule(FREQ_YEARLY,
+                              count=3,
+                              byyearday=(1,100,200),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 1, 1, 9, 0),
+                          datetime(1998, 4, 10, 9, 0),
+                          datetime(1998, 7, 19, 9, 0)])
+
+    def testYearlyByMonthAndYearDay(self):
+        self.assertEqual(list(rrule(FREQ_YEARLY,
+                              count=3,
+                              bymonth=(4,7),
+                              byyearday=(1,100,200),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 4, 10, 9, 0),
+                          datetime(1998, 7, 19, 9, 0),
+                          datetime(1999, 4, 10, 9, 0)])
+
+    def testYearlyByWeekNo(self):
+        self.assertEqual(list(rrule(FREQ_YEARLY,
+                              count=3,
+                              byweekno=20,
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 5, 11, 9, 0),
+                          datetime(1998, 5, 12, 9, 0),
+                          datetime(1998, 5, 13, 9, 0)])
+
+    def testYearlyByWeekNoAndWeekDay(self):
+        # That's a nice one. The first days of week number one
+        # may be in the last year.
+        self.assertEqual(list(rrule(FREQ_YEARLY,
+                              count=3,
+                              byweekno=1,
+                              byweekday=MO,
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 12, 29, 9, 0),
+                          datetime(1999, 1, 4, 9, 0),
+                          datetime(2000, 1, 3, 9, 0)])
+
+    def testYearlyByWeekNoAndWeekDayLarge(self):
+        # Another nice test. The last days of week number 52/53
+        # may be in the next year.
+        self.assertEqual(list(rrule(FREQ_YEARLY,
+                              count=3,
+                              byweekno=52,
+                              byweekday=SU,
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 12, 28, 9, 0),
+                          datetime(1998, 12, 27, 9, 0),
+                          datetime(2000, 1, 2, 9, 0)])
+
+    def testYearlyByWeekNoAndWeekDayLast(self):
+        self.assertEqual(list(rrule(FREQ_YEARLY,
+                              count=3,
+                              byweekno=-1,
+                              byweekday=SU,
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 12, 28, 9, 0),
+                          datetime(1999, 1, 3, 9, 0),
+                          datetime(2000, 1, 2, 9, 0)])
+
+    def testYearlyByEaster(self):
+        self.assertEqual(list(rrule(FREQ_YEARLY,
+                              count=3,
+                              byeaster=0,
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 4, 12, 9, 0),
+                          datetime(1999, 4, 4, 9, 0),
+                          datetime(2000, 4, 23, 9, 0)])
+
+    def testYearlyByEasterPos(self):
+        self.assertEqual(list(rrule(FREQ_YEARLY,
+                              count=3,
+                              byeaster=1,
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 4, 13, 9, 0),
+                          datetime(1999, 4, 5, 9, 0),
+                          datetime(2000, 4, 24, 9, 0)])
+
+    def testYearlyByEasterNeg(self):
+        self.assertEqual(list(rrule(FREQ_YEARLY,
+                              count=3,
+                              byeaster=-1,
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 4, 11, 9, 0),
+                          datetime(1999, 4, 3, 9, 0),
+                          datetime(2000, 4, 22, 9, 0)])
+
+    def testYearlyByWeekNoAndWeekDay53(self):
+        self.assertEqual(list(rrule(FREQ_YEARLY,
+                              count=3,
+                              byweekno=53,
+                              byweekday=MO,
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 12, 28, 9, 0),
+                          datetime(2004, 12, 27, 9, 0),
+                          datetime(2009, 12, 28, 9, 0)])
+
+    def testYearlyByWeekNoAndWeekDay53(self):
+        self.assertEqual(list(rrule(FREQ_YEARLY,
+                              count=3,
+                              byweekno=53,
+                              byweekday=MO,
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 12, 28, 9, 0),
+                          datetime(2004, 12, 27, 9, 0),
+                          datetime(2009, 12, 28, 9, 0)])
+
+    def testYearlyByHour(self):
+        self.assertEqual(list(rrule(FREQ_YEARLY,
+                              count=3,
+                              byhour=(6,18),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 2, 18, 0),
+                          datetime(1998, 9, 2, 6, 0),
+                          datetime(1998, 9, 2, 18, 0)])
+
+    def testYearlyByMinute(self):
+        self.assertEqual(list(rrule(FREQ_YEARLY,
+                              count=3,
+                              byminute=(6,18),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 2, 9, 6),
+                          datetime(1997, 9, 2, 9, 18),
+                          datetime(1998, 9, 2, 9, 6)])
+
+    def testYearlyBySecond(self):
+        self.assertEqual(list(rrule(FREQ_YEARLY,
+                              count=3,
+                              bysecond=(6,18),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 2, 9, 0, 6),
+                          datetime(1997, 9, 2, 9, 0, 18),
+                          datetime(1998, 9, 2, 9, 0, 6)])
+
+    def testYearlyByHourAndMinute(self):
+        self.assertEqual(list(rrule(FREQ_YEARLY,
+                              count=3,
+                              byhour=(6,18),
+                              byminute=(6,18),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 2, 18, 6),
+                          datetime(1997, 9, 2, 18, 18),
+                          datetime(1998, 9, 2, 6, 6)])
+
+    def testYearlyByHourAndSecond(self):
+        self.assertEqual(list(rrule(FREQ_YEARLY,
+                              count=3,
+                              byhour=(6,18),
+                              bysecond=(6,18),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 2, 18, 0, 6),
+                          datetime(1997, 9, 2, 18, 0, 18),
+                          datetime(1998, 9, 2, 6, 0, 6)])
+
+    def testYearlyByMinuteAndSecond(self):
+        self.assertEqual(list(rrule(FREQ_YEARLY,
+                              count=3,
+                              byminute=(6,18),
+                              bysecond=(6,18),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 2, 9, 6, 6),
+                          datetime(1997, 9, 2, 9, 6, 18),
+                          datetime(1997, 9, 2, 9, 18, 6)])
+
+    def testYearlyByHourAndMinuteAndSecond(self):
+        self.assertEqual(list(rrule(FREQ_YEARLY,
+                              count=3,
+                              byhour=(6,18),
+                              byminute=(6,18),
+                              bysecond=(6,18),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 2, 18, 6, 6),
+                          datetime(1997, 9, 2, 18, 6, 18),
+                          datetime(1997, 9, 2, 18, 18, 6)])
+
+    def testYearlyBySetPos(self):
+        self.assertEqual(list(rrule(FREQ_YEARLY,
+                              count=3,
+                              bymonthday=15,
+                              byhour=(6,18),
+                              bysetpos=(3,-3),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 11, 15, 18, 0),
+                          datetime(1998, 2, 15, 6, 0),
+                          datetime(1998, 11, 15, 18, 0)])
 
     def testMonthly(self):
         self.assertEqual(list(rrule(FREQ_MONTHLY,
@@ -296,6 +545,24 @@ class RRuleTest(unittest.TestCase):
                           datetime(1997, 9, 4, 9, 0),
                           datetime(1997, 9, 9, 9, 0)])
 
+    def testMonthlyByNWeekDay(self):
+        self.assertEqual(list(rrule(FREQ_MONTHLY,
+                              count=3,
+                              byweekday=(TU(1),TH(-1)),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 2, 9, 0),
+                          datetime(1997, 9, 25, 9, 0),
+                          datetime(1997, 10, 7, 9, 0)])
+
+    def testMonthlyByNWeekDayLarge(self):
+        self.assertEqual(list(rrule(FREQ_MONTHLY,
+                              count=3,
+                              byweekday=(TU(3),TH(-3)),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 11, 9, 0),
+                          datetime(1997, 9, 16, 9, 0),
+                          datetime(1997, 10, 16, 9, 0)])
+
     def testMonthlyByMonthAndWeekDay(self):
         self.assertEqual(list(rrule(FREQ_MONTHLY,
                               count=3,
@@ -305,6 +572,225 @@ class RRuleTest(unittest.TestCase):
                          [datetime(1998, 1, 1, 9, 0),
                           datetime(1998, 1, 6, 9, 0),
                           datetime(1998, 1, 8, 9, 0)])
+
+    def testMonthlyByMonthAndNWeekDay(self):
+        self.assertEqual(list(rrule(FREQ_MONTHLY,
+                              count=3,
+                              bymonth=(1,3),
+                              byweekday=(TU(1),TH(-1)),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 1, 6, 9, 0),
+                          datetime(1998, 1, 29, 9, 0),
+                          datetime(1998, 3, 3, 9, 0)])
+
+    def testMonthlyByMonthAndNWeekDayLarge(self):
+        self.assertEqual(list(rrule(FREQ_MONTHLY,
+                              count=3,
+                              bymonth=(1,3),
+                              byweekday=(TU(3),TH(-3)),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 1, 15, 9, 0),
+                          datetime(1998, 1, 20, 9, 0),
+                          datetime(1998, 3, 12, 9, 0)])
+
+    def testMonthlyByMonthDayAndWeekDay(self):
+        self.assertEqual(list(rrule(FREQ_MONTHLY,
+                              count=3,
+                              bymonthday=(1,3),
+                              byweekday=(TU,TH),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 1, 1, 9, 0),
+                          datetime(1998, 2, 3, 9, 0),
+                          datetime(1998, 3, 3, 9, 0)])
+
+    def testMonthlyByMonthAndMonthDayAndWeekDay(self):
+        self.assertEqual(list(rrule(FREQ_MONTHLY,
+                              count=3,
+                              bymonth=(1,3),
+                              bymonthday=(1,3),
+                              byweekday=(TU,TH),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 1, 1, 9, 0),
+                          datetime(1998, 3, 3, 9, 0),
+                          datetime(2001, 3, 1, 9, 0)])
+
+    def testMonthlyByYearDay(self):
+        self.assertEqual(list(rrule(FREQ_MONTHLY,
+                              count=3,
+                              byyearday=(1,100,200),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 1, 1, 9, 0),
+                          datetime(1998, 4, 10, 9, 0),
+                          datetime(1998, 7, 19, 9, 0)])
+
+    def testMonthlyByMonthAndYearDay(self):
+        self.assertEqual(list(rrule(FREQ_MONTHLY,
+                              count=3,
+                              bymonth=(4,7),
+                              byyearday=(1,100,200),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 4, 10, 9, 0),
+                          datetime(1998, 7, 19, 9, 0),
+                          datetime(1999, 4, 10, 9, 0)])
+
+    def testMonthlyByWeekNo(self):
+        self.assertEqual(list(rrule(FREQ_MONTHLY,
+                              count=3,
+                              byweekno=20,
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 5, 11, 9, 0),
+                          datetime(1998, 5, 12, 9, 0),
+                          datetime(1998, 5, 13, 9, 0)])
+
+    def testMonthlyByWeekNoAndWeekDay(self):
+        # That's a nice one. The first days of week number one
+        # may be in the last year.
+        self.assertEqual(list(rrule(FREQ_MONTHLY,
+                              count=3,
+                              byweekno=1,
+                              byweekday=MO,
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 12, 29, 9, 0),
+                          datetime(1999, 1, 4, 9, 0),
+                          datetime(2000, 1, 3, 9, 0)])
+
+    def testMonthlyByWeekNoAndWeekDayLarge(self):
+        # Another nice test. The last days of week number 52/53
+        # may be in the next year.
+        self.assertEqual(list(rrule(FREQ_MONTHLY,
+                              count=3,
+                              byweekno=52,
+                              byweekday=SU,
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 12, 28, 9, 0),
+                          datetime(1998, 12, 27, 9, 0),
+                          datetime(2000, 1, 2, 9, 0)])
+
+    def testMonthlyByWeekNoAndWeekDayLast(self):
+        self.assertEqual(list(rrule(FREQ_MONTHLY,
+                              count=3,
+                              byweekno=-1,
+                              byweekday=SU,
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 12, 28, 9, 0),
+                          datetime(1999, 1, 3, 9, 0),
+                          datetime(2000, 1, 2, 9, 0)])
+
+    def testMonthlyByWeekNoAndWeekDay53(self):
+        self.assertEqual(list(rrule(FREQ_MONTHLY,
+                              count=3,
+                              byweekno=53,
+                              byweekday=MO,
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 12, 28, 9, 0),
+                          datetime(2004, 12, 27, 9, 0),
+                          datetime(2009, 12, 28, 9, 0)])
+
+    def testMonthlyByEaster(self):
+        self.assertEqual(list(rrule(FREQ_MONTHLY,
+                              count=3,
+                              byeaster=0,
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 4, 12, 9, 0),
+                          datetime(1999, 4, 4, 9, 0),
+                          datetime(2000, 4, 23, 9, 0)])
+
+    def testMonthlyByEasterPos(self):
+        self.assertEqual(list(rrule(FREQ_MONTHLY,
+                              count=3,
+                              byeaster=1,
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 4, 13, 9, 0),
+                          datetime(1999, 4, 5, 9, 0),
+                          datetime(2000, 4, 24, 9, 0)])
+
+    def testMonthlyByEasterNeg(self):
+        self.assertEqual(list(rrule(FREQ_MONTHLY,
+                              count=3,
+                              byeaster=-1,
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 4, 11, 9, 0),
+                          datetime(1999, 4, 3, 9, 0),
+                          datetime(2000, 4, 22, 9, 0)])
+
+    def testMonthlyByHour(self):
+        self.assertEqual(list(rrule(FREQ_MONTHLY,
+                              count=3,
+                              byhour=(6,18),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 2, 18, 0),
+                          datetime(1997, 10, 2, 6, 0),
+                          datetime(1997, 10, 2, 18, 0)])
+
+    def testMonthlyByMinute(self):
+        self.assertEqual(list(rrule(FREQ_MONTHLY,
+                              count=3,
+                              byminute=(6,18),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 2, 9, 6),
+                          datetime(1997, 9, 2, 9, 18),
+                          datetime(1997, 10, 2, 9, 6)])
+
+    def testMonthlyBySecond(self):
+        self.assertEqual(list(rrule(FREQ_MONTHLY,
+                              count=3,
+                              bysecond=(6,18),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 2, 9, 0, 6),
+                          datetime(1997, 9, 2, 9, 0, 18),
+                          datetime(1997, 10, 2, 9, 0, 6)])
+
+    def testMonthlyByHourAndMinute(self):
+        self.assertEqual(list(rrule(FREQ_MONTHLY,
+                              count=3,
+                              byhour=(6,18),
+                              byminute=(6,18),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 2, 18, 6),
+                          datetime(1997, 9, 2, 18, 18),
+                          datetime(1997, 10, 2, 6, 6)])
+
+    def testMonthlyByHourAndSecond(self):
+        self.assertEqual(list(rrule(FREQ_MONTHLY,
+                              count=3,
+                              byhour=(6,18),
+                              bysecond=(6,18),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 2, 18, 0, 6),
+                          datetime(1997, 9, 2, 18, 0, 18),
+                          datetime(1997, 10, 2, 6, 0, 6)])
+
+    def testMonthlyByMinuteAndSecond(self):
+        self.assertEqual(list(rrule(FREQ_MONTHLY,
+                              count=3,
+                              byminute=(6,18),
+                              bysecond=(6,18),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 2, 9, 6, 6),
+                          datetime(1997, 9, 2, 9, 6, 18),
+                          datetime(1997, 9, 2, 9, 18, 6)])
+
+    def testMonthlyByHourAndMinuteAndSecond(self):
+        self.assertEqual(list(rrule(FREQ_MONTHLY,
+                              count=3,
+                              byhour=(6,18),
+                              byminute=(6,18),
+                              bysecond=(6,18),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 2, 18, 6, 6),
+                          datetime(1997, 9, 2, 18, 6, 18),
+                          datetime(1997, 9, 2, 18, 18, 6)])
+
+    def testMonthlyBySetPos(self):
+        self.assertEqual(list(rrule(FREQ_MONTHLY,
+                              count=3,
+                              bymonthday=(13,17),
+                              byhour=(6,18),
+                              bysetpos=(3,-3),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 13, 18, 0),
+                          datetime(1997, 9, 17, 6, 0),
+                          datetime(1997, 10, 13, 18, 0)])
 
     def testWeekly(self):
         self.assertEqual(list(rrule(FREQ_WEEKLY,
@@ -378,6 +864,15 @@ class RRuleTest(unittest.TestCase):
                           datetime(1997, 9, 4, 9, 0),
                           datetime(1997, 9, 9, 9, 0)])
 
+    def testWeeklyByNWeekDay(self):
+        self.assertEqual(list(rrule(FREQ_WEEKLY,
+                              count=3,
+                              byweekday=(TU(1),TH(-1)),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 2, 9, 0),
+                          datetime(1997, 9, 4, 9, 0),
+                          datetime(1997, 9, 9, 9, 0)])
+
     def testWeeklyByMonthAndWeekDay(self):
         # This test is interesting, because it crosses the year
         # boundary in a weekly period to find day '1' as a
@@ -390,6 +885,215 @@ class RRuleTest(unittest.TestCase):
                          [datetime(1998, 1, 1, 9, 0),
                           datetime(1998, 1, 6, 9, 0),
                           datetime(1998, 1, 8, 9, 0)])
+
+    def testWeeklyByMonthAndNWeekDay(self):
+        self.assertEqual(list(rrule(FREQ_WEEKLY,
+                              count=3,
+                              bymonth=(1,3),
+                              byweekday=(TU(1),TH(-1)),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 1, 1, 9, 0),
+                          datetime(1998, 1, 6, 9, 0),
+                          datetime(1998, 1, 8, 9, 0)])
+
+    def testWeeklyByMonthDayAndWeekDay(self):
+        self.assertEqual(list(rrule(FREQ_WEEKLY,
+                              count=3,
+                              bymonthday=(1,3),
+                              byweekday=(TU,TH),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 1, 1, 9, 0),
+                          datetime(1998, 2, 3, 9, 0),
+                          datetime(1998, 3, 3, 9, 0)])
+
+    def testWeeklyByMonthAndMonthDayAndWeekDay(self):
+        self.assertEqual(list(rrule(FREQ_WEEKLY,
+                              count=3,
+                              bymonth=(1,3),
+                              bymonthday=(1,3),
+                              byweekday=(TU,TH),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 1, 1, 9, 0),
+                          datetime(1998, 3, 3, 9, 0),
+                          datetime(2001, 3, 1, 9, 0)])
+
+    def testWeeklyByYearDay(self):
+        self.assertEqual(list(rrule(FREQ_WEEKLY,
+                              count=3,
+                              byyearday=(1,100,200),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 1, 1, 9, 0),
+                          datetime(1998, 4, 10, 9, 0),
+                          datetime(1998, 7, 19, 9, 0)])
+
+    def testWeeklyByMonthAndYearDay(self):
+        self.assertEqual(list(rrule(FREQ_WEEKLY,
+                              count=3,
+                              bymonth=(1,7),
+                              byyearday=(1,100,200),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 1, 1, 9, 0),
+                          datetime(1998, 7, 19, 9, 0),
+                          datetime(1999, 1, 1, 9, 0)])
+
+    def testWeeklyByWeekNo(self):
+        self.assertEqual(list(rrule(FREQ_WEEKLY,
+                              count=3,
+                              byweekno=20,
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 5, 11, 9, 0),
+                          datetime(1998, 5, 12, 9, 0),
+                          datetime(1998, 5, 13, 9, 0)])
+
+    def testWeeklyByWeekNoAndWeekDay(self):
+        # That's a nice one. The first days of week number one
+        # may be in the last year.
+        self.assertEqual(list(rrule(FREQ_WEEKLY,
+                              count=3,
+                              byweekno=1,
+                              byweekday=MO,
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 12, 29, 9, 0),
+                          datetime(1999, 1, 4, 9, 0),
+                          datetime(2000, 1, 3, 9, 0)])
+
+    def testWeeklyByWeekNoAndWeekDayLarge(self):
+        # Another nice test. The last days of week number 52/53
+        # may be in the next year.
+        self.assertEqual(list(rrule(FREQ_WEEKLY,
+                              count=3,
+                              byweekno=52,
+                              byweekday=SU,
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 12, 28, 9, 0),
+                          datetime(1998, 12, 27, 9, 0),
+                          datetime(2000, 1, 2, 9, 0)])
+
+    def testWeeklyByWeekNoAndWeekDayLast(self):
+        self.assertEqual(list(rrule(FREQ_WEEKLY,
+                              count=3,
+                              byweekno=-1,
+                              byweekday=SU,
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 12, 28, 9, 0),
+                          datetime(1999, 1, 3, 9, 0),
+                          datetime(2000, 1, 2, 9, 0)])
+
+    def testWeeklyByWeekNoAndWeekDay53(self):
+        self.assertEqual(list(rrule(FREQ_WEEKLY,
+                              count=3,
+                              byweekno=53,
+                              byweekday=MO,
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 12, 28, 9, 0),
+                          datetime(2004, 12, 27, 9, 0),
+                          datetime(2009, 12, 28, 9, 0)])
+
+    def testWeeklyByEaster(self):
+        self.assertEqual(list(rrule(FREQ_WEEKLY,
+                              count=3,
+                              byeaster=0,
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 4, 12, 9, 0),
+                          datetime(1999, 4, 4, 9, 0),
+                          datetime(2000, 4, 23, 9, 0)])
+
+    def testWeeklyByEasterPos(self):
+        self.assertEqual(list(rrule(FREQ_WEEKLY,
+                              count=3,
+                              byeaster=1,
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 4, 13, 9, 0),
+                          datetime(1999, 4, 5, 9, 0),
+                          datetime(2000, 4, 24, 9, 0)])
+
+    def testWeeklyByEasterNeg(self):
+        self.assertEqual(list(rrule(FREQ_WEEKLY,
+                              count=3,
+                              byeaster=-1,
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 4, 11, 9, 0),
+                          datetime(1999, 4, 3, 9, 0),
+                          datetime(2000, 4, 22, 9, 0)])
+
+    def testWeeklyByHour(self):
+        self.assertEqual(list(rrule(FREQ_WEEKLY,
+                              count=3,
+                              byhour=(6,18),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 2, 18, 0),
+                          datetime(1997, 9, 9, 6, 0),
+                          datetime(1997, 9, 9, 18, 0)])
+
+    def testWeeklyByMinute(self):
+        self.assertEqual(list(rrule(FREQ_WEEKLY,
+                              count=3,
+                              byminute=(6,18),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 2, 9, 6),
+                          datetime(1997, 9, 2, 9, 18),
+                          datetime(1997, 9, 9, 9, 6)])
+
+    def testWeeklyBySecond(self):
+        self.assertEqual(list(rrule(FREQ_WEEKLY,
+                              count=3,
+                              bysecond=(6,18),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 2, 9, 0, 6),
+                          datetime(1997, 9, 2, 9, 0, 18),
+                          datetime(1997, 9, 9, 9, 0, 6)])
+
+    def testWeeklyByHourAndMinute(self):
+        self.assertEqual(list(rrule(FREQ_WEEKLY,
+                              count=3,
+                              byhour=(6,18),
+                              byminute=(6,18),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 2, 18, 6),
+                          datetime(1997, 9, 2, 18, 18),
+                          datetime(1997, 9, 9, 6, 6)])
+
+    def testWeeklyByHourAndSecond(self):
+        self.assertEqual(list(rrule(FREQ_WEEKLY,
+                              count=3,
+                              byhour=(6,18),
+                              bysecond=(6,18),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 2, 18, 0, 6),
+                          datetime(1997, 9, 2, 18, 0, 18),
+                          datetime(1997, 9, 9, 6, 0, 6)])
+
+    def testWeeklyByMinuteAndSecond(self):
+        self.assertEqual(list(rrule(FREQ_WEEKLY,
+                              count=3,
+                              byminute=(6,18),
+                              bysecond=(6,18),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 2, 9, 6, 6),
+                          datetime(1997, 9, 2, 9, 6, 18),
+                          datetime(1997, 9, 2, 9, 18, 6)])
+
+    def testWeeklyByHourAndMinuteAndSecond(self):
+        self.assertEqual(list(rrule(FREQ_WEEKLY,
+                              count=3,
+                              byhour=(6,18),
+                              byminute=(6,18),
+                              bysecond=(6,18),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 2, 18, 6, 6),
+                          datetime(1997, 9, 2, 18, 6, 18),
+                          datetime(1997, 9, 2, 18, 18, 6)])
+
+    def testWeeklyBySetPos(self):
+        self.assertEqual(list(rrule(FREQ_WEEKLY,
+                              count=3,
+                              byweekday=(TU,TH),
+                              byhour=(6,18),
+                              bysetpos=(3,-3),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 2, 18, 0),
+                          datetime(1997, 9, 4, 6, 0),
+                          datetime(1997, 9, 9, 18, 0)])
 
     def testDaily(self):
         self.assertEqual(list(rrule(FREQ_DAILY,
@@ -463,6 +1167,15 @@ class RRuleTest(unittest.TestCase):
                           datetime(1997, 9, 4, 9, 0),
                           datetime(1997, 9, 9, 9, 0)])
 
+    def testDailyByNWeekDay(self):
+        self.assertEqual(list(rrule(FREQ_DAILY,
+                              count=3,
+                              byweekday=(TU(1),TH(-1)),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 2, 9, 0),
+                          datetime(1997, 9, 4, 9, 0),
+                          datetime(1997, 9, 9, 9, 0)])
+
     def testDailyByMonthAndWeekDay(self):
         self.assertEqual(list(rrule(FREQ_DAILY,
                               count=3,
@@ -472,6 +1185,215 @@ class RRuleTest(unittest.TestCase):
                          [datetime(1998, 1, 1, 9, 0),
                           datetime(1998, 1, 6, 9, 0),
                           datetime(1998, 1, 8, 9, 0)])
+
+    def testDailyByMonthAndNWeekDay(self):
+        self.assertEqual(list(rrule(FREQ_DAILY,
+                              count=3,
+                              bymonth=(1,3),
+                              byweekday=(TU(1),TH(-1)),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 1, 1, 9, 0),
+                          datetime(1998, 1, 6, 9, 0),
+                          datetime(1998, 1, 8, 9, 0)])
+
+    def testDailyByMonthDayAndWeekDay(self):
+        self.assertEqual(list(rrule(FREQ_DAILY,
+                              count=3,
+                              bymonthday=(1,3),
+                              byweekday=(TU,TH),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 1, 1, 9, 0),
+                          datetime(1998, 2, 3, 9, 0),
+                          datetime(1998, 3, 3, 9, 0)])
+
+    def testDailyByMonthAndMonthDayAndWeekDay(self):
+        self.assertEqual(list(rrule(FREQ_DAILY,
+                              count=3,
+                              bymonth=(1,3),
+                              bymonthday=(1,3),
+                              byweekday=(TU,TH),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 1, 1, 9, 0),
+                          datetime(1998, 3, 3, 9, 0),
+                          datetime(2001, 3, 1, 9, 0)])
+
+    def testDailyByYearDay(self):
+        self.assertEqual(list(rrule(FREQ_DAILY,
+                              count=3,
+                              byyearday=(1,100,200),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 1, 1, 9, 0),
+                          datetime(1998, 4, 10, 9, 0),
+                          datetime(1998, 7, 19, 9, 0)])
+
+    def testDailyByMonthAndYearDay(self):
+        self.assertEqual(list(rrule(FREQ_DAILY,
+                              count=3,
+                              bymonth=(1,7),
+                              byyearday=(1,100,200),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 1, 1, 9, 0),
+                          datetime(1998, 7, 19, 9, 0),
+                          datetime(1999, 1, 1, 9, 0)])
+
+    def testDailyByWeekNo(self):
+        self.assertEqual(list(rrule(FREQ_DAILY,
+                              count=3,
+                              byweekno=20,
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 5, 11, 9, 0),
+                          datetime(1998, 5, 12, 9, 0),
+                          datetime(1998, 5, 13, 9, 0)])
+
+    def testDailyByWeekNoAndWeekDay(self):
+        # That's a nice one. The first days of week number one
+        # may be in the last year.
+        self.assertEqual(list(rrule(FREQ_DAILY,
+                              count=3,
+                              byweekno=1,
+                              byweekday=MO,
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 12, 29, 9, 0),
+                          datetime(1999, 1, 4, 9, 0),
+                          datetime(2000, 1, 3, 9, 0)])
+
+    def testDailyByWeekNoAndWeekDayLarge(self):
+        # Another nice test. The last days of week number 52/53
+        # may be in the next year.
+        self.assertEqual(list(rrule(FREQ_DAILY,
+                              count=3,
+                              byweekno=52,
+                              byweekday=SU,
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 12, 28, 9, 0),
+                          datetime(1998, 12, 27, 9, 0),
+                          datetime(2000, 1, 2, 9, 0)])
+
+    def testDailyByWeekNoAndWeekDayLast(self):
+        self.assertEqual(list(rrule(FREQ_DAILY,
+                              count=3,
+                              byweekno=-1,
+                              byweekday=SU,
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 12, 28, 9, 0),
+                          datetime(1999, 1, 3, 9, 0),
+                          datetime(2000, 1, 2, 9, 0)])
+
+    def testDailyByWeekNoAndWeekDay53(self):
+        self.assertEqual(list(rrule(FREQ_DAILY,
+                              count=3,
+                              byweekno=53,
+                              byweekday=MO,
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 12, 28, 9, 0),
+                          datetime(2004, 12, 27, 9, 0),
+                          datetime(2009, 12, 28, 9, 0)])
+
+    def testDailyByEaster(self):
+        self.assertEqual(list(rrule(FREQ_DAILY,
+                              count=3,
+                              byeaster=0,
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 4, 12, 9, 0),
+                          datetime(1999, 4, 4, 9, 0),
+                          datetime(2000, 4, 23, 9, 0)])
+
+    def testDailyByEasterPos(self):
+        self.assertEqual(list(rrule(FREQ_DAILY,
+                              count=3,
+                              byeaster=1,
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 4, 13, 9, 0),
+                          datetime(1999, 4, 5, 9, 0),
+                          datetime(2000, 4, 24, 9, 0)])
+
+    def testDailyByEasterNeg(self):
+        self.assertEqual(list(rrule(FREQ_DAILY,
+                              count=3,
+                              byeaster=-1,
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 4, 11, 9, 0),
+                          datetime(1999, 4, 3, 9, 0),
+                          datetime(2000, 4, 22, 9, 0)])
+
+    def testDailyByHour(self):
+        self.assertEqual(list(rrule(FREQ_DAILY,
+                              count=3,
+                              byhour=(6,18),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 2, 18, 0),
+                          datetime(1997, 9, 3, 6, 0),
+                          datetime(1997, 9, 3, 18, 0)])
+
+    def testDailyByMinute(self):
+        self.assertEqual(list(rrule(FREQ_DAILY,
+                              count=3,
+                              byminute=(6,18),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 2, 9, 6),
+                          datetime(1997, 9, 2, 9, 18),
+                          datetime(1997, 9, 3, 9, 6)])
+
+    def testDailyBySecond(self):
+        self.assertEqual(list(rrule(FREQ_DAILY,
+                              count=3,
+                              bysecond=(6,18),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 2, 9, 0, 6),
+                          datetime(1997, 9, 2, 9, 0, 18),
+                          datetime(1997, 9, 3, 9, 0, 6)])
+
+    def testDailyByHourAndMinute(self):
+        self.assertEqual(list(rrule(FREQ_DAILY,
+                              count=3,
+                              byhour=(6,18),
+                              byminute=(6,18),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 2, 18, 6),
+                          datetime(1997, 9, 2, 18, 18),
+                          datetime(1997, 9, 3, 6, 6)])
+
+    def testDailyByHourAndSecond(self):
+        self.assertEqual(list(rrule(FREQ_DAILY,
+                              count=3,
+                              byhour=(6,18),
+                              bysecond=(6,18),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 2, 18, 0, 6),
+                          datetime(1997, 9, 2, 18, 0, 18),
+                          datetime(1997, 9, 3, 6, 0, 6)])
+
+    def testDailyByMinuteAndSecond(self):
+        self.assertEqual(list(rrule(FREQ_DAILY,
+                              count=3,
+                              byminute=(6,18),
+                              bysecond=(6,18),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 2, 9, 6, 6),
+                          datetime(1997, 9, 2, 9, 6, 18),
+                          datetime(1997, 9, 2, 9, 18, 6)])
+
+    def testDailyByHourAndMinuteAndSecond(self):
+        self.assertEqual(list(rrule(FREQ_DAILY,
+                              count=3,
+                              byhour=(6,18),
+                              byminute=(6,18),
+                              bysecond=(6,18),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 2, 18, 6, 6),
+                          datetime(1997, 9, 2, 18, 6, 18),
+                          datetime(1997, 9, 2, 18, 18, 6)])
+
+    def testDailyBySetPos(self):
+        self.assertEqual(list(rrule(FREQ_DAILY,
+                              count=3,
+                              byhour=(6,18),
+                              byminute=(15,45),
+                              bysetpos=(3,-3),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 2, 18, 15),
+                          datetime(1997, 9, 3, 6, 45),
+                          datetime(1997, 9, 3, 18, 15)])
 
     def testHourly(self):
         self.assertEqual(list(rrule(FREQ_HOURLY,
@@ -545,6 +1467,15 @@ class RRuleTest(unittest.TestCase):
                           datetime(1997, 9, 2, 10, 0),
                           datetime(1997, 9, 2, 11, 0)])
 
+    def testHourlyByNWeekDay(self):
+        self.assertEqual(list(rrule(FREQ_HOURLY,
+                              count=3,
+                              byweekday=(TU(1),TH(-1)),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 2, 9, 0),
+                          datetime(1997, 9, 2, 10, 0),
+                          datetime(1997, 9, 2, 11, 0)])
+
     def testHourlyByMonthAndWeekDay(self):
         self.assertEqual(list(rrule(FREQ_HOURLY,
                               count=3,
@@ -554,6 +1485,211 @@ class RRuleTest(unittest.TestCase):
                          [datetime(1998, 1, 1, 0, 0),
                           datetime(1998, 1, 1, 1, 0),
                           datetime(1998, 1, 1, 2, 0)])
+
+    def testHourlyByMonthAndNWeekDay(self):
+        self.assertEqual(list(rrule(FREQ_HOURLY,
+                              count=3,
+                              bymonth=(1,3),
+                              byweekday=(TU(1),TH(-1)),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 1, 1, 0, 0),
+                          datetime(1998, 1, 1, 1, 0),
+                          datetime(1998, 1, 1, 2, 0)])
+
+    def testHourlyByMonthDayAndWeekDay(self):
+        self.assertEqual(list(rrule(FREQ_HOURLY,
+                              count=3,
+                              bymonthday=(1,3),
+                              byweekday=(TU,TH),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 1, 1, 0, 0),
+                          datetime(1998, 1, 1, 1, 0),
+                          datetime(1998, 1, 1, 2, 0)])
+
+    def testHourlyByMonthAndMonthDayAndWeekDay(self):
+        self.assertEqual(list(rrule(FREQ_HOURLY,
+                              count=3,
+                              bymonth=(1,3),
+                              bymonthday=(1,3),
+                              byweekday=(TU,TH),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 1, 1, 0, 0),
+                          datetime(1998, 1, 1, 1, 0),
+                          datetime(1998, 1, 1, 2, 0)])
+
+    def testHourlyByYearDay(self):
+        self.assertEqual(list(rrule(FREQ_HOURLY,
+                              count=3,
+                              byyearday=(1,100,200),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 1, 1, 0, 0),
+                          datetime(1998, 1, 1, 1, 0),
+                          datetime(1998, 1, 1, 2, 0)])
+
+    def testHourlyByMonthAndYearDay(self):
+        self.assertEqual(list(rrule(FREQ_HOURLY,
+                              count=3,
+                              bymonth=(4,7),
+                              byyearday=(1,100,200),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 4, 10, 0, 0),
+                          datetime(1998, 4, 10, 1, 0),
+                          datetime(1998, 4, 10, 2, 0)])
+
+    def testHourlyByWeekNo(self):
+        self.assertEqual(list(rrule(FREQ_HOURLY,
+                              count=3,
+                              byweekno=20,
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 5, 11, 0, 0),
+                          datetime(1998, 5, 11, 1, 0),
+                          datetime(1998, 5, 11, 2, 0)])
+
+    def testHourlyByWeekNoAndWeekDay(self):
+        self.assertEqual(list(rrule(FREQ_HOURLY,
+                              count=3,
+                              byweekno=1,
+                              byweekday=MO,
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 12, 29, 0, 0),
+                          datetime(1997, 12, 29, 1, 0),
+                          datetime(1997, 12, 29, 2, 0)])
+
+    def testHourlyByWeekNoAndWeekDayLarge(self):
+        self.assertEqual(list(rrule(FREQ_HOURLY,
+                              count=3,
+                              byweekno=52,
+                              byweekday=SU,
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 12, 28, 0, 0),
+                          datetime(1997, 12, 28, 1, 0),
+                          datetime(1997, 12, 28, 2, 0)])
+
+    def testHourlyByWeekNoAndWeekDayLast(self):
+        self.assertEqual(list(rrule(FREQ_HOURLY,
+                              count=3,
+                              byweekno=-1,
+                              byweekday=SU,
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 12, 28, 0, 0),
+                          datetime(1997, 12, 28, 1, 0),
+                          datetime(1997, 12, 28, 2, 0)])
+
+    def testHourlyByWeekNoAndWeekDay53(self):
+        self.assertEqual(list(rrule(FREQ_HOURLY,
+                              count=3,
+                              byweekno=53,
+                              byweekday=MO,
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 12, 28, 0, 0),
+                          datetime(1998, 12, 28, 1, 0),
+                          datetime(1998, 12, 28, 2, 0)])
+
+    def testHourlyByEaster(self):
+        self.assertEqual(list(rrule(FREQ_HOURLY,
+                              count=3,
+                              byeaster=0,
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 4, 12, 0, 0),
+                          datetime(1998, 4, 12, 1, 0),
+                          datetime(1998, 4, 12, 2, 0)])
+
+    def testHourlyByEasterPos(self):
+        self.assertEqual(list(rrule(FREQ_HOURLY,
+                              count=3,
+                              byeaster=1,
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 4, 13, 0, 0),
+                          datetime(1998, 4, 13, 1, 0),
+                          datetime(1998, 4, 13, 2, 0)])
+
+    def testHourlyByEasterNeg(self):
+        self.assertEqual(list(rrule(FREQ_HOURLY,
+                              count=3,
+                              byeaster=-1,
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 4, 11, 0, 0),
+                          datetime(1998, 4, 11, 1, 0),
+                          datetime(1998, 4, 11, 2, 0)])
+
+    def testHourlyByHour(self):
+        self.assertEqual(list(rrule(FREQ_HOURLY,
+                              count=3,
+                              byhour=(6,18),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 2, 18, 0),
+                          datetime(1997, 9, 3, 6, 0),
+                          datetime(1997, 9, 3, 18, 0)])
+
+    def testHourlyByMinute(self):
+        self.assertEqual(list(rrule(FREQ_HOURLY,
+                              count=3,
+                              byminute=(6,18),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 2, 9, 6),
+                          datetime(1997, 9, 2, 9, 18),
+                          datetime(1997, 9, 2, 10, 6)])
+
+    def testHourlyBySecond(self):
+        self.assertEqual(list(rrule(FREQ_HOURLY,
+                              count=3,
+                              bysecond=(6,18),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 2, 9, 0, 6),
+                          datetime(1997, 9, 2, 9, 0, 18),
+                          datetime(1997, 9, 2, 10, 0, 6)])
+
+    def testHourlyByHourAndMinute(self):
+        self.assertEqual(list(rrule(FREQ_HOURLY,
+                              count=3,
+                              byhour=(6,18),
+                              byminute=(6,18),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 2, 18, 6),
+                          datetime(1997, 9, 2, 18, 18),
+                          datetime(1997, 9, 3, 6, 6)])
+
+    def testHourlyByHourAndSecond(self):
+        self.assertEqual(list(rrule(FREQ_HOURLY,
+                              count=3,
+                              byhour=(6,18),
+                              bysecond=(6,18),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 2, 18, 0, 6),
+                          datetime(1997, 9, 2, 18, 0, 18),
+                          datetime(1997, 9, 3, 6, 0, 6)])
+
+    def testHourlyByMinuteAndSecond(self):
+        self.assertEqual(list(rrule(FREQ_HOURLY,
+                              count=3,
+                              byminute=(6,18),
+                              bysecond=(6,18),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 2, 9, 6, 6),
+                          datetime(1997, 9, 2, 9, 6, 18),
+                          datetime(1997, 9, 2, 9, 18, 6)])
+
+    def testHourlyByHourAndMinuteAndSecond(self):
+        self.assertEqual(list(rrule(FREQ_HOURLY,
+                              count=3,
+                              byhour=(6,18),
+                              byminute=(6,18),
+                              bysecond=(6,18),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 2, 18, 6, 6),
+                          datetime(1997, 9, 2, 18, 6, 18),
+                          datetime(1997, 9, 2, 18, 18, 6)])
+
+    def testHourlyBySetPos(self):
+        self.assertEqual(list(rrule(FREQ_HOURLY,
+                              count=3,
+                              byminute=(15,45),
+                              bysecond=(15,45),
+                              bysetpos=(3,-3),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 2, 9, 15, 45),
+                          datetime(1997, 9, 2, 9, 45, 15),
+                          datetime(1997, 9, 2, 10, 15, 45)])
 
     def testMinutely(self):
         self.assertEqual(list(rrule(FREQ_MINUTELY,
@@ -627,6 +1763,15 @@ class RRuleTest(unittest.TestCase):
                           datetime(1997, 9, 2, 9, 1),
                           datetime(1997, 9, 2, 9, 2)])
 
+    def testMinutelyByNWeekDay(self):
+        self.assertEqual(list(rrule(FREQ_MINUTELY,
+                              count=3,
+                              byweekday=(TU(1),TH(-1)),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 2, 9, 0),
+                          datetime(1997, 9, 2, 9, 1),
+                          datetime(1997, 9, 2, 9, 2)])
+
     def testMinutelyByMonthAndWeekDay(self):
         self.assertEqual(list(rrule(FREQ_MINUTELY,
                               count=3,
@@ -636,6 +1781,210 @@ class RRuleTest(unittest.TestCase):
                          [datetime(1998, 1, 1, 0, 0),
                           datetime(1998, 1, 1, 0, 1),
                           datetime(1998, 1, 1, 0, 2)])
+
+    def testMinutelyByMonthAndNWeekDay(self):
+        self.assertEqual(list(rrule(FREQ_MINUTELY,
+                              count=3,
+                              bymonth=(1,3),
+                              byweekday=(TU(1),TH(-1)),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 1, 1, 0, 0),
+                          datetime(1998, 1, 1, 0, 1),
+                          datetime(1998, 1, 1, 0, 2)])
+
+    def testMinutelyByMonthDayAndWeekDay(self):
+        self.assertEqual(list(rrule(FREQ_MINUTELY,
+                              count=3,
+                              bymonthday=(1,3),
+                              byweekday=(TU,TH),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 1, 1, 0, 0),
+                          datetime(1998, 1, 1, 0, 1),
+                          datetime(1998, 1, 1, 0, 2)])
+
+    def testMinutelyByMonthAndMonthDayAndWeekDay(self):
+        self.assertEqual(list(rrule(FREQ_MINUTELY,
+                              count=3,
+                              bymonth=(1,3),
+                              bymonthday=(1,3),
+                              byweekday=(TU,TH),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 1, 1, 0, 0),
+                          datetime(1998, 1, 1, 0, 1),
+                          datetime(1998, 1, 1, 0, 2)])
+
+    def testMinutelyByYearDay(self):
+        self.assertEqual(list(rrule(FREQ_MINUTELY,
+                              count=3,
+                              byyearday=(1,100,200),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 1, 1, 0, 0),
+                          datetime(1998, 1, 1, 0, 1),
+                          datetime(1998, 1, 1, 0, 2)])
+
+    def testMinutelyByMonthAndYearDay(self):
+        self.assertEqual(list(rrule(FREQ_MINUTELY,
+                              count=3,
+                              bymonth=(4,7),
+                              byyearday=(1,100,200),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 4, 10, 0, 0),
+                          datetime(1998, 4, 10, 0, 1),
+                          datetime(1998, 4, 10, 0, 2)])
+
+    def testMinutelyByWeekNo(self):
+        self.assertEqual(list(rrule(FREQ_MINUTELY,
+                              count=3,
+                              byweekno=20,
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 5, 11, 0, 0),
+                          datetime(1998, 5, 11, 0, 1),
+                          datetime(1998, 5, 11, 0, 2)])
+
+    def testMinutelyByWeekNoAndWeekDay(self):
+        self.assertEqual(list(rrule(FREQ_MINUTELY,
+                              count=3,
+                              byweekno=1,
+                              byweekday=MO,
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 12, 29, 0, 0),
+                          datetime(1997, 12, 29, 0, 1),
+                          datetime(1997, 12, 29, 0, 2)])
+
+    def testMinutelyByWeekNoAndWeekDayLarge(self):
+        self.assertEqual(list(rrule(FREQ_MINUTELY,
+                              count=3,
+                              byweekno=52,
+                              byweekday=SU,
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 12, 28, 0, 0),
+                          datetime(1997, 12, 28, 0, 1),
+                          datetime(1997, 12, 28, 0, 2)])
+
+    def testMinutelyByWeekNoAndWeekDayLast(self):
+        self.assertEqual(list(rrule(FREQ_MINUTELY,
+                              count=3,
+                              byweekno=-1,
+                              byweekday=SU,
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 12, 28, 0, 0),
+                          datetime(1997, 12, 28, 0, 1),
+                          datetime(1997, 12, 28, 0, 2)])
+
+    def testMinutelyByWeekNoAndWeekDay53(self):
+        self.assertEqual(list(rrule(FREQ_MINUTELY,
+                              count=3,
+                              byweekno=53,
+                              byweekday=MO,
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 12, 28, 0, 0),
+                          datetime(1998, 12, 28, 0, 1),
+                          datetime(1998, 12, 28, 0, 2)])
+
+    def testMinutelyByEaster(self):
+        self.assertEqual(list(rrule(FREQ_MINUTELY,
+                              count=3,
+                              byeaster=0,
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 4, 12, 0, 0),
+                          datetime(1998, 4, 12, 0, 1),
+                          datetime(1998, 4, 12, 0, 2)])
+
+    def testMinutelyByEasterPos(self):
+        self.assertEqual(list(rrule(FREQ_MINUTELY,
+                              count=3,
+                              byeaster=1,
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 4, 13, 0, 0),
+                          datetime(1998, 4, 13, 0, 1),
+                          datetime(1998, 4, 13, 0, 2)])
+
+    def testMinutelyByEasterNeg(self):
+        self.assertEqual(list(rrule(FREQ_MINUTELY,
+                              count=3,
+                              byeaster=-1,
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 4, 11, 0, 0),
+                          datetime(1998, 4, 11, 0, 1),
+                          datetime(1998, 4, 11, 0, 2)])
+
+    def testMinutelyByHour(self):
+        self.assertEqual(list(rrule(FREQ_MINUTELY,
+                              count=3,
+                              byhour=(6,18),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 2, 18, 0),
+                          datetime(1997, 9, 2, 18, 1),
+                          datetime(1997, 9, 2, 18, 2)])
+
+    def testMinutelyByMinute(self):
+        self.assertEqual(list(rrule(FREQ_MINUTELY,
+                              count=3,
+                              byminute=(6,18),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 2, 9, 6),
+                          datetime(1997, 9, 2, 9, 18),
+                          datetime(1997, 9, 2, 10, 6)])
+
+    def testMinutelyBySecond(self):
+        self.assertEqual(list(rrule(FREQ_MINUTELY,
+                              count=3,
+                              bysecond=(6,18),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 2, 9, 0, 6),
+                          datetime(1997, 9, 2, 9, 0, 18),
+                          datetime(1997, 9, 2, 9, 1, 6)])
+
+    def testMinutelyByHourAndMinute(self):
+        self.assertEqual(list(rrule(FREQ_MINUTELY,
+                              count=3,
+                              byhour=(6,18),
+                              byminute=(6,18),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 2, 18, 6),
+                          datetime(1997, 9, 2, 18, 18),
+                          datetime(1997, 9, 3, 6, 6)])
+
+    def testMinutelyByHourAndSecond(self):
+        self.assertEqual(list(rrule(FREQ_MINUTELY,
+                              count=3,
+                              byhour=(6,18),
+                              bysecond=(6,18),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 2, 18, 0, 6),
+                          datetime(1997, 9, 2, 18, 0, 18),
+                          datetime(1997, 9, 2, 18, 1, 6)])
+
+    def testMinutelyByMinuteAndSecond(self):
+        self.assertEqual(list(rrule(FREQ_MINUTELY,
+                              count=3,
+                              byminute=(6,18),
+                              bysecond=(6,18),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 2, 9, 6, 6),
+                          datetime(1997, 9, 2, 9, 6, 18),
+                          datetime(1997, 9, 2, 9, 18, 6)])
+
+    def testMinutelyByHourAndMinuteAndSecond(self):
+        self.assertEqual(list(rrule(FREQ_MINUTELY,
+                              count=3,
+                              byhour=(6,18),
+                              byminute=(6,18),
+                              bysecond=(6,18),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 2, 18, 6, 6),
+                          datetime(1997, 9, 2, 18, 6, 18),
+                          datetime(1997, 9, 2, 18, 18, 6)])
+
+    def testMinutelyBySetPos(self):
+        self.assertEqual(list(rrule(FREQ_MINUTELY,
+                              count=3,
+                              bysecond=(15,30,45),
+                              bysetpos=(3,-3),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 2, 9, 0, 15),
+                          datetime(1997, 9, 2, 9, 0, 45),
+                          datetime(1997, 9, 2, 9, 1, 15)])
 
     def testSecondly(self):
         self.assertEqual(list(rrule(FREQ_SECONDLY,
@@ -709,6 +2058,15 @@ class RRuleTest(unittest.TestCase):
                           datetime(1997, 9, 2, 9, 0, 1),
                           datetime(1997, 9, 2, 9, 0, 2)])
 
+    def testSecondlyByNWeekDay(self):
+        self.assertEqual(list(rrule(FREQ_SECONDLY,
+                              count=3,
+                              byweekday=(TU(1),TH(-1)),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 2, 9, 0, 0),
+                          datetime(1997, 9, 2, 9, 0, 1),
+                          datetime(1997, 9, 2, 9, 0, 2)])
+
     def testSecondlyByMonthAndWeekDay(self):
         self.assertEqual(list(rrule(FREQ_SECONDLY,
                               count=3,
@@ -718,6 +2076,200 @@ class RRuleTest(unittest.TestCase):
                          [datetime(1998, 1, 1, 0, 0, 0),
                           datetime(1998, 1, 1, 0, 0, 1),
                           datetime(1998, 1, 1, 0, 0, 2)])
+
+    def testSecondlyByMonthAndNWeekDay(self):
+        self.assertEqual(list(rrule(FREQ_SECONDLY,
+                              count=3,
+                              bymonth=(1,3),
+                              byweekday=(TU(1),TH(-1)),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 1, 1, 0, 0, 0),
+                          datetime(1998, 1, 1, 0, 0, 1),
+                          datetime(1998, 1, 1, 0, 0, 2)])
+
+    def testSecondlyByMonthDayAndWeekDay(self):
+        self.assertEqual(list(rrule(FREQ_SECONDLY,
+                              count=3,
+                              bymonthday=(1,3),
+                              byweekday=(TU,TH),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 1, 1, 0, 0, 0),
+                          datetime(1998, 1, 1, 0, 0, 1),
+                          datetime(1998, 1, 1, 0, 0, 2)])
+
+    def testSecondlyByMonthAndMonthDayAndWeekDay(self):
+        self.assertEqual(list(rrule(FREQ_SECONDLY,
+                              count=3,
+                              bymonth=(1,3),
+                              bymonthday=(1,3),
+                              byweekday=(TU,TH),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 1, 1, 0, 0, 0),
+                          datetime(1998, 1, 1, 0, 0, 1),
+                          datetime(1998, 1, 1, 0, 0, 2)])
+
+    def testSecondlyByYearDay(self):
+        self.assertEqual(list(rrule(FREQ_SECONDLY,
+                              count=3,
+                              byyearday=(1,100,200),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 1, 1, 0, 0, 0),
+                          datetime(1998, 1, 1, 0, 0, 1),
+                          datetime(1998, 1, 1, 0, 0, 2)])
+
+    def testSecondlyByMonthAndYearDay(self):
+        self.assertEqual(list(rrule(FREQ_SECONDLY,
+                              count=3,
+                              bymonth=(4,7),
+                              byyearday=(1,100,200),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 4, 10, 0, 0, 0),
+                          datetime(1998, 4, 10, 0, 0, 1),
+                          datetime(1998, 4, 10, 0, 0, 2)])
+
+    def testSecondlyByWeekNo(self):
+        self.assertEqual(list(rrule(FREQ_SECONDLY,
+                              count=3,
+                              byweekno=20,
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 5, 11, 0, 0, 0),
+                          datetime(1998, 5, 11, 0, 0, 1),
+                          datetime(1998, 5, 11, 0, 0, 2)])
+
+    def testSecondlyByWeekNoAndWeekDay(self):
+        self.assertEqual(list(rrule(FREQ_SECONDLY,
+                              count=3,
+                              byweekno=1,
+                              byweekday=MO,
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 12, 29, 0, 0, 0),
+                          datetime(1997, 12, 29, 0, 0, 1),
+                          datetime(1997, 12, 29, 0, 0, 2)])
+
+    def testSecondlyByWeekNoAndWeekDayLarge(self):
+        self.assertEqual(list(rrule(FREQ_SECONDLY,
+                              count=3,
+                              byweekno=52,
+                              byweekday=SU,
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 12, 28, 0, 0, 0),
+                          datetime(1997, 12, 28, 0, 0, 1),
+                          datetime(1997, 12, 28, 0, 0, 2)])
+
+    def testSecondlyByWeekNoAndWeekDayLast(self):
+        self.assertEqual(list(rrule(FREQ_SECONDLY,
+                              count=3,
+                              byweekno=-1,
+                              byweekday=SU,
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 12, 28, 0, 0, 0),
+                          datetime(1997, 12, 28, 0, 0, 1),
+                          datetime(1997, 12, 28, 0, 0, 2)])
+
+    def testSecondlyByWeekNoAndWeekDay53(self):
+        self.assertEqual(list(rrule(FREQ_SECONDLY,
+                              count=3,
+                              byweekno=53,
+                              byweekday=MO,
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 12, 28, 0, 0, 0),
+                          datetime(1998, 12, 28, 0, 0, 1),
+                          datetime(1998, 12, 28, 0, 0, 2)])
+
+    def testSecondlyByEaster(self):
+        self.assertEqual(list(rrule(FREQ_SECONDLY,
+                              count=3,
+                              byeaster=0,
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 4, 12, 0, 0, 0),
+                          datetime(1998, 4, 12, 0, 0, 1),
+                          datetime(1998, 4, 12, 0, 0, 2)])
+
+    def testSecondlyByEasterPos(self):
+        self.assertEqual(list(rrule(FREQ_SECONDLY,
+                              count=3,
+                              byeaster=1,
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 4, 13, 0, 0, 0),
+                          datetime(1998, 4, 13, 0, 0, 1),
+                          datetime(1998, 4, 13, 0, 0, 2)])
+
+    def testSecondlyByEasterNeg(self):
+        self.assertEqual(list(rrule(FREQ_SECONDLY,
+                              count=3,
+                              byeaster=-1,
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1998, 4, 11, 0, 0, 0),
+                          datetime(1998, 4, 11, 0, 0, 1),
+                          datetime(1998, 4, 11, 0, 0, 2)])
+
+    def testSecondlyByHour(self):
+        self.assertEqual(list(rrule(FREQ_SECONDLY,
+                              count=3,
+                              byhour=(6,18),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 2, 18, 0, 0),
+                          datetime(1997, 9, 2, 18, 0, 1),
+                          datetime(1997, 9, 2, 18, 0, 2)])
+
+    def testSecondlyByMinute(self):
+        self.assertEqual(list(rrule(FREQ_SECONDLY,
+                              count=3,
+                              byminute=(6,18),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 2, 9, 6, 0),
+                          datetime(1997, 9, 2, 9, 6, 1),
+                          datetime(1997, 9, 2, 9, 6, 2)])
+
+    def testSecondlyBySecond(self):
+        self.assertEqual(list(rrule(FREQ_SECONDLY,
+                              count=3,
+                              bysecond=(6,18),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 2, 9, 0, 6),
+                          datetime(1997, 9, 2, 9, 0, 18),
+                          datetime(1997, 9, 2, 9, 1, 6)])
+
+    def testSecondlyByHourAndMinute(self):
+        self.assertEqual(list(rrule(FREQ_SECONDLY,
+                              count=3,
+                              byhour=(6,18),
+                              byminute=(6,18),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 2, 18, 6, 0),
+                          datetime(1997, 9, 2, 18, 6, 1),
+                          datetime(1997, 9, 2, 18, 6, 2)])
+
+    def testSecondlyByHourAndSecond(self):
+        self.assertEqual(list(rrule(FREQ_SECONDLY,
+                              count=3,
+                              byhour=(6,18),
+                              bysecond=(6,18),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 2, 18, 0, 6),
+                          datetime(1997, 9, 2, 18, 0, 18),
+                          datetime(1997, 9, 2, 18, 1, 6)])
+
+    def testSecondlyByMinuteAndSecond(self):
+        self.assertEqual(list(rrule(FREQ_SECONDLY,
+                              count=3,
+                              byminute=(6,18),
+                              bysecond=(6,18),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 2, 9, 6, 6),
+                          datetime(1997, 9, 2, 9, 6, 18),
+                          datetime(1997, 9, 2, 9, 18, 6)])
+
+    def testSecondlyByHourAndMinuteAndSecond(self):
+        self.assertEqual(list(rrule(FREQ_SECONDLY,
+                              count=3,
+                              byhour=(6,18),
+                              byminute=(6,18),
+                              bysecond=(6,18),
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 2, 18, 6, 6),
+                          datetime(1997, 9, 2, 18, 6, 18),
+                          datetime(1997, 9, 2, 18, 18, 6)])
 
     def testUntilNotMatching(self):
         self.assertEqual(list(rrule(FREQ_DAILY,
