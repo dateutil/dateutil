@@ -333,7 +333,7 @@ class rrule:
                 #if eval(self._pred):
                 if ((bymonth and ii.mmask[i] not in bymonth) or
                     (byweekno and not ii.wnomask[i]) or
-                    (byyearday and i+1 not in byyearday) or
+                    (byyearday and (i%ii.yearlen)+1 not in byyearday) or
                     (byweekday and ii.wdaymask[i] not in byweekday) or
                     (ii.nwdaymask and not ii.nwdaymask[i]) or
                     (byeaster and not ii.eastermask[i]) or
