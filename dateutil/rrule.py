@@ -346,6 +346,7 @@ class rrule:
 
             # Output results
             if bysetpos and timeset:
+                poslist = []
                 for pos in bysetpos:
                     if pos < 0:
                         daypos, timepos = divmod(pos, len(timeset))
@@ -359,15 +360,17 @@ class rrule:
                         pass
                     else:
                         date = datetime.date.fromordinal(ii.yearordinal+i)
-                        res = datetime.datetime.combine(date, time)
-                        if until and res > until:
-                            return
-                        elif res >= self._dtstart:
-                            yield res
-                            if count:
-                                count -= 1
-                                if not count:
-                                    return
+                        poslist.append(datetime.datetime.combine(date, time))
+                poslist.sort()
+                for res in poslist:
+                    if until and res > until:
+                        return
+                    elif res >= self._dtstart:
+                        yield res
+                        if count:
+                            count -= 1
+                            if not count:
+                                return
             else:
                 for i in dayset[start:end]:
                     if i is not None:
