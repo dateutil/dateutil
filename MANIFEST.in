@@ -1,0 +1,3 @@
+recursive-include dateutil *.py
+include MANIFEST.in README LICENSE Makefile
+include test.py
