@@ -52,7 +52,7 @@ import commands
 import os
 now = parse(commands.getoutput("date"))
 today = now.date()
-year = rrule(FREQ_YEARLY,bymonth=8,bymonthday=13,byweekday=FR)[0].year
+year = rrule(YEARLY,bymonth=8,bymonthday=13,byweekday=FR)[0].year
 rdelta = relativedelta(easter(year), today)
 print "Today is:", today
 print "Year with next Aug 13th on a Friday is:", year
@@ -72,8 +72,8 @@ And the Easter of that year is: 2004-04-11
 
 == Download ==
 The following files are available.
-  * attachment:python-dateutil-0.3.tar.bz2
-  * attachment:python-dateutil-0.3-1cl.noarch.rpm
+  * attachment:python-dateutil-0.5.tar.bz2
+  * attachment:python-dateutil-0.5-1cl.noarch.rpm
 
 == Author ==
 The dateutil module was written by GustavoNiemeyer <niemeyer@conectiva.com>.
@@ -273,14 +273,16 @@ datetime.datetime(1997, 4, 7, 0, 0)
 How long ago has the millennium changed?
 {{{
 >>> relativedelta(NOW, date(2001,1,1))
-relativedelta(years=+2, months=+8, days=+16, hours=+20, minutes=+54, seconds=+47, microseconds=+282310)
+relativedelta(years=+2, months=+8, days=+16,
+	      hours=+20, minutes=+54, seconds=+47, microseconds=+282310)
 }}}
 
 How old is John?
 {{{
 >>> johnbirthday = datetime(1978, 4, 5, 12, 0)
 >>> relativedelta(NOW, johnbirthday)
-relativedelta(years=+25, months=+5, days=+12, hours=+8, minutes=+54, seconds=+47, microseconds=+282310)
+relativedelta(years=+25, months=+5, days=+12,
+	      hours=+8, minutes=+54, seconds=+47, microseconds=+282310)
 }}}
 
 It works with dates too.
@@ -335,9 +337,9 @@ prototype is:
 rrule(freq)
 }}}
 
-Where {{{freq}}} must be one of {{{FREQ_YEARLY}}}, {{{FREQ_MONTHLY}}},
-{{{FREQ_WEEKLY}}}, {{{FREQ_DAILY}}}, {{{FREQ_HOURLY}}}, {{{FREQ_MINUTELY}}},
-or {{{FREQ_SECONDLY}}}.
+Where {{{freq}}} must be one of {{{YEARLY}}}, {{{MONTHLY}}},
+{{{WEEKLY}}}, {{{DAILY}}}, {{{HOURLY}}}, {{{MINUTELY}}},
+or {{{SECONDLY}}}.
 
 Additionally, it supports the following keyword arguments:
 
@@ -355,8 +357,8 @@ Additionally, it supports the following keyword arguments:
 
     interval::
     The interval between each {{{freq}}} iteration. For example,
-    when using {{{FREQ_YEARLY}}}, an interval of {{{2}}} means
-    once every two years, but with {{{FREQ_HOURLY}}}, it means
+    when using {{{YEARLY}}}, an interval of {{{2}}} means
+    once every two years, but with {{{HOURLY}}}, it means
     once every two hours. The default interval is {{{1}}}.
 
     wkst::
@@ -382,7 +384,7 @@ Additionally, it supports the following keyword arguments:
     specify an occurrence number, corresponding to the nth
     occurrence of the rule inside the frequency period. For
     example, a {{{bysetpos}}} of {{{-1}}} if combined with a
-    {{{FREQ_MONTHLY}}} frequency, and a {{{byweekday}}} of
+    {{{MONTHLY}}} frequency, and a {{{byweekday}}} of
     {{{(MO, TU, WE, TH, FR)}}}, will result in the last work
     day of every month.
 
@@ -413,8 +415,8 @@ Additionally, it supports the following keyword arguments:
     the recurrence will be applied. It's also possible to use
     an argument {{{n}}} for the weekday instances, which will
     mean the {{{n}}}''th'' occurrence of this weekday in the
-    period. For example, with {{{FREQ_MONTHLY}}}, or with
-    {{{FREQ_YEARLY}}} and {{{BYMONTH}}}, using {{{FR(+1)}}}
+    period. For example, with {{{MONTHLY}}}, or with
+    {{{YEARLY}}} and {{{BYMONTH}}}, using {{{FR(+1)}}}
     in {{{byweekday}}} will specify the first friday of the
     month where the recurrence happens. Notice that in the RFC
     documentation, this is specified as {{{BYDAY}}}, but was
@@ -519,7 +521,8 @@ Prepare the environment.
 
 Daily, for 10 occurrences.
 {{{
->>> list(rrule(FREQ_DAILY, count=10, dtstart=parse("19970902T090000")))
+>>> list(rrule(DAILY, count=10,
+	       dtstart=parse("19970902T090000")))
 [datetime.datetime(1997, 9, 2, 9, 0),
  datetime.datetime(1997, 9, 3, 9, 0),
  datetime.datetime(1997, 9, 4, 9, 0),
@@ -534,7 +537,9 @@ Daily, for 10 occurrences.
 
 Daily until December 24, 1997
 {{{
->>> list(rrule(FREQ_DAILY, dtstart=parse("19970902T090000"), until=parse("19971224T000000")))
+>>> list(rrule(DAILY,
+	       dtstart=parse("19970902T090000"),
+	       until=parse("19971224T000000")))
 [datetime.datetime(1997, 9, 2, 9, 0),
  datetime.datetime(1997, 9, 3, 9, 0),
  datetime.datetime(1997, 9, 4, 9, 0),
@@ -546,7 +551,8 @@ Daily until December 24, 1997
 
 Every other day, 5 occurrences.
 {{{
->>> list(rrule(FREQ_DAILY, interval=2, count=5, dtstart=parse("19970902T090000")))
+>>> list(rrule(DAILY, interval=2, count=5,
+	       dtstart=parse("19970902T090000")))
 [datetime.datetime(1997, 9, 2, 9, 0),
  datetime.datetime(1997, 9, 4, 9, 0),
  datetime.datetime(1997, 9, 6, 9, 0),
@@ -556,7 +562,8 @@ Every other day, 5 occurrences.
 
 Every 10 days, 5 occurrences.
 {{{
->>> list(rrule(FREQ_DAILY, interval=10, count=5, dtstart=parse("19970902T090000")))
+>>> list(rrule(DAILY, interval=10, count=5,
+	       dtstart=parse("19970902T090000")))
 [datetime.datetime(1997, 9, 2, 9, 0),
  datetime.datetime(1997, 9, 12, 9, 0),
  datetime.datetime(1997, 9, 22, 9, 0),
@@ -566,7 +573,9 @@ Every 10 days, 5 occurrences.
 
 Everyday in January, for 3 years.
 {{{
->>> list(rrule(FREQ_YEARLY, bymonth=1, byweekday=range(7), dtstart=parse("19980101T090000"), until=parse("20000131T090000")))
+>>> list(rrule(YEARLY, bymonth=1, byweekday=range(7),
+	       dtstart=parse("19980101T090000"),
+	       until=parse("20000131T090000")))
 [datetime.datetime(1998, 1, 1, 9, 0),
  datetime.datetime(1998, 1, 2, 9, 0),
  (...)
@@ -586,13 +595,16 @@ Everyday in January, for 3 years.
 
 Same thing, in another way.
 {{{
->>> list(rrule(FREQ_DAILY, bymonth=1, dtstart=parse("19980101T090000"), until=parse("20000131T090000")))
+>>> list(rrule(DAILY, bymonth=1,
+               dtstart=parse("19980101T090000"),
+	       until=parse("20000131T090000")))
 (...)
 }}}
 
 Weekly for 10 occurrences.
 {{{
->>> list(rrule(FREQ_WEEKLY, count=10, dtstart=parse("19970902T090000")))
+>>> list(rrule(WEEKLY, count=10,
+	       dtstart=parse("19970902T090000")))
 [datetime.datetime(1997, 9, 2, 9, 0),
  datetime.datetime(1997, 9, 9, 9, 0),
  datetime.datetime(1997, 9, 16, 9, 0),
@@ -607,7 +619,8 @@ Weekly for 10 occurrences.
 
 Every other week, 6 occurrences.
 {{{
->>> list(rrule(FREQ_WEEKLY, interval=2, count=6, dtstart=parse("19970902T090000")))
+>>> list(rrule(WEEKLY, interval=2, count=6,
+	       dtstart=parse("19970902T090000")))
 [datetime.datetime(1997, 9, 2, 9, 0),
  datetime.datetime(1997, 9, 16, 9, 0),
  datetime.datetime(1997, 9, 30, 9, 0),
@@ -618,8 +631,8 @@ Every other week, 6 occurrences.
 
 Weekly on Tuesday and Thursday for 5 weeks.
 {{{
->>> list(rrule(FREQ_WEEKLY, count=10, wkst=SU, byweekday=(TU,TH), dtstart=parse(
-"19970902T090000")))
+>>> list(rrule(WEEKLY, count=10, wkst=SU, byweekday=(TU,TH),
+	       dtstart=parse("19970902T090000")))
 [datetime.datetime(1997, 9, 2, 9, 0),
  datetime.datetime(1997, 9, 4, 9, 0),
  datetime.datetime(1997, 9, 9, 9, 0),
@@ -634,8 +647,9 @@ Weekly on Tuesday and Thursday for 5 weeks.
 
 Every other week on Tuesday and Thursday, for 8 occurrences.
 {{{
->>> list(rrule(FREQ_WEEKLY, interval=2, count=8, wkst=SU, byweekday=(TU,TH), dts
-tart=parse("19970902T090000")))
+>>> list(rrule(WEEKLY, interval=2, count=8,
+	       wkst=SU, byweekday=(TU,TH),
+	       dtstart=parse("19970902T090000")))
 [datetime.datetime(1997, 9, 2, 9, 0),
  datetime.datetime(1997, 9, 4, 9, 0),
  datetime.datetime(1997, 9, 16, 9, 0),
@@ -648,7 +662,8 @@ tart=parse("19970902T090000")))
 
 Monthly on the 1st Friday for ten occurrences.
 {{{
->>> list(rrule(FREQ_MONTHLY, count=10, byweekday=FR(1), dtstart=parse("19970905T090000")))
+>>> list(rrule(MONTHLY, count=10, byweekday=FR(1),
+	       dtstart=parse("19970905T090000")))
 [datetime.datetime(1997, 9, 5, 9, 0),
  datetime.datetime(1997, 10, 3, 9, 0),
  datetime.datetime(1997, 11, 7, 9, 0),
@@ -663,7 +678,9 @@ Monthly on the 1st Friday for ten occurrences.
 
 Every other month on the 1st and last Sunday of the month for 10 occurrences.
 {{{
->>> list(rrule(FREQ_MONTHLY, interval=2, count=10, byweekday=(SU(1), SU(-1)), dtstart=parse("19970907T090000")))
+>>> list(rrule(MONTHLY, interval=2, count=10,
+	       byweekday=(SU(1), SU(-1)),
+	       dtstart=parse("19970907T090000")))
 [datetime.datetime(1997, 9, 7, 9, 0),
  datetime.datetime(1997, 9, 28, 9, 0),
  datetime.datetime(1997, 11, 2, 9, 0),
@@ -678,7 +695,8 @@ Every other month on the 1st and last Sunday of the month for 10 occurrences.
 
 Monthly on the second to last Monday of the month for 6 months.
 {{{
->>> list(rrule(FREQ_MONTHLY, count=6, byweekday=MO(-2), dtstart=parse("19970922T090000")))
+>>> list(rrule(MONTHLY, count=6, byweekday=MO(-2),
+	       dtstart=parse("19970922T090000")))
 [datetime.datetime(1997, 9, 22, 9, 0),
  datetime.datetime(1997, 10, 20, 9, 0),
  datetime.datetime(1997, 11, 17, 9, 0),
@@ -689,7 +707,8 @@ Monthly on the second to last Monday of the month for 6 months.
 
 Monthly on the third to the last day of the month, for 6 months.
 {{{
->>> list(rrule(FREQ_MONTHLY, count=6, bymonthday=-3, dtstart=parse("19970928T090000")))
+>>> list(rrule(MONTHLY, count=6, bymonthday=-3,
+	       dtstart=parse("19970928T090000")))
 [datetime.datetime(1997, 9, 28, 9, 0),
  datetime.datetime(1997, 10, 29, 9, 0),
  datetime.datetime(1997, 11, 28, 9, 0),
@@ -700,7 +719,8 @@ Monthly on the third to the last day of the month, for 6 months.
 
 Monthly on the 2nd and 15th of the month for 5 occurrences.
 {{{
->>> list(rrule(FREQ_MONTHLY, count=5, bymonthday=(2,15), dtstart=parse("19970902T090000")))
+>>> list(rrule(MONTHLY, count=5, bymonthday=(2,15),
+	       dtstart=parse("19970902T090000")))
 [datetime.datetime(1997, 9, 2, 9, 0),
  datetime.datetime(1997, 9, 15, 9, 0),
  datetime.datetime(1997, 10, 2, 9, 0),
@@ -710,7 +730,8 @@ Monthly on the 2nd and 15th of the month for 5 occurrences.
 
 Monthly on the first and last day of the month for 3 occurrences.
 {{{
->>> list(rrule(FREQ_MONTHLY, count=5, bymonthday=(-1,1,), dtstart=parse("1997090
+>>> list(rrule(MONTHLY, count=5, bymonthday=(-1,1,),
+               dtstart=parse("1997090
 2T090000")))
 [datetime.datetime(1997, 9, 30, 9, 0),
  datetime.datetime(1997, 10, 1, 9, 0),
@@ -721,7 +742,9 @@ Monthly on the first and last day of the month for 3 occurrences.
 
 Every 18 months on the 10th thru 15th of the month for 10 occurrences.
 {{{
->>> list(rrule(FREQ_MONTHLY, interval=18, count=10, bymonthday=range(10,16), dtstart=parse("19970910T090000")))
+>>> list(rrule(MONTHLY, interval=18, count=10,
+	       bymonthday=range(10,16),
+	       dtstart=parse("19970910T090000")))
 [datetime.datetime(1997, 9, 10, 9, 0),
  datetime.datetime(1997, 9, 11, 9, 0),
  datetime.datetime(1997, 9, 12, 9, 0),
@@ -736,8 +759,8 @@ Every 18 months on the 10th thru 15th of the month for 10 occurrences.
 
 Every Tuesday, every other month, 6 occurences.
 {{{
->>> list(rrule(FREQ_MONTHLY, interval=2, count=6, byweekday=TU, dtstart=parse("1
-9970902T090000")))
+>>> list(rrule(MONTHLY, interval=2, count=6, byweekday=TU,
+	       dtstart=parse("19970902T090000")))
 [datetime.datetime(1997, 9, 2, 9, 0),
  datetime.datetime(1997, 9, 9, 9, 0),
  datetime.datetime(1997, 9, 16, 9, 0),
@@ -748,7 +771,8 @@ Every Tuesday, every other month, 6 occurences.
 
 Yearly in June and July for 10 occurrences.
 {{{
->>> list(rrule(FREQ_YEARLY, count=4, bymonth=(6,7), dtstart=parse("19970610T0900
+>>> list(rrule(YEARLY, count=4, bymonth=(6,7),
+	       dtstart=parse("19970610T0900
 00")))
 [datetime.datetime(1997, 6, 10, 9, 0),
  datetime.datetime(1997, 7, 10, 9, 0),
@@ -758,7 +782,8 @@ Yearly in June and July for 10 occurrences.
 
 Every 3rd year on the 1st, 100th and 200th day for 4 occurrences.
 {{{
->>> list(rrule(FREQ_YEARLY, count=4, interval=3, byyearday=(1,100,200), dtstart=parse("19970101T090000")))
+>>> list(rrule(YEARLY, count=4, interval=3, byyearday=(1,100,200),
+	       dtstart=parse("19970101T090000")))
 [datetime.datetime(1997, 1, 1, 9, 0),
  datetime.datetime(1997, 4, 10, 9, 0),
  datetime.datetime(1997, 7, 19, 9, 0),
@@ -767,7 +792,8 @@ Every 3rd year on the 1st, 100th and 200th day for 4 occurrences.
 
 Every 20th Monday of the year, 3 occurrences.
 {{{
->>> list(rrule(FREQ_YEARLY, count=3, byweekday=MO(20), dtstart=parse("19970519T090000")))
+>>> list(rrule(YEARLY, count=3, byweekday=MO(20),
+	       dtstart=parse("19970519T090000")))
 [datetime.datetime(1997, 5, 19, 9, 0),
  datetime.datetime(1998, 5, 18, 9, 0),
  datetime.datetime(1999, 5, 17, 9, 0)]
@@ -776,7 +802,8 @@ Every 20th Monday of the year, 3 occurrences.
 Monday of week number 20 (where the default start of the week is Monday),
 3 occurrences.
 {{{
->>> list(rrule(FREQ_YEARLY, count=3, byweekno=20, byweekday=MO, dtstart=parse("19970512T090000")))
+>>> list(rrule(YEARLY, count=3, byweekno=20, byweekday=MO,
+	       dtstart=parse("19970512T090000")))
 [datetime.datetime(1997, 5, 12, 9, 0),
  datetime.datetime(1998, 5, 11, 9, 0),
  datetime.datetime(1999, 5, 17, 9, 0)]
@@ -784,7 +811,8 @@ Monday of week number 20 (where the default start of the week is Monday),
 
 The week number 1 may be in the last year.
 {{{
->>> list(rrule(FREQ_WEEKLY, count=3, byweekno=1, byweekday=MO, dtstart=parse("19970902T090000")))
+>>> list(rrule(WEEKLY, count=3, byweekno=1, byweekday=MO,
+	       dtstart=parse("19970902T090000")))
 [datetime.datetime(1997, 12, 29, 9, 0),
  datetime.datetime(1999, 1, 4, 9, 0),
  datetime.datetime(2000, 1, 3, 9, 0)]
@@ -792,7 +820,8 @@ The week number 1 may be in the last year.
 
 And the week numbers greater than 51 may be in the next year.
 {{{
->>> list(rrule(FREQ_WEEKLY, count=3, byweekno=52, byweekday=SU, dtstart=parse("19970902T090000")))
+>>> list(rrule(WEEKLY, count=3, byweekno=52, byweekday=SU,
+	       dtstart=parse("19970902T090000")))
 [datetime.datetime(1997, 12, 28, 9, 0),
  datetime.datetime(1998, 12, 27, 9, 0),
  datetime.datetime(2000, 1, 2, 9, 0)]
@@ -800,7 +829,8 @@ And the week numbers greater than 51 may be in the next year.
 
 Only some years have week number 53:
 {{{
->>> list(rrule(FREQ_WEEKLY, count=3, byweekno=53, byweekday=MO, dtstart=parse("19970902T090000")))
+>>> list(rrule(WEEKLY, count=3, byweekno=53, byweekday=MO,
+	       dtstart=parse("19970902T090000")))
 [datetime.datetime(1998, 12, 28, 9, 0),
  datetime.datetime(2004, 12, 27, 9, 0),
  datetime.datetime(2009, 12, 28, 9, 0)]
@@ -808,8 +838,8 @@ Only some years have week number 53:
 
 Every Friday the 13th, 4 occurrences.
 {{{
->>> list(rrule(FREQ_YEARLY, count=4, byweekday=FR, bymonthday=13, dtstart=parse(
-"19970902T090000")))
+>>> list(rrule(YEARLY, count=4, byweekday=FR, bymonthday=13,
+	       dtstart=parse("19970902T090000")))
 [datetime.datetime(1998, 2, 13, 9, 0),
  datetime.datetime(1998, 3, 13, 9, 0),
  datetime.datetime(1998, 11, 13, 9, 0),
@@ -819,7 +849,9 @@ Every Friday the 13th, 4 occurrences.
 Every four years, the first Tuesday after a Monday in November,
 3 occurrences (U.S. Presidential Election day):
 {{{
->>> list(rrule(FREQ_YEARLY, interval=4, count=3, bymonth=11, byweekday=TU, bymonthday=(2,3,4,5,6,7,8), dtstart=parse("19961105T090000")))
+>>> list(rrule(YEARLY, interval=4, count=3, bymonth=11,
+	       byweekday=TU, bymonthday=(2,3,4,5,6,7,8),
+	       dtstart=parse("19961105T090000")))
 [datetime.datetime(1996, 11, 5, 9, 0),
  datetime.datetime(2000, 11, 7, 9, 0),
  datetime.datetime(2004, 11, 2, 9, 0)]
@@ -828,7 +860,8 @@ Every four years, the first Tuesday after a Monday in November,
 The 3rd instance into the month of one of Tuesday, Wednesday or
 Thursday, for the next 3 months:
 {{{
->>> list(rrule(FREQ_MONTHLY, count=3, byweekday=(TU,WE,TH), bysetpos=3, dtstart=parse("19970904T090000")))
+>>> list(rrule(MONTHLY, count=3, byweekday=(TU,WE,TH),
+	       bysetpos=3, dtstart=parse("19970904T090000")))
 [datetime.datetime(1997, 9, 4, 9, 0),
  datetime.datetime(1997, 10, 7, 9, 0),
  datetime.datetime(1997, 11, 6, 9, 0)]
@@ -836,8 +869,8 @@ Thursday, for the next 3 months:
 
 The 2nd to last weekday of the month, 3 occurrences.
 {{{
->>> list(rrule(FREQ_MONTHLY, count=3, byweekday=(MO,TU,WE,TH,FR), bysetpos=-2, d
-tstart=parse("19970929T090000")))
+>>> list(rrule(MONTHLY, count=3, byweekday=(MO,TU,WE,TH,FR),
+	       bysetpos=-2, dtstart=parse("19970929T090000")))
 [datetime.datetime(1997, 9, 29, 9, 0),
  datetime.datetime(1997, 10, 30, 9, 0),
  datetime.datetime(1997, 11, 27, 9, 0)]
@@ -845,7 +878,9 @@ tstart=parse("19970929T090000")))
 
 Every 3 hours from 9:00 AM to 5:00 PM on a specific day.
 {{{
->>> list(rrule(FREQ_HOURLY, interval=3, dtstart=parse("19970902T090000"), until=parse("19970902T170000")))
+>>> list(rrule(HOURLY, interval=3,
+	       dtstart=parse("19970902T090000"),
+	       until=parse("19970902T170000")))
 [datetime.datetime(1997, 9, 2, 9, 0),
  datetime.datetime(1997, 9, 2, 12, 0),
  datetime.datetime(1997, 9, 2, 15, 0)]
@@ -853,8 +888,8 @@ Every 3 hours from 9:00 AM to 5:00 PM on a specific day.
 
 Every 15 minutes for 6 occurrences.
 {{{
->>> list(rrule(FREQ_MINUTELY, interval=15, count=6, dtstart=parse("19970902T0900
-00")))
+>>> list(rrule(MINUTELY, interval=15, count=6,
+	       dtstart=parse("19970902T090000")))
 [datetime.datetime(1997, 9, 2, 9, 0),
  datetime.datetime(1997, 9, 2, 9, 15),
  datetime.datetime(1997, 9, 2, 9, 30),
@@ -865,8 +900,8 @@ Every 15 minutes for 6 occurrences.
 
 Every hour and a half for 4 occurrences.
 {{{
->>> list(rrule(FREQ_MINUTELY, interval=90, count=4, dtstart=parse("19970902T0900
-00")))
+>>> list(rrule(MINUTELY, interval=90, count=4,
+	       dtstart=parse("19970902T090000")))
 [datetime.datetime(1997, 9, 2, 9, 0),
  datetime.datetime(1997, 9, 2, 10, 30),
  datetime.datetime(1997, 9, 2, 12, 0),
@@ -875,8 +910,9 @@ Every hour and a half for 4 occurrences.
 
 Every 20 minutes from 9:00 AM to 4:40 PM for two days.
 {{{
->>> list(rrule(FREQ_MINUTELY, interval=20, count=48, byhour=range(9,17), byminut
-e=(0,20,40), dtstart=parse("19970902T090000")))
+>>> list(rrule(MINUTELY, interval=20, count=48,
+	       byhour=range(9,17), byminute=(0,20,40),
+	       dtstart=parse("19970902T090000")))
 [datetime.datetime(1997, 9, 2, 9, 0),
  datetime.datetime(1997, 9, 2, 9, 20),
  (...)
@@ -891,14 +927,17 @@ e=(0,20,40), dtstart=parse("19970902T090000")))
 
 An example where the days generated makes a difference because of {{{wkst}}}.
 {{{
->>> list(rrule(FREQ_WEEKLY, interval=2, count=4, byweekday=(TU,SU), wkst=MO, dtstart=parse("19970805T090000")))
+>>> list(rrule(WEEKLY, interval=2, count=4,
+	       byweekday=(TU,SU), wkst=MO,
+	       dtstart=parse("19970805T090000")))
 [datetime.datetime(1997, 8, 5, 9, 0),
  datetime.datetime(1997, 8, 10, 9, 0),
  datetime.datetime(1997, 8, 19, 9, 0),
  datetime.datetime(1997, 8, 24, 9, 0)]
 
->>> list(rrule(FREQ_WEEKLY, interval=2, count=4, byweekday=(TU,SU), wkst=SU, dts
-tart=parse("19970805T090000")))
+>>> list(rrule(WEEKLY, interval=2, count=4,
+	       byweekday=(TU,SU), wkst=SU,
+	       dtstart=parse("19970805T090000")))
 [datetime.datetime(1997, 8, 5, 9, 0),
  datetime.datetime(1997, 8, 17, 9, 0),
  datetime.datetime(1997, 8, 19, 9, 0),
@@ -980,8 +1019,10 @@ recurrence set, if possible.
 Daily, for 7 days, jumping Saturday and Sunday occurrences.
 {{{
 >>> set = rruleset()
->>> set.rrule(rrule(FREQ_DAILY, count=7, dtstart=parse("19970902T090000")))
->>> set.exrule(rrule(FREQ_YEARLY, byweekday=(SA,SU), dtstart=parse("19970902T090000")))
+>>> set.rrule(rrule(DAILY, count=7,
+		    dtstart=parse("19970902T090000")))
+>>> set.exrule(rrule(YEARLY, byweekday=(SA,SU),
+		     dtstart=parse("19970902T090000")))
 >>> list(set)
 [datetime.datetime(1997, 9, 2, 9, 0),
  datetime.datetime(1997, 9, 3, 9, 0),
@@ -993,7 +1034,8 @@ Daily, for 7 days, jumping Saturday and Sunday occurrences.
 Weekly, for 4 weeks, plus one time on day 7, and not on day 16.
 {{{
 >>> set = rruleset()
->>> set.rrule(rrule(FREQ_WEEKLY, count=4, dtstart=parse("19970902T090000")))
+>>> set.rrule(rrule(WEEKLY, count=4,
+		    dtstart=parse("19970902T090000")))
 >>> set.rdate(datetime.datetime(1997, 9, 7, 9, 0))
 >>> set.exdate(datetime.datetime(1997, 9, 16, 9, 0))
 >>> list(set)
@@ -1068,7 +1110,8 @@ Every 10 days, 5 occurrences.
 
 Same thing, but passing only the {{{RRULE}}} value.
 {{{
->>> list(rrulestr("FREQ=DAILY;INTERVAL=10;COUNT=5", dtstart=parse("19970902T090000")))
+>>> list(rrulestr("FREQ=DAILY;INTERVAL=10;COUNT=5",
+		  dtstart=parse("19970902T090000")))
 [datetime.datetime(1997, 9, 2, 9, 0),
  datetime.datetime(1997, 9, 12, 9, 0),
  datetime.datetime(1997, 9, 22, 9, 0),
@@ -1216,10 +1259,12 @@ Some simple examples based on the {{{date}}} command, using the
 {{{TZOFFSET}}} dictionary to provide the BRST timezone offset.
 {{{
 >>> parse("Thu Sep 25 10:36:28 BRST 2003", tzinfos=TZOFFSETS)
-datetime.datetime(2003, 9, 25, 10, 36, 28, tzinfo=tzoffset('BRST', -10800))
+datetime.datetime(2003, 9, 25, 10, 36, 28,
+		  tzinfo=tzoffset('BRST', -10800))
 
 >>> parse("2003 10:36:28 BRST 25 Sep Thu", tzinfos=TZOFFSETS)
-datetime.datetime(2003, 9, 25, 10, 36, 28, tzinfo=tzoffset('BRST', -10800))
+datetime.datetime(2003, 9, 25, 10, 36, 28,
+		  tzinfo=tzoffset('BRST', -10800))
 }}}
 
 Notice that since BRST is my local timezone, parsing it without
@@ -1285,13 +1330,15 @@ datetime.datetime(2003, 9, 25, 0, 0)
 Another format, based on {{{date -R}}} (RFC822):
 {{{
 >>> parse("Thu, 25 Sep 2003 10:49:41 -0300")
-datetime.datetime(2003, 9, 25, 10, 49, 41, tzinfo=tzoffset(None, -10800))
+datetime.datetime(2003, 9, 25, 10, 49, 41,
+		  tzinfo=tzoffset(None, -10800))
 }}}
 
 ISO format:
 {{{
 >>> parse("2003-09-25T10:49:41.5-03:00")
-datetime.datetime(2003, 9, 25, 10, 49, 41, 500000, tzinfo=tzoffset(None, -10800))
+datetime.datetime(2003, 9, 25, 10, 49, 41, 500000,
+		  tzinfo=tzoffset(None, -10800))
 }}}
 
 Some variations:
@@ -1312,10 +1359,12 @@ datetime.datetime(2003, 9, 25, 0, 0)
 ISO format, without separators:
 {{{
 >>> parse("20030925T104941.5-0300")
-datetime.datetime(2003, 9, 25, 10, 49, 41, 500000, tzinfo=tzinfo=tzoffset(None, -10800))
+datetime.datetime(2003, 9, 25, 10, 49, 41, 500000,
+		  tzinfo=tzinfo=tzoffset(None, -10800))
 
 >>> parse("20030925T104941-0300")
-datetime.datetime(2003, 9, 25, 10, 49, 41, tzinfo=tzoffset(None, -10800))
+datetime.datetime(2003, 9, 25, 10, 49, 41,
+		  tzinfo=tzoffset(None, -10800))
 
 >>> parse("20030925T104941")
 datetime.datetime(2003, 9, 25, 10, 49, 41)
@@ -1439,7 +1488,8 @@ Fuzzy parsing:
 >>> s = "Today is 25 of September of 2003, exactly " \
 ...     "at 10:49:41 with timezone -03:00."
 >>> parse(s, fuzzy=True)
-datetime.datetime(2003, 9, 25, 10, 49, 41, tzinfo=tzoffset(None, -10800))
+datetime.datetime(2003, 9, 25, 10, 49, 41,
+		  tzinfo=tzoffset(None, -10800))
 }}}
 
 Other random formats:
@@ -1541,13 +1591,15 @@ The {{{name}}} parameter may be optionally set to {{{None}}}, and
 >>> from dateutil.tz import *
 
 >>> datetime.now(tzoffset("BRST", -10800))
-datetime.datetime(2003, 9, 27, 9, 52, 43, 624904, tzinfo=tzinfo=tzoffset('BRST', -10800))
+datetime.datetime(2003, 9, 27, 9, 52, 43, 624904,
+		  tzinfo=tzinfo=tzoffset('BRST', -10800))
 
 >>> datetime.now(tzoffset("BRST", -10800)).tzname()
 'BRST'
 
 >>> datetime.now(tzoffset("BRST", -10800)).astimezone(tzutc())
-datetime.datetime(2003, 9, 27, 12, 53, 11, 446419, tzinfo=tzutc())
+datetime.datetime(2003, 9, 27, 12, 53, 11, 446419,
+		  tzinfo=tzutc())
 }}}
 
 ==== tzlocal type ====
@@ -1561,13 +1613,15 @@ parameters.
 >>> from dateutil.tz import *
 
 >>> datetime.now(tzlocal())
-datetime.datetime(2003, 9, 27, 10, 1, 43, 673605, tzinfo=tzlocal())
+datetime.datetime(2003, 9, 27, 10, 1, 43, 673605,
+		  tzinfo=tzlocal())
 
 >>> datetime.now(tzlocal()).tzname()
 'BRST'
 
 >>> datetime.now(tzlocal()).astimezone(tzoffset(None, 0))
-datetime.datetime(2003, 9, 27, 13, 3, 0, 11493, tzinfo=tzoffset(None, 0))
+datetime.datetime(2003, 9, 27, 13, 3, 0, 11493,
+		  tzinfo=tzoffset(None, 0))
 }}}
 
 ==== tzstr type ====
@@ -1649,7 +1703,8 @@ instead of timezone strings, information is passed using
 {{{relativedelta}}}s which are applied to a datetime set to the first
 day of the year. Here is the prototype of this type's constructor:
 {{{
-tzrange(stdabbr, stdoffset=None, dstabbr=None, dstoffset=None, start=None, end=None):
+tzrange(stdabbr, stdoffset=None, dstabbr=None, dstoffset=None,
+	start=None, end=None):
 }}}
 
 Offsets must be given in seconds. Information not provided will be
@@ -1663,8 +1718,10 @@ True
 >>> from dateutil.relativedelta import *
 >>> range1 = tzrange("EST", -18000, "EDT")
 >>> range2 = tzrange("EST", -18000, "EDT", -14400,
-...                  relativedelta(hours=+2, month=4, day=1, weekday=SU(+1)),
-...                  relativedelta(hours=+1, month=10, day=31, weekday=SU(-1)))>>> tzstr('EST5EDT') == range1 == range2
+...                  relativedelta(hours=+2, month=4, day=1,
+				   weekday=SU(+1)),
+...                  relativedelta(hours=+1, month=10, day=31,
+				   weekday=SU(-1)))
 >>> tzstr('EST5EDT') == range1 == range2
 True
 }}}
@@ -1693,10 +1750,12 @@ a {{{read()}}} method.
 {{{
 >>> tz = tzfile("/etc/localtime")
 >>> datetime.now(tz)
-datetime.datetime(2003, 9, 27, 12, 3, 48, 392138, tzinfo=tzfile('/etc/localtime'))
+datetime.datetime(2003, 9, 27, 12, 3, 48, 392138,
+		  tzinfo=tzfile('/etc/localtime'))
 
 >>> datetime.now(tz).astimezone(tzutc())
-datetime.datetime(2003, 9, 27, 15, 3, 53, 70863, tzinfo=tzutc())
+datetime.datetime(2003, 9, 27, 15, 3, 53, 70863,
+		  tzinfo=tzutc())
 
 >>> datetime.now(tz).tzname()
 'BRST'
@@ -1776,7 +1835,8 @@ And here is an example exploring a {{{tzical}}} type:
 <tzicalvtz 'US-Eastern'>
 
 >>> datetime.now(est)
-datetime.datetime(2003, 10, 6, 19, 44, 18, 667987, tzinfo=<tzicalvtz 'US-Eastern'>)
+datetime.datetime(2003, 10, 6, 19, 44, 18, 667987,
+		  tzinfo=<tzicalvtz 'US-Eastern'>)
 
 >>> est == tz.get()
 True

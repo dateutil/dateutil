@@ -2,7 +2,7 @@
 from distutils.core import setup
 
 setup(name="python-dateutil",
-      version = "0.4",
+      version = "0.5",
       description = "Extensions to the standard python 2.3+ datetime module",
       author = "Gustavo Niemeyer",
       author_email = "niemeyer@conectiva.com",

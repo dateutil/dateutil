@@ -14,8 +14,8 @@ import thread
 import sys
 
 __all__ = ["rrule", "rruleset", "rrulestr",
-           "FREQ_YEARLY", "FREQ_MONTHLY", "FREQ_WEEKLY", "FREQ_DAILY",
-           "FREQ_HOURLY", "FREQ_MINUTELY", "FREQ_SECONDLY",
+           "YEARLY", "MONTHLY", "WEEKLY", "DAILY",
+           "HOURLY", "MINUTELY", "SECONDLY",
            "MO", "TU", "WE", "TH", "FR", "SA", "SU"]
 
 # Every mask is 7 days longer to handle cross-year weekly periods.
@@ -35,13 +35,13 @@ del M29, M30, M31, M365MASK[59], MDAY365MASK[59], NMDAY365MASK[31]
 MDAY365MASK = tuple(MDAY365MASK)
 M365MASK = tuple(M365MASK)
 
-(FREQ_YEARLY,
- FREQ_MONTHLY,
- FREQ_WEEKLY,
- FREQ_DAILY,
- FREQ_HOURLY,
- FREQ_MINUTELY,
- FREQ_SECONDLY) = range(7)
+(YEARLY,
+ MONTHLY,
+ WEEKLY,
+ DAILY,
+ HOURLY,
+ MINUTELY,
+ SECONDLY) = range(7)
 
 # Imported on demand.
 easter = None
@@ -258,13 +258,13 @@ class rrule(rrulebase):
             self._bysetpos = tuple(bysetpos)
         if not (byweekno or byyearday or bymonthday or
                 byweekday is not None or byeaster is not None):
-            if freq == FREQ_YEARLY:
+            if freq == YEARLY:
                 if not bymonth:
                     bymonth = dtstart.month
                 bymonthday = dtstart.day
-            elif freq == FREQ_MONTHLY:
+            elif freq == MONTHLY:
                 bymonthday = dtstart.day
-            elif freq == FREQ_WEEKLY:
+            elif freq == WEEKLY:
                 byweekday = dtstart.weekday()
         # bymonth
         if not bymonth:
@@ -319,7 +319,7 @@ class rrule(rrulebase):
             self._byweekday = (byweekday,)
             self._bynweekday = None
         elif hasattr(byweekday, "n"):
-            if byweekday.n == 0 or freq > FREQ_MONTHLY:
+            if byweekday.n == 0 or freq > MONTHLY:
                 self._byweekday = (byweekday.weekday,)
                 self._bynweekday = None
             else:
@@ -331,7 +331,7 @@ class rrule(rrulebase):
             for wday in byweekday:
                 if type(wday) is int:
                     self._byweekday.append(wday)
-                elif wday.n == 0 or freq > FREQ_MONTHLY:
+                elif wday.n == 0 or freq > MONTHLY:
                     self._byweekday.append(wday.weekday)
                 else:
                     self._bynweekday.append((wday.weekday, wday.n))
@@ -343,7 +343,7 @@ class rrule(rrulebase):
                 self._bynweekday = None
         # byhour
         if byhour is None:
-            if freq < FREQ_HOURLY:
+            if freq < HOURLY:
                 self._byhour = (dtstart.hour,)
             else:
                 self._byhour = None
@@ -353,7 +353,7 @@ class rrule(rrulebase):
             self._byhour = tuple(byhour)
         # byminute
         if byminute is None:
-            if freq < FREQ_MINUTELY:
+            if freq < MINUTELY:
                 self._byminute = (dtstart.minute,)
             else:
                 self._byminute = None
@@ -363,7 +363,7 @@ class rrule(rrulebase):
             self._byminute = tuple(byminute)
         # bysecond
         if bysecond is None:
-            if freq < FREQ_SECONDLY:
+            if freq < SECONDLY:
                 self._bysecond = (dtstart.second,)
             else:
                 self._bysecond = None
@@ -372,7 +372,7 @@ class rrule(rrulebase):
         else:
             self._bysecond = tuple(bysecond)
 
-        if self._freq >= FREQ_HOURLY:
+        if self._freq >= HOURLY:
             self._timeset = None
         else:
             self._timeset = []
@@ -409,25 +409,25 @@ class rrule(rrulebase):
         ii = _iterinfo(self)
         ii.rebuild(year, month)
 
-        getdayset = {FREQ_YEARLY:ii.ydayset,
-                     FREQ_MONTHLY:ii.mdayset,
-                     FREQ_WEEKLY:ii.wdayset,
-                     FREQ_DAILY:ii.ddayset,
-                     FREQ_HOURLY:ii.ddayset,
-                     FREQ_MINUTELY:ii.ddayset,
-                     FREQ_SECONDLY:ii.ddayset}[freq]
+        getdayset = {YEARLY:ii.ydayset,
+                     MONTHLY:ii.mdayset,
+                     WEEKLY:ii.wdayset,
+                     DAILY:ii.ddayset,
+                     HOURLY:ii.ddayset,
+                     MINUTELY:ii.ddayset,
+                     SECONDLY:ii.ddayset}[freq]
         
-        if freq < FREQ_HOURLY:
+        if freq < HOURLY:
             timeset = self._timeset
         else:
-            gettimeset = {FREQ_HOURLY:ii.htimeset,
-                          FREQ_MINUTELY:ii.mtimeset,
-                          FREQ_SECONDLY:ii.stimeset}[freq]
-            if ((freq >= FREQ_HOURLY and
+            gettimeset = {HOURLY:ii.htimeset,
+                          MINUTELY:ii.mtimeset,
+                          SECONDLY:ii.stimeset}[freq]
+            if ((freq >= HOURLY and
                  self._byhour and hour not in self._byhour) or
-                (freq >= FREQ_MINUTELY and
+                (freq >= MINUTELY and
                  self._byminute and minute not in self._byminute) or
-                (freq >= FREQ_SECONDLY and
+                (freq >= SECONDLY and
                  self._bysecond and minute not in self._bysecond)):
                 timeset = ()
             else:
@@ -506,13 +506,13 @@ class rrule(rrulebase):
 
             # Handle frequency and interval
             fixday = False
-            if freq == FREQ_YEARLY:
+            if freq == YEARLY:
                 year += interval
                 if year > datetime.MAXYEAR:
                     self._len = total
                     return
                 ii.rebuild(year, month)
-            elif freq == FREQ_MONTHLY:
+            elif freq == MONTHLY:
                 month += interval
                 if month > 12:
                     div, mod = divmod(month, 12)
@@ -525,17 +525,17 @@ class rrule(rrulebase):
                         self._len = total
                         return
                 ii.rebuild(year, month)
-            elif freq == FREQ_WEEKLY:
+            elif freq == WEEKLY:
                 if wkst > weekday:
                     day += -(weekday+1+(6-wkst))+self._interval*7
                 else:
                     day += -(weekday-wkst)+self._interval*7
                 weekday = wkst
                 fixday = True
-            elif freq == FREQ_DAILY:
+            elif freq == DAILY:
                 day += interval
                 fixday = True
-            elif freq == FREQ_HOURLY:
+            elif freq == HOURLY:
                 if filtered:
                     # Jump to one iteration before next day
                     hour += ((23-hour)//interval)*interval
@@ -549,7 +549,7 @@ class rrule(rrulebase):
                     if not byhour or hour in byhour:
                         break
                 timeset = gettimeset(hour, minute, second)
-            elif freq == FREQ_MINUTELY:
+            elif freq == MINUTELY:
                 if filtered:
                     # Jump to one iteration before next day
                     minute += ((1439-(hour*60+minute))//interval)*interval
@@ -569,7 +569,7 @@ class rrule(rrulebase):
                         (not byminute or minute in byminute)):
                         break
                 timeset = gettimeset(hour, minute, second)
-            elif freq == FREQ_SECONDLY:
+            elif freq == SECONDLY:
                 if filtered:
                     # Jump to one iteration before next day
                     second += (((86399-(hour*3600+minute*60+second))
@@ -717,13 +717,13 @@ class _iterinfo(object):
         if (rr._bynweekday and
             (month != self.lastmonth or year != self.lastyear)):
             ranges = []
-            if rr._freq == FREQ_YEARLY:
+            if rr._freq == YEARLY:
                 if rr._bymonth:
                     for month in rr._bymonth:
                         ranges.append(self.mrange[month-1:month+1])
                 else:
                     ranges = [(0, self.yearlen)]
-            elif rr._freq == FREQ_MONTHLY:
+            elif rr._freq == MONTHLY:
                 ranges = [self.mrange[month-1:month+1]]
             if ranges:
                 # Weekly frequency won't get here, so we may not
@@ -875,13 +875,13 @@ class rruleset(rrulebase):
 
 class _rrulestr:
 
-    _freq_map = {"YEARLY": FREQ_YEARLY,
-                 "MONTHLY": FREQ_MONTHLY,
-                 "WEEKLY": FREQ_WEEKLY,
-                 "DAILY": FREQ_DAILY,
-                 "HOURLY": FREQ_HOURLY,
-                 "MINUTELY": FREQ_MINUTELY,
-                 "SECONDLY": FREQ_SECONDLY}
+    _freq_map = {"YEARLY": YEARLY,
+                 "MONTHLY": MONTHLY,
+                 "WEEKLY": WEEKLY,
+                 "DAILY": DAILY,
+                 "HOURLY": HOURLY,
+                 "MINUTELY": MINUTELY,
+                 "SECONDLY": SECONDLY}
 
     _weekday_map = {"MO":0,"TU":1,"WE":2,"TH":3,"FR":4,"SA":5,"SU":6}
 
