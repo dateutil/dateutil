@@ -22,6 +22,8 @@ M365MASK = tuple(M365MASK)
  FREQ_MINUTELY,
  FREQ_SECONDLY) = range(7)
 
+easter = None # Imported on demand.
+
 class weekday(object):
     __slots__ = ["weekday", "n"]
 
@@ -50,11 +52,13 @@ class weekday(object):
 MO, TU, WE, TH, FR, SA, SU = weekdays = tuple([weekday(x) for x in range(7)])
 
 class rrule:
-    def __init__(self, dtstart, freq,
+    def __init__(self, freq, dtstart=None,
                  interval=1, wkst=0, count=None, until=None, bysetpos=None,
-                 bymonth=None, bymonthday=None, byyearday=None,
+                 bymonth=None, bymonthday=None, byyearday=None, byeaster=None,
                  byweekno=None, byweekday=None,
                  byhour=None, byminute=None, bysecond=None):
+        if not dtstart:
+            dtstart = datetime.datetime.now()
         self._dtstart = dtstart
         self._freq = freq
         self._interval = interval
@@ -65,8 +69,8 @@ class rrule:
             self._wkst = wkst
         else:
             self._wkst = wkst.weekday
-        if not (bymonth or byweekno or byyearday or
-                bymonthday or byweekday is not None):
+        if not (bymonth or byweekno or byyearday or bymonthday or
+                byweekday is not None or byeaster is not None):
             if freq == FREQ_YEARLY:
                 bymonth = dtstart.month
                 bymonthday = dtstart.day
@@ -88,6 +92,15 @@ class rrule:
             self._byyearday = (byyearday,)
         else:
             self._byyearday = tuple(byyearday)
+        # byeaster
+        if byeaster is not None:
+            global easter
+            if not easter:
+                import easter
+            if type(byeaster) is int:
+                self._byeaster = (byeaster,)
+            else:
+                self._byeaster = tuple(byeaster)
         # bymonthay
         if not bymonthday:
             self._bymonthday = None
@@ -223,7 +236,8 @@ class rrule:
                         ii.mdaymask[i] not in self._bymonthday) or
                     (self._byweekday and
                         ii.wdaymask[i] not in self._byweekday) or
-                    (ii.nwdaymask and not ii.nwdaymask[i])):
+                    (ii.nwdaymask and not ii.nwdaymask[i]) or
+                    (self._byeaster and not ii.eastermask[i])):
                     dayset[i] = None
 
             # Output results
@@ -360,7 +374,8 @@ class rrule:
 class _iterinfo(object):
     __slots__ = ["rrule", "yearlen", "yearordinal", "lastyear", "lastmonth",
                  "mmask", "mrange", "mdaymask",
-                 "wdaymask", "wnomask", "nwdaymask"]
+                 "wdaymask", "wnomask", "nwdaymask",
+                 "eastermask"]
 
     def __init__(self, rrule):
         for attr in self.__slots__:
@@ -437,6 +452,12 @@ class _iterinfo(object):
                         i += (n-1)*7*s
                         if first <= i <= last:
                             self.nwdaymask[i] = 1
+
+        if rr._byeaster:
+            self.eastermask = [0]*self.yearlen
+            eyday = easter.easter(year).toordinal()-self.yearordinal
+            for offset in rr._byeaster:
+                self.eastermask[eyday+offset] = 1
 
     def ydayset(self, year, month, day):
         return range(self.yearlen), 0, self.yearlen
