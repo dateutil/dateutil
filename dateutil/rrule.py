@@ -160,7 +160,7 @@ class rrule:
             self._byweekday = (byweekday,)
             self._bynweekday = None
         elif hasattr(byweekday, "n"):
-            if byweekday.n == 0:
+            if byweekday.n == 0 or freq > FREQ_MONTHLY:
                 self._byweekday = (byweekday.weekday,)
                 self._bynweekday = None
             else:
@@ -172,7 +172,7 @@ class rrule:
             for wday in byweekday:
                 if type(wday) is int:
                     self._byweekday.append(wday)
-                elif wday.n == 0:
+                elif wday.n == 0 or freq > FREQ_MONTHLY:
                     self._byweekday.append(wday.weekday)
                 else:
                     self._bynweekday.append((wday.weekday, wday.n))
