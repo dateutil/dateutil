@@ -7,18 +7,19 @@ __all__ = ["rrule", "rruleset", "rrulestr",
            "FREQ_HOURLY", "FREQ_MINUTELY", "FREQ_SECONDLY",
            "MO", "TU", "WE", "TH", "FR", "SA", "SU"]
 
+# Every mask is 7 days longer to handle cross-year weekly periods.
 M366MASK = tuple([1]*31+[2]*29+[3]*31+[4]*30+[5]*31+[6]*30+
-                 [7]*31+[8]*31+[9]*30+[10]*31+[11]*30+[12]*31)
+                 [7]*31+[8]*31+[9]*30+[10]*31+[11]*30+[12]*31+[1]*7)
 M365MASK = list(M366MASK)
 M29, M30, M31 = range(1,30), range(1,31), range(1,32)
-MDAY366MASK = tuple(M31+M29+M31+M30+M31+M30+M31+M31+M30+M31+M30+M31)
+MDAY366MASK = tuple(M31+M29+M31+M30+M31+M30+M31+M31+M30+M31+M30+M31+M31[:7])
 MDAY365MASK = list(MDAY366MASK)
 M29, M30, M31 = range(-29,0), range(-30,0), range(-31,0)
-NMDAY366MASK = tuple(M31+M29+M31+M30+M31+M30+M31+M31+M30+M31+M30+M31)
+NMDAY366MASK = tuple(M31+M29+M31+M30+M31+M30+M31+M31+M30+M31+M30+M31+M31[:7])
 NMDAY365MASK = list(NMDAY366MASK)
 M366RANGE = (0,31,60,91,121,152,182,213,244,274,305,335,366)
 M365RANGE = (0,31,59,90,120,151,181,212,243,273,304,334,365)
-WDAYMASK = [0,1,2,3,4,5,6]*54
+WDAYMASK = [0,1,2,3,4,5,6]*55
 del M29, M30, M31, M365MASK[59], MDAY365MASK[59], NMDAY365MASK[31]
 MDAY365MASK = tuple(MDAY365MASK)
 M365MASK = tuple(M365MASK)
@@ -535,10 +536,10 @@ class rrule:
         return l
 
 class _iterinfo(object):
-    __slots__ = ["rrule", "yearlen", "yearordinal", "lastyear", "lastmonth",
+    __slots__ = ["rrule", "lastyear", "lastmonth",
+                 "yearlen", "yearordinal", "yearweekday",
                  "mmask", "mrange", "mdaymask", "nmdaymask",
-                 "wdaymask", "wnomask", "nwdaymask",
-                 "eastermask"]
+                 "wdaymask", "wnomask", "nwdaymask", "eastermask"]
 
     def __init__(self, rrule):
         for attr in self.__slots__:
@@ -546,30 +547,34 @@ class _iterinfo(object):
         self.rrule = rrule
 
     def rebuild(self, year, month):
+        # Every mask is 7 days longer to handle cross-year weekly periods.
         rr = self.rrule
         if year != self.lastyear:
             self.yearlen = 365+calendar.isleap(year)
-            self.yearordinal = datetime.date(year,1,1).toordinal()
+            firstyday = datetime.date(year, 1, 1)
+            self.yearordinal = firstyday.toordinal()
+            self.yearweekday = firstyday.weekday()
 
             wday = datetime.date(year, 1, 1).weekday()
             if self.yearlen == 365:
                 self.mmask = M365MASK
                 self.mdaymask = MDAY365MASK
                 self.nmdaymask = NMDAY365MASK
-                self.wdaymask = WDAYMASK[wday:wday+365]
+                self.wdaymask = WDAYMASK[wday:]
                 self.mrange = M365RANGE
             else:
                 self.mmask = M366MASK
                 self.mdaymask = MDAY366MASK
                 self.nmdaymask = NMDAY366MASK
-                self.wdaymask = WDAYMASK[wday:wday+366]
+                self.wdaymask = WDAYMASK[wday:]
                 self.mrange = M366RANGE
 
             if not rr._byweekno:
                 self.wnomask = None
             else:
-                self.wnomask = [0]*self.yearlen
-                no1wkst = firstwkst = self.wdaymask.index(rr._wkst)
+                self.wnomask = [0]*(self.yearlen+7)
+                #no1wkst = firstwkst = self.wdaymask.index(rr._wkst)
+                no1wkst = firstwkst = (7-self.yearweekday+rr._wkst)%7
                 if no1wkst+1 > 4:
                     no1wkst = 0
                 numweeks = 52+(self.yearlen-no1wkst)%7/4
@@ -578,8 +583,10 @@ class _iterinfo(object):
                         n += numweeks+1
                     if n > 1:
                         i = no1wkst+(n-1)*7
-                        while self.wdaymask[i] != rr._wkst:
-                            i -= 1
+                        if no1wkst != firstwkst:
+                            i -= 7-firstwkst
+                        #while self.wdaymask[i] != rr._wkst:
+                        #    i -= 1
                     else:
                         i = 0
                     for j in range(7):
@@ -600,6 +607,8 @@ class _iterinfo(object):
             elif rr._freq == FREQ_MONTHLY:
                 ranges = [self.mrange[month-1:month+1]]
             if ranges:
+                # Weekly frequency won't get here, so we may not
+                # care about cross-year weekly periods.
                 self.nwdaymask = [0]*self.yearlen
                 for first, last in ranges:
                     last -= 1
@@ -617,7 +626,7 @@ class _iterinfo(object):
                             self.nwdaymask[i] = 1
 
         if rr._byeaster:
-            self.eastermask = [0]*self.yearlen
+            self.eastermask = [0]*(self.yearlen+7)
             eyday = easter.easter(year).toordinal()-self.yearordinal
             for offset in rr._byeaster:
                 self.eastermask[eyday+offset] = 1
@@ -637,14 +646,16 @@ class _iterinfo(object):
 
     def wdayset(self, year, month, day):
         # We need to handle cross-year weeks here.
-        set = [None]*self.yearlen
+        set = [None]*(self.yearlen+7)
         i = datetime.date(year, month, day).toordinal()-self.yearordinal
         start = i
         for j in range(7):
             set[i] = i
             i += 1
-            if (not (0 <= i < self.yearlen) or
-                self.wdaymask[i] == self.rrule._wkst):
+            #if (not (0 <= i < self.yearlen) or
+            #    self.wdaymask[i] == self.rrule._wkst):
+            # This will cross the year boundary, if necessary.
+            if self.wdaymask[i] == self.rrule._wkst:
                 break
         return set, start, i
 
@@ -660,7 +671,7 @@ class _iterinfo(object):
         for minute in rr._byminute:
             for second in rr._bysecond:
                 set.append(datetime.time(hour, minute, second,
-                                                    tzinfo=rr._tzinfo))
+                                         tzinfo=rr._tzinfo))
         set.sort()
         return set
 
