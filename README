@@ -35,10 +35,12 @@ the standard '''datetime''' module, available in Python 2.3+.
   * More than 400 test cases.
 
 == Download ==
-attachment:python-dateutil-0.1.tar.bz2
+The following files are available.
+  * attachment:python-dateutil-0.1.tar.bz2
+  * attachment:python-dateutil-0.1-1cl.noarch.rpm
 
 == Author ==
-GustavoNiemeyer <niemeyer@conectiva.com>
+The dateutil module was written by GustavoNiemeyer <niemeyer@conectiva.com>.
 
 == Documentation ==
 The following modules are available.
