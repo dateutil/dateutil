@@ -34,10 +34,46 @@ the standard '''datetime''' module, available in Python 2.3+.
 
   * More than 400 test cases.
 
+== Quick example ==
+Here's a snapshot, just to give an idea about the power of the
+package. For more examples, look at the documentation below.
+
+Suppose you want to know how much time is left, in
+years/months/days/etc, before the next easter happening on a
+year with a Friday 13th in August, and you want to get today's
+date out of the "date" unix system command. Here is the code:
+{{{
+from dateutil.relativedelta import *
+from dateutil.easter import *
+from dateutil.rrule import *
+from dateutil.parser import *
+from datetime import *
+import commands
+import os
+now = parse(commands.getoutput("date"))
+today = now.date()
+year = rrule(FREQ_YEARLY,bymonth=8,bymonthday=13,byweekday=FR)[0].year
+rdelta = relativedelta(easter(year), today)
+print "Today is:", today
+print "Year with next Aug 13th on a Friday is:", year
+print "How far is the Easter of that year:", rdelta
+print "And the Easter of that year is:", today+rdelta
+}}}
+
+And here's the output:
+{{{
+Today is: 2003-10-11
+Year with next Aug 13th on a Friday is: 2004
+How far is the Easter of that year: relativedelta(months=+6)
+And the Easter of that year is: 2004-04-11
+}}}
+
+{i} It was '''really''' a coincidence :)
+
 == Download ==
 The following files are available.
-  * attachment:python-dateutil-0.2.tar.bz2
-  * attachment:python-dateutil-0.2-1cl.noarch.rpm
+  * attachment:python-dateutil-0.3.tar.bz2
+  * attachment:python-dateutil-0.3-1cl.noarch.rpm
 
 == Author ==
 The dateutil module was written by GustavoNiemeyer <niemeyer@conectiva.com>.
