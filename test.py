@@ -2334,6 +2334,64 @@ class RRuleTest(unittest.TestCase):
                                dtstart=parse("19970902T090000")).count(),
                          3)
 
+    def testContains(self):
+        rr = rrule(FREQ_DAILY, count=3, dtstart=parse("19970902T090000"))
+        self.assertEqual(datetime(1997, 9, 3, 9, 0) in rr, True)
+
+    def testContainsNot(self):
+        rr = rrule(FREQ_DAILY, count=3, dtstart=parse("19970902T090000"))
+        self.assertEqual(datetime(1997, 9, 3, 9, 0) not in rr, False)
+
+    def testBefore(self):
+        self.assertEqual(rrule(FREQ_DAILY,
+                               #count=5,
+                               dtstart=parse("19970902T090000"))
+                               .before(parse("19970905T090000")),
+                         datetime(1997, 9, 4, 9, 0))
+
+    def testBeforeInc(self):
+        self.assertEqual(rrule(FREQ_DAILY,
+                               #count=5,
+                               dtstart=parse("19970902T090000"))
+                               .before(parse("19970905T090000"), inc=True),
+                         datetime(1997, 9, 5, 9, 0))
+
+    def testAfter(self):
+        self.assertEqual(rrule(FREQ_DAILY,
+                               #count=5,
+                               dtstart=parse("19970902T090000"))
+                               .after(parse("19970904T090000")),
+                         datetime(1997, 9, 5, 9, 0))
+
+    def testAfterInc(self):
+        self.assertEqual(rrule(FREQ_DAILY,
+                               #count=5,
+                               dtstart=parse("19970902T090000"))
+                               .after(parse("19970904T090000"), inc=True),
+                         datetime(1997, 9, 4, 9, 0))
+
+    def testBetween(self):
+        self.assertEqual(rrule(FREQ_DAILY,
+                               #count=5,
+                               dtstart=parse("19970902T090000"))
+                               .between(parse("19970902T090000"),
+                                        parse("19970906T090000")),
+                         [datetime(1997, 9, 3, 9, 0),
+                          datetime(1997, 9, 4, 9, 0),
+                          datetime(1997, 9, 5, 9, 0)])
+
+    def testBetweenInc(self):
+        self.assertEqual(rrule(FREQ_DAILY,
+                               #count=5,
+                               dtstart=parse("19970902T090000"))
+                               .between(parse("19970902T090000"),
+                                        parse("19970906T090000"), inc=True),
+                         [datetime(1997, 9, 2, 9, 0),
+                          datetime(1997, 9, 3, 9, 0),
+                          datetime(1997, 9, 4, 9, 0),
+                          datetime(1997, 9, 5, 9, 0),
+                          datetime(1997, 9, 6, 9, 0)])
+
     def testCachePre(self):
         rr = rrule(FREQ_DAILY, count=15, cache=True,
                    dtstart=parse("19970902T090000"))
@@ -2395,6 +2453,17 @@ class RRuleTest(unittest.TestCase):
                           datetime(1997, 9, 14, 9, 0),
                           datetime(1997, 9, 15, 9, 0),
                           datetime(1997, 9, 16, 9, 0)])
+
+    def testCachePreContains(self):
+        rr = rrule(FREQ_DAILY, count=3, cache=True,
+                   dtstart=parse("19970902T090000"))
+        self.assertEqual(datetime(1997, 9, 3, 9, 0) in rr, True)
+
+    def testCachePostContains(self):
+        rr = rrule(FREQ_DAILY, count=3, cache=True,
+                   dtstart=parse("19970902T090000"))
+        for x in rr: pass
+        self.assertEqual(datetime(1997, 9, 3, 9, 0) in rr, True)
 
     def testSet(self):
         set = rruleset()
