@@ -16,6 +16,9 @@ the standard '''datetime''' module, available in Python 2.3+.
   * Computing of relative deltas between two given
   date and/or datetime objects;
 
+  * Computing of dates based on recurrence rules, as specified
+  in the [ftp://ftp.rfc-editor.org/in-notes/rfc2445.txt iCalendar RFC].
+
   * Generic parsing of dates in almost any string format;
 
   * Timezone (tzinfo) implementations for tzfile(5) format
@@ -267,6 +270,28 @@ We can use the non-leap year day to ignore this:
 >>> date(2000, 1, 1)+relativedelta(nlyearday=260)
 datetime.date(2000, 9, 17)
 }}}
+
+=== rrule ===
+The rrule module offers a small, complete, and very fast, implementation
+of the recurrence rules documented in the 
+[ftp://ftp.rfc-editor.org/in-notes/rfc2445.txt iCalendar RFC].
+
+==== rrule constructor ====
+
+==== Notes ====
+
+  * The rrule type has no {{{byday}}} keyword. The equivalent keyword
+  has been replaced by the {{{byweekday}}} keyword, to remove the
+  ambiguity present in the original keyword.
+
+  * Unlike documented in the RFC, the starting datetime ({{{dtstart}}})
+  is not the first recurrence instance, unless it does fit in the
+  specified rules. In a python module context, this behavior makes more
+  sense than otherwise.
+
+  * In addition to the documented keywords, a {{{byeaster}}} keyword
+  was introduced, making it easy to compute recurrent events relative
+  to the Easter Sunday.
 
 === parser ===
 This module offers a generic date/time string parser which is
