@@ -766,7 +766,8 @@ class tzical:
                         if rrulelines:
                             rr = rrule.rrulestr("\n".join(rrulelines),
                                                 compatible=True,
-                                                ignoretz=True)
+                                                ignoretz=True,
+                                                cache=True)
                         comp = _tzicalvtzcomp(tzoffsetfrom, tzoffsetto,
                                               (comptype == "DAYLIGHT"),
                                               tzname, rr)

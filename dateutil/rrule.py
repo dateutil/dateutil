@@ -1,5 +1,6 @@
 import datetime
 import calendar
+import thread
 
 M366MASK = tuple([1]*31+[2]*29+[3]*31+[4]*30+[5]*31+[6]*30+
                  [7]*31+[8]*31+[9]*30+[10]*31+[11]*30+[12]*31)
@@ -61,7 +62,14 @@ class rrule:
                  interval=1, wkst=0, count=None, until=None, bysetpos=None,
                  bymonth=None, bymonthday=None, byyearday=None, byeaster=None,
                  byweekno=None, byweekday=None,
-                 byhour=None, byminute=None, bysecond=None):
+                 byhour=None, byminute=None, bysecond=None,
+                 cache=False):
+        if cache:
+            self._cache = []
+            self._cache_lock = thread.allocate_lock()
+            self._cache_gen  = self._iter()
+        else:
+            self._cache = None
         if not dtstart:
             dtstart = datetime.datetime.now()
         self._dtstart = dtstart
@@ -201,9 +209,29 @@ class rrule:
             self._timeset.sort()
             self._timeset = tuple(self._timeset)
 
-    def iter(self, dtstart):
+    def _iter_cached(self):
+        i = 0
+        while True:
+            if i == len(self._cache):
+                self._cache_lock.acquire()
+                try:
+                    try:
+                        for j in range(10):
+                            self._cache.append(self._cache_gen.next())
+                    except StopIteration:
+                        self._cache.append(None)
+                finally:
+                    self._cache_lock.release()
+            item = self._cache[i]
+            if item is None:
+                return
+            else:
+                yield item
+            i += 1
+
+    def _iter(self):
         year, month, day, hour, minute, second, weekday, yearday, _ = \
-            dtstart.timetuple()
+            self._dtstart.timetuple()
 
         freq = self._freq
 
@@ -285,7 +313,7 @@ class rrule:
                             res = datetime.datetime.combine(date, time)
                             if self._until and res > self._until:
                                 return
-                            elif res >= dtstart:
+                            elif res >= self._dtstart:
                                 yield res
                                 if count:
                                     count -= 1
@@ -379,7 +407,10 @@ class rrule:
                     ii.rebuild(year, month)
 
     def __iter__(self):
-        return self.iter(self._dtstart)
+        if self._cache is None:
+            return self._iter()
+        else:
+            return self._iter_cached()
             
     def before(self, dt, inc=False):
         last = None
@@ -405,6 +436,31 @@ class rrule:
                 if i > dt:
                     return i
         return None
+
+    def between(self, after, before, inc=False):
+        started = False
+        l = []
+        if inc:
+            for i in self:
+                if not started:
+                    if i >= after:
+                        started = True
+                        l.append(i)
+                else:
+                    if i > before:
+                        break
+                    l.append(i)
+        else:
+            for i in self:
+                if not started:
+                    if i > after:
+                        started = True
+                        l.append(i)
+                else:
+                    if i >= before:
+                        break
+                    l.append(i)
+        return l
 
 class _iterinfo(object):
     __slots__ = ["rrule", "yearlen", "yearordinal", "lastyear", "lastmonth",
@@ -566,11 +622,18 @@ class rruleset:
         def __cmp__(self, other):
             return cmp(self.dt, other.dt)
 
-    def __init__(self):
+    def __init__(self, cache=False):
         self._rrule = []
         self._rdate = []
         self._exrule = []
         self._exdate = []
+
+        if cache:
+            self._cache = []
+            self._cache_lock = thread.allocate_lock()
+            self._cache_gen  = self._iter()
+        else:
+            self._cache = None
 
     def append_rrule(self, rrule):
         self._rrule.append(rrule)
@@ -596,7 +659,27 @@ class rruleset:
     def remove_exdate(self, exdate):
         self._exdate.remove(exdate)
 
-    def __iter__(self):
+    def _iter_cached(self):
+        i = 0
+        while True:
+            if i == len(self._cache):
+                self._cache_lock.acquire()
+                try:
+                    try:
+                        for i in range(10):
+                            self._cache.append(self._cache_gen.next())
+                    except StopIteration:
+                        self._cache.append(None)
+                finally:
+                    self._cache_lock.release()
+            item = self._cache[i]
+            if item is None:
+                return
+            else:
+                yield item
+            i += 1
+
+    def _iter(self):
         rlist = []
         self._genitem(rlist, iter(self._rdate).next)
         for gen in [iter(x).next for x in self._rrule]:
@@ -619,6 +702,12 @@ class rruleset:
                 lastdt = ritem.dt
             ritem.next()
             rlist.sort()
+
+    def __iter__(self):
+        if self._cache is None:
+            return self._iter()
+        else:
+            return self._iter_cached()
 
     def before(self, dt, inc=False):
         last = None
@@ -644,6 +733,32 @@ class rruleset:
                 if i > dt:
                     return i
         return None
+
+    def between(self, after, before, inc=False):
+        started = False
+        l = []
+        if inc:
+            for i in self:
+                if not started:
+                    if i >= after:
+                        started = True
+                        l.append(i)
+                else:
+                    if i > before:
+                        break
+                    l.append(i)
+        else:
+            for i in self:
+                if not started:
+                    if i > after:
+                        started = True
+                        l.append(i)
+                else:
+                    if i >= before:
+                        break
+                    l.append(i)
+        return l
+
 
 class _rrulestr:
 
@@ -704,7 +819,7 @@ class _rrulestr:
 
     _handle_BYDAY = _handle_BYWEEKDAY
 
-    def _parse_rfc_rrule(self, line, dtstart=None):
+    def _parse_rfc_rrule(self, line, dtstart=None, cache=False):
         if line.find(':') != -1:
             name, value = line.split(':')
             if name != "RRULE":
@@ -722,10 +837,11 @@ class _rrulestr:
                 raise "unknown parameter '%s'" % name
             except (KeyError, ValueError):
                 raise "invalid '%s': %s" % (name, value)
-        return rrule(dtstart=dtstart, **kwargs)
+        return rrule(dtstart=dtstart, cache=cache, **kwargs)
 
     def _parse_rfc(self, s,
                    dtstart=None,
+                   cache=False,
                    unfold=False,
                    forceset=False,
                    compatible=False,
@@ -759,7 +875,7 @@ class _rrulestr:
                     i += 1
         if (not forceset and
               len(lines) == 1 and (not s.find(':') or s.startswith('RRULE:'))):
-            return self._parse_rfc_rrule(s)
+            return self._parse_rfc_rrule(s, cache=cache)
         else:
             rrulevals = []
             rdatevals = []
@@ -804,7 +920,7 @@ class _rrulestr:
                 rdatevals or exrulevals or exdatevals):
                 if not parser and (rdatevals or exdatevals):
                     from dateutil import parser
-                set = rruleset()
+                set = rruleset(cache=cache)
                 for value in rrulevals:
                     set.append_rrule(self._parse_rfc_rrule(value,
                                                            dtstart=dtstart))
@@ -823,7 +939,9 @@ class _rrulestr:
                     set.append_rdate(dtstart)
                 return set
             else:
-                return self._parse_rfc_rrule(rrulevals[0], dtstart=dtstart)
+                return self._parse_rfc_rrule(rrulevals[0],
+                                             dtstart=dtstart,
+                                             cache=cache)
 
     def __call__(self, s, **kwargs):
         return self._parse_rfc(s, **kwargs)
