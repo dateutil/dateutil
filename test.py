@@ -3182,6 +3182,10 @@ class ParserTest(unittest.TestCase):
     def testLongMonth(self):
         self.assertEqual(parse("October", default=self.default),
                          datetime(2003, 10, 25))
+        
+    def testZeroYear(self):
+        self.assertEqual(parse("31-Dec-00", default=self.default),
+                         datetime(2000, 12, 31))
 
     def testFuzzy(self):
         s = "Today is 25 of September of 2003, exactly " \
@@ -3330,7 +3334,7 @@ class ParserTest(unittest.TestCase):
 
     def testIncreasingCTime(self):
         # This test will check 200 different years, every month, every day,
-        # every hour, every minute, severy second, and every weekday, using
+        # every hour, every minute, every second, and every weekday, using
         # a delta of more or less 1 year, 1 month, 1 day, 1 minute and
         # 1 second.
         delta = timedelta(days=365+31+1, seconds=1+60+60*60)

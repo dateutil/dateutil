@@ -269,7 +269,7 @@ class parserinfo:
 
     def validate(self, res):
         # move to info
-        if res.year:
+        if res.year is not None:
             res.year = self.convertyear(res.year)
         if res.tzoffset == 0 and not res.tzname or res.tzname == 'Z':
             res.tzname = "UTC"
