@@ -7,9 +7,11 @@ datetime module.
 __author__ = "Gustavo Niemeyer <niemeyer@conectiva.com>"
 __license__ = "PSF License"
 
+import itertools
 import datetime
 import calendar
 import thread
+import sys
 
 __all__ = ["rrule", "rruleset", "rrulestr",
            "FREQ_YEARLY", "FREQ_MONTHLY", "FREQ_WEEKLY", "FREQ_DAILY",
@@ -75,20 +77,156 @@ class weekday(object):
 
 MO, TU, WE, TH, FR, SA, SU = weekdays = tuple([weekday(x) for x in range(7)])
 
-class rrule:
+class rrulebase:
+    def __init__(self, cache=False):
+        if cache:
+            self._cache = []
+            self._cache_lock = thread.allocate_lock()
+            self._cache_gen  = self._iter()
+            self._cache_complete = False
+        else:
+            self._cache = None
+            self._cache_complete = False
+        self._len = None
+
+    def __iter__(self):
+        if self._cache_complete:
+            return iter(self._cache)
+        elif self._cache is None:
+            return self._iter()
+        else:
+            return self._iter_cached()
+
+    def _iter_cached(self):
+        i = 0
+        gen = self._cache_gen
+        cache = self._cache
+        acquire = self._cache_lock.acquire
+        release = self._cache_lock.release
+        while gen:
+            if i == len(cache):
+                acquire()
+                if self._cache_complete:
+                    break
+                try:
+                    for j in range(10):
+                        cache.append(gen.next())
+                except StopIteration:
+                    self._cache_gen = gen = None
+                    self._cache_complete = True
+                    break
+                release()
+            yield cache[i]
+            i += 1
+        while i < self._len:
+            yield cache[i]
+            i += 1
+
+    def __getitem__(self, item):
+        if self._cache_complete:
+            return self._cache[item]
+        elif isinstance(item, slice):
+            if item.step and item.step < 0:
+                return list(iter(self))[item]
+            else:
+                return list(itertools.islice(self,
+                                             item.start or 0,
+                                             item.stop or sys.maxint,
+                                             item.step or 1))
+        elif item > 0:
+            gen = iter(self)
+            for i in range(item):
+                res = gen.next()
+            return res
+        else:
+            return list(iter(self))[item]
+
+    def __contains__(self, item):
+        if self._cache_complete:
+            return item in self._cache
+        else:
+            for i in self:
+                if i == item:
+                    return True
+        return False
+
+    # __len__() introduces a large performance penality.
+    def count(self):
+        if self._len is None:
+            for x in self: pass
+        return self._len
+
+    def before(self, dt, inc=False):
+        if self._cache_complete:
+            gen = self._cache
+        else:
+            gen = self
+        last = None
+        if inc:
+            for i in gen:
+                if i > dt:
+                    break
+                last = i
+        else:
+            for i in gen:
+                if i >= dt:
+                    break
+                last = i
+        return last
+
+    def after(self, dt, inc=False):
+        if self._cache_complete:
+            gen = self._cache
+        else:
+            gen = self
+        if inc:
+            for i in gen:
+                if i >= dt:
+                    return i
+        else:
+            for i in gen:
+                if i > dt:
+                    return i
+        return None
+
+    def between(self, after, before, inc=False):
+        if self._cache_complete:
+            gen = self._cache
+        else:
+            gen = self
+        started = False
+        l = []
+        if inc:
+            for i in gen:
+                if not started:
+                    if i >= after:
+                        started = True
+                        l.append(i)
+                else:
+                    if i > before:
+                        break
+                    l.append(i)
+        else:
+            for i in gen:
+                if not started:
+                    if i > after:
+                        started = True
+                        l.append(i)
+                else:
+                    if i >= before:
+                        break
+                    l.append(i)
+        return l
+
+class rrule(rrulebase):
     def __init__(self, freq, dtstart=None,
                  interval=1, wkst=None, count=None, until=None, bysetpos=None,
                  bymonth=None, bymonthday=None, byyearday=None, byeaster=None,
                  byweekno=None, byweekday=None,
                  byhour=None, byminute=None, bysecond=None,
                  cache=False):
+        rrulebase.__init__(self, cache)
         global easter
-        if cache:
-            self._cache = []
-            self._cache_lock = thread.allocate_lock()
-            self._cache_gen  = self._iter()
-        else:
-            self._cache = None
         if not dtstart:
             dtstart = datetime.datetime.now().replace(microsecond=0)
         elif not isinstance(dtstart, datetime.datetime):
@@ -244,54 +382,6 @@ class rrule:
             self._timeset.sort()
             self._timeset = tuple(self._timeset)
 
-        #self._compile_pred()
-    
-    def _compile_pred(self):
-        predlist = []
-        if self._byweekday:
-            predlist.append("(ii.wdaymask[i] not in self._byweekday)")
-        if self._bymonth:
-            predlist.append("(ii.mmask[i] not in self._bymonth)")
-        if self._bymonthday and self._bynmonthday:
-            predlist.append("(ii.mdaymask[i] not in self._bymonthday and"
-                            " ii.nmdaymask[i] not in self._bynmonthday)")
-        elif self._bymonthday:
-            predlist.append("(ii.mdaymask[i] not in self._bymonthday)")
-        elif self._bynmonthday:
-            predlist.append("(ii.nmdaymask[i] not in self._bynmonthday)")
-        if self._byweekno:
-            predlist.append("(not ii.wnomask[i])")
-        if self._byyearday:
-            predlist.append("(i+1 not in self._byyearday)")
-        if self._bynweekday and self._freq in (FREQ_YEARLY, FREQ_MONTHLY):
-            predlist.append("(not ii.nwdaymask[i])")
-        if self._byeaster:
-            predlist.append("(ii.eastermask[i])")
-        if predlist:
-            self._pred = compile(" or ".join(predlist), "<string>", "eval")
-        else:
-            self._pred = compile("False", "<string>", "eval")
-
-    def _iter_cached(self):
-        i = 0
-        while True:
-            if i == len(self._cache):
-                self._cache_lock.acquire()
-                try:
-                    try:
-                        for j in range(10):
-                            self._cache.append(self._cache_gen.next())
-                    except StopIteration:
-                        self._cache.append(None)
-                finally:
-                    self._cache_lock.release()
-            item = self._cache[i]
-            if item is None:
-                return
-            else:
-                yield item
-            i += 1
-
     def _iter(self):
         year, month, day, hour, minute, second, weekday, yearday, _ = \
             self._dtstart.timetuple()
@@ -340,6 +430,7 @@ class rrule:
             else:
                 timeset = gettimeset(hour, minute, second)
 
+        total = 0
         count = self._count
         while True:
             # Get dayset with the right frequency
@@ -348,7 +439,6 @@ class rrule:
             # Do the "hard" work ;-)
             filtered = False
             for i in dayset[start:end]:
-                #if eval(self._pred):
                 if ((bymonth and ii.mmask[i] not in bymonth) or
                     (byweekno and not ii.wnomask[i]) or
                     (byyearday and (i%ii.yearlen)+1 not in byyearday) or
@@ -383,12 +473,15 @@ class rrule:
                 poslist.sort()
                 for res in poslist:
                     if until and res > until:
+                        self._len = total
                         return
                     elif res >= self._dtstart:
+                        total += 1
                         yield res
                         if count:
                             count -= 1
                             if not count:
+                                self._len = total
                                 return
             else:
                 for i in dayset[start:end]:
@@ -397,18 +490,24 @@ class rrule:
                         for time in timeset:
                             res = datetime.datetime.combine(date, time)
                             if until and res > until:
+                                self._len = total
                                 return
                             elif res >= self._dtstart:
+                                total += 1
                                 yield res
                                 if count:
                                     count -= 1
                                     if not count:
+                                        self._len = total
                                         return
 
             # Handle frequency and interval
             fixday = False
             if freq == FREQ_YEARLY:
                 year += interval
+                if year > datetime.MAXYEAR:
+                    self._len = total
+                    return
                 ii.rebuild(year, month)
             elif freq == FREQ_MONTHLY:
                 month += interval
@@ -419,6 +518,9 @@ class rrule:
                     if month == 0:
                         month = 12
                         year -= 1
+                    if year > datetime.MAXYEAR:
+                        self._len = total
+                        return
                 ii.rebuild(year, month)
             elif freq == FREQ_WEEKLY:
                 if wkst > weekday:
@@ -499,64 +601,11 @@ class rrule:
                         if month == 13:
                             month = 1
                             year += 1
+                            if year > datetime.MAXYEAR:
+                                self._len = total
+                                return
                         daysinmonth = calendar.monthrange(year, month)[1]
                     ii.rebuild(year, month)
-
-    def __iter__(self):
-        if self._cache is None:
-            return self._iter()
-        else:
-            return self._iter_cached()
-            
-    def before(self, dt, inc=False):
-        last = None
-        if inc:
-            for i in self:
-                if i > dt:
-                    break
-                last = i
-        else:
-            for i in self:
-                if i >= dt:
-                    break
-                last = i
-        return last
-
-    def after(self, dt, inc=False):
-        if inc:
-            for i in self:
-                if i >= dt:
-                    return i
-        else:
-            for i in self:
-                if i > dt:
-                    return i
-        return None
-
-    def between(self, after, before, inc=False):
-        started = False
-        l = []
-        if inc:
-            for i in self:
-                if not started:
-                    if i >= after:
-                        started = True
-                        l.append(i)
-                else:
-                    if i > before:
-                        break
-                    l.append(i)
-        else:
-            for i in self:
-                if not started:
-                    if i > after:
-                        started = True
-                        l.append(i)
-                else:
-                    if i >= before:
-                        break
-                    l.append(i)
-        return l
 
 class _iterinfo(object):
     __slots__ = ["rrule", "lastyear", "lastmonth",
@@ -752,7 +801,7 @@ class _iterinfo(object):
                 tzinfo=self.rrule._tzinfo),)
 
 
-class rruleset:
+class rruleset(rrulebase):
 
     class _genitem:
         def __init__(self, genlist, gen):
@@ -774,17 +823,11 @@ class rruleset:
             return cmp(self.dt, other.dt)
 
     def __init__(self, cache=False):
+        rrulebase.__init__(self, cache)
         self._rrule = []
         self._rdate = []
         self._exrule = []
         self._exdate = []
-
-        if cache:
-            self._cache = []
-            self._cache_lock = thread.allocate_lock()
-            self._cache_gen  = self._iter()
-        else:
-            self._cache = None
 
     def rrule(self, rrule):
         self._rrule.append(rrule)
@@ -798,26 +841,6 @@ class rruleset:
     def exdate(self, exdate):
         self._exdate.append(exdate)
 
-    def _iter_cached(self):
-        i = 0
-        while True:
-            if i == len(self._cache):
-                self._cache_lock.acquire()
-                try:
-                    try:
-                        for i in range(10):
-                            self._cache.append(self._cache_gen.next())
-                    except StopIteration:
-                        self._cache.append(None)
-                finally:
-                    self._cache_lock.release()
-            item = self._cache[i]
-            if item is None:
-                return
-            else:
-                yield item
-            i += 1
-
     def _iter(self):
         rlist = []
         self._genitem(rlist, iter(self._rdate).next)
@@ -830,6 +853,7 @@ class rruleset:
             self._genitem(exlist, gen)
         exlist.sort()
         lastdt = None
+        total = 0
         while rlist:
             ritem = rlist[0]
             if not lastdt or lastdt != ritem.dt:
@@ -837,67 +861,12 @@ class rruleset:
                     exlist[0].next()
                     exlist.sort()
                 if not exlist or ritem != exlist[0]:
+                    total += 1
                     yield ritem.dt
                 lastdt = ritem.dt
             ritem.next()
             rlist.sort()
-
-    def __iter__(self):
-        if self._cache is None:
-            return self._iter()
-        else:
-            return self._iter_cached()
-
-    def before(self, dt, inc=False):
-        last = None
-        if inc:
-            for i in self:
-                if i > dt:
-                    break
-                last = i
-        else:
-            for i in self:
-                if i >= dt:
-                    break
-                last = i
-        return last
-
-    def after(self, dt, inc=False):
-        if inc:
-            for i in self:
-                if i >= dt:
-                    return i
-        else:
-            for i in self:
-                if i > dt:
-                    return i
-        return None
-
-    def between(self, after, before, inc=False):
-        started = False
-        l = []
-        if inc:
-            for i in self:
-                if not started:
-                    if i >= after:
-                        started = True
-                        l.append(i)
-                else:
-                    if i > before:
-                        break
-                    l.append(i)
-        else:
-            for i in self:
-                if not started:
-                    if i > after:
-                        started = True
-                        l.append(i)
-                else:
-                    if i >= before:
-                        break
-                    l.append(i)
-        return l
-
+        self._len = total
 
 class _rrulestr:
 

@@ -2287,6 +2287,115 @@ class RRuleTest(unittest.TestCase):
                           datetime(1997, 9, 3, 9, 0),
                           datetime(1997, 9, 4, 9, 0)])
 
+    def testMaxYear(self):
+        self.assertEqual(list(rrule(FREQ_YEARLY,
+                              count=3,
+                              bymonth=2,
+                              bymonthday=31,
+                              dtstart=parse("99970902T090000"))),
+                         [])
+
+    def testGetItem(self):
+        self.assertEqual(rrule(FREQ_DAILY,
+                               count=3,
+                               dtstart=parse("19970902T090000"))[0],
+                         datetime(1997, 9, 2, 9, 0))
+
+    def testGetItemNeg(self):
+        self.assertEqual(rrule(FREQ_DAILY,
+                               count=3,
+                               dtstart=parse("19970902T090000"))[-1],
+                         datetime(1997, 9, 4, 9, 0))
+
+    def testGetItemSlice(self):
+        self.assertEqual(rrule(FREQ_DAILY,
+                               #count=3,
+                               dtstart=parse("19970902T090000"))[1:2],
+                         [datetime(1997, 9, 3, 9, 0)])
+
+    def testGetItemSliceEmpty(self):
+        self.assertEqual(rrule(FREQ_DAILY,
+                               count=3,
+                               dtstart=parse("19970902T090000"))[:],
+                         [datetime(1997, 9, 2, 9, 0),
+                          datetime(1997, 9, 3, 9, 0),
+                          datetime(1997, 9, 4, 9, 0)])
+
+    def testGetItemSliceStep(self):
+        self.assertEqual(rrule(FREQ_DAILY,
+                               count=3,
+                               dtstart=parse("19970902T090000"))[::-2],
+                         [datetime(1997, 9, 4, 9, 0),
+                          datetime(1997, 9, 2, 9, 0)])
+
+    def testCount(self):
+        self.assertEqual(rrule(FREQ_DAILY,
+                               count=3,
+                               dtstart=parse("19970902T090000")).count(),
+                         3)
+
+    def testCachePre(self):
+        rr = rrule(FREQ_DAILY, count=15, cache=True,
+                   dtstart=parse("19970902T090000"))
+        self.assertEqual(list(rr),
+                         [datetime(1997, 9, 2, 9, 0),
+                          datetime(1997, 9, 3, 9, 0),
+                          datetime(1997, 9, 4, 9, 0),
+                          datetime(1997, 9, 5, 9, 0),
+                          datetime(1997, 9, 6, 9, 0),
+                          datetime(1997, 9, 7, 9, 0),
+                          datetime(1997, 9, 8, 9, 0),
+                          datetime(1997, 9, 9, 9, 0),
+                          datetime(1997, 9, 10, 9, 0),
+                          datetime(1997, 9, 11, 9, 0),
+                          datetime(1997, 9, 12, 9, 0),
+                          datetime(1997, 9, 13, 9, 0),
+                          datetime(1997, 9, 14, 9, 0),
+                          datetime(1997, 9, 15, 9, 0),
+                          datetime(1997, 9, 16, 9, 0)])
+
+    def testCachePost(self):
+        rr = rrule(FREQ_DAILY, count=15, cache=True,
+                   dtstart=parse("19970902T090000"))
+        for x in rr: pass
+        self.assertEqual(list(rr),
+                         [datetime(1997, 9, 2, 9, 0),
+                          datetime(1997, 9, 3, 9, 0),
+                          datetime(1997, 9, 4, 9, 0),
+                          datetime(1997, 9, 5, 9, 0),
+                          datetime(1997, 9, 6, 9, 0),
+                          datetime(1997, 9, 7, 9, 0),
+                          datetime(1997, 9, 8, 9, 0),
+                          datetime(1997, 9, 9, 9, 0),
+                          datetime(1997, 9, 10, 9, 0),
+                          datetime(1997, 9, 11, 9, 0),
+                          datetime(1997, 9, 12, 9, 0),
+                          datetime(1997, 9, 13, 9, 0),
+                          datetime(1997, 9, 14, 9, 0),
+                          datetime(1997, 9, 15, 9, 0),
+                          datetime(1997, 9, 16, 9, 0)])
+
+    def testCachePostInternal(self):
+        rr = rrule(FREQ_DAILY, count=15, cache=True,
+                   dtstart=parse("19970902T090000"))
+        for x in rr: pass
+        self.assertEqual(rr._cache,
+                         [datetime(1997, 9, 2, 9, 0),
+                          datetime(1997, 9, 3, 9, 0),
+                          datetime(1997, 9, 4, 9, 0),
+                          datetime(1997, 9, 5, 9, 0),
+                          datetime(1997, 9, 6, 9, 0),
+                          datetime(1997, 9, 7, 9, 0),
+                          datetime(1997, 9, 8, 9, 0),
+                          datetime(1997, 9, 9, 9, 0),
+                          datetime(1997, 9, 10, 9, 0),
+                          datetime(1997, 9, 11, 9, 0),
+                          datetime(1997, 9, 12, 9, 0),
+                          datetime(1997, 9, 13, 9, 0),
+                          datetime(1997, 9, 14, 9, 0),
+                          datetime(1997, 9, 15, 9, 0),
+                          datetime(1997, 9, 16, 9, 0)])
+
     def testSet(self):
         set = rruleset()
         set.rrule(rrule(FREQ_YEARLY, count=2, byweekday=TU,
@@ -2362,6 +2471,49 @@ class RRuleTest(unittest.TestCase):
                          [datetime(1997, 9, 2, 9, 0),
                           datetime(1997, 9, 9, 9, 0),
                           datetime(1997, 9, 16, 9, 0)])
+
+    def testSetCount(self):
+        set = rruleset()
+        set.rrule(rrule(FREQ_YEARLY, count=6, byweekday=(TU,TH),
+                        dtstart=parse("19970902T090000")))
+        set.exrule(rrule(FREQ_YEARLY, count=3, byweekday=TH,
+                        dtstart=parse("19970902T090000")))
+        self.assertEqual(set.count(), 3)
+
+    def testSetCachePre(self):
+        set = rruleset()
+        set.rrule(rrule(FREQ_YEARLY, count=2, byweekday=TU,
+                        dtstart=parse("19970902T090000")))
+        set.rrule(rrule(FREQ_YEARLY, count=1, byweekday=TH,
+                        dtstart=parse("19970902T090000")))
+        self.assertEqual(list(set),
+                         [datetime(1997, 9, 2, 9, 0),
+                          datetime(1997, 9, 4, 9, 0),
+                          datetime(1997, 9, 9, 9, 0)])
+
+    def testSetCachePost(self):
+        set = rruleset(cache=True)
+        set.rrule(rrule(FREQ_YEARLY, count=2, byweekday=TU,
+                        dtstart=parse("19970902T090000")))
+        set.rrule(rrule(FREQ_YEARLY, count=1, byweekday=TH,
+                        dtstart=parse("19970902T090000")))
+        for x in set: pass
+        self.assertEqual(list(set),
+                         [datetime(1997, 9, 2, 9, 0),
+                          datetime(1997, 9, 4, 9, 0),
+                          datetime(1997, 9, 9, 9, 0)])
+
+    def testSetCachePostInternal(self):
+        set = rruleset(cache=True)
+        set.rrule(rrule(FREQ_YEARLY, count=2, byweekday=TU,
+                        dtstart=parse("19970902T090000")))
+        set.rrule(rrule(FREQ_YEARLY, count=1, byweekday=TH,
+                        dtstart=parse("19970902T090000")))
+        for x in set: pass
+        self.assertEqual(list(set._cache),
+                         [datetime(1997, 9, 2, 9, 0),
+                          datetime(1997, 9, 4, 9, 0),
+                          datetime(1997, 9, 9, 9, 0)])
 
     def testStr(self):
         self.assertEqual(list(rrulestr(
