@@ -283,8 +283,13 @@ class parserinfo:
 
 class parser:
 
-    def __init__(self, parserinfo=parserinfo):
-        self.info = parserinfo()
+    def __init__(self, info=parserinfo):
+        if issubclass(info, parserinfo):
+            self.info = parserinfo()
+        elif isinstance(info, parserinfo):
+            self.info = info
+        else:
+            raise TypeError, "Unsupported parserinfo type"
 
     def parse(self, timestr, default=None,
                     ignoretz=False, tzinfos=None,
