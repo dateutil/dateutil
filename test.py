@@ -2643,6 +2643,14 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(parse("20030925"),
                          datetime(2003, 9, 25))
 
+    def testNoSeparator1(self):
+        self.assertEqual(parse("199709020908"),
+                         datetime(1997, 9, 2, 9, 8))
+
+    def testNoSeparator2(self):
+        self.assertEqual(parse("19970902090807"),
+                         datetime(1997, 9, 2, 9, 8, 7))
+
     def testDateWithDash1(self):
         self.assertEqual(parse("2003-09-25"),
                          datetime(2003, 9, 25))

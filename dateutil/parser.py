@@ -372,6 +372,16 @@ class parser:
                         ymd.append(int(s[:4]))
                         ymd.append(int(s[4:6]))
                         ymd.append(int(s[6:]))
+                    elif len_li in (12, 14):
+                        # YYYYMMDDhhmm[ss]
+                        s = l[i-1]
+                        ymd.append(int(s[:4]))
+                        ymd.append(int(s[4:6]))
+                        ymd.append(int(s[6:8]))
+                        res.hour = int(s[8:10])
+                        res.minute = int(s[10:12])
+                        if len_li == 14:
+                            res.second = int(s[12:])
                     elif ((i < len_l and info.hms(l[i]) is not None) or
                           (i+1 < len_l and l[i] == ' ' and
                            info.hms(l[i+1]) is not None)):
