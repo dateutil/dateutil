@@ -27,7 +27,11 @@ the standard '''datetime''' module, available in Python 2.3+.
   files (/etc/localtime, /usr/share/zoneinfo, etc), TZ
   environment string (in all known formats), iCalendar
   format files, given ranges (with help from relative deltas),
-  local machine timezone, fixed offset timezone, and UTC timezone.
+  local machine timezone, fixed offset timezone, UTC timezone,
+  and Windows registry-based time zones.
+
+  * Internal up-to-date world timezone information based on
+  Olson's database.
 
   * Computing of Easter Sunday dates for any given year,
   using Western, Orthodox or Julian algorithms;
@@ -1853,6 +1857,47 @@ Let's check the daylight ranges, as usual:
 'EDT'
 >>> datetime(2003, 10, 26, 1, 00, tzinfo=est).tzname()
 'EST'
+}}}
+
+==== tzwin type ====
+This type offers access to internal registry-based Windows timezones.
+The constuctor prototype is:
+{{{
+tzwin(name)
+}}}
+
+Where {{{name}}} is the timezone name. There's a static {{{tzwin.list()}}}
+method to check the available names,
+
+==== tzwin methods ====
+
+    tzwin.display()::
+    This method returns the timezone extended name.
+
+    tzwin.list()::
+    This static method lists all available timezone names.
+
+==== tzwin examples ====
+{{{
+>>> tz = tzwin("E. South America Standard Time")
+}}}
+
+==== tzwinlocal type ====
+This type offers access to internal registry-based Windows timezones.
+The constructor accepts no parameters, so the prototype is:
+{{{
+tzwinlocal()
+}}}
+
+==== tzwinlocal methods ====
+
+    tzwinlocal.display()::
+    This method returns the timezone extended name, and returns
+    {{{None}}} if one is not available.
+
+==== tzwinlocal examples ====
+{{{
+>>> tz = tzwinlocal()
 }}}
 
 ==== gettz() function ====

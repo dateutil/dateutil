@@ -21,11 +21,9 @@ __all__ = ["tzutc", "tzoffset", "tzlocal", "tzfile", "tzrange",
            "tzstr", "tzical", "tzwin", "gettz"]
 
 try:
-    import _winreg
-except ImportError:
-    tzwin = None
-else:
-    from dateutil.tzwin import tzwin
+    from dateutil.tzwin import tzwin, tzwinlocal
+except (ImportError, OSError):
+    tzwin, tzwinlocal = None, None
 
 ZERO = datetime.timedelta(0)
 EPOCHORDINAL = datetime.datetime.utcfromtimestamp(0).toordinal()
@@ -856,8 +854,12 @@ class tzical:
     def __repr__(self):
         return "%s(%s)" % (self.__class__.__name__, `self._s`)
 
-TZFILES = ["/etc/localtime", "localtime"]
-TZPATHS = ["/usr/share/zoneinfo", "/usr/lib/zoneinfo", "/etc/zoneinfo"]
+if sys.platform != "win32":
+    TZFILES = ["/etc/localtime", "localtime"]
+    TZPATHS = ["/usr/share/zoneinfo", "/usr/lib/zoneinfo", "/etc/zoneinfo"]
+else:
+    TZFILES = []
+    TZPATHS = []
 
 def gettz(name=None):
     tz = None
@@ -885,7 +887,7 @@ def gettz(name=None):
     else:
         if name.startswith(":"):
             name = name[:-1]
-        if name.startswith("/"):
+        if os.path.isabs(name):
             if os.path.isfile(name):
                 tz = tzfile(name)
             else:
@@ -903,8 +905,15 @@ def gettz(name=None):
                 except (IOError, OSError, ValueError):
                     pass
             else:
-                from dateutil.zoneinfo import gettz
-                tz = gettz(name)
+                tz = None
+                if tzwin:
+                    try:
+                        tz = tzwin(name)
+                    except OSError:
+                        pass
+                if not tz:
+                    from dateutil.zoneinfo import gettz
+                    tz = gettz(name)
                 if not tz:
                     for c in name:
                         # name must have at least one offset to be a tzstr
