@@ -133,10 +133,13 @@ class rrulebase:
                                              item.start or 0,
                                              item.stop or sys.maxint,
                                              item.step or 1))
-        elif item > 0:
+        elif item >= 0:
             gen = iter(self)
-            for i in range(item):
-                res = gen.next()
+            try:
+                for i in range(item+1):
+                    res = gen.next()
+            except StopIteration:
+                raise IndexError
             return res
         else:
             return list(iter(self))[item]
