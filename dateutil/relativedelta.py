@@ -277,17 +277,10 @@ Here is the behavior of operations with relativedelta:
         if self.weekday:
             weekday, nth = self.weekday.weekday, self.weekday.n or 1
             jumpdays = (abs(nth)-1)*7
-            ret_weekday = ret.weekday()
             if nth > 0:
-                if weekday < ret_weekday:
-                    jumpdays += (6-ret_weekday)+weekday+1
-                else:
-                    jumpdays += weekday-ret_weekday
+                jumpdays += (7-ret.weekday()+weekday)%7
             else:
-                if weekday > ret_weekday:
-                    jumpdays += ret_weekday+1+(6-weekday)
-                else:
-                    jumpdays += ret_weekday-weekday
+                jumpdays += (ret.weekday()-weekday)%7
                 jumpdays *= -1
             ret += datetime.timedelta(days=jumpdays)
         return ret
