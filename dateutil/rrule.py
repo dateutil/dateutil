@@ -51,7 +51,7 @@ MO, TU, WE, TH, FR, SA, SU = weekdays = tuple([weekday(x) for x in range(7)])
 
 class rrule:
     def __init__(self, dtstart, freq,
-                 interval=1, wkst=0, count=None, setpos=None, until=None,
+                 interval=1, wkst=0, count=None, until=None, bysetpos=None,
                  bymonth=None, bymonthday=None, byyearday=None,
                  byweekno=None, byweekday=None,
                  byhour=None, byminute=None, bysecond=None):
@@ -59,9 +59,9 @@ class rrule:
         self._freq = freq
         self._interval = interval
         self._count = count
-        self._setpos = setpos
         self._until = until
         self._wkst = wkst or 0
+        self._bysetpos = bysetpos
         if not (bymonth or byweekno or byyearday or
                 bymonthday or byweekday is not None):
             if freq == FREQ_YEARLY:
@@ -69,6 +69,8 @@ class rrule:
                 bymonthday = dtstart.day
             elif freq == FREQ_MONTHLY:
                 bymonthday = dtstart.day
+            elif freq == FREQ_WEEKLY:
+                byweekday = dtstart.weekday()
         # bymonth
         if not bymonth:
             self._bymonth = None
@@ -165,8 +167,13 @@ class rrule:
                   FREQ_MINUTELY:ii.dset,
                   FREQ_SECONDLY:ii.dset}[self._freq]
         
+        if self._bysetpos:
+            bysetpos = abs(self._bysetpos)
+            bysetpossignal = self._bysetpos/bysetpos
         count = self._count
+
         while True:
+            # Get set with the right frequency
             set, start, end = getset(year, month, day)
 
             # Do the "hard" work ;-)
@@ -180,31 +187,48 @@ class rrule:
                         ii.wdaymask[i] not in self._byweekday) or
                     (ii.nwdaymask and not ii.nwdaymask[i])):
                     set[i] = None
-            
-            # Handle bysetpos
 
             # Output results
-            for i in set:
-                if i is not None:
+            if self._bysetpos:
+                daypos = (bysetpos*bysetpossignal)/len(self._time)
+                timepos = (bysetpos%len(self._time))*bysetpossignal
+                try:
+                    i = [x for x in set[start:end] if x is not None][daypos]
+                    time = self._time[timepos]
+                except IndexError:
+                    pass
+                else:
                     date = datetime.date.fromordinal(ii.yearordinal+i)
-                    for time in self._time:
-                        res = datetime.datetime.combine(date, time)
-                        if self._until and res > until:
+                    res = datetime.datetime.combine(date, time)
+                    if self._until and res > until:
+                        return
+                    elif res >= dtstart:
+                        yield res
+                    if count:
+                        count -= 1
+                        if not count:
                             return
-                        elif res >= dtstart:
-                            # Check until and count
-                            yield res
-                        if count:
-                            count -= 1
-                            if not count:
+            else:
+                for i in set[start:end]:
+                    if i is not None:
+                        date = datetime.date.fromordinal(ii.yearordinal+i)
+                        for time in self._time:
+                            res = datetime.datetime.combine(date, time)
+                            if self._until and res > until:
                                 return
+                            elif res >= dtstart:
+                                yield res
+                            if count:
+                                count -= 1
+                                if not count:
+                                    return
 
             # Handle frequency and interval
             if self._freq == FREQ_YEARLY:
                 year += self._interval
                 ii.rebuild(year, month)
             elif self._freq == FREQ_MONTHLY:
-                month += self.rrule._interval
+                month += self._interval
                 if month > 12:
                     div, mod = divmod(month, 12)
                     month = mod
@@ -214,10 +238,12 @@ class rrule:
                         year -= 1
                 ii.rebuild(year, month)
             elif self._freq == FREQ_WEEKLY:
-                if day > self._wkst:
-                    day = -(self._wkst-weekday)+self._interval*7
+                if self._wkst > weekday:
+                    day += -(weekday+1+(6-self._wkst))+self._interval*7
                 else:
-                    day = -(weekday+6-self._wkst)+self._interval*7
+                    day += -(weekday-self._wkst)+self._interval*7
+                weekday = self._wkst
+                daysinmonth = calendar.monthrange(year, month)[1]
                 if day > daysinmonth:
                     while day > daysinmonth:
                         day -= daysinmonth
@@ -246,7 +272,8 @@ class rrule:
 
 class _iterinfo(object):
     __slots__ = ["rrule", "yearlen", "yearordinal", "lastyear", "lastmonth",
-                 "mmask", "mdaymask", "wdaymask", "wnomask", "nwdaymask"]
+                 "mmask", "mrange", "mdaymask",
+                 "wdaymask", "wnomask", "nwdaymask"]
 
     def __init__(self, rrule):
         for attr in self.__slots__:
@@ -265,10 +292,12 @@ class _iterinfo(object):
                 self.mmask = M365MASK
                 self.mdaymask = MDAY365MASK
                 self.wdaymask = WDAYMASK[wday:365]
+                self.mrange = M365RANGE
             else:
                 self.mmask = M366MASK
                 self.mdaymask = MDAY366MASK
                 self.wdaymask = WDAYMASK[wday:366]
+                self.mrange = M366RANGE
 
             if not rr._byweekno:
                 self.wnomask = None
@@ -295,19 +324,15 @@ class _iterinfo(object):
 
         if rr._bynweekday and month != self.lastmonth:
             self.lastmonth = month
-            if self.yearlen == 366:
-                mrange = M366RANGE
-            else:
-                mrange = M365RANGE
             ranges = []
             if rr._freq == YEARLY:
                 if rr._bymonth:
                     for month in rr._bymonth:
-                        ranges.append(mrange[month-1:month+1])
+                        ranges.append(self.mrange[month-1:month+1])
                 else:
                     ranges = [(0, self.yearlen)]
             elif rr._freq == MONTHLY:
-                ranges = [mrange[month-1:month+1]]
+                ranges = [self.mrange[month-1:month+1]]
             if ranges:
                 self.nwdaymask = [0]*self.yearlen
                 for first, last in ranges:
@@ -343,7 +368,8 @@ class _iterinfo(object):
         for j in range(7):
             set[i] = i
             i += 1
-            if not (0 <= i < self.yearlen) or wdaymask[i] == self.rr._wkst:
+            if (not (0 <= i < self.yearlen) or
+                self.wdaymask[i] == self.rrule._wkst):
                 break
         return set, start, i
 
