@@ -42,6 +42,8 @@ class tzutc(datetime.tzinfo):
     def __repr__(self):
         return "%s()" % self.__class__.__name__
 
+    __reduce__ = object.__reduce__
+
 class tzoffset(datetime.tzinfo):
 
     def __init__(self, name, offset):
@@ -68,6 +70,8 @@ class tzoffset(datetime.tzinfo):
         return "%s(%s, %s)" % (self.__class__.__name__,
                                `self._name`,
                                self._offset.days*86400+self._offset.seconds)
+
+    __reduce__ = object.__reduce__
 
 class tzlocal(datetime.tzinfo):
 
@@ -136,6 +140,8 @@ class tzlocal(datetime.tzinfo):
     def __repr__(self):
         return "%s()" % self.__class__.__name__
 
+    __reduce__ = object.__reduce__
+
 class _ttinfo(object):
     __slots__ = ["offset", "delta", "isdst", "abbr", "isstd", "isgmt"]
 
@@ -163,6 +169,17 @@ class _ttinfo(object):
 
     def __ne__(self, other):
         return not self.__eq__(other)
+
+    def __getstate__(self):
+        state = {}
+        for name in self.__slots__:
+            state[name] = getattr(self, name, None)
+        return state
+
+    def __setstate__(self, state):
+        for name in self.__slots__:
+            if name in state:
+                setattr(self, name, state[name])
 
 class tzfile(datetime.tzinfo):
 
@@ -438,6 +455,8 @@ class tzfile(datetime.tzinfo):
     def __repr__(self):
         return "%s(%s)" % (self.__class__.__name__, `self._s`)
 
+    __reduce__ = object.__reduce__
+
 class tzrange(datetime.tzinfo):
 
     def __init__(self, stdabbr, stdoffset=None,
@@ -515,6 +534,7 @@ class tzrange(datetime.tzinfo):
     def __repr__(self):
         return "%s(...)" % self.__class__.__name__
 
+    __reduce__ = object.__reduce__
 
 class tzstr(tzrange):
     
@@ -651,6 +671,8 @@ class _tzicalvtz(datetime.tzinfo):
 
     def __repr__(self):
         return "<tzicalvtz %s>" % `self._tzid`
+
+    __reduce__ = object.__reduce__
 
 class tzical:
     def __init__(self, fileobj):
