@@ -73,6 +73,7 @@ class rrule:
                  byweekno=None, byweekday=None,
                  byhour=None, byminute=None, bysecond=None,
                  cache=False):
+        global easter
         if cache:
             self._cache = []
             self._cache_lock = thread.allocate_lock()
@@ -316,7 +317,7 @@ class rrule:
                  self._byhour and hour not in self._byhour) or
                 (freq >= FREQ_MINUTELY and
                  self._byminute and minute not in self._byminute) or
-                (freq >= FREQ_MINUTELY and
+                (freq >= FREQ_SECONDLY and
                  self._bysecond and minute not in self._bysecond)):
                 timeset = ()
             else:
