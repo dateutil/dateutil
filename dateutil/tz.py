@@ -758,10 +758,10 @@ class tzical:
                         if not founddtstart:
                             raise ValueError, \
                                   "mandatory DTSTART not found"
-                        if not tzoffsetfrom:
+                        if tzoffsetfrom is None:
                             raise ValueError, \
                                   "mandatory TZOFFSETFROM not found"
-                        if not tzoffsetto:
+                        if tzoffsetto is None:
                             raise ValueError, \
                                   "mandatory TZOFFSETFROM not found"
                         # Process component
