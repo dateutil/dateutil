@@ -72,15 +72,15 @@ How far is the Easter of that year: relativedelta(months=+6)
 And the Easter of that year is: 2004-04-11
 }}}
 
-{i} It was '''really''' a coincidence :)
+{i} Being exactly 6 months ahead was '''really''' a coincidence :)
 
 == Download ==
 The following files are available.
-  * attachment:python-dateutil-0.5.tar.bz2
-  * attachment:python-dateutil-0.5-1cl.noarch.rpm
+  * attachment:python-dateutil-0.9.tar.bz2
+  * attachment:python-dateutil-0.9-1cl.noarch.rpm
 
 == Author ==
-The dateutil module was written by GustavoNiemeyer <niemeyer@conectiva.com>.
+The dateutil module was written by GustavoNiemeyer <gustavo@niemeyer.net>.
 
 == Documentation ==
 The following modules are available.
