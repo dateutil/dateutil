@@ -46,13 +46,17 @@ class _timelex:
         self.whitespace = ' \t\r\n'
         self.charstack = []
         self.tokenstack = []
-        self.state = None
-        self.token = None
         self.eof = False
 
     def get_token(self):
         if self.tokenstack:
             return self.tokenstack.pop(0)
+        seenletters = False
+        token = None
+        state = None
+        wordchars = self.wordchars
+        numchars = self.numchars
+        whitespace = self.whitespace
         while not self.eof:
             if self.charstack:
                 nextchar = self.charstack.pop(0)
@@ -61,52 +65,64 @@ class _timelex:
             if not nextchar:
                 self.eof = True
                 break
-            elif not self.state:
-                self.token = nextchar
-                if nextchar in self.wordchars:
-                    self.state = 'a'
-                elif nextchar in self.numchars:
-                    self.state = '0'
-                elif nextchar in self.whitespace:
-                    self.token = ' '
+            elif not state:
+                token = nextchar
+                if nextchar in wordchars:
+                    state = 'a'
+                elif nextchar in numchars:
+                    state = '0'
+                elif nextchar in whitespace:
+                    token = ' '
                     break # emit token
                 else:
                     break # emit token
-            elif self.state == 'a':
-                if nextchar in self.wordchars:
-                    self.token += nextchar
+            elif state == 'a':
+                seenletters = True
+                if nextchar in wordchars:
+                    token += nextchar
+                elif nextchar == '.':
+                    token += nextchar
+                    state = 'a.'
+                else:
+                    self.charstack.append(nextchar)
+                    break # emit token
+            elif state == '0':
+                if nextchar in numchars:
+                    token += nextchar
+                elif nextchar == '.':
+                    token += nextchar
+                    state = '0.'
                 else:
                     self.charstack.append(nextchar)
                     break # emit token
-            elif self.state == '0':
-                if (nextchar in self.numchars or nextchar in '.'):
-                    self.token += nextchar
+            elif state == 'a.':
+                seenletters = True
+                if nextchar == '.' or nextchar in wordchars:
+                    token += nextchar
+                elif nextchar in numchars and token[-1] == '.':
+                    token += nextchar
+                    state = '0.'
                 else:
                     self.charstack.append(nextchar)
-                    if self.token[-1] == '.':
-                        self.tokenstack.append('.')
-                        self.token = self.token[:-1]
-                        if self.token.count('.') == 1:
-                            splitdots = False
                     break # emit token
-        if self.state == '0':
-            if self.token[-1] == '.':
-                appenddot = True
-                self.token = self.token[:-1]
-            else:
-                appenddot = False
-            if self.token.count('.') > 1:
-                l = self.token.split('.')
-                self.token = l[0]
-                for tok in l[1:]:
-                    self.tokenstack.append('.')
-                    self.tokenstack.append(tok)
-            if appenddot:
+            elif state == '0.':
+                if nextchar == '.' or nextchar in numchars:
+                    token += nextchar
+                elif nextchar in wordchars and token[-1] == '.':
+                    token += nextchar
+                    state = 'a.'
+                else:
+                    self.charstack.append(nextchar)
+                    break # emit token
+        if (state in ('a.', '0.') and
+            (seenletters or token.count('.') > 1 or token[-1] == '.')):
+            l = token.split('.')
+            token = l[0]
+            for tok in l[1:]:
                 self.tokenstack.append('.')
-        result = self.token
-        self.token = None
-        self.state = None
-        return result
+                if tok:
+                    self.tokenstack.append(tok)
+        return token
 
     def __iter__(self):
         return self
