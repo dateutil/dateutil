@@ -50,7 +50,9 @@ parser = None
 class weekday(object):
     __slots__ = ["weekday", "n"]
 
-    def __init__(self, weekday, n=0):
+    def __init__(self, weekday, n=None):
+        if n == 0:
+            raise ValueError, "Can't create weekday with n == 0"
         self.weekday = weekday
         self.n = n
 
@@ -319,7 +321,7 @@ class rrule(rrulebase):
             self._byweekday = (byweekday,)
             self._bynweekday = None
         elif hasattr(byweekday, "n"):
-            if byweekday.n == 0 or freq > MONTHLY:
+            if not byweekday.n or freq > MONTHLY:
                 self._byweekday = (byweekday.weekday,)
                 self._bynweekday = None
             else:
@@ -331,7 +333,7 @@ class rrule(rrulebase):
             for wday in byweekday:
                 if type(wday) is int:
                     self._byweekday.append(wday)
-                elif wday.n == 0 or freq > MONTHLY:
+                elif not wday.n or freq > MONTHLY:
                     self._byweekday.append(wday.weekday)
                 else:
                     self._bynweekday.append((wday.weekday, wday.n))
@@ -926,7 +928,7 @@ class _rrulestr:
             for i in range(len(wday)):
                 if wday[i] not in '+-0123456789':
                     break
-            n = wday[:i] or 0
+            n = wday[:i] or None
             w = wday[i:]
             if n: n = int(n)
             l.append(weekdays[self._weekday_map[w]](n))
