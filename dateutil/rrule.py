@@ -68,7 +68,7 @@ MO, TU, WE, TH, FR, SA, SU = weekdays = tuple([weekday(x) for x in range(7)])
 
 class rrule:
     def __init__(self, freq, dtstart=None,
-                 interval=1, wkst=0, count=None, until=None, bysetpos=None,
+                 interval=1, wkst=None, count=None, until=None, bysetpos=None,
                  bymonth=None, bymonthday=None, byyearday=None, byeaster=None,
                  byweekno=None, byweekday=None,
                  byhour=None, byminute=None, bysecond=None,
@@ -88,7 +88,9 @@ class rrule:
         self._interval = interval
         self._count = count
         self._until = until
-        if type(wkst) is int:
+        if wkst is None:
+            self._wkst = calendar.firstweekday()
+        elif type(wkst) is int:
             self._wkst = wkst
         else:
             self._wkst = wkst.weekday

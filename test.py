@@ -2303,6 +2303,28 @@ class RRuleTest(unittest.TestCase):
                               until=parse("19970901T090000"))),
                          [])
 
+    def testWkStIntervalMO(self):
+        self.assertEqual(list(rrule(FREQ_WEEKLY,
+                              count=3,
+                              interval=2,
+                              byweekday=(TU,SU),
+                              wkst=MO,
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 2, 9, 0),
+                          datetime(1997, 9, 7, 9, 0),
+                          datetime(1997, 9, 16, 9, 0)])
+
+    def testWkStIntervalSU(self):
+        self.assertEqual(list(rrule(FREQ_WEEKLY,
+                              count=3,
+                              interval=2,
+                              byweekday=(TU,SU),
+                              wkst=SU,
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 2, 9, 0),
+                          datetime(1997, 9, 14, 9, 0),
+                          datetime(1997, 9, 16, 9, 0)])
+
 class ParserTest(unittest.TestCase):
     def setUp(self):
         self.tzinfos = {"BRST": -10800}

@@ -314,7 +314,9 @@ Additionally, it supports the following keyword arguments:
     The week start day. Must be one of the {{{MO}}}, {{{TU}}},
     {{{WE}}} constants, or an integer, specifying the first day
     of the week. This will affect recurrences based on weekly
-    periods.
+    periods. The default week start is got from
+    {{{calendar.firstweekday()}}}, and may be modified by
+    {{{calendar.setfirstweekday()}}}.
 
     count::
     How many occurrences will be generated.
@@ -709,6 +711,30 @@ Monday of week number 20 (where the default start of the week is Monday),
 [datetime.datetime(1997, 5, 12, 9, 0),
  datetime.datetime(1998, 5, 11, 9, 0),
  datetime.datetime(1999, 5, 17, 9, 0)]
+}}}
+
+The week number 1 may be in the last year.
+{{{
+>>> list(rrule(FREQ_WEEKLY, count=3, byweekno=1, byweekday=MO, dtstart=parse("19970902T090000")))
+[datetime.datetime(1997, 12, 29, 9, 0),
+ datetime.datetime(1999, 1, 4, 9, 0),
+ datetime.datetime(2000, 1, 3, 9, 0)]
+}}}
+
+And the week numbers greater than 51 may be in the next year.
+{{{
+>>> list(rrule(FREQ_WEEKLY, count=3, byweekno=52, byweekday=SU, dtstart=parse("19970902T090000")))
+[datetime.datetime(1997, 12, 28, 9, 0),
+ datetime.datetime(1998, 12, 27, 9, 0),
+ datetime.datetime(2000, 1, 2, 9, 0)]
+}}}
+
+Only some years have week number 53:
+{{{
+>>> list(rrule(FREQ_WEEKLY, count=3, byweekno=53, byweekday=MO, dtstart=parse("19970902T090000")))
+[datetime.datetime(1998, 12, 28, 9, 0),
+ datetime.datetime(2004, 12, 27, 9, 0),
+ datetime.datetime(2009, 12, 28, 9, 0)]
 }}}
 
 Every Friday the 13th, 4 occurrences.
