@@ -36,8 +36,8 @@ the standard '''datetime''' module, available in Python 2.3+.
 
 == Download ==
 The following files are available.
-  * attachment:python-dateutil-0.1.tar.bz2
-  * attachment:python-dateutil-0.1-1cl.noarch.rpm
+  * attachment:python-dateutil-0.2.tar.bz2
+  * attachment:python-dateutil-0.2-1cl.noarch.rpm
 
 == Author ==
 The dateutil module was written by GustavoNiemeyer <niemeyer@conectiva.com>.
