@@ -846,11 +846,13 @@ class rruleset(rrulebase):
 
     def _iter(self):
         rlist = []
+        self._rdate.sort()
         self._genitem(rlist, iter(self._rdate).next)
         for gen in [iter(x).next for x in self._rrule]:
             self._genitem(rlist, gen)
         rlist.sort()
         exlist = []
+        self._exdate.sort()
         self._genitem(exlist, iter(self._exdate).next)
         for gen in [iter(x).next for x in self._exrule]:
             self._genitem(exlist, gen)

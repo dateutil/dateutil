@@ -56,7 +56,7 @@ first one is passing it two date/datetime classes:
 
 And the other way is to use the following keyword arguments:
 
-    year, month, day, hour, minute, seconds, microseconds:
+    year, month, day, hour, minute, second, microsecond:
         Absolute information.
 
     years, months, weeks, days, hours, minutes, seconds, microseconds:
