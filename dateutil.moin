@@ -274,9 +274,48 @@ datetime.date(2000, 9, 17)
 === rrule ===
 The rrule module offers a small, complete, and very fast, implementation
 of the recurrence rules documented in the 
-[ftp://ftp.rfc-editor.org/in-notes/rfc2445.txt iCalendar RFC].
+[ftp://ftp.rfc-editor.org/in-notes/rfc2445.txt iCalendar RFC], including
+support for caching of results.
 
-==== rrule constructor ====
+==== rrule type ====
+That's the base of the rrule operation. It accepts all the keywords
+defined in the RFC as its constructor parameters (except {{{byday}}},
+which was renamed to {{{byweekday}}}) and more. The constructor
+prototype is:
+{{{
+rrule(freq)
+}}}
+
+Where {{{freq}}} must be one of {{{FREQ_YEARLY}}}, {{{FREQ_MONTHLY}}},
+{{{FREQ_WEEKLY}}}, {{{FREQ_DAILY}}}, {{{FREQ_HOURLY}}}, {{{FREQ_MINUTELY}}},
+or {{{FREQ_SECONDLY}}}.
+
+Additionally, it supports the following keyword arguments:
+
+    dtstart::
+    The recurrence start. Besides being the base for the
+    recurrence, missing parameters in the final recurrence
+    instances will also be extracted from this date. If not
+    given, {{{datetime.now()}}} will be used instead.
+
+    interval::
+    The interval between each {{{freq}}} iteration.
+
+    wkst::
+    The week start day. Must be one of the {{{MO}}}, {{{TU}}}, {{{WE}}}
+    constants, or an integer, specifying the first day of the week.
+
+    count::
+    How many occurrences will be generated.
+
+
+
+
+
+
+
+Here are some examples, 
+
 
 ==== Notes ====
 
@@ -287,7 +326,9 @@ of the recurrence rules documented in the
   * Unlike documented in the RFC, the starting datetime ({{{dtstart}}})
   is not the first recurrence instance, unless it does fit in the
   specified rules. In a python module context, this behavior makes more
-  sense than otherwise.
+  sense than otherwise. Notice that you can easily get the original
+  behavior by using a rruleset and adding the {{{dtstart}}} as an
+  {{{rdate}}} recurrence.
 
   * In addition to the documented keywords, a {{{byeaster}}} keyword
   was introduced, making it easy to compute recurrent events relative
@@ -420,7 +461,7 @@ further timezone settings will yield a {{{tzlocal}}} timezone.
 datetime.datetime(2003, 9, 25, 10, 36, 28, tzinfo=tzlocal())
 }}}
 
-We can also ask to ignore the timezone explicetly:
+We can also ask to ignore the timezone explicitly:
 {{{
 >>> parse("Thu Sep 25 10:36:28 BRST 2003", ignoretz=True)
 datetime.datetime(2003, 9, 25, 10, 36, 28)
@@ -898,6 +939,85 @@ Check the daylight limit.
 >>> datetime(2003, 10, 26, 1, 00, tzinfo=tz).tzname()
 'EST'
 }}}  
+
+==== tzical type ====
+This type is able to parse
+[ftp://ftp.rfc-editor.org/in-notes/rfc2445.txt iCalendar]
+style {{{VTIMEZONE}}} sessions into a Python timezone object.
+The constuctor prototype is:
+{{{
+tzical(fileobj)
+}}}
+
+Where {{{fileobj}}} is either a filename or a file-like object with
+a {{{read()}}} method.
+
+Since a single iCalendar file may contain more than one timezone,
+you must ask for the timezone you want with the {{{get()}}} method.
+It has the following prototype:
+{{{
+tzical.get(tzid=None)
+}}}
+
+If there's more than one timezone in the parsed file, you'll need
+to pass the tzid parameter. Otherwise, leaving it empty will yield
+the only available timezone.
+
+Here is a sample file extracted from the RFC. This file defines
+the {{{EST5EDT}}} timezone, and will be used in the following example.
+{{{
+BEGIN:VTIMEZONE
+TZID:US-Eastern
+LAST-MODIFIED:19870101T000000Z
+TZURL:http://zones.stds_r_us.net/tz/US-Eastern
+BEGIN:STANDARD
+DTSTART:19671029T020000
+RRULE:FREQ=YEARLY;BYDAY=-1SU;BYMONTH=10
+TZOFFSETFROM:-0400
+TZOFFSETTO:-0500
+TZNAME:EST
+END:STANDARD
+BEGIN:DAYLIGHT
+DTSTART:19870405T020000
+RRULE:FREQ=YEARLY;BYDAY=1SU;BYMONTH=4
+TZOFFSETFROM:-0500
+TZOFFSETTO:-0400
+TZNAME:EDT
+END:DAYLIGHT
+END:VTIMEZONE
+}}}
+
+And here is an example exploring a {{{tzical}}} type:
+{{{
+>>> from dateutil.tz import *; from datetime import *
+
+>>> tz = tzical('EST5EDT.ics')
+>>> tz.keys()
+['US-Eastern']
+
+>>> est = tz.get('US-Eastern')
+>>> est
+<tzicalvtz 'US-Eastern'>
+
+>>> datetime.now(est)
+datetime.datetime(2003, 10, 6, 19, 44, 18, 667987, tzinfo=<tzicalvtz 'US-Eastern'>)
+
+>>> est == tz.get()
+True
+}}}
+
+Let's check the daylight ranges, as usual:
+{{{
+>>> datetime(2003, 4, 6, 1, 59, tzinfo=est).tzname()
+'EST'
+>>> datetime(2003, 4, 6, 2, 00, tzinfo=est).tzname()
+'EDT'
+
+>>> datetime(2003, 10, 26, 0, 59, tzinfo=est).tzname()
+'EDT'
+>>> datetime(2003, 10, 26, 1, 00, tzinfo=est).tzname()
+'EST'
+}}}
 
 ==== gettz() function ====
 This function is a helper that will try its best to get the right

@@ -670,6 +670,9 @@ class tzical:
 
         self._parse_rfc(fileobj.read())
 
+    def keys(self):
+        return self._vtz.keys()
+
     def get(self, tzid=None):
         if tzid is None:
             keys = self._vtz.keys()
