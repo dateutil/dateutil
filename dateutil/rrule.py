@@ -360,7 +360,9 @@ class rrule:
                         pass
                     else:
                         date = datetime.date.fromordinal(ii.yearordinal+i)
-                        poslist.append(datetime.datetime.combine(date, time))
+                        res = datetime.datetime.combine(date, time)
+                        if res not in poslist:
+                            poslist.append(res)
                 poslist.sort()
                 for res in poslist:
                     if until and res > until:
