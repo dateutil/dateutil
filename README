@@ -1914,7 +1914,10 @@ of the timezone information path (the base could be
 specification, or a timezone abbreviation. If {{{name}}} is not given,
 and the {{{TZ}}} environment variable is set, it's used instead. If the
 parameter is not given, and {{{TZ}}} is not set, the default tzfile
-paths will be tried.
+paths will be tried. Then, if no timezone information is found,
+an internal compiled database of timezones is used. When running
+on Windows, the internal registry-based Windows timezones are also
+considered.
 
 Example:
 {{{
@@ -1944,6 +1947,24 @@ tzlocal()
 
 >>> gettz("Unavailable")
 >>> 
+}}}
+
+=== zoneinfo ===
+This module provides direct access to the internal compiled
+database of timezones. The timezone data and the compiling tools
+are obtained from the following project:
+
+  http://www.twinsun.com/tz/tz-link.htm
+
+==== gettz() function ====
+This function will try to retrieve the given timezone information
+from the internal compiled database, and will cache its results.
+
+Example:
+{{{
+>>> from dateutil import zoneinfo
+>>> zoneinfo.gettz("Brazil/East")
+tzfile('Brazil/East')
 }}}
 
 ## vim:ft=moin
