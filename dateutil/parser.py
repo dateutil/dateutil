@@ -62,6 +62,8 @@ class _timelex:
                 nextchar = self.charstack.pop(0)
             else:
                 nextchar = self.instream.read(1)
+                while nextchar == '\x00':
+                    nextchar = self.instream.read(1)
             if not nextchar:
                 self.eof = True
                 break
