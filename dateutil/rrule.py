@@ -60,8 +60,11 @@ class rrule:
         self._interval = interval
         self._count = count
         self._until = until
-        self._wkst = wkst or 0
         self._bysetpos = bysetpos
+        if type(wkst) is int:
+            self._wkst = wkst
+        else:
+            self._wkst = wkst.weekday
         if not (bymonth or byweekno or byyearday or
                 bymonthday or byweekday is not None):
             if freq == FREQ_YEARLY:
@@ -98,7 +101,7 @@ class rrule:
         elif type(byweekno) is int:
             self._byweekno = (byweekno,)
         else:
-            self.byweekno = tuple(byweekno)
+            self._byweekno = tuple(byweekno)
         # byweekday / bynweekday
         if byweekday is None:
             self._byweekday = None
@@ -131,53 +134,88 @@ class rrule:
                 self._bynweekday = None
         # byhour
         if byhour is None:
-            byhour = (dtstart.hour,)
+            if freq < FREQ_HOURLY:
+                self._byhour = (dtstart.hour,)
+            else:
+                self._byhour = None
         elif type(byhour) is int:
-            byhour = (byhour,)
+            self._byhour = (byhour,)
+        else:
+            self._byhour = tuple(byhour)
         # byminute
         if byminute is None:
-            byminute = (dtstart.minute,)
+            if freq < FREQ_MINUTELY:
+                self._byminute = (dtstart.minute,)
+            else:
+                self._byminute = None
         elif type(byminute) is int:
-            byminute = (byminute,)
+            self._byminute = (byminute,)
+        else:
+            self._byminute = tuple(byminute)
         # bysecond
         if bysecond is None:
-            bysecond = (dtstart.second,)
+            if freq < FREQ_SECONDLY:
+                self._bysecond = (dtstart.second,)
+            else:
+                self._bysecond = None
         elif type(bysecond) is int:
-            bysecond = (bysecond,)
-        self._time = []
-        for hour in byhour:
-            for minute in byminute:
-                for second in bysecond:
-                    self._time.append(datetime.time(hour, minute, second))
-        self._time.sort()
-        self._time = tuple(self._time)
+            self._bysecond = (bysecond,)
+        else:
+            self._bysecond = tuple(bysecond)
+
+        if self._freq >= FREQ_HOURLY:
+            self._timeset = None
+        else:
+            self._timeset = []
+            for hour in self._byhour:
+                for minute in self._byminute:
+                    for second in self._bysecond:
+                        self._timeset.append(
+                                datetime.time(hour, minute, second))
+            self._timeset.sort()
+            self._timeset = tuple(self._timeset)
 
     def iter(self, dtstart):
         year, month, day, hour, minute, second, weekday, yearday, _ = \
             dtstart.timetuple()
 
+        freq = self._freq
+
         ii = _iterinfo(self)
         ii.rebuild(year, month)
 
-        getset = {FREQ_YEARLY:ii.yset,
-                  FREQ_MONTHLY:ii.mset,
-                  FREQ_WEEKLY:ii.wset,
-                  FREQ_DAILY:ii.dset,
-                  FREQ_HOURLY:ii.dset,
-                  FREQ_MINUTELY:ii.dset,
-                  FREQ_SECONDLY:ii.dset}[self._freq]
+        getdayset = {FREQ_YEARLY:ii.ydayset,
+                     FREQ_MONTHLY:ii.mdayset,
+                     FREQ_WEEKLY:ii.wdayset,
+                     FREQ_DAILY:ii.ddayset,
+                     FREQ_HOURLY:ii.ddayset,
+                     FREQ_MINUTELY:ii.ddayset,
+                     FREQ_SECONDLY:ii.ddayset}[freq]
         
-        if self._bysetpos:
-            bysetpos = abs(self._bysetpos)
-            bysetpossignal = self._bysetpos/bysetpos
         count = self._count
 
-        while True:
-            # Get set with the right frequency
-            set, start, end = getset(year, month, day)
+        if freq < FREQ_HOURLY:
+            timeset = self._timeset
+        else:
+            gettimeset = {FREQ_HOURLY:ii.htimeset,
+                          FREQ_MINUTELY:ii.mtimeset,
+                          FREQ_SECONDLY:ii.stimeset}[freq]
+            if ((freq >= FREQ_HOURLY and
+                 self._byhour and hour not in self._byhour) or
+                (freq >= FREQ_MINUTELY and
+                 self._byminute and minute not in self._byminute) or
+                (freq >= FREQ_MINUTELY and
+                 self._bysecond and minute not in self._bysecond)):
+                timeset = ()
+            else:
+                timeset = gettimeset(hour, minute, second)
 
+        while True:
+            # Get dayset with the right frequency
+            dayset, start, end = getdayset(year, month, day)
+            
             # Do the "hard" work ;-)
-            for i in set[start:end]:
+            for i in dayset[start:end]:
                 if ((self._bymonth and ii.mmask[i] not in self._bymonth) or
                     (self._byweekno and not ii.wnomask[i]) or
                     (self._byyearday and i+1 not in self._byyearday) or
@@ -186,15 +224,21 @@ class rrule:
                     (self._byweekday and
                         ii.wdaymask[i] not in self._byweekday) or
                     (ii.nwdaymask and not ii.nwdaymask[i])):
-                    set[i] = None
+                    dayset[i] = None
 
             # Output results
-            if self._bysetpos:
-                daypos = (bysetpos*bysetpossignal)/len(self._time)
-                timepos = (bysetpos%len(self._time))*bysetpossignal
+            if self._bysetpos and self._timeset:
+                if self._bysetpos < 0:
+                    daypos, timepos = divmod(self._bysetpos,
+                                             len(self._timeset))
+                else:
+                    daypos, timepos = divmod(self._bysetpos-1,
+                                             len(self._timeset))
                 try:
-                    i = [x for x in set[start:end] if x is not None][daypos]
-                    time = self._time[timepos]
+                    #print [datetime.date.fromordinal(ii.yearordinal+x)
+                    #       for x in set[start:end] if x is not None]
+                    i = [x for x in dayset[start:end] if x is not None][daypos]
+                    time = timeset[timepos]
                 except IndexError:
                     pass
                 else:
@@ -204,30 +248,31 @@ class rrule:
                         return
                     elif res >= dtstart:
                         yield res
-                    if count:
-                        count -= 1
-                        if not count:
-                            return
+                        if count:
+                            count -= 1
+                            if not count:
+                                return
             else:
-                for i in set[start:end]:
+                for i in dayset[start:end]:
                     if i is not None:
                         date = datetime.date.fromordinal(ii.yearordinal+i)
-                        for time in self._time:
+                        for time in timeset:
                             res = datetime.datetime.combine(date, time)
                             if self._until and res > until:
                                 return
                             elif res >= dtstart:
                                 yield res
-                            if count:
-                                count -= 1
-                                if not count:
-                                    return
+                                if count:
+                                    count -= 1
+                                    if not count:
+                                        return
 
             # Handle frequency and interval
-            if self._freq == FREQ_YEARLY:
+            fixday = False
+            if freq == FREQ_YEARLY:
                 year += self._interval
                 ii.rebuild(year, month)
-            elif self._freq == FREQ_MONTHLY:
+            elif freq == FREQ_MONTHLY:
                 month += self._interval
                 if month > 12:
                     div, mod = divmod(month, 12)
@@ -237,24 +282,66 @@ class rrule:
                         month = 12
                         year -= 1
                 ii.rebuild(year, month)
-            elif self._freq == FREQ_WEEKLY:
+            elif freq == FREQ_WEEKLY:
                 if self._wkst > weekday:
                     day += -(weekday+1+(6-self._wkst))+self._interval*7
                 else:
                     day += -(weekday-self._wkst)+self._interval*7
                 weekday = self._wkst
-                daysinmonth = calendar.monthrange(year, month)[1]
-                if day > daysinmonth:
-                    while day > daysinmonth:
-                        day -= daysinmonth
-                        month += 1
-                        if month == 13:
-                            month = 1
-                            year += 1
-                        daysinmonth = calendar.monthrange(year, month)[1]
-                    ii.rebuild(year, month)
-            elif self._freq == FREQ_DAILY:
+                fixday = True
+            elif freq == FREQ_DAILY:
                 day += self._interval
+                fixday = True
+            elif freq == FREQ_HOURLY:
+                while True:
+                    hour += self._interval
+                    div, mod = divmod(hour, 24)
+                    if div:
+                        hour = mod
+                        day += div
+                        fixday = True
+                    if not self._byhour or hour in self._byhour:
+                        break
+                timeset = gettimeset(hour, minute, second)
+            elif freq == FREQ_MINUTELY:
+                while True:
+                    minute += self._interval
+                    div, mod = divmod(minute, 60)
+                    if div:
+                        minute = mod
+                        hour += div
+                        div, mod = divmod(hour, 24)
+                        if div:
+                            hour = mod
+                            day += div
+                            fixday = True
+                    if ((not self._byhour or hour in self._byhour) and
+                        (not self._byminute or minute in self._byminute)):
+                        break
+                timeset = gettimeset(hour, minute, second)
+            elif freq == FREQ_SECONDLY:
+                while True:
+                    second += self._interval
+                    div, mod = divmod(second, 60)
+                    if div:
+                        second = mod
+                        minute += div
+                        div, mod = divmod(minute, 60)
+                        if div:
+                            minute = mod
+                            hour += div
+                            div, mod = divmod(hour, 24)
+                            if div:
+                                hour = mod
+                                day += div
+                                fixday = True
+                    if ((not self._byhour or hour in self._byhour) and
+                        (not self._byminute or minute in self._byminute) and
+                        (not self._bysecond or second in self._bysecond)):
+                        break
+                timeset = gettimeset(hour, minute, second)
+
+            if fixday and day > 28:
                 daysinmonth = calendar.monthrange(year, month)[1]
                 if day > daysinmonth:
                     while day > daysinmonth:
@@ -291,12 +378,12 @@ class _iterinfo(object):
             if self.yearlen == 365:
                 self.mmask = M365MASK
                 self.mdaymask = MDAY365MASK
-                self.wdaymask = WDAYMASK[wday:365]
+                self.wdaymask = WDAYMASK[wday:wday+365]
                 self.mrange = M365RANGE
             else:
                 self.mmask = M366MASK
                 self.mdaymask = MDAY366MASK
-                self.wdaymask = WDAYMASK[wday:366]
+                self.wdaymask = WDAYMASK[wday:wday+366]
                 self.mrange = M366RANGE
 
             if not rr._byweekno:
@@ -351,17 +438,17 @@ class _iterinfo(object):
                         if first <= i <= last:
                             self.nwdaymask[i] = 1
 
-    def yset(self, year, month, day):
+    def ydayset(self, year, month, day):
         return range(self.yearlen), 0, self.yearlen
 
-    def mset(self, year, month, day):
+    def mdayset(self, year, month, day):
         set = [None]*self.yearlen
         start, end = self.mrange[month-1:month+1]
         for i in range(start, end):
             set[i] = i
         return set, start, end
 
-    def wset(self, year, month, day):
+    def wdayset(self, year, month, day):
         set = [None]*self.yearlen
         i = datetime.date(year, month, day).toordinal()-self.yearordinal
         start = i
@@ -373,10 +460,28 @@ class _iterinfo(object):
                 break
         return set, start, i
 
-    def dset(self, year, month, day):
+    def ddayset(self, year, month, day):
         set = [None]*self.yearlen
         i = datetime.date(year, month, day).toordinal()-self.yearordinal
         set[i] = i
         return set, i, i+1
+
+    def htimeset(self, hour, minute, second):
+        set = []
+        for minute in self.rrule._byminute:
+            for second in self.rrule._bysecond:
+                set.append(datetime.time(hour, minute, second))
+        set.sort()
+        return set
+
+    def mtimeset(self, hour, minute, second):
+        set = []
+        for second in self.rrule._bysecond:
+            set.append(datetime.time(hour, minute, second))
+        set.sort()
+        return set
+
+    def stimeset(self, hour, minute, second):
+        return (datetime.time(hour, minute, second),)
 
 # vim:ts=4:sw=4:et
