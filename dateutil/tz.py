@@ -11,12 +11,12 @@ import datetime
 import struct
 import time
 
-import relativedelta
-import parser
+relativedelta = None
+parser = None
+rrule = None
 
-__all__ = ["tzutc", "tzoffset", "tzlocal",
-           "tzfile", "tzrange", "tzstr",
-           "gettz"]
+__all__ = ["tzutc", "tzoffset", "tzlocal", "tzfile",
+           "tzrange", "tzstr", "tzical", "gettz"]
 
 ZERO = datetime.timedelta(0)
 EPOCHORDINAL = datetime.datetime.utcfromtimestamp(0).toordinal()
@@ -443,6 +443,9 @@ class tzrange(datetime.tzinfo):
     def __init__(self, stdabbr, stdoffset=None,
                  dstabbr=None, dstoffset=None,
                  start=None, end=None):
+        global relativedelta
+        if not relativedelta:
+            from dateutil import relativedelta
         self._std_abbr = stdabbr
         self._dst_abbr = dstabbr
         if stdoffset is not None:
@@ -516,6 +519,9 @@ class tzrange(datetime.tzinfo):
 class tzstr(tzrange):
     
     def __init__(self, s):
+        global parser
+        if not parser:
+            from dateutil import parser
         self._s = s
 
         res = parser._parsetz(s)
@@ -572,6 +578,242 @@ class tzstr(tzrange):
             delta = self._dst_offset-self._std_offset
             kwargs["seconds"] -= delta.seconds+delta.days*86400
         return relativedelta.relativedelta(**kwargs)
+
+    def __repr__(self):
+        return "%s(%s)" % (self.__class__.__name__, `self._s`)
+
+class _tzicalvtzcomp:
+    def __init__(self, tzoffsetfrom, tzoffsetto, isdst,
+                       tzname=None, rrule=None):
+        self.tzoffsetfrom = datetime.timedelta(seconds=tzoffsetfrom)
+        self.tzoffsetto = datetime.timedelta(seconds=tzoffsetto)
+        self.tzoffsetdiff = self.tzoffsetto-self.tzoffsetfrom
+        self.isdst = isdst
+        self.tzname = tzname
+        self.rrule = rrule
+
+class _tzicalvtz(datetime.tzinfo):
+    def __init__(self, tzid, comps=[]):
+        self._tzid = tzid
+        self._comps = comps
+        self._cachedate = []
+        self._cachecomp = []
+
+    def _find_comp(self, dt):
+        if len(self._comps) == 1:
+            return self._comps[0]
+        dt = dt.replace(tzinfo=None)
+        try:
+            return self._cachecomp[self._cachedate.index(dt)]
+        except ValueError:
+            pass
+        lastcomp = None
+        lastcompdt = None
+        for comp in self._comps:
+            if not comp.isdst:
+                # Handle the extra hour in DST -> STD
+                compdt = comp.rrule.before(dt-comp.tzoffsetdiff, inc=True)
+            else:
+                compdt = comp.rrule.before(dt, inc=True)
+            if compdt and (not lastcompdt or lastcompdt < compdt):
+                lastcompdt = compdt
+                lastcomp = comp
+        if not lastcomp:
+            # RFC says nothing about what to do when a given
+            # time is before the first onset date. We'll look for the
+            # first standard component, or the first component, if
+            # none is found.
+            for comp in self._comps:
+                if not comp.isdst:
+                    lastcomp = comp
+                    break
+            else:
+                lastcomp = comp[0]
+        self._cachedate.insert(0, dt)
+        self._cachecomp.insert(0, lastcomp)
+        if len(self._cachedate) > 10:
+            self._cachedate.pop()
+            self._cachecomp.pop()
+        return lastcomp
+
+    def utcoffset(self, dt):
+        return self._find_comp(dt).tzoffsetto
+
+    def dst(self, dt):
+        comp = self._find_comp(dt)
+        if comp.isdst:
+            return comp.tzoffsetdiff
+        else:
+            return ZERO
+
+    def tzname(self, dt):
+        return self._find_comp(dt).tzname
+
+    def __repr__(self):
+        return "<tzicalvtz %s>" % `self._tzid`
+
+class tzical:
+    def __init__(self, fileobj):
+        global rrule
+        if not rrule:
+            from dateutil import rrule
+
+        if isinstance(fileobj, basestring):
+            self._s = fileobj
+            fileobj = open(fileobj)
+        elif hasattr(fileobj, "name"):
+            self._s = fileobj.name
+        else:
+            self._s = `fileobj`
+
+        self._vtz = {}
+
+        self._parse_rfc(fileobj.read())
+
+    def get(self, tzid=None):
+        if tzid is None:
+            keys = self._vtz.keys()
+            if len(keys) == 0:
+                raise "no timezones defined"
+            elif len(keys) > 1:
+                raise "more than one timezone available"
+            tzid = keys[0]
+        return self._vtz.get(tzid)
+
+    def _parse_offset(self, s):
+        s = s.strip()
+        if not s:
+            raise ValueError, "empty offset"
+        if s[0] in ('+', '-'):
+            signal = (-1,+1)[s[0]=='+']
+            s = s[1:]
+        else:
+            signal = +1
+        if len(s) == 4:
+            return (int(s[:2])*3600+int(s[2:])*60)*signal
+        elif len(s) == 6:
+            return (int(s[:2])*3600+int(s[2:4])*60+int(s[4:]))*signal
+        else:
+            raise ValueError, "invalid offset: "+s
+
+    def _parse_rfc(self, s):
+        lines = s.splitlines()
+        if not lines:
+            raise ValueError, "empty string"
+
+        # Unfold
+        i = 0
+        while i < len(lines):
+            line = lines[i].rstrip()
+            if not line:
+                del lines[i]
+            elif i > 0 and line[0] == " ":
+                lines[i-1] += line[1:]
+                del lines[i]
+            else:
+                i += 1
+
+        invtz = False
+        comptype = None
+        for line in lines:
+            if not line:
+                continue
+            name, value = line.split(':', 1)
+            parms = name.split(';')
+            if not parms:
+                raise ValueError, "empty property name"
+            name = parms[0].upper()
+            parms = parms[1:]
+            if invtz:
+                if name == "BEGIN":
+                    if value in ("STANDARD", "DAYLIGHT"):
+                        # Process component
+                        pass
+                    else:
+                        raise ValueError, "unknown component: "+value
+                    comptype = value
+                    founddtstart = False
+                    tzoffsetfrom = None
+                    tzoffsetto = None
+                    rrulelines = []
+                    tzname = None
+                elif name == "END":
+                    if value == "VTIMEZONE":
+                        if comptype:
+                            raise ValueError, \
+                                  "component not closed: "+comptype
+                        if not tzid:
+                            raise ValueError, \
+                                  "mandatory TZID not found"
+                        if not comps:
+                            raise ValueError, \
+                                  "at least one component is needed"
+                        # Process vtimezone
+                        self._vtz[tzid] = _tzicalvtz(tzid, comps)
+                        invtz = False
+                    elif value == comptype:
+                        if not founddtstart:
+                            raise ValueError, \
+                                  "mandatory DTSTART not found"
+                        if not tzoffsetfrom:
+                            raise ValueError, \
+                                  "mandatory TZOFFSETFROM not found"
+                        if not tzoffsetto:
+                            raise ValueError, \
+                                  "mandatory TZOFFSETFROM not found"
+                        # Process component
+                        rr = None
+                        if rrulelines:
+                            rr = rrule.rrulestr("\n".join(rrulelines),
+                                                compatible=True,
+                                                ignoretz=True)
+                        comp = _tzicalvtzcomp(tzoffsetfrom, tzoffsetto,
+                                              (comptype == "DAYLIGHT"),
+                                              tzname, rr)
+                        comps.append(comp)
+                        comptype = None
+                    else:
+                        raise ValueError, \
+                              "invalid component end: "+value
+                elif comptype:
+                    if name == "DTSTART":
+                        rrulelines.append(line)
+                        founddtstart = True
+                    elif name in ("RRULE", "RDATE", "EXRULE", "EXDATE"):
+                        rrulelines.append(line)
+                    elif name == "TZOFFSETFROM":
+                        if parms:
+                            raise ValueError, \
+                                  "unsupported %s parm: %s "%(name, parms[0])
+                        tzoffsetfrom = self._parse_offset(value)
+                    elif name == "TZOFFSETTO":
+                        if parms:
+                            raise ValueError, \
+                                  "unsupported TZOFFSETTO parm: "+parms[0]
+                        tzoffsetto = self._parse_offset(value)
+                    elif name == "TZNAME":
+                        if parms:
+                            raise ValueError, \
+                                  "unsupported TZNAME parm: "+parms[0]
+                        tzname = value
+                    elif name == "COMMENT":
+                        pass
+                    else:
+                        raise ValueError, "unsupported property: "+name
+                else:
+                    if name == "TZID":
+                        if parms:
+                            raise ValueError, \
+                                  "unsupported TZID parm: "+parms[0]
+                        tzid = value
+                    elif name in ("TZURL", "LAST-MODIFIED", "COMMENT"):
+                        pass
+                    else:
+                        raise ValueError, "unsupported property: "+name
+            elif name == "BEGIN" and value == "VTIMEZONE":
+                tzid = None
+                comps = []
+                invtz = True
 
     def __repr__(self):
         return "%s(%s)" % (self.__class__.__name__, `self._s`)

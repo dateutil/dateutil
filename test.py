@@ -776,7 +776,7 @@ class EasterTest(unittest.TestCase):
 
 class TZTest(unittest.TestCase):
 
-    EST5EDT = """
+    TZFILE_EST5EDT = """
 VFppZgAAAAAAAAAAAAAAAAAAAAAAAAAEAAAABAAAAAAAAADrAAAABAAAABCeph5wn7rrYKCGAHCh
 ms1gomXicKOD6eCkaq5wpTWnYKZTyvCnFYlgqDOs8Kj+peCqE47wqt6H4KvzcPCsvmngrdNS8K6e
 S+CvszTwsH4t4LGcUXCyZ0pgs3wzcLRHLGC1XBVwticOYLc793C4BvBguRvZcLnm0mC7BPXwu8a0
@@ -800,6 +800,28 @@ AAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEA
 AQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQAB
 AAEAAQABAAEAAQABAAEAAQABAAEAAf//x8ABAP//ubAABP//x8ABCP//x8ABDEVEVABFU1QARVdU
 AEVQVAAAAAABAAAAAQ==
+    """
+
+    TZICAL_EST5EDT = """
+BEGIN:VTIMEZONE
+TZID:US-Eastern
+LAST-MODIFIED:19870101T000000Z
+TZURL:http://zones.stds_r_us.net/tz/US-Eastern
+BEGIN:STANDARD
+DTSTART:19671029T020000
+RRULE:FREQ=YEARLY;BYDAY=-1SU;BYMONTH=10
+TZOFFSETFROM:-0400
+TZOFFSETTO:-0500
+TZNAME:EST
+END:STANDARD
+BEGIN:DAYLIGHT
+DTSTART:19870405T020000
+RRULE:FREQ=YEARLY;BYDAY=1SU;BYMONTH=4
+TZOFFSETFROM:-0500
+TZOFFSETTO:-0400
+TZNAME:EDT
+END:DAYLIGHT
+END:VTIMEZONE
     """
 
     def testStrStart1(self):
@@ -907,12 +929,22 @@ AEVQVAAAAAABAAAAAQ==
                          tzrange("EST", -18000, "EDT"))
 
     def testFileStart1(self):
-        tz = tzfile(StringIO(base64.decodestring(self.EST5EDT)))
+        tz = tzfile(StringIO(base64.decodestring(self.TZFILE_EST5EDT)))
         self.assertEqual(datetime(2003,4,6,1,59,tzinfo=tz).tzname(), "EST")
         self.assertEqual(datetime(2003,4,6,2,00,tzinfo=tz).tzname(), "EDT")
         
     def testFileEnd1(self):
-        tz = tzfile(StringIO(base64.decodestring(self.EST5EDT)))
+        tz = tzfile(StringIO(base64.decodestring(self.TZFILE_EST5EDT)))
+        self.assertEqual(datetime(2003,10,26,0,59,tzinfo=tz).tzname(), "EDT")
+        self.assertEqual(datetime(2003,10,26,1,00,tzinfo=tz).tzname(), "EST")
+
+    def testICalStart1(self):
+        tz = tzical(StringIO(self.TZICAL_EST5EDT)).get()
+        self.assertEqual(datetime(2003,4,6,1,59,tzinfo=tz).tzname(), "EST")
+        self.assertEqual(datetime(2003,4,6,2,00,tzinfo=tz).tzname(), "EDT")
+
+    def testICalEnd1(self):
+        tz = tzical(StringIO(self.TZICAL_EST5EDT)).get()
         self.assertEqual(datetime(2003,10,26,0,59,tzinfo=tz).tzname(), "EDT")
         self.assertEqual(datetime(2003,10,26,1,00,tzinfo=tz).tzname(), "EST")
 

@@ -20,7 +20,10 @@ class weekday(object):
         self.n = n
 
     def __call__(self, n):
-        return self.__class__(self.weekday, n)
+        if n == self.n:
+            return self
+        else:
+            return self.__class__(self.weekday, n)
 
     def __eq__(self, other):
         try:
