@@ -294,7 +294,7 @@ Additionally, the following keyword arguments are available:
     If this is true, even if a timezone is found in the string,
     the parser will not use it.
 
-    tzoffsets::
+    tzinfos::
     Using this keyword argument you may provide custom timezones
     to the parser. If given, it must be either a dictionary with
     the timezone abbreviation as key, or a function accepting a
@@ -381,10 +381,10 @@ The following code will prepare the environment:
 Some simple examples based on the {{{date}}} command, using the
 {{{TZOFFSET}}} dictionary to provide the BRST timezone offset.
 {{{
->>> parse("Thu Sep 25 10:36:28 BRST 2003", tzoffsets=TZOFFSETS)
+>>> parse("Thu Sep 25 10:36:28 BRST 2003", tzinfos=TZOFFSETS)
 datetime.datetime(2003, 9, 25, 10, 36, 28, tzinfo=tzoffset('BRST', -10800))
 
->>> parse("2003 10:36:28 BRST 25 Sep Thu", tzoffsets=TZOFFSETS)
+>>> parse("2003 10:36:28 BRST 25 Sep Thu", tzinfos=TZOFFSETS)
 datetime.datetime(2003, 9, 25, 10, 36, 28, tzinfo=tzoffset('BRST', -10800))
 }}}
 
