@@ -803,7 +803,7 @@ def parse(timestr, default=None, ignoretz=False, tzoffsets=None, **kwargs):
             repl[attr] = value
     ret = default.replace(**repl)
     if res.weekday is not None and not res.day:
-        ret = ret+relativedelta.relativedelta(weekday=(res.weekday, +1))
+        ret = ret+relativedelta.relativedelta(weekday=res.weekday)
     if not ignoretz:
         if callable(tzoffsets) or tzoffsets and res.tzname in tzoffsets:
             if callable(tzoffsets):

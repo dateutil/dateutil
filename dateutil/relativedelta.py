@@ -10,7 +10,34 @@ __license__ = "PSF License"
 import datetime
 import calendar
 
-__all__ = ["relativedelta"]
+__all__ = ["relativedelta", "MO", "TU", "WE", "TH", "FR", "SA", "SU"]
+
+class weekday(object):
+    __slots__ = ["weekday", "n"]
+
+    def __init__(self, weekday, n=0):
+        self.weekday = weekday
+        self.n = n
+
+    def __call__(self, n):
+        return self.__class__(self.weekday, n)
+
+    def __eq__(self, other):
+        try:
+            if self.weekday != other.weekday or self.n != other.n:
+                return False
+        except AttributeError:
+            return False
+        return True
+
+    def __repr__(self):
+        s = ("MO", "TU", "WE", "TH", "FR", "SA", "SU")[self.weekday]
+        if not self.n:
+            return s
+        else:
+            return "%s(%+d)" % (s, self.n)
+
+MO, TU, WE, TH, FR, SA, SU = weekdays = tuple([weekday(x) for x in range(7)])
 
 class relativedelta:
     """
@@ -33,7 +60,11 @@ And the other way is to use the following keyword arguments:
         Relative information, may be negative.
 
     weekday:
-        Tuple with (wday, nth), specifying the nth relative weekday.
+        One of the weekday instances (MO, TU, etc). These instances may
+        receive a parameter N, specifying the Nth weekday, which could
+        be positive or negative (like MO(+1) or MO(-2). Not specifying
+        it is the same as specifying +1. You can also use an integer,
+        where 0=MO.
 
     leapdays:
         Will add given days to the date found, if year is a leap
@@ -133,11 +164,15 @@ Here is the behavior of operations with relativedelta:
             self.year = year
             self.month = month
             self.day = day
-            self.weekday = weekday
             self.hour = hour
             self.minute = minute
             self.second = second
             self.microsecond = microsecond
+
+            if type(weekday) is int:
+                self.weekday = weekdays[weekday]
+            else:
+                self.weekday = weekday
 
             yday = 0
             if nlyearday:
@@ -236,8 +271,8 @@ Here is the behavior of operations with relativedelta:
                                     minutes=self.minutes,
                                     seconds=self.seconds,
                                     microseconds=self.microseconds))
-        if self.weekday and self.weekday[1]:
-            weekday, nth = self.weekday
+        if self.weekday:
+            weekday, nth = self.weekday.weekday, self.weekday.n or 1
             jumpdays = (abs(nth)-1)*7
             ret_weekday = ret.weekday()
             if nth > 0:
@@ -267,6 +302,7 @@ Here is the behavior of operations with relativedelta:
                              minutes=other.minutes+self.minutes,
                              seconds=other.seconds+self.seconds,
                              microseconds=other.microseconds+self.microseconds,
+                             leapdays=other.leapdays or self.leapdays,
                              year=other.year or self.year,
                              month=other.month or self.month,
                              day=other.day or self.day,
@@ -286,6 +322,7 @@ Here is the behavior of operations with relativedelta:
                              minutes=other.minutes-self.minutes,
                              seconds=other.seconds-self.seconds,
                              microseconds=other.microseconds-self.microseconds,
+                             leapdays=other.leapdays or self.leapdays,
                              year=other.year or self.year,
                              month=other.month or self.month,
                              day=other.day or self.day,
@@ -303,6 +340,7 @@ Here is the behavior of operations with relativedelta:
                              minutes=-self.minutes,
                              seconds=-self.seconds,
                              microseconds=-self.microseconds,
+                             leapdays=self.leapdays,
                              year=self.year,
                              month=self.month,
                              day=self.day,
@@ -320,6 +358,7 @@ Here is the behavior of operations with relativedelta:
                     not self.minutes and
                     not self.seconds and
                     not self.microseconds and
+                    not self.leapdays and
                     self.year is None and
                     self.month is None and
                     self.day is None and
@@ -338,6 +377,7 @@ Here is the behavior of operations with relativedelta:
                              minutes=self.minutes*f,
                              seconds=self.seconds*f,
                              microseconds=self.microseconds*f,
+                             leapdays=self.leapdays,
                              year=self.year,
                              month=self.month,
                              day=self.day,
@@ -350,10 +390,28 @@ Here is the behavior of operations with relativedelta:
     def __eq__(self, other):
         if not isinstance(other, relativedelta):
             return False
-        for attr in self.__dict__:
-            if getattr(self, attr) != getattr(other, attr):
+        if self.weekday or other.weekday:
+            if not self.weekday or not other.weekday:
                 return False
-        return True
+            if self.weekday.weekday != other.weekday.weekday:
+                return False
+            n1, n2 = self.weekday.n, other.weekday.n
+            if n1 != n2 and not (n1 in (0, 1) and n2 in (0, 1)):
+                return False
+        return (self.years == other.years and
+                self.months == other.months and
+                self.days == other.days and
+                self.hours == other.hours and
+                self.minutes == other.minutes and
+                self.seconds == other.seconds and
+                self.leapdays == other.leapdays and
+                self.year == other.year and
+                self.month == other.month and
+                self.day == other.day and
+                self.hour == other.hour and
+                self.minute == other.minute and
+                self.second == other.second and
+                self.microsecond == other.microsecond)
 
     def __ne__(self, other):
         return not self.__eq__(other)

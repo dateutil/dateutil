@@ -63,7 +63,14 @@ And the other way is to use any of the following keyword arguments:
   Relative information, may be negative.
 
   weekday::
-  Tuple with {{{(wday, nth)}}}, specifying the nth relative weekday.
+  One of the weekday instances ({{{MO}}}, {{{TU}}}, etc). These
+  instances may receive a parameter {{{n}}}, specifying the {{{n}}}th
+  weekday, which could be positive or negative (like {{{MO(+2)}}} or
+  {{{MO(-3)}}}. Not specifying it is the same as specifying {{{+1}}}.
+  You can also use an integer, where {{{0=MO}}}. Notice that,
+  for example, if the calculated date is already Monday, using
+  {{{MO}}} or {{{MO(+1)}}} (which is the same thing in this context),
+  won't change the day.
 
   leapdays::
   Will add given days to the date found, but only if the computed
@@ -92,18 +99,14 @@ on operations, here is a description of its behavior.
   the computed month is after february, remove one day from the found date.
   1. Do steps 1 and 2 for {{{hour}}}/{{{hours}}}, {{{minute}}}/{{{minutes}}},
   {{{second}}}/{{{seconds}}}, {{{microsecond}}}/{{{microseconds}}}.
-  1. If the {{{weekday}}} argument is present, calculate the weekday,
-  with the given {{{(wday, nth)}}} tuple. {{{wday}}} is the index of the
-  {{{weekday}}} (0-6, 0=Mon), and {{{nth}}} is the number of weeks to add
-  forward or backward, depending on its signal. Notice that if
-  the calculated date is already Monday, for example, using {{{(0, 1)}}}
-  or {{{(0, -1)}}} won't change the day.
+  1. If the {{{weekday}}} argument is present, calculate the {{{n}}}th
+  occurrence of the given weekday.
 
 ==== Examples ====
 
 Let's begin our trip.
 {{{
->>> from datetime import *; from dtutil import *
+>>> from datetime import *; from dateutil.relativedelta import *
 >>> import calendar
 }}}
 
@@ -182,25 +185,28 @@ datetime.date(2000, 3, 1)
 
 Next friday.
 {{{
->>> TODAY+relativedelta(weekday=(calendar.FRIDAY, +1))
+>>> TODAY+relativedelta(weekday=FR)
+datetime.date(2003, 9, 19)
+
+>>> TODAY+relativedelta(weekday=calendar.FRIDAY)
 datetime.date(2003, 9, 19)
 }}}
 
 Last friday in this month.
 {{{
->>> TODAY+relativedelta(day=31, weekday=(calendar.FRIDAY, -1))
+>>> TODAY+relativedelta(day=31, weekday=FR(-1))
 datetime.date(2003, 9, 26)
 }}}
 
 Next wednesday (it's today!).
 {{{
->>> TODAY+relativedelta(weekday=(calendar.WEDNESDAY, +1))
+>>> TODAY+relativedelta(weekday=WE(+1))
 datetime.date(2003, 9, 17)
 }}}
 
 Next wednesday, but not today.
 {{{
->>> TODAY+relativedelta(days=+1, weekday=(calendar.WEDNESDAY, +1))
+>>> TODAY+relativedelta(days=+1, weekday=WE(+1))
 datetime.date(2003, 9, 24)
 }}}
 
@@ -208,7 +214,7 @@ Following
 [http://www.cl.cam.ac.uk/~mgk25/iso-time.html ISO year week number notation]
 find the first day of the 15th week of 1997.
 {{{
->>> datetime(1997,1,1)+relativedelta(day=4, weekday=(0, -1), weeks=+14)
+>>> datetime(1997,1,1)+relativedelta(day=4, weekday=MO(-1), weeks=+14)
 datetime.datetime(1997, 4, 7, 0, 0)
 }}}
 
@@ -814,8 +820,8 @@ True
 >>> from dateutil.relativedelta import *
 >>> range1 = tzrange("EST", -18000, "EDT")
 >>> range2 = tzrange("EST", -18000, "EDT", -14400,
-...                  relativedelta(hours=+2, month=4, day=1, weekday=(6, 1)),
-...                  relativedelta(hours=+1, month=10, day=31, weekday=(6, -1)))>>> tzstr('EST5EDT') == range1 == range2
+...                  relativedelta(hours=+2, month=4, day=1, weekday=SU(+1)),
+...                  relativedelta(hours=+1, month=10, day=31, weekday=SU(-1)))>>> tzstr('EST5EDT') == range1 == range2
 >>> tzstr('EST5EDT') == range1 == range2
 True
 }}}

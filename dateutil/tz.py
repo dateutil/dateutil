@@ -456,17 +456,13 @@ class tzrange(datetime.tzinfo):
         else:
             self._dst_offset = ZERO
         if start is None:
-            self._start_delta = relativedelta.relativedelta(hours=+2,
-                                                            month=4,
-                                                            day=1,
-                                                            weekday=(6, +1))
+            self._start_delta = relativedelta.relativedelta(
+                    hours=+2, month=4, day=1, weekday=relativedelta.SU(+1))
         else:
             self._start_delta = start
         if end is None:
-            self._end_delta = relativedelta.relativedelta(hours=+1,
-                                                          month=10,
-                                                          day=31,
-                                                          weekday=(6, -1))
+            self._end_delta = relativedelta.relativedelta(
+                    hours=+1, month=10, day=31, weekday=relativedelta.SU(-1))
         else:
             self._end_delta = end
 
@@ -542,7 +538,7 @@ class tzstr(tzrange):
         if x.month is not None:
             kwargs["month"] = x.month
             if x.weekday is not None:
-                kwargs["weekday"] = (x.weekday, x.week)
+                kwargs["weekday"] = relativedelta.weekday(x.weekday, x.week)
                 if x.week > 0:
                     kwargs["day"] = 1
                 else:
@@ -559,11 +555,11 @@ class tzstr(tzrange):
             if not isend:
                 kwargs["month"] = 4
                 kwargs["day"] = 1
-                kwargs["weekday"] = (6, +1)
+                kwargs["weekday"] = relativedelta.SU(+1)
             else:
                 kwargs["month"] = 10
                 kwargs["day"] = 31
-                kwargs["weekday"] = (6, -1)
+                kwargs["weekday"] = relativedelta.SU(-1)
         if x.time is not None:
             kwargs["seconds"] = x.time
         else:

@@ -74,30 +74,29 @@ class RelativeDeltaTest(unittest.TestCase):
                          date(2000, 3, 1))
 
     def testNextFriday(self):
-        self.assertEqual(self.today +
-                         relativedelta(weekday=(calendar.FRIDAY, +1)),
+        self.assertEqual(self.today+relativedelta(weekday=FR),
+                         date(2003, 9, 19))
+
+    def testNextFridayInt(self):
+        self.assertEqual(self.today+relativedelta(weekday=calendar.FRIDAY),
                          date(2003, 9, 19))
 
     def testLastFridayInThisMonth(self):
-        self.assertEqual(self.today +
-                         relativedelta(day=31, weekday=(calendar.FRIDAY, -1)),
+        self.assertEqual(self.today+relativedelta(day=31, weekday=FR(-1)),
                          date(2003, 9, 26))
 
     def testNextWednesdayIsToday(self):
-        self.assertEqual(self.today +
-                         relativedelta(weekday=(calendar.WEDNESDAY, +1)),
+        self.assertEqual(self.today+relativedelta(weekday=WE),
                          date(2003, 9, 17))
 
 
     def testNextWenesdayNotToday(self):
-        self.assertEqual(self.today +
-                         relativedelta(days=+1,
-                                       weekday=(calendar.WEDNESDAY, +1)),
+        self.assertEqual(self.today+relativedelta(days=+1, weekday=WE),
                          date(2003, 9, 24))
         
     def test15thISOYearWeek(self):
         self.assertEqual(date(2003, 1, 1) +
-                         relativedelta(day=4, weekday=(0, -1), weeks=+14),
+                         relativedelta(day=4, weeks=+14, weekday=MO(-1)),
                          date(2003, 4, 7))
 
     def testMillenniumAge(self):
@@ -898,10 +897,10 @@ AEVQVAAAAAABAAAAAQ==
                          tzrange("EST", -18000, "EDT", -14400,
                                  relativedelta(hours=+2,
                                                month=4, day=1,
-                                               weekday=(6, 1)),
+                                               weekday=SU(+1)),
                                  relativedelta(hours=+1,
                                                month=10, day=31,
-                                               weekday=(6, -1))))
+                                               weekday=SU(-1))))
 
     def testRangeCmp2(self):
         self.assertEqual(tzstr("EST5EDT"),
