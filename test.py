@@ -149,15 +149,6 @@ class RRuleTest(unittest.TestCase):
                           datetime(1998, 9, 2, 9, 0),
                           datetime(1999, 9, 2, 9, 0)])
 
-    def testStrYearly(self):
-        self.assertEqual(list(rrulestr("""
-                              DTSTART:19970902T090000
-                              RRULE:FREQ=YEARLY;COUNT=3
-                              """)),
-                         [datetime(1997, 9, 2, 9, 0),
-                          datetime(1998, 9, 2, 9, 0),
-                          datetime(1999, 9, 2, 9, 0)])
-
     def testYearlyInterval(self):
         self.assertEqual(list(rrule(FREQ_YEARLY,
                               count=3,
@@ -480,15 +471,6 @@ class RRuleTest(unittest.TestCase):
                           datetime(1997, 10, 2, 9, 0),
                           datetime(1997, 11, 2, 9, 0)])
 
-    def testStrMonthly(self):
-        self.assertEqual(list(rrulestr("""
-                              DTSTART:19970902T090000
-                              RRULE:FREQ=MONTHLY;COUNT=3
-                              """)),
-                         [datetime(1997, 9, 2, 9, 0),
-                          datetime(1997, 10, 2, 9, 0),
-                          datetime(1997, 11, 2, 9, 0)])
-
     def testMonthlyInterval(self):
         self.assertEqual(list(rrule(FREQ_MONTHLY,
                               count=3,
@@ -800,15 +782,6 @@ class RRuleTest(unittest.TestCase):
                           datetime(1997, 9, 9, 9, 0),
                           datetime(1997, 9, 16, 9, 0)])
 
-    def testStrWeekly(self):
-        self.assertEqual(list(rrulestr("""
-                              DTSTART:19970902T090000
-                              RRULE:FREQ=WEEKLY;COUNT=3
-                              """)),
-                         [datetime(1997, 9, 2, 9, 0),
-                          datetime(1997, 9, 9, 9, 0),
-                          datetime(1997, 9, 16, 9, 0)])
-
     def testWeeklyInterval(self):
         self.assertEqual(list(rrule(FREQ_WEEKLY,
                               count=3,
@@ -1099,15 +1072,6 @@ class RRuleTest(unittest.TestCase):
         self.assertEqual(list(rrule(FREQ_DAILY,
                               count=3,
                               dtstart=parse("19970902T090000"))),
-                         [datetime(1997, 9, 2, 9, 0),
-                          datetime(1997, 9, 3, 9, 0),
-                          datetime(1997, 9, 4, 9, 0)])
-
-    def testStrDaily(self):
-        self.assertEqual(list(rrulestr("""
-                              DTSTART:19970902T090000
-                              RRULE:FREQ=DAILY;COUNT=3
-                              """)),
                          [datetime(1997, 9, 2, 9, 0),
                           datetime(1997, 9, 3, 9, 0),
                           datetime(1997, 9, 4, 9, 0)])
@@ -1403,15 +1367,6 @@ class RRuleTest(unittest.TestCase):
                           datetime(1997, 9, 2, 10, 0),
                           datetime(1997, 9, 2, 11, 0)])
 
-    def testStrHourly(self):
-        self.assertEqual(list(rrulestr("""
-                              DTSTART:19970902T090000
-                              RRULE:FREQ=HOURLY;COUNT=3
-                              """)),
-                         [datetime(1997, 9, 2, 9, 0),
-                          datetime(1997, 9, 2, 10, 0),
-                          datetime(1997, 9, 2, 11, 0)])
-
     def testHourlyInterval(self):
         self.assertEqual(list(rrule(FREQ_HOURLY,
                               count=3,
@@ -1699,15 +1654,6 @@ class RRuleTest(unittest.TestCase):
                           datetime(1997, 9, 2, 9, 1),
                           datetime(1997, 9, 2, 9, 2)])
 
-    def testStrMinutely(self):
-        self.assertEqual(list(rrulestr("""
-                              DTSTART:19970902T090000
-                              RRULE:FREQ=MINUTELY;COUNT=3
-                              """)),
-                         [datetime(1997, 9, 2, 9, 0),
-                          datetime(1997, 9, 2, 9, 1),
-                          datetime(1997, 9, 2, 9, 2)])
-
     def testMinutelyInterval(self):
         self.assertEqual(list(rrule(FREQ_MINUTELY,
                               count=3,
@@ -1990,15 +1936,6 @@ class RRuleTest(unittest.TestCase):
         self.assertEqual(list(rrule(FREQ_SECONDLY,
                               count=3,
                               dtstart=parse("19970902T090000"))),
-                         [datetime(1997, 9, 2, 9, 0, 0),
-                          datetime(1997, 9, 2, 9, 0, 1),
-                          datetime(1997, 9, 2, 9, 0, 2)])
-
-    def testStrSecondly(self):
-        self.assertEqual(list(rrulestr("""
-                              DTSTART:19970902T090000
-                              RRULE:FREQ=SECONDLY;COUNT=3
-                              """)),
                          [datetime(1997, 9, 2, 9, 0, 0),
                           datetime(1997, 9, 2, 9, 0, 1),
                           datetime(1997, 9, 2, 9, 0, 2)])
@@ -2324,6 +2261,259 @@ class RRuleTest(unittest.TestCase):
                          [datetime(1997, 9, 2, 9, 0),
                           datetime(1997, 9, 14, 9, 0),
                           datetime(1997, 9, 16, 9, 0)])
+
+    def testSet(self):
+        set = rruleset()
+        set.rrule(rrule(FREQ_YEARLY, count=2, byweekday=TU,
+                        dtstart=parse("19970902T090000")))
+        set.rrule(rrule(FREQ_YEARLY, count=1, byweekday=TH,
+                        dtstart=parse("19970902T090000")))
+        self.assertEqual(list(set),
+                         [datetime(1997, 9, 2, 9, 0),
+                          datetime(1997, 9, 4, 9, 0),
+                          datetime(1997, 9, 9, 9, 0)])
+
+    def testSetDate(self):
+        set = rruleset()
+        set.rrule(rrule(FREQ_YEARLY, count=1, byweekday=TU,
+                        dtstart=parse("19970902T090000")))
+        set.rdate(datetime(1997, 9, 4, 9))
+        set.rdate(datetime(1997, 9, 9, 9))
+        self.assertEqual(list(set),
+                         [datetime(1997, 9, 2, 9, 0),
+                          datetime(1997, 9, 4, 9, 0),
+                          datetime(1997, 9, 9, 9, 0)])
+
+    def testSetExRule(self):
+        set = rruleset()
+        set.rrule(rrule(FREQ_YEARLY, count=6, byweekday=(TU,TH),
+                        dtstart=parse("19970902T090000")))
+        set.exrule(rrule(FREQ_YEARLY, count=3, byweekday=TH,
+                        dtstart=parse("19970902T090000")))
+        self.assertEqual(list(set),
+                         [datetime(1997, 9, 2, 9, 0),
+                          datetime(1997, 9, 9, 9, 0),
+                          datetime(1997, 9, 16, 9, 0)])
+
+    def testSetExDate(self):
+        set = rruleset()
+        set.rrule(rrule(FREQ_YEARLY, count=6, byweekday=(TU,TH),
+                        dtstart=parse("19970902T090000")))
+        set.exdate(datetime(1997, 9, 4, 9))
+        set.exdate(datetime(1997, 9, 11, 9))
+        set.exdate(datetime(1997, 9, 18, 9))
+        self.assertEqual(list(set),
+                         [datetime(1997, 9, 2, 9, 0),
+                          datetime(1997, 9, 9, 9, 0),
+                          datetime(1997, 9, 16, 9, 0)])
+
+    def testSetDateAndExDate(self):
+        set = rruleset()
+        set.rdate(datetime(1997, 9, 2, 9))
+        set.rdate(datetime(1997, 9, 4, 9))
+        set.rdate(datetime(1997, 9, 9, 9))
+        set.rdate(datetime(1997, 9, 11, 9))
+        set.rdate(datetime(1997, 9, 16, 9))
+        set.rdate(datetime(1997, 9, 18, 9))
+        set.exdate(datetime(1997, 9, 4, 9))
+        set.exdate(datetime(1997, 9, 11, 9))
+        set.exdate(datetime(1997, 9, 18, 9))
+        self.assertEqual(list(set),
+                         [datetime(1997, 9, 2, 9, 0),
+                          datetime(1997, 9, 9, 9, 0),
+                          datetime(1997, 9, 16, 9, 0)])
+
+    def testSetDateAndExRule(self):
+        set = rruleset()
+        set.rdate(datetime(1997, 9, 2, 9))
+        set.rdate(datetime(1997, 9, 4, 9))
+        set.rdate(datetime(1997, 9, 9, 9))
+        set.rdate(datetime(1997, 9, 11, 9))
+        set.rdate(datetime(1997, 9, 16, 9))
+        set.rdate(datetime(1997, 9, 18, 9))
+        set.exrule(rrule(FREQ_YEARLY, count=3, byweekday=TH,
+                        dtstart=parse("19970902T090000")))
+        self.assertEqual(list(set),
+                         [datetime(1997, 9, 2, 9, 0),
+                          datetime(1997, 9, 9, 9, 0),
+                          datetime(1997, 9, 16, 9, 0)])
+
+    def testStr(self):
+        self.assertEqual(list(rrulestr(
+                              "DTSTART:19970902T090000\n"
+                              "RRULE:FREQ=YEARLY;COUNT=3\n"
+                              )),
+                         [datetime(1997, 9, 2, 9, 0),
+                          datetime(1998, 9, 2, 9, 0),
+                          datetime(1999, 9, 2, 9, 0)])
+
+    def testStrType(self):
+        self.assertEqual(isinstance(rrulestr(
+                              "DTSTART:19970902T090000\n"
+                              "RRULE:FREQ=YEARLY;COUNT=3\n"
+                              ), rrule), True)
+
+    def testStrForceSetType(self):
+        self.assertEqual(isinstance(rrulestr(
+                              "DTSTART:19970902T090000\n"
+                              "RRULE:FREQ=YEARLY;COUNT=3\n"
+                              , forceset=True), rruleset), True)
+
+    def testStrSetType(self):
+        self.assertEqual(isinstance(rrulestr(
+                              "DTSTART:19970902T090000\n"
+                              "RRULE:FREQ=YEARLY;COUNT=2;BYDAY=TU\n"
+                              "RRULE:FREQ=YEARLY;COUNT=1;BYDAY=TH\n"
+                              ), rruleset), True)
+
+    def testStrCase(self):
+        self.assertEqual(list(rrulestr(
+                              "dtstart:19970902T090000\n"
+                              "rrule:freq=yearly;count=3\n"
+                              )),
+                         [datetime(1997, 9, 2, 9, 0),
+                          datetime(1998, 9, 2, 9, 0),
+                          datetime(1999, 9, 2, 9, 0)])
+
+    def testStrSpaces(self):
+        self.assertEqual(list(rrulestr(
+                              " DTSTART:19970902T090000 "
+                              " RRULE:FREQ=YEARLY;COUNT=3 "
+                              )),
+                         [datetime(1997, 9, 2, 9, 0),
+                          datetime(1998, 9, 2, 9, 0),
+                          datetime(1999, 9, 2, 9, 0)])
+
+    def testStrSpacesAndLines(self):
+        self.assertEqual(list(rrulestr(
+                              " DTSTART:19970902T090000 \n"
+                              " \n"
+                              " RRULE:FREQ=YEARLY;COUNT=3 \n"
+                              )),
+                         [datetime(1997, 9, 2, 9, 0),
+                          datetime(1998, 9, 2, 9, 0),
+                          datetime(1999, 9, 2, 9, 0)])
+
+    def testStrNoDTStart(self):
+        self.assertEqual(list(rrulestr(
+                              "RRULE:FREQ=YEARLY;COUNT=3\n"
+                              , dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 2, 9, 0),
+                          datetime(1998, 9, 2, 9, 0),
+                          datetime(1999, 9, 2, 9, 0)])
+
+    def testStrValueOnly(self):
+        self.assertEqual(list(rrulestr(
+                              "FREQ=YEARLY;COUNT=3\n"
+                              , dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 2, 9, 0),
+                          datetime(1998, 9, 2, 9, 0),
+                          datetime(1999, 9, 2, 9, 0)])
+
+    def testStrUnfold(self):
+        self.assertEqual(list(rrulestr(
+                              "FREQ=YEA\n RLY;COUNT=3\n", unfold=True,
+                              dtstart=parse("19970902T090000"))),
+                         [datetime(1997, 9, 2, 9, 0),
+                          datetime(1998, 9, 2, 9, 0),
+                          datetime(1999, 9, 2, 9, 0)])
+
+    def testStrSet(self):
+        self.assertEqual(list(rrulestr(
+                              "DTSTART:19970902T090000\n"
+                              "RRULE:FREQ=YEARLY;COUNT=2;BYDAY=TU\n"
+                              "RRULE:FREQ=YEARLY;COUNT=1;BYDAY=TH\n"
+                              )),
+                         [datetime(1997, 9, 2, 9, 0),
+                          datetime(1997, 9, 4, 9, 0),
+                          datetime(1997, 9, 9, 9, 0)])
+
+    def testStrSetDate(self):
+        self.assertEqual(list(rrulestr(
+                              "DTSTART:19970902T090000\n"
+                              "RRULE:FREQ=YEARLY;COUNT=1;BYDAY=TU\n"
+                              "RDATE:19970904T090000\n"
+                              "RDATE:19970909T090000\n"
+                              )),
+                         [datetime(1997, 9, 2, 9, 0),
+                          datetime(1997, 9, 4, 9, 0),
+                          datetime(1997, 9, 9, 9, 0)])
+
+    def testStrSetExRule(self):
+        self.assertEqual(list(rrulestr(
+                              "DTSTART:19970902T090000\n"
+                              "RRULE:FREQ=YEARLY;COUNT=6;BYDAY=TU,TH\n"
+                              "EXRULE:FREQ=YEARLY;COUNT=3;BYDAY=TH\n"
+                              )),
+                         [datetime(1997, 9, 2, 9, 0),
+                          datetime(1997, 9, 9, 9, 0),
+                          datetime(1997, 9, 16, 9, 0)])
+
+    def testStrSetExDate(self):
+        self.assertEqual(list(rrulestr(
+                              "DTSTART:19970902T090000\n"
+                              "RRULE:FREQ=YEARLY;COUNT=6;BYDAY=TU,TH\n"
+                              "EXDATE:19970904T090000\n"
+                              "EXDATE:19970911T090000\n"
+                              "EXDATE:19970918T090000\n"
+                              )),
+                         [datetime(1997, 9, 2, 9, 0),
+                          datetime(1997, 9, 9, 9, 0),
+                          datetime(1997, 9, 16, 9, 0)])
+
+    def testStrSetDateAndExDate(self):
+        self.assertEqual(list(rrulestr(
+                              "DTSTART:19970902T090000\n"
+                              "RDATE:19970902T090000\n"
+                              "RDATE:19970904T090000\n"
+                              "RDATE:19970909T090000\n"
+                              "RDATE:19970911T090000\n"
+                              "RDATE:19970916T090000\n"
+                              "RDATE:19970918T090000\n"
+                              "EXDATE:19970904T090000\n"
+                              "EXDATE:19970911T090000\n"
+                              "EXDATE:19970918T090000\n"
+                              )),
+                         [datetime(1997, 9, 2, 9, 0),
+                          datetime(1997, 9, 9, 9, 0),
+                          datetime(1997, 9, 16, 9, 0)])
+
+    def testStrSetDateAndExRule(self):
+        self.assertEqual(list(rrulestr(
+                              "DTSTART:19970902T090000\n"
+                              "RDATE:19970902T090000\n"
+                              "RDATE:19970904T090000\n"
+                              "RDATE:19970909T090000\n"
+                              "RDATE:19970911T090000\n"
+                              "RDATE:19970916T090000\n"
+                              "RDATE:19970918T090000\n"
+                              "EXRULE:FREQ=YEARLY;COUNT=3;BYDAY=TH\n"
+                              )),
+                         [datetime(1997, 9, 2, 9, 0),
+                          datetime(1997, 9, 9, 9, 0),
+                          datetime(1997, 9, 16, 9, 0)])
+
+    def testStrKeywords(self):
+        self.assertEqual(list(rrulestr(
+                              "DTSTART:19970902T090000\n"
+                              "RRULE:FREQ=YEARLY;COUNT=3;INTERVAL=3;"
+                                    "BYMONTH=3;BYWEEKDAY=TH;BYMONTHDAY=3;"
+                                    "BYHOUR=3;BYMINUTE=3;BYSECOND=3\n"
+                              )),
+                         [datetime(2033, 3, 3, 3, 3, 3),
+                          datetime(2039, 3, 3, 3, 3, 3),
+                          datetime(2072, 3, 3, 3, 3, 3)])
+
+    def testStrNWeekDay(self):
+        self.assertEqual(list(rrulestr(
+                              "DTSTART:19970902T090000\n"
+                              "RRULE:FREQ=YEARLY;COUNT=3;BYDAY=1TU,-1TH\n"
+                              )),
+                         [datetime(1997, 12, 25, 9, 0),
+                          datetime(1998, 1, 6, 9, 0),
+                          datetime(1998, 12, 31, 9, 0)])
+
+
 
 class ParserTest(unittest.TestCase):
     def setUp(self):

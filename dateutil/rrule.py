@@ -984,10 +984,10 @@ class _rrulestr:
             forceset = True
             unfold = True
         s = s.upper()
-        lines = s.splitlines()
-        if not lines:
+        if not s.strip():
             raise ValueError, "empty string"
         if unfold:
+            lines = s.splitlines()
             i = 0
             while i < len(lines):
                 line = lines[i].rstrip()
@@ -999,14 +999,7 @@ class _rrulestr:
                 else:
                     i += 1
         else:
-            i = 0
-            while i < len(lines):
-                line = lines[i].strip()
-                if not line:
-                    del lines[i]
-                else:
-                    lines[i] = line
-                    i += 1
+            lines = s.split()
         if (not forceset and len(lines) == 1 and
             (s.find(':') == -1 or s.startswith('RRULE:'))):
             return self._parse_rfc_rrule(lines[0], cache=cache,
