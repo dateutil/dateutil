@@ -16,8 +16,10 @@ the standard '''datetime''' module, available in Python 2.3+.
   * Computing of relative deltas between two given
   date and/or datetime objects;
 
-  * Computing of dates based on recurrence rules, as specified
-  in the [ftp://ftp.rfc-editor.org/in-notes/rfc2445.txt iCalendar RFC].
+  * Computing of dates based on very flexible recurrence rules,
+  using a superset of the
+  [ftp://ftp.rfc-editor.org/in-notes/rfc2445.txt iCalendar]
+  specification. Parsing of RFC strings is supported as well.
 
   * Generic parsing of dates in almost any string format;
 
@@ -30,7 +32,16 @@ the standard '''datetime''' module, available in Python 2.3+.
   * Computing of Easter Sunday dates for any given year,
   using Western, Orthodox or Julian algorithms;
 
-== Modules ==
+  * More than 400 test cases.
+
+== Download ==
+  * attachment:python-dateutil-0.1.tar.bz2
+
+== Author ==
+GustavoNiemeyer <niemeyer@conectiva.com>
+
+== Documentation ==
+The following modules are available.
 
 === relativedelta ===
 This module offers the '''relativedelta''' type, which is based 
@@ -1751,6 +1762,4 @@ tzlocal()
 >>> 
 }}}
 
-== Author ==
-GustavoNiemeyer <niemeyer@conectiva.com>
-
+## vim:ft=moin
