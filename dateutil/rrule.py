@@ -201,23 +201,23 @@ class rrulebase:
         l = []
         if inc:
             for i in gen:
-                if not started:
+                if i > before:
+                    break
+                elif not started:
                     if i >= after:
                         started = True
                         l.append(i)
                 else:
-                    if i > before:
-                        break
                     l.append(i)
         else:
             for i in gen:
-                if not started:
+                if i >= before:
+                    break
+                elif not started:
                     if i > after:
                         started = True
                         l.append(i)
                 else:
-                    if i >= before:
-                        break
                     l.append(i)
         return l
 

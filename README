@@ -108,7 +108,7 @@ Notice that instead of {{{datetime}}} instances, you may use
 
 And the other way is to use any of the following keyword arguments:
 
-  year, month, day, hour, minute, seconds, microseconds::
+  year, month, day, hour, minute, second, microsecond::
   Absolute information.
 
   years, months, weeks, days, hours, minutes, seconds, microseconds::
