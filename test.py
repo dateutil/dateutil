@@ -140,19 +140,19 @@ class RelativeDeltaTest(unittest.TestCase):
 
 class ParserTest(unittest.TestCase):
     def setUp(self):
-        self.tzoffsets = {"BRST": -10800}
+        self.tzinfos = {"BRST": -10800}
         self.brsttz = tzoffset("BRST", -10800)
         self.default = datetime(2003, 9, 25)
 
     def testDateCommandFormat(self):
         self.assertEqual(parse("Thu Sep 25 10:36:28 BRST 2003",
-                               tzoffsets=self.tzoffsets),
+                               tzinfos=self.tzinfos),
                          datetime(2003, 9, 25, 10, 36, 28,
                                   tzinfo=self.brsttz))
 
     def testDateCommandFormatReversed(self):
         self.assertEqual(parse("2003 10:36:28 BRST 25 Sep Thu",
-                               tzoffsets=self.tzoffsets),
+                               tzinfos=self.tzinfos),
                          datetime(2003, 9, 25, 10, 36, 28,
                                   tzinfo=self.brsttz))
 
