@@ -18,7 +18,7 @@ parser = None
 rrule = None
 
 __all__ = ["tzutc", "tzoffset", "tzlocal", "tzfile", "tzrange",
-           "tzstr", "tzical", "tzwin", "gettz"]
+           "tzstr", "tzical", "tzwin", "tzwinlocal", "gettz"]
 
 try:
     from dateutil.tzwin import tzwin, tzwinlocal

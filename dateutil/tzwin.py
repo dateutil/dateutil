@@ -83,8 +83,8 @@ class tzwin(tzwinbase):
         tzkey.Close()
         handle.Close()
 
-        self._dstname = str(keydict["Dlt"])
-        self._stdname = str(keydict["Std"])
+        self._stdname = keydict["Std"].encode("iso-8859-1")
+        self._dstname = keydict["Dlt"].encode("iso-8859-1")
 
         self._display = keydict["Display"]
         
@@ -122,8 +122,8 @@ class tzwinlocal(tzwinbase):
         keydict = valuestodict(tzlocalkey)
         tzlocalkey.Close()
 
-        self._stdname = str(keydict["StandardName"])
-        self._dstname = str(keydict["DaylightName"])
+        self._stdname = keydict["StandardName"].encode("iso-8859-1")
+        self._dstname = keydict["DaylightName"].encode("iso-8859-1")
 
         try:
             tzkey = _winreg.OpenKey(handle, "%s\%s"%(TZKEYNAME, self._stdname))
