@@ -1,7 +1,7 @@
 #!/usr/bin/python
 from distutils.core import setup
 
-setup(name="dateutil",
+setup(name="python-dateutil",
       version = "0.1",
       description = "Extensions to the standard python 2.3+ datetime module",
       author = "Gustavo Niemeyer",
