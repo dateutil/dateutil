@@ -37,13 +37,13 @@ def gettz(name):
             del CACHE[CACHESIZE:]
     return tzinfo
 
-def rebuild(filename, tag=None):
+def rebuild(filename, tag=None, format="gz"):
     import tempfile, shutil
     tmpdir = tempfile.mkdtemp()
     zonedir = os.path.join(tmpdir, "zoneinfo")
     moduledir = os.path.dirname(__file__)
     if tag: tag = "-"+tag
-    targetname = "zoneinfo%s.tar.bz2" % tag
+    targetname = "zoneinfo%s.tar.%s" % (tag, format)
     try:
         tf = TarFile.open(filename)
         for name in tf.getnames():
@@ -56,9 +56,9 @@ def rebuild(filename, tag=None):
         tf.close()
         target = os.path.join(moduledir, targetname)
         for entry in os.listdir(moduledir):
-            if entry.startswith("zoneinfo") and entry.endswith(".tar.bz2"):
+            if entry.startswith("zoneinfo") and ".tar." in entry:
                 os.unlink(os.path.join(moduledir, entry))
-        tf = TarFile.open(target, "w:bz2")
+        tf = TarFile.open(target, "w:%s" % format)
         for entry in os.listdir(zonedir):
             entrypath = os.path.join(zonedir, entry)
             tf.add(entrypath, entry)
