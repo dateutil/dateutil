@@ -425,6 +425,26 @@ The following methods are available in {{{rrule}}} instances:
     With {{{inc == True}}}, they will be included in the list,
     if they are found in the recurrence set.
 
+    rrule.count()::
+    Returns the number of recurrences in this set. It will have
+    go trough the whole recurrence, if this hasn't been done
+    before.
+
+Besides these methods, {{{rrule}}} instances also support
+the {{{__getitem__()}}} and {{{__contains__()}}} special methods,
+meaning that these are valid expressions:
+{{{
+rr = rrule(...)
+if datetime(...) in rr:
+    ...
+print rr[0]
+print rr[-1]
+print rr[1:2]
+print rr[::-2]
+}}}
+
+The getitem/slicing mechanism is smart enough to avoid getting the whole
+recurrence set, if possible.
 
 ==== Notes ====
 
@@ -898,6 +918,27 @@ The following methods are available:
     if {{{after}}} and/or {{{before}}} are themselves occurrences.
     With {{{inc == True}}}, they will be included in the list,
     if they are found in the recurrence set.
+
+    rruleset.count()::
+    Returns the number of recurrences in this set. It will have
+    go trough the whole recurrence, if this hasn't been done
+    before.
+
+Besides these methods, {{{rruleset}}} instances also support
+the {{{__getitem__()}}} and {{{__contains__()}}} special methods,
+meaning that these are valid expressions:
+{{{
+set = rruleset(...)
+if datetime(...) in set:
+    ...
+print set[0]
+print set[-1]
+print set[1:2]
+print set[::-2]
+}}}
+
+The getitem/slicing mechanism is smart enough to avoid getting the whole
+recurrence set, if possible.
 
 ==== rruleset examples ====
 Daily, for 7 days, jumping Saturday and Sunday occurrences.
