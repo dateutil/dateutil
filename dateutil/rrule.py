@@ -1009,8 +1009,9 @@ class _rrulestr:
                     i += 1
         if (not forceset and len(lines) == 1 and
             (s.find(':') == -1 or s.startswith('RRULE:'))):
-            return self._parse_rfc_rrule(s, cache=cache, dtstart=dtstart,
-                                         ignoretz=ignoretz, tzinfos=tzinfos)
+            return self._parse_rfc_rrule(lines[0], cache=cache,
+                                         dtstart=dtstart, ignoretz=ignoretz,
+                                         tzinfos=tzinfos)
         else:
             rrulevals = []
             rdatevals = []
