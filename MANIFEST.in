@@ -1,3 +1,3 @@
-recursive-include dateutil *.py
+recursive-include dateutil *.py *.tar.*
 include setup.py setup.cfg MANIFEST.in README LICENSE Makefile
 include test.py

@@ -10,13 +10,22 @@ __license__ = "PSF License"
 import datetime
 import struct
 import time
+import sys
+import os
 
 relativedelta = None
 parser = None
 rrule = None
 
-__all__ = ["tzutc", "tzoffset", "tzlocal", "tzfile",
-           "tzrange", "tzstr", "tzical", "gettz"]
+__all__ = ["tzutc", "tzoffset", "tzlocal", "tzfile", "tzrange",
+           "tzstr", "tzical", "tzwin", "gettz"]
+
+try:
+    import _winreg
+except ImportError:
+    tzwin = None
+else:
+    from dateutil.tzwin import tzwin
 
 ZERO = datetime.timedelta(0)
 EPOCHORDINAL = datetime.datetime.utcfromtimestamp(0).toordinal()
@@ -188,12 +197,12 @@ class tzfile(datetime.tzinfo):
     
     def __init__(self, fileobj):
         if isinstance(fileobj, basestring):
-            self._s = fileobj
+            self._filename = fileobj
             fileobj = open(fileobj)
         elif hasattr(fileobj, "name"):
-            self._s = fileobj.name
+            self._filename = fileobj.name
         else:
-            self._s = `fileobj`
+            self._filename = `fileobj`
 
         # From tzfile(5):
         #
@@ -453,9 +462,12 @@ class tzfile(datetime.tzinfo):
 
 
     def __repr__(self):
-        return "%s(%s)" % (self.__class__.__name__, `self._s`)
+        return "%s(%s)" % (self.__class__.__name__, `self._filename`)
 
-    __reduce__ = object.__reduce__
+    def __reduce__(self):
+        if not os.path.isfile(self._filename):
+            raise ValueError, "Unpickable %s class" % self.__class__.__name__
+        return (self.__class__, (self._filename,))
 
 class tzrange(datetime.tzinfo):
 
@@ -843,8 +855,6 @@ class tzical:
 
     def __repr__(self):
         return "%s(%s)" % (self.__class__.__name__, `self._s`)
-
-import sys, os
 
 TZFILES = ["/etc/localtime", "localtime"]
 TZPATHS = ["/usr/share/zoneinfo", "/usr/lib/zoneinfo", "/etc/zoneinfo"]

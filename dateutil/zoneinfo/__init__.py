@@ -7,6 +7,10 @@ __all__ = ["setcachesize", "gettz", "rebuild"]
 CACHE = []
 CACHESIZE = 10
 
+class tzfile(tzfile):
+    def __reduce__(self):
+        return (gettz, (self._filename,))
+
 ZONEINFOFILE = None
 for entry in os.listdir(os.path.dirname(__file__)):
     if entry.startswith("zoneinfo") and ".tar." in entry:
