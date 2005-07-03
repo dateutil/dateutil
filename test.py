@@ -3350,6 +3350,10 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(parse("01m02h", default=self.default),
                          datetime(2003, 9, 25, 2, 1))
 
+    def testRandomFormat35(self):
+        self.assertEqual(parse("2004 10 Apr 11h30m", default=self.default),
+                         datetime(2004, 4, 10, 11, 30))
+
     def testIncreasingCTime(self):
         # This test will check 200 different years, every month, every day,
         # every hour, every minute, every second, and every weekday, using
