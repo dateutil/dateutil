@@ -1243,7 +1243,7 @@ If {{{dayfirst}}} is {{{True}}} and {{{yearfirst}}} is {{{True}}}:
 ==== Converting two digit years ====
 When a two digit year is found, it is processed considering
 the current year, so that the computed year is never more
-than 49 years after then current year, nor 50 years before the
+than 49 years after the current year, nor 50 years before the
 current year. In other words, if we are in year 2003, and the
 year 30 is found, it will be considered as 2030, but if the
 year 60 is found, it will be considered 1960.
