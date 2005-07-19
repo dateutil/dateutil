@@ -76,8 +76,8 @@ And the Easter of that year is: 2004-04-11
 
 == Download ==
 The following files are available.
-  * attachment:python-dateutil-0.9.tar.bz2
-  * attachment:python-dateutil-0.9-1cl.noarch.rpm
+  * attachment:python-dateutil-1.0.tar.bz2
+  * attachment:python-dateutil-1.0-1cl.noarch.rpm
 
 == Author ==
 The dateutil module was written by GustavoNiemeyer <gustavo@niemeyer.net>.
