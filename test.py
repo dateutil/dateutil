@@ -17,6 +17,7 @@ from dateutil.parser import *
 from dateutil.easter import *
 from dateutil.rrule import *
 from dateutil.tz import *
+from dateutil import zoneinfo
 
 from datetime import *
 
@@ -3610,6 +3611,16 @@ END:VTIMEZONE
         
     def testFileEnd1(self):
         tz = tzfile(StringIO(base64.decodestring(self.TZFILE_EST5EDT)))
+        self.assertEqual(datetime(2003,10,26,0,59,tzinfo=tz).tzname(), "EDT")
+        self.assertEqual(datetime(2003,10,26,1,00,tzinfo=tz).tzname(), "EST")
+
+    def testZoneInfoFileStart1(self):
+        tz = zoneinfo.gettz("EST5EDT")
+        self.assertEqual(datetime(2003,4,6,1,59,tzinfo=tz).tzname(), "EST")
+        self.assertEqual(datetime(2003,4,6,2,00,tzinfo=tz).tzname(), "EDT")
+        
+    def testZoneInfoFileEnd1(self):
+        tz = zoneinfo.gettz("EST5EDT")
         self.assertEqual(datetime(2003,10,26,0,59,tzinfo=tz).tzname(), "EDT")
         self.assertEqual(datetime(2003,10,26,1,00,tzinfo=tz).tzname(), "EST")
 
