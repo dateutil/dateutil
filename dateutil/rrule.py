@@ -153,6 +153,8 @@ class rrulebase:
             for i in self:
                 if i == item:
                     return True
+                elif i > item:
+                    return False
         return False
 
     # __len__() introduces a large performance penality.
