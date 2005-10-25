@@ -1,4 +1,22 @@
 
+Version 1.1
+-----------
+
+- Fixed rrule byyearday handling. Abramo Bagnara pointed out that
+  RFC2445 allows negative numbers.
+
+- Updating timezone information to version 2005n.
+
+
+Version 1.0
+-----------
+
+- Fixed parsing of XXhXXm formatted time after day/month/year
+  has been parsed.
+
+- Added patch by Jeffrey Harris optimizing rrule.__contains__.
+
+
 Version 0.9
 -----------
 
