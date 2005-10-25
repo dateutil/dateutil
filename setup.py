@@ -10,7 +10,7 @@ if os.path.isfile("MANIFEST"):
 PYTHONLIB = get_python_lib(1)
 
 setup(name="python-dateutil",
-      version = "1.0",
+      version = "1.1",
       description = "Extensions to the standard python 2.3+ datetime module",
       author = "Gustavo Niemeyer",
       author_email = "niemeyer@conectiva.com",
