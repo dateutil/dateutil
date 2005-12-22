@@ -20,11 +20,18 @@ class tzfile(tzfile):
     def __reduce__(self):
         return (gettz, (self._filename,))
 
-ZONEINFOFILE = None
-for entry in os.listdir(os.path.dirname(__file__)):
-    if entry.startswith("zoneinfo") and ".tar." in entry:
-        ZONEINFOFILE = os.path.join(os.path.dirname(__file__), entry)
-        break
+def getzoneinfofile():
+    filenames = os.listdir(os.path.join(os.path.dirname(__file__)))
+    filenames.sort()
+    filenames.reverse()
+    for entry in filenames:
+        if entry.startswith("zoneinfo") and ".tar." in entry:
+            return os.path.join(os.path.dirname(__file__), entry)
+    return None
+
+ZONEINFOFILE = getzoneinfofile()
+
+del getzoneinfofile
 
 def setcachesize(size):
     global CACHESIZE, CACHE
