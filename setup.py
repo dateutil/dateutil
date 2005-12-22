@@ -13,7 +13,7 @@ PYTHONLIB = join(get_python_lib(standard_lib=1, prefix=''), 'site-packages')
 ZONEINFO = join("dateutil", "zoneinfo")
 
 setup(name="python-dateutil",
-      version = "1.2",
+      version = "1.1",
       description = "Extensions to the standard python 2.3+ datetime module",
       author = "Gustavo Niemeyer",
       author_email = "gustavo@niemeyer.net",
