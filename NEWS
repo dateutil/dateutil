@@ -5,7 +5,9 @@ Version 1.1
 - Fixed rrule byyearday handling. Abramo Bagnara pointed out that
   RFC2445 allows negative numbers.
 
-- Updating timezone information to version 2005n.
+- Fixed --prefix handling in setup.py (by Sidnei da Silva).
+
+- Updating timezone information to version 2005q.
 
 
 Version 1.0
