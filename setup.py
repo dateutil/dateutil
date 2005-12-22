@@ -9,7 +9,7 @@ if isfile("MANIFEST"):
     os.unlink("MANIFEST")
 
 # Get PYTHONLIB with no prefix so --prefix installs work.
-PYTHONLIB = get_python_lib(1, 0, '')
+PYTHONLIB = join(get_python_lib(standard_lib=1, prefix=''), 'site-packages')
 ZONEINFO = join("dateutil", "zoneinfo")
 
 setup(name="python-dateutil",
