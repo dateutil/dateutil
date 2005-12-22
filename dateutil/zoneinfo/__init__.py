@@ -8,7 +8,7 @@ from dateutil.tz import tzfile
 from tarfile import TarFile
 import os
 
-__author__ = "Gustavo Niemeyer <niemeyer@conectiva.com>"
+__author__ = "Gustavo Niemeyer <gustavo@niemeyer.net>"
 __license__ = "PSF License"
 
 __all__ = ["setcachesize", "gettz", "rebuild"]

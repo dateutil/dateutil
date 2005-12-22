@@ -448,14 +448,18 @@ class rrule(rrulebase):
             for i in dayset[start:end]:
                 if ((bymonth and ii.mmask[i] not in bymonth) or
                     (byweekno and not ii.wnomask[i]) or
-                    (byyearday and (i%ii.yearlen)+1 not in byyearday
-                               and -ii.yearlen+i not in byyearday) or
                     (byweekday and ii.wdaymask[i] not in byweekday) or
                     (ii.nwdaymask and not ii.nwdaymask[i]) or
                     (byeaster and not ii.eastermask[i]) or
                     ((bymonthday or bynmonthday) and
                      ii.mdaymask[i] not in bymonthday and
-                     ii.nmdaymask[i] not in bynmonthday)):
+                     ii.nmdaymask[i] not in bynmonthday) or
+                    (byyearday and
+                     ((i < ii.yearlen and i+1 not in byyearday
+                                      and -ii.yearlen+i not in byyearday) or
+                      (i >= ii.yearlen and i+1-ii.yearlen not in byyearday
+                                       and -ii.nextyearlen+i-ii.yearlen
+                                           not in byyearday)))):
                     dayset[i] = None
                     filtered = True
 
@@ -617,7 +621,7 @@ class rrule(rrulebase):
 
 class _iterinfo(object):
     __slots__ = ["rrule", "lastyear", "lastmonth",
-                 "yearlen", "yearordinal", "yearweekday",
+                 "yearlen", "nextyearlen", "yearordinal", "yearweekday",
                  "mmask", "mrange", "mdaymask", "nmdaymask",
                  "wdaymask", "wnomask", "nwdaymask", "eastermask"]
 
@@ -631,6 +635,7 @@ class _iterinfo(object):
         rr = self.rrule
         if year != self.lastyear:
             self.yearlen = 365+calendar.isleap(year)
+            self.nextyearlen = 365+calendar.isleap(year+1)
             firstyday = datetime.date(year, 1, 1)
             self.yearordinal = firstyday.toordinal()
             self.yearweekday = firstyday.weekday()
