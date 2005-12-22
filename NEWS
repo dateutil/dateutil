@@ -7,6 +7,9 @@ Version 1.1
 
 - Fixed --prefix handling in setup.py (by Sidnei da Silva).
 
+- Now tz.gettz() returns a tzlocal instance when not given any
+  arguments and no other timezone information is found.
+
 - Updating timezone information to version 2005q.
 
 
