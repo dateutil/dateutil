@@ -1,9 +1,9 @@
 #!/usr/bin/python
 from distutils.sysconfig import get_python_lib
 from distutils.core import setup
+from os.path import isfile, join
 import glob
 import os
-from os.path import isfile, join
 
 if isfile("MANIFEST"):
     os.unlink("MANIFEST")
