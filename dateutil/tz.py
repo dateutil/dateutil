@@ -884,6 +884,8 @@ def gettz(name=None):
                     break
                 except (IOError, OSError, ValueError):
                     pass
+        else:
+            tz = tzlocal()
     else:
         if name.startswith(":"):
             name = name[:-1]
