@@ -1,3 +1,10 @@
+Version 1.2
+-----------
+
+- Now tzfile will round timezones to full-minutes if necessary,
+  since Python's datetime doesn't support sub-minute offsets.
+  Thanks to Ilpo Nyyssönen for reporting the issue.
+
 
 Version 1.1
 -----------
