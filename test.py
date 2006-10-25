@@ -2933,6 +2933,19 @@ class RRuleTest(unittest.TestCase):
                           datetime(1998, 1, 6, 9, 0),
                           datetime(1998, 12, 31, 9, 0)])
 
+    def testBadBySetPos(self):
+        self.assertRaises(ValueError,
+                          rrule, MONTHLY,
+                                 count=1,
+                                 bysetpos=0,
+                                 dtstart=parse("19970902T090000"))
+
+    def testBadBySetPosMany(self):
+        self.assertRaises(ValueError,
+                          rrule, MONTHLY,
+                                 count=1,
+                                 bysetpos=(-1,0,1),
+                                 dtstart=parse("19970902T090000"))
 
 
 class ParserTest(unittest.TestCase):

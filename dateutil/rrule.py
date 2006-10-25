@@ -257,9 +257,16 @@ class rrule(rrulebase):
         if bysetpos is None:
             self._bysetpos = None
         elif type(bysetpos) is int:
+            if bysetpos == 0 or not (-366 <= bysetpos <= 366):
+                raise ValueError("bysetpos must be between 1 and 366, "
+                                 "or between -366 and -1")
             self._bysetpos = (bysetpos,)
         else:
             self._bysetpos = tuple(bysetpos)
+            for pos in self._bysetpos:
+                if pos == 0 or not (-366 <= pos <= 366):
+                    raise ValueError("bysetpos must be between 1 and 366, "
+                                     "or between -366 and -1")
         if not (byweekno or byyearday or bymonthday or
                 byweekday is not None or byeaster is not None):
             if freq == YEARLY:
