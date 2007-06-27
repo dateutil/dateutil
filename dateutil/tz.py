@@ -297,7 +297,7 @@ class tzfile(datetime.tzinfo):
 
         # Not used, for now
         if leapcnt:
-            leap = struct.unpack(">%dl" % leapcnt*2,
+            leap = struct.unpack(">%dl" % (leapcnt*2),
                                  fileobj.read(leapcnt*8))
 
         # Then there are tzh_ttisstdcnt standard/wall
