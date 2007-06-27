@@ -5,6 +5,11 @@ Version 1.2
   since Python's datetime doesn't support sub-minute offsets.
   Thanks to Ilpo Nyyssönen for reporting the issue.
 
+- Removed bare string exceptions, as reported and fixed by
+  Wilfredo Sánchez Vega.
+
+- Fix bug in leap count parsing (reported and fixed by Eugene Oden).
+
 
 Version 1.1
 -----------
