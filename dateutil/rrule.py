@@ -972,9 +972,9 @@ class _rrulestr:
                                                ignoretz=ignoretz,
                                                tzinfos=tzinfos)
             except AttributeError:
-                raise "unknown parameter '%s'" % name
+                raise ValueError, "unknown parameter '%s'" % name
             except (KeyError, ValueError):
-                raise "invalid '%s': %s" % (name, value)
+                raise ValueError, "invalid '%s': %s" % (name, value)
         return rrule(dtstart=dtstart, cache=cache, **rrkwargs)
 
     def _parse_rfc(self, s,
