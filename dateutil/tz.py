@@ -753,6 +753,8 @@ class tzical:
             else:
                 i += 1
 
+        tzid = None
+        comps = []
         invtz = False
         comptype = None
         for line in lines:
