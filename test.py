@@ -3548,6 +3548,14 @@ class ParserTest(unittest.TestCase):
             self.assertEqual(parse(dt.isoformat()), dt)
             dt += delta
 
+    def testMicrosecondsPrecisionError(self):
+        # Skip found out that sad precision problem. :-(
+        dt1 = parse("00:11:25.01")
+        dt2 = parse("00:12:10.01")
+        self.assertEquals(dt1.microsecond, 10000)
+        self.assertEquals(dt2.microsecond, 10000)
+
+
 class EasterTest(unittest.TestCase):
     easterlist = [
                  # WESTERN            ORTHODOX

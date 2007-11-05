@@ -387,9 +387,7 @@ class parser:
                             res.hour = int(s[:2])
                             res.minute = int(s[2:4])
                             value = float(s[4:])
-                            res.second = int(value)
-                            if value%1:
-                                res.microsecond = int(1000000*(value%1))
+                            res.second, res.microsecond = _parsems(value)
                     elif len_li == 8:
                         # YYYYMMDD
                         s = l[i-1]
@@ -423,9 +421,7 @@ class parser:
                                 if value%1:
                                     res.second = int(60*(value%1))
                             elif idx == 2:
-                                res.second = int(value)
-                                if value%1:
-                                    res.microsecond = int(1000000*(value%1))
+                                res.second, res.microsecond = _parsems(value)
                             i += 1
                             if i >= len_l or idx == 2:
                                 break
@@ -452,9 +448,7 @@ class parser:
                         i += 1
                         if i < len_l and l[i] == ':':
                             value = float(l[i+1])
-                            res.second = int(value)
-                            if value%1:
-                                res.microsecond = int(1000000*(value%1))
+                            res.second, res.microsecond = _parsems(value)
                             i += 2
                     elif i < len_l and l[i] in ('-', '/', '.'):
                         sep = l[i]
@@ -871,5 +865,9 @@ class _tzparser:
 DEFAULTTZPARSER = _tzparser()
 def _parsetz(tzstr):
     return DEFAULTTZPARSER.parse(tzstr)
+
+def _parsems(value):
+    return int(value), int(value * 1000000) - int(value) * 1000000
+
 
 # vim:ts=4:sw=4:et
