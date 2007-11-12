@@ -4,16 +4,23 @@ from distutils.core import setup
 from os.path import isfile, join
 import glob
 import os
+import re
+
 
 if isfile("MANIFEST"):
     os.unlink("MANIFEST")
+
 
 # Get PYTHONLIB with no prefix so --prefix installs work.
 PYTHONLIB = join(get_python_lib(standard_lib=1, prefix=''), 'site-packages')
 ZONEINFO = join("dateutil", "zoneinfo")
 
+VERSION = re.search('__version__ = "([^"]+)"',
+                    open("dateutil/__init__.py").read()).group(1)
+
+
 setup(name="python-dateutil",
-      version = "1.2",
+      version = VERSION,
       description = "Extensions to the standard python 2.3+ datetime module",
       author = "Gustavo Niemeyer",
       author_email = "gustavo@niemeyer.net",
