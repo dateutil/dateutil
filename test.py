@@ -1,6 +1,9 @@
 #!/usr/bin/python
-import unittest
+# -*- encoding: utf-8 -*-
 from cStringIO import StringIO
+import unittest
+import calendar
+import time
 import base64
 import os
 
@@ -21,8 +24,6 @@ from dateutil import zoneinfo
 
 from datetime import *
 
-import calendar
-import time
 
 class RelativeDeltaTest(unittest.TestCase):
     now = datetime(2003, 9, 17, 20, 54, 47, 282310)
@@ -2949,6 +2950,7 @@ class RRuleTest(unittest.TestCase):
 
 
 class ParserTest(unittest.TestCase):
+
     def setUp(self):
         self.tzinfos = {"BRST": -10800}
         self.brsttz = tzoffset("BRST", -10800)
@@ -3554,6 +3556,16 @@ class ParserTest(unittest.TestCase):
         dt2 = parse("00:12:10.01")
         self.assertEquals(dt1.microsecond, 10000)
         self.assertEquals(dt2.microsecond, 10000)
+
+    def testCustomParserInfo(self):
+        # Custom parser info wasn't working, as Michael Elsdörfer discovered.
+        from dateutil.parser import parserinfo, parser
+        class myparserinfo(parserinfo):
+            MONTHS = parserinfo.MONTHS[:]
+            MONTHS[0] = ("Foo", "Foo")
+        myparser = parser(myparserinfo())
+        dt = myparser.parse("01/Foo/2007")
+        self.assertEquals(dt, datetime(2007, 1, 1))
 
 
 class EasterTest(unittest.TestCase):

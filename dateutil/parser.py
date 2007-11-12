@@ -8,16 +8,23 @@ datetime module.
 __author__ = "Gustavo Niemeyer <gustavo@niemeyer.net>"
 __license__ = "PSF License"
 
-import os.path
-import string
-import sys
-import time
-
 import datetime
+import string
+import time
+import sys
+import os
+
+try:
+    from cStringIO import StringIO
+except ImportError:
+    from StringIO import StringIO
+
 import relativedelta
 import tz
 
+
 __all__ = ["parse", "parserinfo"]
+
 
 # Some pointers:
 #
@@ -28,12 +35,9 @@ __all__ = ["parse", "parserinfo"]
 # http://search.cpan.org/author/MUIR/Time-modules-2003.0211/lib/Time/ParseDate.pm
 # http://stein.cshl.org/jade/distrib/docs/java.text.SimpleDateFormat.html
 
-try:
-    from cStringIO import StringIO
-except ImportError:
-    from StringIO import StringIO
 
-class _timelex:
+class _timelex(object):
+
     def __init__(self, instream):
         if isinstance(instream, basestring):
             instream = StringIO(instream)
@@ -139,6 +143,7 @@ class _timelex:
         return list(cls(s))
     split = classmethod(split)
 
+
 class _resultbase(object):
 
     def __init__(self):
@@ -156,7 +161,8 @@ class _resultbase(object):
     def __repr__(self):
         return self._repr(self.__class__.__name__)
 
-class parserinfo:
+
+class parserinfo(object):
 
     # m from a.m/p.m, t from ISO T separator
     JUMP = [" ", ".", ",", ";", "-", "/", "'",
@@ -281,15 +287,10 @@ class parserinfo:
         return True
 
 
-class parser:
+class parser(object):
 
-    def __init__(self, info=parserinfo):
-        if issubclass(info, parserinfo):
-            self.info = parserinfo()
-        elif isinstance(info, parserinfo):
-            self.info = info
-        else:
-            raise TypeError, "Unsupported parserinfo type"
+    def __init__(self, info=None):
+        self.info = info or parserinfo()
 
     def parse(self, timestr, default=None,
                     ignoretz=False, tzinfos=None,
@@ -693,7 +694,8 @@ def parse(timestr, parserinfo=None, **kwargs):
     else:
         return DEFAULTPARSER.parse(timestr, **kwargs)
 
-class _tzparser:
+
+class _tzparser(object):
 
     class _result(_resultbase):
 
@@ -862,9 +864,11 @@ class _tzparser:
 
         return res
 
+
 DEFAULTTZPARSER = _tzparser()
 def _parsetz(tzstr):
     return DEFAULTTZPARSER.parse(tzstr)
+
 
 def _parsems(value):
     return int(value), int(value * 1000000) - int(value) * 1000000
