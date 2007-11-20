@@ -14,6 +14,8 @@ Version 1.3
 - Version is now published in dateutil.__version__, as requested
   by Darren Dale.
 
+- All code is compatible with new-style division.
+
 
 Version 1.2
 -----------

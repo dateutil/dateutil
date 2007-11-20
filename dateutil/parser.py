@@ -210,7 +210,7 @@ class parserinfo(object):
         self.yearfirst = yearfirst
 
         self._year = time.localtime().tm_year
-        self._century = self._year/100*100
+        self._century = self._year//100*100
 
     def _convert(self, lst):
         dct = {}
