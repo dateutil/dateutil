@@ -3877,6 +3877,15 @@ END:VTIMEZONE
         self.assertEqual(datetime(2003,10,26,0,59,tzinfo=tz).tzname(), "EDT")
         self.assertEqual(datetime(2003,10,26,1,00,tzinfo=tz).tzname(), "EST")
 
+    def testZoneInfoOffsetSignal(self):
+        utc = gettz("UTC")
+        nyc = zoneinfo.gettz("America/New_York")
+        t0 = datetime(2007,11,4,0,30, tzinfo=nyc)
+        t1 = t0.astimezone(utc)
+        t2 = t1.astimezone(nyc)
+        self.assertEquals(t0, t2)
+        self.assertEquals(nyc.dst(t0), timedelta(hours=1))
+
     def testICalStart1(self):
         tz = tzical(StringIO(self.TZICAL_EST5EDT)).get()
         self.assertEqual(datetime(2003,4,6,1,59,tzinfo=tz).tzname(), "EST")
