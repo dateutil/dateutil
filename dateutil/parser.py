@@ -741,6 +741,8 @@ class _tzparser(object):
                     if (i < len_l and
                         (l[i] in ('+', '-') or l[i][0] in "0123456789")):
                         if l[i] in ('+', '-'):
+                            # Yes, that's right.  See the TZ variable
+                            # documentation.
                             signal = (1,-1)[l[i] == '+']
                             i += 1
                         else:
@@ -863,7 +865,7 @@ class _tzparser(object):
 
         except (IndexError, ValueError, AssertionError):
             return None
-
+        
         return res
 
 

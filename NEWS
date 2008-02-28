@@ -1,10 +1,20 @@
 Version 1.4
 -----------
 
-- Fixed another precision problem on conversion of decimal seconds to
-  microseconds, as reported by Erik Brown.  Now they're gone for real,
-  since it's not using floating point arithmetic anymore.
+- Fixed another parser precision problem on conversion of decimal seconds
+  to microseconds, as reported by Erik Brown.  Now these issues are gone
+  for real since it's not using floating point arithmetic anymore.
 
+- Fixed case where tzrange.utcoffset and tzrange.dst() might fail due
+  to a date being used where a datetime was expected (reported and fixed
+  by Lennart Regebro).
+
+- Prevent tzstr from introducing daylight timings in strings that didn't
+  specify them (reported by Lennart Regebro).
+
+- Calls like gettz("GMT+3") and gettz("UTC-2") will now return the
+  expected values, instead of the TZ variable behavior.
+  
 
 
 Version 1.3

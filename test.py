@@ -3871,7 +3871,7 @@ END:VTIMEZONE
         tz = zoneinfo.gettz("EST5EDT")
         self.assertEqual(datetime(2003,4,6,1,59,tzinfo=tz).tzname(), "EST")
         self.assertEqual(datetime(2003,4,6,2,00,tzinfo=tz).tzname(), "EDT")
-        
+
     def testZoneInfoFileEnd1(self):
         tz = zoneinfo.gettz("EST5EDT")
         self.assertEqual(datetime(2003,10,26,0,59,tzinfo=tz).tzname(), "EDT")
@@ -3898,6 +3898,29 @@ END:VTIMEZONE
         # Eugene Oden notified about the issue.
         tz = tzfile(StringIO(base64.decodestring(self.NEW_YORK)))
         self.assertEquals(datetime(2007,3,31,20,12).tzname(), None)
+
+    def testBrokenIsDstHandling(self):
+        # tzrange._isdst() was using a date() rather than a datetime().
+        # Issue reported by Lennart Regebro.
+        dt = datetime(2007,8,6,4,10, tzinfo=tzutc())
+        self.assertEquals(dt.astimezone(tz=gettz("GMT+2")),
+                          datetime(2007,8,6,6,10, tzinfo=tzstr("GMT+2")))
+
+    def testGMTHasNoDaylight(self):
+        # tzstr("GMT+2") improperly considered daylight saving time.
+        # Issue reported by Lennart Regebro.
+        dt = datetime(2007,8,6,4,10)
+        self.assertEquals(gettz("GMT+2").dst(dt), timedelta(0))
+
+    def testGMTOffset(self):
+        # GMT and UTC offsets have inverted signal when compared to the
+        # usual TZ variable handling.
+        dt = datetime(2007,8,6,4,10, tzinfo=tzutc())
+        self.assertEquals(dt.astimezone(tz=tzstr("GMT+2")),
+                          datetime(2007,8,6,6,10, tzinfo=tzstr("GMT+2")))
+        self.assertEquals(dt.astimezone(tz=gettz("UTC-2")),
+                          datetime(2007,8,6,2,10, tzinfo=tzstr("UTC-2")))
+
 
 if __name__ == "__main__":
 	unittest.main()
