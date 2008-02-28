@@ -3557,6 +3557,20 @@ class ParserTest(unittest.TestCase):
         self.assertEquals(dt1.microsecond, 10000)
         self.assertEquals(dt2.microsecond, 10000)
 
+    def testMicrosecondPrecisionErrorReturns(self):
+        # One more precision issue, discovered by Eric Brown.  This should
+        # be the last one, as we're no longer using floating points.
+        for ms in [100001, 100000, 99999, 99998,
+                    10001,  10000,  9999,  9998,
+                     1001,   1000,   999,   998,
+                      101,    100,    99,    98]:
+            dt = datetime(2008, 2, 27, 21, 26, 1, ms)
+            self.assertEquals(parse(dt.isoformat()), dt)
+
+    def testHighPrecisionSeconds(self):
+        self.assertEquals(parse("20080227T21:26:01.123456789"),
+                          datetime(2008, 2, 27, 21, 26, 1, 123456))
+
     def testCustomParserInfo(self):
         # Custom parser info wasn't working, as Michael Elsdörfer discovered.
         from dateutil.parser import parserinfo, parser

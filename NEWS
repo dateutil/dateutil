@@ -1,3 +1,12 @@
+Version 1.4
+-----------
+
+- Fixed another precision problem on conversion of decimal seconds to
+  microseconds, as reported by Erik Brown.  Now they're gone for real,
+  since it's not using floating point arithmetic anymore.
+
+
+
 Version 1.3
 -----------
 

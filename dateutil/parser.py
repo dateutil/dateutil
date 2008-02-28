@@ -361,9 +361,11 @@ class parser(object):
 
                 # Check if it's a number
                 try:
-                    value = float(l[i])
+                    value_repr = l[i]
+                    value = float(value_repr)
                 except ValueError:
                     value = None
+
                 if value is not None:
                     # Token is a number
                     len_li = len(l[i])
@@ -387,8 +389,7 @@ class parser(object):
                             # 19990101T235959[.59]
                             res.hour = int(s[:2])
                             res.minute = int(s[2:4])
-                            value = float(s[4:])
-                            res.second, res.microsecond = _parsems(value)
+                            res.second, res.microsecond = _parsems(s[4:])
                     elif len_li == 8:
                         # YYYYMMDD
                         s = l[i-1]
@@ -422,13 +423,15 @@ class parser(object):
                                 if value%1:
                                     res.second = int(60*(value%1))
                             elif idx == 2:
-                                res.second, res.microsecond = _parsems(value)
+                                res.second, res.microsecond = \
+                                    _parsems(value_repr)
                             i += 1
                             if i >= len_l or idx == 2:
                                 break
                             # 12h00
                             try:
-                                value = float(l[i])
+                                value_repr = l[i]
+                                value = float(value_repr)
                             except ValueError:
                                 break
                             else:
@@ -448,8 +451,7 @@ class parser(object):
                             res.second = int(60*(value%1))
                         i += 1
                         if i < len_l and l[i] == ':':
-                            value = float(l[i+1])
-                            res.second, res.microsecond = _parsems(value)
+                            res.second, res.microsecond = _parsems(l[i+1])
                             i += 2
                     elif i < len_l and l[i] in ('-', '/', '.'):
                         sep = l[i]
@@ -871,7 +873,12 @@ def _parsetz(tzstr):
 
 
 def _parsems(value):
-    return int(value), int(value * 1000000) - int(value) * 1000000
+    """Parse a I[.F] seconds value into (seconds, microseconds)."""
+    if "." not in value:
+        return int(value), 0
+    else:
+        i, f = value.split(".")
+        return int(i), int(f.ljust(6, "0")[:6])
 
 
 # vim:ts=4:sw=4:et
