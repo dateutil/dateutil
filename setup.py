@@ -30,4 +30,5 @@ datetime module, available in Python 2.3+.
       packages = ["dateutil", "dateutil.zoneinfo"],
       package_data={"": ["*.tar.gz"]},
       include_package_data=True,
+      zip_safe=False,
       )
