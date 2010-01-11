@@ -11,8 +11,9 @@ if isfile("MANIFEST"):
     os.unlink("MANIFEST")
 
 
+TOPDIR = os.path.dirname(__file__) or "."
 VERSION = re.search('__version__ = "([^"]+)"',
-                    open("dateutil/__init__.py").read()).group(1)
+                    open(TOPDIR + "/dateutil/__init__.py").read()).group(1)
 
 
 setup(name="python-dateutil",
