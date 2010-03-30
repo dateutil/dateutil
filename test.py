@@ -131,6 +131,11 @@ class RelativeDeltaTest(unittest.TestCase):
         self.assertEqual(self.today+relativedelta(yearday=261),
                          date(2003, 9, 18))
 
+    def testYearDayBug(self):
+        # Tests a problem reported by Adam Ryan.
+        self.assertEqual(date(2010, 1, 1)+relativedelta(yearday=15),
+                         date(2010, 1, 15))
+
     def testNonLeapYearDay(self):
         self.assertEqual(date(2003, 1, 1)+relativedelta(nlyearday=260),
                          date(2003, 9, 17))

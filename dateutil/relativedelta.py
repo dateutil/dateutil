@@ -190,7 +190,7 @@ Here is the behavior of operations with relativedelta:
                     if yday <= ydays:
                         self.month = idx+1
                         if idx == 0:
-                            self.day = ydays
+                            self.day = yday
                         else:
                             self.day = yday-ydayidx[idx-1]
                         break
