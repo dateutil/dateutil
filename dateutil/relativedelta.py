@@ -423,6 +423,7 @@ Here is the behavior of operations with relativedelta:
                 self.hours == other.hours and
                 self.minutes == other.minutes and
                 self.seconds == other.seconds and
+                self.microseconds == other.microseconds and
                 self.leapdays == other.leapdays and
                 self.year == other.year and
                 self.month == other.month and

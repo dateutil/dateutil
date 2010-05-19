@@ -226,6 +226,17 @@ class RelativeDeltaTest(unittest.TestCase):
         self.assertFalse(relativedelta(days=0))
         self.assertTrue(relativedelta(days=1))
 
+    def testComparison(self):
+        d1 = relativedelta(years=1, months=1, days=1, leapdays=0, hours=1, 
+                           minutes=1, seconds=1, microseconds=1)
+        d2 = relativedelta(years=1, months=1, days=1, leapdays=0, hours=1, 
+                           minutes=1, seconds=1, microseconds=1)
+        d3 = relativedelta(years=1, months=1, days=1, leapdays=0, hours=1, 
+                           minutes=1, seconds=1, microseconds=2)
+
+        self.assertEqual(d1, d2)
+        self.assertNotEqual(d1, d3)
+
     def testWeeks(self):
         # Test that the weeks property is working properly.
         rd = relativedelta(years=4, months=2, weeks=8, days=6)
