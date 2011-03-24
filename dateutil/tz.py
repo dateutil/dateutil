@@ -5,7 +5,7 @@ This module offers extensions to the standard python 2.3+
 datetime module.
 """
 __author__ = "Gustavo Niemeyer <gustavo@niemeyer.net>"
-__license__ = "PSF License"
+__license__ = "Simplified BSD"
 
 import datetime
 import struct
