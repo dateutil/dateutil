@@ -75,7 +75,7 @@ class tzoffset(datetime.tzinfo):
 
     def __repr__(self):
         return "%s(%s, %s)" % (self.__class__.__name__,
-                               `self._name`,
+                               repr(self._name),
                                self._offset.days*86400+self._offset.seconds)
 
     __reduce__ = object.__reduce__
@@ -161,7 +161,7 @@ class _ttinfo(object):
         for attr in self.__slots__:
             value = getattr(self, attr)
             if value is not None:
-                l.append("%s=%s" % (attr, `value`))
+                l.append("%s=%s" % (attr, repr(value)))
         return "%s(%s)" % (self.__class__.__name__, ", ".join(l))
 
     def __eq__(self, other):
@@ -194,13 +194,13 @@ class tzfile(datetime.tzinfo):
     # ftp://elsie.nci.nih.gov/pub/tz*.tar.gz
     
     def __init__(self, fileobj):
-        if isinstance(fileobj, basestring):
+        if isinstance(fileobj, str):
             self._filename = fileobj
             fileobj = open(fileobj)
         elif hasattr(fileobj, "name"):
             self._filename = fileobj.name
         else:
-            self._filename = `fileobj`
+            self._filename = repr(fileobj)
 
         # From tzfile(5):
         #
@@ -212,8 +212,8 @@ class tzfile(datetime.tzinfo):
         # ``standard'' byte order (the high-order  byte
         # of the value is written first).
 
-        if fileobj.read(4) != "TZif":
-            raise ValueError, "magic not found"
+        if fileobj.read(4).decode() != "TZif":
+            raise ValueError("magic not found")
 
         fileobj.read(16)
 
@@ -284,7 +284,7 @@ class tzfile(datetime.tzinfo):
         for i in range(typecnt):
             ttinfo.append(struct.unpack(">lbb", fileobj.read(6)))
 
-        abbr = fileobj.read(charcnt)
+        abbr = fileobj.read(charcnt).decode()
 
         # Then there are tzh_leapcnt pairs of four-byte
         # values, written in  standard byte  order;  the
@@ -360,7 +360,7 @@ class tzfile(datetime.tzinfo):
             if not self._trans_list:
                 self._ttinfo_std = self._ttinfo_first = self._ttinfo_list[0]
             else:
-                for i in range(timecnt-1,-1,-1):
+                for i in range(timecnt-1, -1, -1):
                     tti = self._trans_idx[i]
                     if not self._ttinfo_std and not tti.isdst:
                         self._ttinfo_std = tti
@@ -465,11 +465,11 @@ class tzfile(datetime.tzinfo):
 
 
     def __repr__(self):
-        return "%s(%s)" % (self.__class__.__name__, `self._filename`)
+        return "%s(%s)" % (self.__class__.__name__, repr(self._filename))
 
     def __reduce__(self):
         if not os.path.isfile(self._filename):
-            raise ValueError, "Unpickable %s class" % self.__class__.__name__
+            raise ValueError("Unpickable %s class" % self.__class__.__name__)
         return (self.__class__, (self._filename,))
 
 class tzrange(datetime.tzinfo):
@@ -524,7 +524,7 @@ class tzrange(datetime.tzinfo):
     def _isdst(self, dt):
         if not self._start_delta:
             return False
-        year = datetime.datetime(dt.year,1,1)
+        year = datetime.datetime(dt.year, 1, 1)
         start = year+self._start_delta
         end = year+self._end_delta
         dt = dt.replace(tzinfo=None)
@@ -561,7 +561,7 @@ class tzstr(tzrange):
 
         res = parser._parsetz(s)
         if res is None:
-            raise ValueError, "unknown string format"
+            raise ValueError("unknown string format")
 
         # Here we break the compatibility with the TZ variable handling.
         # GMT-3 actually *means* the timezone -3.
@@ -624,7 +624,7 @@ class tzstr(tzrange):
         return relativedelta.relativedelta(**kwargs)
 
     def __repr__(self):
-        return "%s(%s)" % (self.__class__.__name__, `self._s`)
+        return "%s(%s)" % (self.__class__.__name__, repr(self._s))
 
 class _tzicalvtzcomp:
     def __init__(self, tzoffsetfrom, tzoffsetto, isdst,
@@ -694,7 +694,7 @@ class _tzicalvtz(datetime.tzinfo):
         return self._find_comp(dt).tzname
 
     def __repr__(self):
-        return "<tzicalvtz %s>" % `self._tzid`
+        return "<tzicalvtz %s>" % repr(self._tzid)
 
     __reduce__ = object.__reduce__
 
@@ -704,37 +704,37 @@ class tzical:
         if not rrule:
             from dateutil import rrule
 
-        if isinstance(fileobj, basestring):
+        if isinstance(fileobj, str):
             self._s = fileobj
             fileobj = open(fileobj)
         elif hasattr(fileobj, "name"):
             self._s = fileobj.name
         else:
-            self._s = `fileobj`
+            self._s = repr(fileobj)
 
         self._vtz = {}
 
         self._parse_rfc(fileobj.read())
 
     def keys(self):
-        return self._vtz.keys()
+        return list(self._vtz.keys())
 
     def get(self, tzid=None):
         if tzid is None:
-            keys = self._vtz.keys()
+            keys = list(self._vtz.keys())
             if len(keys) == 0:
-                raise ValueError, "no timezones defined"
+                raise ValueError("no timezones defined")
             elif len(keys) > 1:
-                raise ValueError, "more than one timezone available"
+                raise ValueError("more than one timezone available")
             tzid = keys[0]
         return self._vtz.get(tzid)
 
     def _parse_offset(self, s):
         s = s.strip()
         if not s:
-            raise ValueError, "empty offset"
+            raise ValueError("empty offset")
         if s[0] in ('+', '-'):
-            signal = (-1,+1)[s[0]=='+']
+            signal = (-1, +1)[s[0]=='+']
             s = s[1:]
         else:
             signal = +1
@@ -743,12 +743,12 @@ class tzical:
         elif len(s) == 6:
             return (int(s[:2])*3600+int(s[2:4])*60+int(s[4:]))*signal
         else:
-            raise ValueError, "invalid offset: "+s
+            raise ValueError("invalid offset: "+s)
 
     def _parse_rfc(self, s):
         lines = s.splitlines()
         if not lines:
-            raise ValueError, "empty string"
+            raise ValueError("empty string")
 
         # Unfold
         i = 0
@@ -772,7 +772,7 @@ class tzical:
             name, value = line.split(':', 1)
             parms = name.split(';')
             if not parms:
-                raise ValueError, "empty property name"
+                raise ValueError("empty property name")
             name = parms[0].upper()
             parms = parms[1:]
             if invtz:
@@ -781,7 +781,7 @@ class tzical:
                         # Process component
                         pass
                     else:
-                        raise ValueError, "unknown component: "+value
+                        raise ValueError("unknown component: "+value)
                     comptype = value
                     founddtstart = False
                     tzoffsetfrom = None
@@ -791,27 +791,21 @@ class tzical:
                 elif name == "END":
                     if value == "VTIMEZONE":
                         if comptype:
-                            raise ValueError, \
-                                  "component not closed: "+comptype
+                            raise ValueError("component not closed: "+comptype)
                         if not tzid:
-                            raise ValueError, \
-                                  "mandatory TZID not found"
+                            raise ValueError("mandatory TZID not found")
                         if not comps:
-                            raise ValueError, \
-                                  "at least one component is needed"
+                            raise ValueError("at least one component is needed")
                         # Process vtimezone
                         self._vtz[tzid] = _tzicalvtz(tzid, comps)
                         invtz = False
                     elif value == comptype:
                         if not founddtstart:
-                            raise ValueError, \
-                                  "mandatory DTSTART not found"
+                            raise ValueError("mandatory DTSTART not found")
                         if tzoffsetfrom is None:
-                            raise ValueError, \
-                                  "mandatory TZOFFSETFROM not found"
+                            raise ValueError("mandatory TZOFFSETFROM not found")
                         if tzoffsetto is None:
-                            raise ValueError, \
-                                  "mandatory TZOFFSETFROM not found"
+                            raise ValueError("mandatory TZOFFSETFROM not found")
                         # Process component
                         rr = None
                         if rrulelines:
@@ -825,8 +819,7 @@ class tzical:
                         comps.append(comp)
                         comptype = None
                     else:
-                        raise ValueError, \
-                              "invalid component end: "+value
+                        raise ValueError("invalid component end: "+value)
                 elif comptype:
                     if name == "DTSTART":
                         rrulelines.append(line)
@@ -835,40 +828,36 @@ class tzical:
                         rrulelines.append(line)
                     elif name == "TZOFFSETFROM":
                         if parms:
-                            raise ValueError, \
-                                  "unsupported %s parm: %s "%(name, parms[0])
+                            raise ValueError("unsupported %s parm: %s "%(name, parms[0]))
                         tzoffsetfrom = self._parse_offset(value)
                     elif name == "TZOFFSETTO":
                         if parms:
-                            raise ValueError, \
-                                  "unsupported TZOFFSETTO parm: "+parms[0]
+                            raise ValueError("unsupported TZOFFSETTO parm: "+parms[0])
                         tzoffsetto = self._parse_offset(value)
                     elif name == "TZNAME":
                         if parms:
-                            raise ValueError, \
-                                  "unsupported TZNAME parm: "+parms[0]
+                            raise ValueError("unsupported TZNAME parm: "+parms[0])
                         tzname = value
                     elif name == "COMMENT":
                         pass
                     else:
-                        raise ValueError, "unsupported property: "+name
+                        raise ValueError("unsupported property: "+name)
                 else:
                     if name == "TZID":
                         if parms:
-                            raise ValueError, \
-                                  "unsupported TZID parm: "+parms[0]
+                            raise ValueError("unsupported TZID parm: "+parms[0])
                         tzid = value
                     elif name in ("TZURL", "LAST-MODIFIED", "COMMENT"):
                         pass
                     else:
-                        raise ValueError, "unsupported property: "+name
+                        raise ValueError("unsupported property: "+name)
             elif name == "BEGIN" and value == "VTIMEZONE":
                 tzid = None
                 comps = []
                 invtz = True
 
     def __repr__(self):
-        return "%s(%s)" % (self.__class__.__name__, `self._s`)
+        return "%s(%s)" % (self.__class__.__name__, repr(self._s))
 
 if sys.platform != "win32":
     TZFILES = ["/etc/localtime", "localtime"]
@@ -914,7 +903,7 @@ def gettz(name=None):
             for path in TZPATHS:
                 filepath = os.path.join(path, name)
                 if not os.path.isfile(filepath):
-                    filepath = filepath.replace(' ','_')
+                    filepath = filepath.replace(' ', '_')
                     if not os.path.isfile(filepath):
                         continue
                 try:

@@ -8,7 +8,7 @@ __author__ = "Gustavo Niemeyer <gustavo@niemeyer.net>"
 __license__ = "PSF License"
 
 import datetime
-import thread
+import _thread
 import signal
 import time
 
@@ -88,7 +88,7 @@ class schedthread:
 
     def run(self):
         self._running = True
-        thread.start_new_thread(self._loop, ())
+        _thread.start_new_thread(self._loop, ())
         
     def stop(self):
         self._running = False

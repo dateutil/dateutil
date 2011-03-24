@@ -25,8 +25,8 @@ setup(name="python-dateutil",
       license = "PSF License",
       long_description =
 """\
-The dateutil module provides powerful extensions to the standard
-datetime module, available in Python 2.3+.
+The dateutil module provides powerful extensions to the 
+datetime module available in the Python standard library.
 """,
       packages = ["dateutil", "dateutil.zoneinfo"],
       package_data={"": ["*.tar.gz"]},

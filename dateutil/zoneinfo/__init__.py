@@ -21,8 +21,7 @@ class tzfile(tzfile):
         return (gettz, (self._filename,))
 
 def getzoneinfofile():
-    filenames = os.listdir(os.path.join(os.path.dirname(__file__)))
-    filenames.sort()
+    filenames = sorted(os.listdir(os.path.join(os.path.dirname(__file__))))
     filenames.reverse()
     for entry in filenames:
         if entry.startswith("zoneinfo") and ".tar." in entry:

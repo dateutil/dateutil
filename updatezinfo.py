@@ -14,22 +14,22 @@ def main():
         tzdata = sys.argv[1]
     else:
         from ftplib import FTP
-        print "Connecting to %s..." % SERVER
+        print("Connecting to %s..." % SERVER)
         ftp = FTP(SERVER)
-        print "Logging in..."
+        print("Logging in...")
         ftp.login()
-        print "Changing to %s..." % DIR
+        print("Changing to %s..." % DIR)
         ftp.cwd(DIR)
-        print "Listing files..."
+        print("Listing files...")
         for name in ftp.nlst():
             if NAME.match(name):
                 break
         else:
             sys.exit("error: file matching %s not found" % NAME.pattern)
         if os.path.isfile(name):
-            print "Found local %s..." % name
+            print("Found local %s..." % name)
         else:
-            print "Retrieving %s..." % name
+            print("Retrieving %s..." % name)
             file = open(name, "w")
             ftp.retrbinary("RETR "+name, file.write)
             file.close()
@@ -37,9 +37,9 @@ def main():
         tzdata = name
     if not tzdata or not NAME.match(tzdata):
         sys.exit("Usage: updatezinfo.py tzdataXXXXX.tar.gz")
-    print "Updating timezone information..."
+    print("Updating timezone information...")
     rebuild(tzdata, NAME.match(tzdata).group(1))
-    print "Done."
+    print("Done.")
 
 if __name__ == "__main__":
     main()

@@ -13,14 +13,15 @@ import string
 import time
 import sys
 import os
+import collections
 
 try:
-    from cStringIO import StringIO
+    from io import StringIO
 except ImportError:
-    from StringIO import StringIO
+    from io import StringIO
 
-import relativedelta
-import tz
+from . import relativedelta
+from . import tz
 
 
 __all__ = ["parse", "parserinfo"]
@@ -39,7 +40,7 @@ __all__ = ["parse", "parserinfo"]
 class _timelex(object):
 
     def __init__(self, instream):
-        if isinstance(instream, basestring):
+        if isinstance(instream, str):
             instream = StringIO(instream)
         self.instream = instream
         self.wordchars = ('abcdfeghijklmnopqrstuvwxyz'
@@ -133,7 +134,7 @@ class _timelex(object):
     def __iter__(self):
         return self
 
-    def next(self):
+    def __next__(self):
         token = self.get_token()
         if token is None:
             raise StopIteration
@@ -155,7 +156,7 @@ class _resultbase(object):
         for attr in self.__slots__:
             value = getattr(self, attr)
             if value is not None:
-                l.append("%s=%s" % (attr, `value`))
+                l.append("%s=%s" % (attr, repr(value)))
         return "%s(%s)" % (classname, ", ".join(l))
 
     def __repr__(self):
@@ -300,7 +301,7 @@ class parser(object):
                                                       second=0, microsecond=0)
         res = self._parse(timestr, **kwargs)
         if res is None:
-            raise ValueError, "unknown string format"
+            raise ValueError("unknown string format")
         repl = {}
         for attr in ["year", "month", "day", "hour",
                      "minute", "second", "microsecond"]:
@@ -311,20 +312,20 @@ class parser(object):
         if res.weekday is not None and not res.day:
             ret = ret+relativedelta.relativedelta(weekday=res.weekday)
         if not ignoretz:
-            if callable(tzinfos) or tzinfos and res.tzname in tzinfos:
-                if callable(tzinfos):
+            if isinstance(tzinfos, collections.Callable) or tzinfos and res.tzname in tzinfos:
+                if isinstance(tzinfos, collections.Callable):
                     tzdata = tzinfos(res.tzname, res.tzoffset)
                 else:
                     tzdata = tzinfos.get(res.tzname)
                 if isinstance(tzdata, datetime.tzinfo):
                     tzinfo = tzdata
-                elif isinstance(tzdata, basestring):
+                elif isinstance(tzdata, str):
                     tzinfo = tz.tzstr(tzdata)
                 elif isinstance(tzdata, int):
                     tzinfo = tz.tzoffset(res.tzname, tzdata)
                 else:
-                    raise ValueError, "offset must be tzinfo subclass, " \
-                                      "tz string, or int offset"
+                    raise ValueError("offset must be tzinfo subclass, " \
+                                      "tz string, or int offset")
                 ret = ret.replace(tzinfo=tzinfo)
             elif res.tzname and res.tzname in time.tzname:
                 ret = ret.replace(tzinfo=tz.tzlocal())
@@ -585,7 +586,7 @@ class parser(object):
 
                 # Check for a numbered timezone
                 if res.hour is not None and l[i] in ('+', '-'):
-                    signal = (-1,1)[l[i] == '+']
+                    signal = (-1, 1)[l[i] == '+']
                     i += 1
                     len_li = len(l[i])
                     if len_li == 4:
@@ -743,7 +744,7 @@ class _tzparser(object):
                         if l[i] in ('+', '-'):
                             # Yes, that's right.  See the TZ variable
                             # documentation.
-                            signal = (1,-1)[l[i] == '+']
+                            signal = (1, -1)[l[i] == '+']
                             i += 1
                         else:
                             signal = -1
@@ -801,15 +802,15 @@ class _tzparser(object):
                     x.time = int(l[i])
                     i += 2
                 if i < len_l:
-                    if l[i] in ('-','+'):
-                        signal = (-1,1)[l[i] == "+"]
+                    if l[i] in ('-', '+'):
+                        signal = (-1, 1)[l[i] == "+"]
                         i += 1
                     else:
                         signal = 1
                     res.dstoffset = (res.stdoffset+int(l[i]))*signal
             elif (l.count(',') == 2 and l[i:].count('/') <= 2 and
-                  not [y for x in l[i:] if x not in (',','/','J','M',
-                                                     '.','-',':')
+                  not [y for x in l[i:] if x not in (',', '/', 'J', 'M',
+                                                     '.', '-', ':')
                          for y in x if y not in "0123456789"]):
                 for x in (res.start, res.end):
                     if l[i] == 'J':
