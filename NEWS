@@ -1,3 +1,12 @@
+Version 2.0
+-----------
+
+- Ported to Python 3, by Brian Jones.  If you need dateutil for Python 2.X,
+  please continue using the 1.X series.
+
+- There's no such thing as a "PSF License".  This source code is now
+  made available under the Simplified BSD license.  See LICENSE for
+  details.
 
 Version 1.5
 -----------

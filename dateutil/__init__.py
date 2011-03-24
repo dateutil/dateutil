@@ -6,4 +6,4 @@ datetime module.
 """
 __author__ = "Gustavo Niemeyer <gustavo@niemeyer.net>"
 __license__ = "Simplified BSD"
-__version__ = "1.5"
+__version__ = "2.0"
