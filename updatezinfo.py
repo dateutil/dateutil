@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 from dateutil.zoneinfo import rebuild
 import shutil
 import sys
