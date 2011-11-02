@@ -306,7 +306,7 @@ Here is the behavior of operations with relativedelta:
                              hour=other.hour or self.hour,
                              minute=other.minute or self.minute,
                              second=other.second or self.second,
-                             microsecond=other.second or self.microsecond)
+                             microsecond=other.microsecond or self.microsecond)
 
     def __sub__(self, other):
         if not isinstance(other, relativedelta):
@@ -326,7 +326,7 @@ Here is the behavior of operations with relativedelta:
                              hour=other.hour or self.hour,
                              minute=other.minute or self.minute,
                              second=other.second or self.second,
-                             microsecond=other.second or self.microsecond)
+                             microsecond=other.microsecond or self.microsecond)
 
     def __neg__(self):
         return relativedelta(years=-self.years,
