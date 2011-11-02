@@ -12,7 +12,7 @@ import thread
 import signal
 import time
 
-class sched:
+class sched(object):
 
     def __init__(self, rrule,
                  tolerance=None, last=None,
@@ -49,7 +49,7 @@ class sched:
         return item
 
 
-class schedset:
+class schedset(object):
     def __init__(self):
         self._scheds = []
 
@@ -76,7 +76,7 @@ class schedset:
         return res
 
 
-class schedthread:
+class schedthread(object):
     
     def __init__(self, sched, lock=None):
         self._sched = sched
@@ -109,7 +109,7 @@ class schedthread:
                 time.sleep(seconds)
 
 
-class schedalarm:
+class schedalarm(object):
     
     def __init__(self, sched, lock=None):
         self._sched = sched

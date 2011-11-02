@@ -626,7 +626,7 @@ class tzstr(tzrange):
     def __repr__(self):
         return "%s(%s)" % (self.__class__.__name__, `self._s`)
 
-class _tzicalvtzcomp:
+class _tzicalvtzcomp(object):
     def __init__(self, tzoffsetfrom, tzoffsetto, isdst,
                        tzname=None, rrule=None):
         self.tzoffsetfrom = datetime.timedelta(seconds=tzoffsetfrom)
@@ -698,7 +698,7 @@ class _tzicalvtz(datetime.tzinfo):
 
     __reduce__ = object.__reduce__
 
-class tzical:
+class tzical(object):
     def __init__(self, fileobj):
         global rrule
         if not rrule:

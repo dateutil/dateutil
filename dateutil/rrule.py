@@ -79,7 +79,7 @@ class weekday(object):
 
 MO, TU, WE, TH, FR, SA, SU = weekdays = tuple([weekday(x) for x in range(7)])
 
-class rrulebase:
+class rrulebase(object):
     def __init__(self, cache=False):
         if cache:
             self._cache = []
@@ -232,7 +232,7 @@ class rrule(rrulebase):
                  byweekno=None, byweekday=None,
                  byhour=None, byminute=None, bysecond=None,
                  cache=False):
-        rrulebase.__init__(self, cache)
+        super(rrule, self).__init__(cache)
         global easter
         if not dtstart:
             dtstart = datetime.datetime.now().replace(microsecond=0)
@@ -823,7 +823,7 @@ class _iterinfo(object):
 
 class rruleset(rrulebase):
 
-    class _genitem:
+    class _genitem(object):
         def __init__(self, genlist, gen):
             try:
                 self.dt = gen()
@@ -843,7 +843,7 @@ class rruleset(rrulebase):
             return cmp(self.dt, other.dt)
 
     def __init__(self, cache=False):
-        rrulebase.__init__(self, cache)
+        super(rruleset, self).__init__(cache)
         self._rrule = []
         self._rdate = []
         self._exrule = []
@@ -890,7 +890,7 @@ class rruleset(rrulebase):
             rlist.sort()
         self._len = total
 
-class _rrulestr:
+class _rrulestr(object):
 
     _freq_map = {"YEARLY": YEARLY,
                  "MONTHLY": MONTHLY,

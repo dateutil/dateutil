@@ -42,7 +42,7 @@ class weekday(object):
 
 MO, TU, WE, TH, FR, SA, SU = weekdays = tuple([weekday(x) for x in range(7)])
 
-class relativedelta:
+class relativedelta(object):
     """
 The relativedelta type is based on the specification of the excelent
 work done by M.-A. Lemburg in his mx.DateTime extension. However,
