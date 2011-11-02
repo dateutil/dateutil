@@ -146,6 +146,15 @@ class RelativeDeltaTest(unittest.TestCase):
         self.assertEqual(self.today+relativedelta(yearday=261),
                          date(2003, 9, 18))
 
+    def test884317(self):
+        # See https://bugs.launchpad.net/dateutil/+bug/884317
+        a = relativedelta(second = 2, microsecond = 20)
+        b = relativedelta(second = 1, microsecond = 10)
+        c = a-b
+        self.assertEqual(c.microsecond, b.microsecond)
+        c = a+b
+        self.assertEqual(c.microsecond, b.microsecond)
+
 class RRuleTest(unittest.TestCase):
 
     def testYearly(self):
