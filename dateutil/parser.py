@@ -326,7 +326,7 @@ class parser(object):
                     tzdata = tzinfos.get(res.tzname)
                 if isinstance(tzdata, datetime.tzinfo):
                     tzinfo = tzdata
-                elif isinstance(tzdata, str):
+                elif isinstance(tzdata, text_type):
                     tzinfo = tz.tzstr(tzdata)
                 elif isinstance(tzdata, integer_types):
                     tzinfo = tz.tzoffset(res.tzname, tzdata)
