@@ -5,7 +5,6 @@ from __future__ import unicode_literals
 from six import StringIO, BytesIO, PY3
 import unittest
 import calendar
-import time
 import base64
 import os
 
@@ -414,16 +413,6 @@ class RRuleTest(unittest.TestCase):
                          [datetime(1998, 4, 11, 9, 0),
                           datetime(1999, 4, 3, 9, 0),
                           datetime(2000, 4, 22, 9, 0)])
-
-    def testYearlyByWeekNoAndWeekDay53(self):
-        self.assertEqual(list(rrule(YEARLY,
-                              count=3,
-                              byweekno=53,
-                              byweekday=MO,
-                              dtstart=parse("19970902T090000"))),
-                         [datetime(1998, 12, 28, 9, 0),
-                          datetime(2004, 12, 27, 9, 0),
-                          datetime(2009, 12, 28, 9, 0)])
 
     def testYearlyByWeekNoAndWeekDay53(self):
         self.assertEqual(list(rrule(YEARLY,
@@ -3080,15 +3069,15 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(parse("Sep 25 2003"),
                          datetime(2003, 9, 25))
 
-    def testDateCommandFormatStrip9(self):
+    def testDateCommandFormatStrip10(self):
         self.assertEqual(parse("Sep 2003", default=self.default),
                          datetime(2003, 9, 25))
 
-    def testDateCommandFormatStrip10(self):
+    def testDateCommandFormatStrip11(self):
         self.assertEqual(parse("Sep", default=self.default),
                          datetime(2003, 9, 25))
 
-    def testDateCommandFormatStrip11(self):
+    def testDateCommandFormatStrip12(self):
         self.assertEqual(parse("2003", default=self.default),
                          datetime(2003, 9, 25))
 
@@ -3289,14 +3278,6 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(parse("10/09/03", yearfirst=True),
                          datetime(2010, 9, 3))
 
-    def testDateWithSpace12(self):
-        self.assertEqual(parse("25 09 03"),
-                         datetime(2003, 9, 25))
-
-    def testDateWithSpace13(self):
-        self.assertEqual(parse("25 09 03"),
-                         datetime(2003, 9, 25))
-
     def testDateWithSpace1(self):
         self.assertEqual(parse("2003 09 25"),
                          datetime(2003, 9, 25))
@@ -3345,10 +3326,6 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(parse("25 09 03"),
                          datetime(2003, 9, 25))
 
-    def testDateWithSpace13(self):
-        self.assertEqual(parse("25 09 03"),
-                         datetime(2003, 9, 25))
-
     def testStrangelyOrderedDate1(self):
         self.assertEqual(parse("03 25 Sep"),
                          datetime(2003, 9, 25))
@@ -3369,13 +3346,17 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(parse("10h36m28s", default=self.default),
                          datetime(2003, 9, 25, 10, 36, 28))
 
-    def testHourWithLettersStrip1(self):
+    def testHourWithLettersStrip2(self):
         self.assertEqual(parse("10h36m", default=self.default),
                          datetime(2003, 9, 25, 10, 36))
 
-    def testHourWithLettersStrip2(self):
+    def testHourWithLettersStrip3(self):
         self.assertEqual(parse("10h", default=self.default),
                          datetime(2003, 9, 25, 10))
+
+    def testHourWithLettersStrip4(self):
+        self.assertEqual(parse("10 h 36", default=self.default),
+                         datetime(2003, 9, 25, 10, 36))
 
     def testHourAmPm1(self):
         self.assertEqual(parse("10h am", default=self.default),
