@@ -367,13 +367,13 @@ Here is the behavior of operations with relativedelta:
 
     def __mul__(self, other):
         f = float(other)
-        return relativedelta(years=self.years*f,
-                             months=self.months*f,
-                             days=self.days*f,
-                             hours=self.hours*f,
-                             minutes=self.minutes*f,
-                             seconds=self.seconds*f,
-                             microseconds=self.microseconds*f,
+        return relativedelta(years=int(self.years*f),
+                             months=int(self.months*f),
+                             days=int(self.days*f),
+                             hours=int(self.hours*f),
+                             minutes=int(self.minutes*f),
+                             seconds=int(self.seconds*f),
+                             microseconds=int(self.microseconds*f),
                              leapdays=self.leapdays,
                              year=self.year,
                              month=self.month,
@@ -383,6 +383,8 @@ Here is the behavior of operations with relativedelta:
                              minute=self.minute,
                              second=self.second,
                              microsecond=self.microsecond)
+
+    __rmul__ = __mul__
 
     def __eq__(self, other):
         if not isinstance(other, relativedelta):
@@ -415,6 +417,8 @@ Here is the behavior of operations with relativedelta:
 
     def __div__(self, other):
         return self.__mul__(1/float(other))
+
+    __truediv__ = __div__
 
     def __repr__(self):
         l = []

@@ -157,9 +157,15 @@ class RelativeDeltaTest(unittest.TestCase):
         c = a+b
         self.assertEqual(c.microsecond, b.microsecond)
 
-    def test28Days(self):
+    def testMultiplication(self):
         self.assertEqual(datetime(2000, 1, 1) + relativedelta(days=1) * 28,
                          datetime(2000, 1, 29))
+        self.assertEqual(datetime(2000, 1, 1) + 28 * relativedelta(days=1),
+                         datetime(2000, 1, 29))
+
+    def testDivision(self):
+        self.assertEqual(datetime(2000, 1, 1) + relativedelta(days=28) / 28,
+                         datetime(2000, 1, 2))
 
 class RRuleTest(unittest.TestCase):
 
