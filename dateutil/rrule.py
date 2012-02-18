@@ -16,7 +16,7 @@ except ImportError:
     import thread as _thread
 import sys
 
-from six import advance_iterator
+from six import advance_iterator, integer_types
 
 __all__ = ["rrule", "rruleset", "rrulestr",
            "YEARLY", "MONTHLY", "WEEKLY", "DAILY",
@@ -255,13 +255,13 @@ class rrule(rrulebase):
         self._until = until
         if wkst is None:
             self._wkst = calendar.firstweekday()
-        elif isinstance(wkst, int):
+        elif isinstance(wkst, integer_types):
             self._wkst = wkst
         else:
             self._wkst = wkst.weekday
         if bysetpos is None:
             self._bysetpos = None
-        elif isinstance(bysetpos, int):
+        elif isinstance(bysetpos, integer_types):
             if bysetpos == 0 or not (-366 <= bysetpos <= 366):
                 raise ValueError("bysetpos must be between 1 and 366, "
                                  "or between -366 and -1")
@@ -285,14 +285,14 @@ class rrule(rrulebase):
         # bymonth
         if not bymonth:
             self._bymonth = None
-        elif isinstance(bymonth, int):
+        elif isinstance(bymonth, integer_types):
             self._bymonth = (bymonth,)
         else:
             self._bymonth = tuple(bymonth)
         # byyearday
         if not byyearday:
             self._byyearday = None
-        elif isinstance(byyearday, int):
+        elif isinstance(byyearday, integer_types):
             self._byyearday = (byyearday,)
         else:
             self._byyearday = tuple(byyearday)
@@ -300,7 +300,7 @@ class rrule(rrulebase):
         if byeaster is not None:
             if not easter:
                 from dateutil import easter
-            if isinstance(byeaster, int):
+            if isinstance(byeaster, integer_types):
                 self._byeaster = (byeaster,)
             else:
                 self._byeaster = tuple(byeaster)
@@ -310,7 +310,7 @@ class rrule(rrulebase):
         if not bymonthday:
             self._bymonthday = ()
             self._bynmonthday = ()
-        elif isinstance(bymonthday, int):
+        elif isinstance(bymonthday, integer_types):
             if bymonthday < 0:
                 self._bynmonthday = (bymonthday,)
                 self._bymonthday = ()
@@ -323,7 +323,7 @@ class rrule(rrulebase):
         # byweekno
         if byweekno is None:
             self._byweekno = None
-        elif isinstance(byweekno, int):
+        elif isinstance(byweekno, integer_types):
             self._byweekno = (byweekno,)
         else:
             self._byweekno = tuple(byweekno)
@@ -331,7 +331,7 @@ class rrule(rrulebase):
         if byweekday is None:
             self._byweekday = None
             self._bynweekday = None
-        elif isinstance(byweekday, int):
+        elif isinstance(byweekday, integer_types):
             self._byweekday = (byweekday,)
             self._bynweekday = None
         elif hasattr(byweekday, "n"):
@@ -345,7 +345,7 @@ class rrule(rrulebase):
             self._byweekday = []
             self._bynweekday = []
             for wday in byweekday:
-                if isinstance(wday, int):
+                if isinstance(wday, integer_types):
                     self._byweekday.append(wday)
                 elif not wday.n or freq > MONTHLY:
                     self._byweekday.append(wday.weekday)
@@ -363,7 +363,7 @@ class rrule(rrulebase):
                 self._byhour = (dtstart.hour,)
             else:
                 self._byhour = None
-        elif isinstance(byhour, int):
+        elif isinstance(byhour, integer_types):
             self._byhour = (byhour,)
         else:
             self._byhour = tuple(byhour)
@@ -373,7 +373,7 @@ class rrule(rrulebase):
                 self._byminute = (dtstart.minute,)
             else:
                 self._byminute = None
-        elif isinstance(byminute, int):
+        elif isinstance(byminute, integer_types):
             self._byminute = (byminute,)
         else:
             self._byminute = tuple(byminute)
@@ -383,7 +383,7 @@ class rrule(rrulebase):
                 self._bysecond = (dtstart.second,)
             else:
                 self._bysecond = None
-        elif isinstance(bysecond, int):
+        elif isinstance(bysecond, integer_types):
             self._bysecond = (bysecond,)
         else:
             self._bysecond = tuple(bysecond)

@@ -2,7 +2,7 @@
 # -*- encoding: utf-8 -*-
 from __future__ import unicode_literals
 
-from six import StringIO, BytesIO
+from six import StringIO, BytesIO, PY3
 import unittest
 import calendar
 import time
@@ -98,7 +98,7 @@ class RelativeDeltaTest(unittest.TestCase):
     def testNextWenesdayNotToday(self):
         self.assertEqual(self.today+relativedelta(days=+1, weekday=WE),
                          date(2003, 9, 24))
-        
+
     def test15thISOYearWeek(self):
         self.assertEqual(date(2003, 1, 1) +
                          relativedelta(day=4, weeks=+14, weekday=MO(-1)),
@@ -156,6 +156,10 @@ class RelativeDeltaTest(unittest.TestCase):
         self.assertEqual(c.microsecond, b.microsecond)
         c = a+b
         self.assertEqual(c.microsecond, b.microsecond)
+
+    def test28Days(self):
+        self.assertEqual(datetime(2000, 1, 1) + relativedelta(days=1) * 28,
+                         datetime(2000, 1, 29))
 
 class RRuleTest(unittest.TestCase):
 
@@ -2399,6 +2403,27 @@ class RRuleTest(unittest.TestCase):
                           datetime(2010, 3, 22, 13, 1),
                           datetime(2010, 3, 22, 14, 1)])
 
+    def testLongIntegers(self):
+        if not PY3:  # There is no longs in python3
+            self.assertEqual(list(rrule(MINUTELY,
+                                  count=long(2),
+                                  interval=long(2),
+                                  bymonth=long(2),
+                                  byweekday=long(3),
+                                  byhour=long(6),
+                                  byminute=long(6),
+                                  bysecond=long(6),
+                                  dtstart=parse("19970902T090000"))),
+                             [datetime(1998, 2, 5, 6, 6, 6),
+                              datetime(1998, 2, 12, 6, 6, 6)])
+            self.assertEqual(list(rrule(YEARLY,
+                                  count=long(2),
+                                  bymonthday=long(5),
+                                  byweekno=long(2),
+                                  dtstart=parse("19970902T090000"))),
+                             [datetime(1998, 1, 5, 9, 0),
+                              datetime(2004, 1, 5, 9, 0)])
+
     def testUntilNotMatching(self):
         self.assertEqual(list(rrule(DAILY,
                               count=3,
@@ -3002,6 +3027,12 @@ class ParserTest(unittest.TestCase):
                          datetime(2003, 9, 25, 10, 36, 28,
                                   tzinfo=self.brsttz))
 
+    def testDateCommandFormatWithLong(self):
+        if not PY3:
+            self.assertEqual(parse("Thu Sep 25 10:36:28 BRST 2003",
+                                   tzinfos={"BRST": long(-10800)}),
+                             datetime(2003, 9, 25, 10, 36, 28,
+                                      tzinfo=self.brsttz))
     def testDateCommandFormatIgnoreTz(self):
         self.assertEqual(parse("Thu Sep 25 10:36:28 BRST 2003",
                                ignoretz=True),

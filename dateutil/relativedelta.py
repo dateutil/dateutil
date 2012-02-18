@@ -10,6 +10,8 @@ __license__ = "Simplified BSD"
 import datetime
 import calendar
 
+from six import integer_types
+
 __all__ = ["relativedelta", "MO", "TU", "WE", "TH", "FR", "SA", "SU"]
 
 class weekday(object):
@@ -171,7 +173,7 @@ Here is the behavior of operations with relativedelta:
             self.second = second
             self.microsecond = microsecond
 
-            if isinstance(weekday, int):
+            if isinstance(weekday, integer_types):
                 self.weekday = weekdays[weekday]
             else:
                 self.weekday = weekday

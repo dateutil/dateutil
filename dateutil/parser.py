@@ -22,7 +22,7 @@ try:
 except ImportError:
     from io import StringIO
 
-from six import text_type, binary_type
+from six import text_type, binary_type, integer_types
 
 from . import relativedelta
 from . import tz
@@ -328,7 +328,7 @@ class parser(object):
                     tzinfo = tzdata
                 elif isinstance(tzdata, str):
                     tzinfo = tz.tzstr(tzdata)
-                elif isinstance(tzdata, int):
+                elif isinstance(tzdata, integer_types):
                     tzinfo = tz.tzoffset(res.tzname, tzdata)
                 else:
                     raise ValueError("offset must be tzinfo subclass, " \
