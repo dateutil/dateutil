@@ -7,6 +7,8 @@ datetime module.
 __author__ = "Gustavo Niemeyer <gustavo@niemeyer.net>"
 __license__ = "Simplified BSD"
 
+from six import string_types
+
 import datetime
 import struct
 import time
@@ -211,9 +213,9 @@ class tzfile(datetime.tzinfo):
     # ftp://elsie.nci.nih.gov/pub/tz*.tar.gz
     
     def __init__(self, fileobj):
-        if isinstance(fileobj, str):
+        if isinstance(fileobj, string_types):
             self._filename = fileobj
-            fileobj = open(fileobj)
+            fileobj = open(fileobj, 'rb')
         elif hasattr(fileobj, "name"):
             self._filename = fileobj.name
         else:
@@ -724,9 +726,9 @@ class tzical(object):
         if not rrule:
             from dateutil import rrule
 
-        if isinstance(fileobj, str):
+        if isinstance(fileobj, string_types):
             self._s = fileobj
-            fileobj = open(fileobj)
+            fileobj = open(fileobj, 'r')  # ical should be encoded in UTF-8 with CRLF
         elif hasattr(fileobj, "name"):
             self._s = fileobj.name
         else:

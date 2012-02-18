@@ -3973,6 +3973,10 @@ END:VTIMEZONE
         tz = tzfile(BytesIO(base64.decodestring(self.NEW_YORK)))
         self.assertEqual(datetime(2007, 3, 31, 20, 12).tzname(), None)
 
+    def testGettz(self):
+        # bug 892569
+        str(gettz('UTC'))
+
     def testBrokenIsDstHandling(self):
         # tzrange._isdst() was using a date() rather than a datetime().
         # Issue reported by Lennart Regebro.
