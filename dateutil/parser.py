@@ -192,7 +192,7 @@ class parserinfo(object):
                 ("Jun", "June"),
                 ("Jul", "July"),
                 ("Aug", "August"),
-                ("Sep", "September"),
+                ("Sep", "Sept", "September"),
                 ("Oct", "October"),
                 ("Nov", "November"),
                 ("Dec", "December")]
