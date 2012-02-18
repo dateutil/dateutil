@@ -10,8 +10,13 @@ __license__ = "Simplified BSD"
 import itertools
 import datetime
 import calendar
-import _thread
+try:
+    import _thread
+except ImportError:
+    import thread as _thread
 import sys
+
+from six import advance_iterator
 
 __all__ = ["rrule", "rruleset", "rrulestr",
            "YEARLY", "MONTHLY", "WEEKLY", "DAILY",
@@ -79,7 +84,7 @@ class weekday(object):
 
 MO, TU, WE, TH, FR, SA, SU = weekdays = tuple([weekday(x) for x in range(7)])
 
-class rrulebase:
+class rrulebase(object):
     def __init__(self, cache=False):
         if cache:
             self._cache = []
@@ -112,7 +117,7 @@ class rrulebase:
                     break
                 try:
                     for j in range(10):
-                        cache.append(next(gen))
+                        cache.append(advance_iterator(gen))
                 except StopIteration:
                     self._cache_gen = gen = None
                     self._cache_complete = True
@@ -139,7 +144,7 @@ class rrulebase:
             gen = iter(self)
             try:
                 for i in range(item+1):
-                    res = next(gen)
+                    res = advance_iterator(gen)
             except StopIteration:
                 raise IndexError
             return res
@@ -232,7 +237,7 @@ class rrule(rrulebase):
                  byweekno=None, byweekday=None,
                  byhour=None, byminute=None, bysecond=None,
                  cache=False):
-        rrulebase.__init__(self, cache)
+        super(rrule, self).__init__(cache)
         global easter
         if not dtstart:
             dtstart = datetime.datetime.now().replace(microsecond=0)
@@ -823,10 +828,10 @@ class _iterinfo(object):
 
 class rruleset(rrulebase):
 
-    class _genitem:
+    class _genitem(object):
         def __init__(self, genlist, gen):
             try:
-                self.dt = gen()
+                self.dt = advance_iterator(gen)
                 genlist.append(self)
             except StopIteration:
                 pass
@@ -835,9 +840,11 @@ class rruleset(rrulebase):
 
         def __next__(self):
             try:
-                self.dt = self.gen()
+                self.dt = advance_iterator(self.gen)
             except StopIteration:
                 self.genlist.remove(self)
+
+        next = __next__
 
         def __lt__(self, other):
             return self.dt < other.dt
@@ -848,8 +855,11 @@ class rruleset(rrulebase):
         def __eq__(self, other):
             return self.dt == other.dt
 
+        def __ne__(self, other):
+            return self.dt != other.dt
+
     def __init__(self, cache=False):
-        rrulebase.__init__(self, cache)
+        super(rruleset, self).__init__(cache)
         self._rrule = []
         self._rdate = []
         self._exrule = []
@@ -857,7 +867,7 @@ class rruleset(rrulebase):
 
     def rrule(self, rrule):
         self._rrule.append(rrule)
-    
+
     def rdate(self, rdate):
         self._rdate.append(rdate)
 
@@ -870,14 +880,14 @@ class rruleset(rrulebase):
     def _iter(self):
         rlist = []
         self._rdate.sort()
-        self._genitem(rlist, iter(self._rdate).__next__)
-        for gen in [iter(x).__next__ for x in self._rrule]:
+        self._genitem(rlist, iter(self._rdate))
+        for gen in [iter(x) for x in self._rrule]:
             self._genitem(rlist, gen)
         rlist.sort()
         exlist = []
         self._exdate.sort()
-        self._genitem(exlist, iter(self._exdate).__next__)
-        for gen in [iter(x).__next__ for x in self._exrule]:
+        self._genitem(exlist, iter(self._exdate))
+        for gen in [iter(x) for x in self._exrule]:
             self._genitem(exlist, gen)
         exlist.sort()
         lastdt = None
@@ -886,17 +896,17 @@ class rruleset(rrulebase):
             ritem = rlist[0]
             if not lastdt or lastdt != ritem.dt:
                 while exlist and exlist[0] < ritem:
-                    next(exlist[0])
+                    advance_iterator(exlist[0])
                     exlist.sort()
                 if not exlist or ritem != exlist[0]:
                     total += 1
                     yield ritem.dt
                 lastdt = ritem.dt
-            next(ritem)
+            advance_iterator(ritem)
             rlist.sort()
         self._len = total
 
-class _rrulestr:
+class _rrulestr(object):
 
     _freq_map = {"YEARLY": YEARLY,
                  "MONTHLY": MONTHLY,

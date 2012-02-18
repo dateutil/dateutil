@@ -42,7 +42,7 @@ class weekday(object):
 
 MO, TU, WE, TH, FR, SA, SU = weekdays = tuple([weekday(x) for x in range(7)])
 
-class relativedelta:
+class relativedelta(object):
     """
 The relativedelta type is based on the specification of the excelent
 work done by M.-A. Lemburg in his mx.DateTime extension. However,
@@ -305,7 +305,7 @@ Here is the behavior of operations with relativedelta:
                              hour=other.hour or self.hour,
                              minute=other.minute or self.minute,
                              second=other.second or self.second,
-                             microsecond=other.second or self.microsecond)
+                             microsecond=other.microsecond or self.microsecond)
 
     def __sub__(self, other):
         if not isinstance(other, relativedelta):
@@ -325,7 +325,7 @@ Here is the behavior of operations with relativedelta:
                              hour=other.hour or self.hour,
                              minute=other.minute or self.minute,
                              second=other.second or self.second,
-                             microsecond=other.second or self.microsecond)
+                             microsecond=other.microsecond or self.microsecond)
 
     def __neg__(self):
         return relativedelta(years=-self.years,

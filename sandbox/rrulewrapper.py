@@ -1,6 +1,6 @@
 from rrule import *
 
-class rrulewrapper:
+class rrulewrapper(object):
     def __init__(self, freq, **kwargs):
         self._construct = kwargs.copy()
         self._construct["freq"] = freq

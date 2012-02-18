@@ -5,8 +5,10 @@ Copyright (c) 2003-2007  Gustavo Niemeyer <gustavo@niemeyer.net>
 This module offers extensions to the standard python 2.3+
 datetime module.
 """
+from __future__ import unicode_literals
 __author__ = "Gustavo Niemeyer <gustavo@niemeyer.net>"
 __license__ = "Simplified BSD"
+
 
 import datetime
 import string
@@ -19,6 +21,8 @@ try:
     from io import StringIO
 except ImportError:
     from io import StringIO
+
+from six import text_type, binary_type
 
 from . import relativedelta
 from . import tz
@@ -40,7 +44,7 @@ __all__ = ["parse", "parserinfo"]
 class _timelex(object):
 
     def __init__(self, instream):
-        if isinstance(instream, str):
+        if isinstance(instream, text_type):
             instream = StringIO(instream)
         self.instream = instream
         self.wordchars = ('abcdfeghijklmnopqrstuvwxyz'
@@ -139,6 +143,9 @@ class _timelex(object):
         if token is None:
             raise StopIteration
         return token
+
+    def next(self):
+        return self.__next__()  # Python 2.x support
 
     def split(cls, s):
         return list(cls(s))
@@ -692,6 +699,11 @@ class parser(object):
 
 DEFAULTPARSER = parser()
 def parse(timestr, parserinfo=None, **kwargs):
+    # Python 2.x support: datetimes return their string presentation as
+    # bytes in 2.x and unicode in 3.x, so it's reasonable to expect that
+    # the parser will get both kinds. Internally we use unicode only.
+    if isinstance(timestr, binary_type):
+        timestr = timestr.decode()
     if parserinfo:
         return parser(parserinfo).parse(timestr, **kwargs)
     else:

@@ -1,6 +1,8 @@
-#!/usr/bin/python3
+#!/usr/bin/python
 # -*- encoding: utf-8 -*-
-from io import StringIO,BytesIO
+from __future__ import unicode_literals
+
+from six import StringIO, BytesIO
 import unittest
 import calendar
 import time
@@ -145,6 +147,15 @@ class RelativeDeltaTest(unittest.TestCase):
                          date(2000, 9, 17))
         self.assertEqual(self.today+relativedelta(yearday=261),
                          date(2003, 9, 18))
+
+    def test884317(self):
+        # See https://bugs.launchpad.net/dateutil/+bug/884317
+        a = relativedelta(second = 2, microsecond = 20)
+        b = relativedelta(second = 1, microsecond = 10)
+        c = a-b
+        self.assertEqual(c.microsecond, b.microsecond)
+        c = a+b
+        self.assertEqual(c.microsecond, b.microsecond)
 
 class RRuleTest(unittest.TestCase):
 
@@ -3874,12 +3885,12 @@ END:VTIMEZONE
                          tzrange("EST", -18000, "EDT"))
 
     def testFileStart1(self):
-        tz = tzfile(BytesIO(base64.decodebytes(self.TZFILE_EST5EDT)))
+        tz = tzfile(BytesIO(base64.decodestring(self.TZFILE_EST5EDT)))
         self.assertEqual(datetime(2003, 4, 6, 1, 59, tzinfo=tz).tzname(), "EST")
         self.assertEqual(datetime(2003, 4, 6, 2, 00, tzinfo=tz).tzname(), "EDT")
         
     def testFileEnd1(self):
-        tz = tzfile(BytesIO(base64.decodebytes(self.TZFILE_EST5EDT)))
+        tz = tzfile(BytesIO(base64.decodestring(self.TZFILE_EST5EDT)))
         self.assertEqual(datetime(2003, 10, 26, 0, 59, tzinfo=tz).tzname(), "EDT")
         self.assertEqual(datetime(2003, 10, 26, 1, 00, tzinfo=tz).tzname(), "EST")
 
@@ -3915,14 +3926,14 @@ END:VTIMEZONE
 
     def testRoundNonFullMinutes(self):
         # This timezone has an offset of 5992 seconds in 1900-01-01.
-        tz = tzfile(BytesIO(base64.decodebytes(self.EUROPE_HELSINKI)))
+        tz = tzfile(BytesIO(base64.decodestring(self.EUROPE_HELSINKI)))
         self.assertEqual(str(datetime(1900, 1, 1, 0, 0, tzinfo=tz)),
                             "1900-01-01 00:00:00+01:40")
 
     def testLeapCountDecodesProperly(self):
         # This timezone has leapcnt, and failed to decode until
         # Eugene Oden notified about the issue.
-        tz = tzfile(BytesIO(base64.decodebytes(self.NEW_YORK)))
+        tz = tzfile(BytesIO(base64.decodestring(self.NEW_YORK)))
         self.assertEqual(datetime(2007, 3, 31, 20, 12).tzname(), None)
 
     def testBrokenIsDstHandling(self):
