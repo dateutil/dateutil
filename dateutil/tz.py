@@ -7,7 +7,7 @@ datetime module.
 __author__ = "Gustavo Niemeyer <gustavo@niemeyer.net>"
 __license__ = "Simplified BSD"
 
-from six import string_types
+from six import string_types, PY3
 
 import datetime
 import struct
@@ -28,14 +28,13 @@ except (ImportError, OSError):
     tzwin, tzwinlocal = None, None
 
 def tzname_in_python2(myfunc):
-    import six
     """Change unicode output into bytestrings in Python 2
 
     tzname() API changed in Python 3. It used to return bytes, but was changed
     to unicode strings
     """
     def inner_func(*args, **kwargs):
-        if six.PY3:
+        if PY3:
             return myfunc(*args, **kwargs)
         else:
             return myfunc(*args, **kwargs).encode()
