@@ -1,6 +1,7 @@
-dateutil - Extensions to the standard python 2.3+ datetime module.
+dateutil - Extensions to the standard Python datetime module.
 
 Copyright (c) 2003-2011 - Gustavo Niemeyer <gustavo@niemeyer.net>
+Copyright (c) 2012 - Tomi Pieviläinen <tomi.pievilainen@iki.fi>
 
 All rights reserved.
 
