@@ -3928,7 +3928,8 @@ END:VTIMEZONE
     def testZoneInfoOffsetSignal(self):
         utc = zoneinfo.gettz("UTC")
         nyc = zoneinfo.gettz("America/New_York")
-        self.assertFalse(any([None in [utc, nyc]]))
+        self.assertNotEqual(utc, None)
+        self.assertNotEqual(nyc, None)
         t0 = datetime(2007, 11, 4, 0, 30, tzinfo=nyc)
         t1 = t0.astimezone(utc)
         t2 = t1.astimezone(nyc)
