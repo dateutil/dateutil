@@ -12,7 +12,10 @@ import os
 if os.path.exists("build"):
 	from distutils.util import get_platform
 	import sys
-	s = "build/lib.%s-%.3s" % (get_platform(), sys.version)
+	if sys.version_info >= (3, 2):
+		s = "build/lib"
+	else:
+		s = "build/lib.%s-%.3s" % (get_platform(), sys.version)
 	s = os.path.join(os.getcwd(), s)
 	sys.path.insert(0, s)
 
