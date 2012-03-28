@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/python
 from os.path import isfile, join
 import glob
 import os
@@ -18,11 +18,11 @@ VERSION = re.search('__version__ = "([^"]+)"',
 
 setup(name="python-dateutil",
       version = VERSION,
-      description = "Extensions to the standard python 2.3+ datetime module",
-      author = "Gustavo Niemeyer",
-      author_email = "gustavo@niemeyer.net",
+      description = "Extensions to the standard Python datetime module",
+      author = "Tomi Pievilaeinen",
+      author_email = "tomi.pievilainen@iki.fi",
       url = "http://labix.org/python-dateutil",
-      license = "PSF License",
+      license = "Simplified BSD",
       long_description =
 """\
 The dateutil module provides powerful extensions to the 
