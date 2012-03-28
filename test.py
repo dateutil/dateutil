@@ -150,14 +150,35 @@ class RelativeDeltaTest(unittest.TestCase):
         self.assertEqual(self.today+relativedelta(yearday=261),
                          date(2003, 9, 18))
 
-    def test884317(self):
-        # See https://bugs.launchpad.net/dateutil/+bug/884317
-        a = relativedelta(second = 2, microsecond = 20)
-        b = relativedelta(second = 1, microsecond = 10)
-        c = a-b
-        self.assertEqual(c.microsecond, b.microsecond)
-        c = a+b
-        self.assertEqual(c.microsecond, b.microsecond)
+    def testAddition(self):
+        self.assertEqual(relativedelta(days=10) +
+                         relativedelta(years=1, months=2, days=3, hours=4,
+                                       minutes=5, microseconds=6),
+                         relativedelta(years=1, months=2, days=13, hours=4,
+                                       minutes=5, microseconds=6))
+
+    def testAdditionToDatetime(self):
+        self.assertEqual(datetime(2000, 1, 1) + relativedelta(days=1),
+                         datetime(2000, 1, 2))
+
+    def testRightAdditionToDatetime(self):
+        self.assertEqual(relativedelta(days=1) + datetime(2000, 1, 1),
+                         datetime(2000, 1, 2))
+
+    def testSubtraction(self):
+        self.assertEqual(relativedelta(days=10) -
+                         relativedelta(years=1, months=2, days=3, hours=4,
+                                       minutes=5, microseconds=6),
+                         relativedelta(years=-1, months=-2, days=7, hours=-4,
+                                       minutes=-5, microseconds=-6))
+
+    def testRightSubtractionFromDatetime(self):
+        self.assertEqual(datetime(2000, 1, 2) - relativedelta(days=1),
+                         datetime(2000, 1, 1))
+
+    def testSubractionWithDatetime(self):
+        self.assertRaises(TypeError, lambda x, y: x - y,
+                          (relativedelta(days=1), datetime(2000, 1, 1)))
 
     def testMultiplication(self):
         self.assertEqual(datetime(2000, 1, 1) + relativedelta(days=1) * 28,
