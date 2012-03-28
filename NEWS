@@ -1,11 +1,11 @@
-Version 2.1pre
---------------
+Version 2.1
+-----------
 
 - New maintainer
 
-- Dateutil now works on Python 2.6, 2.7 and 3.2 fomr same codebase (with six)
+- Dateutil now works on Python 2.6, 2.7 and 3.2 from same codebase (with six)
 
-- https://launchpad.net/bugs/704047: Ismael Carnales' patch for a new time format
+- #704047: Ismael Carnales' patch for a new time format
 
 - Small bug fixes, thanks for reporters!
 
