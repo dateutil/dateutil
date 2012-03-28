@@ -1,12 +1,12 @@
 #!/usr/bin/python
-from dateutil.zoneinfo import rebuild
-import shutil
-import sys
 import os
 import re
+import sys
 
-SERVER = "elsie.nci.nih.gov"
-DIR = "/pub"
+from dateutil.zoneinfo import rebuild
+
+SERVER = "ftp.iana.org"
+DIR = "/tz"
 NAME = re.compile("tzdata(.*).tar.gz")
 
 def main():

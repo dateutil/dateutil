@@ -66,7 +66,10 @@ def rebuild(filename, tag=None, format="gz"):
     targetname = "zoneinfo%s.tar.%s" % (tag, format)
     try:
         tf = TarFile.open(filename)
-        for name in tf.getnames():
+        # The "backwards" zone file contains links to other files, so must be
+        # processed as last
+        for name in sorted(tf.getnames(),
+                           key=lambda k: k != "backward" and k or "z"):
             if not (name.endswith(".sh") or
                     name.endswith(".tab") or
                     name == "leapseconds"):
