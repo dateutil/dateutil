@@ -208,7 +208,7 @@ class _ttinfo(object):
 class tzfile(datetime.tzinfo):
 
     # http://www.twinsun.com/tz/tz-link.htm
-    # ftp://elsie.nci.nih.gov/pub/tz*.tar.gz
+    # ftp://ftp.iana.org/tz/tz*.tar.gz
     
     def __init__(self, fileobj):
         if isinstance(fileobj, string_types):
