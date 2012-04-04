@@ -1,5 +1,6 @@
 #!/usr/bin/python
 from os.path import isfile, join
+import codecs
 import glob
 import os
 import re
@@ -13,7 +14,7 @@ if isfile("MANIFEST"):
 
 TOPDIR = os.path.dirname(__file__) or "."
 VERSION = re.search('__version__ = "([^"]+)"',
-                    open(TOPDIR + "/dateutil/__init__.py").read()).group(1)
+                    codecs.open(TOPDIR + "/dateutil/__init__.py", encoding='utf-8').read()).group(1)
 
 
 setup(name="python-dateutil",
