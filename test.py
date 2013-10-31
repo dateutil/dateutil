@@ -3458,6 +3458,16 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(parse(s, fuzzy=True),
                          datetime(2003, 9, 25, 10, 49, 41,
                                   tzinfo=self.brsttz))
+    def testFuzzyWithTokens(self):
+        s = "Today is 25 of September of 2003, exactly " \
+            "at 10:49:41 with timezone -03:00."
+        self.assertEqual(parse(s, fuzzy_with_tokens=True),
+                (datetime(2003, 9, 25, 10, 49, 41,
+                    tzinfo=self.brsttz),
+                    ('Today is ', 'of ', ', exactly at ',
+                        ' with timezone ', '.')
+                    )
+                )
 
     def testExtraSpace(self):
         self.assertEqual(parse("  July   4 ,  1976   12:01:02   am  "),
