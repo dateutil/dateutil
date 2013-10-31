@@ -10,14 +10,14 @@ import os
 
 # Add build directory to search path
 if os.path.exists("build"):
-	from distutils.util import get_platform
-	import sys
-	if sys.version_info >= (3, 2):
-		s = "build/lib"
-	else:
-		s = "build/lib.%s-%.3s" % (get_platform(), sys.version)
-	s = os.path.join(os.getcwd(), s)
-	sys.path.insert(0, s)
+    from distutils.util import get_platform
+    import sys
+    if sys.version_info >= (3, 2):
+        s = "build/lib"
+    else:
+        s = "build/lib.%s-%.3s" % (get_platform(), sys.version)
+    s = os.path.join(os.getcwd(), s)
+    sys.path.insert(0, s)
 
 from dateutil.relativedelta import *
 from dateutil.parser import *
@@ -3447,7 +3447,7 @@ class ParserTest(unittest.TestCase):
     def testLongMonth(self):
         self.assertEqual(parse("October", default=self.default),
                          datetime(2003, 10, 25))
-        
+
     def testZeroYear(self):
         self.assertEqual(parse("31-Dec-00", default=self.default),
                          datetime(2000, 12, 31))
@@ -3907,7 +3907,7 @@ END:VTIMEZONE
     def testStrCmp1(self):
         self.assertEqual(tzstr("EST5EDT"),
                          tzstr("EST5EDT4,M4.1.0/02:00:00,M10-5-0/02:00"))
-        
+
     def testStrCmp2(self):
         self.assertEqual(tzstr("EST5EDT"),
                          tzstr("EST5EDT,4,1,0,7200,10,-1,0,7200,3600"))
@@ -3930,7 +3930,7 @@ END:VTIMEZONE
         tz = tzfile(BytesIO(base64.decodestring(self.TZFILE_EST5EDT)))
         self.assertEqual(datetime(2003, 4, 6, 1, 59, tzinfo=tz).tzname(), "EST")
         self.assertEqual(datetime(2003, 4, 6, 2, 00, tzinfo=tz).tzname(), "EDT")
-        
+
     def testFileEnd1(self):
         tz = tzfile(BytesIO(base64.decodestring(self.TZFILE_EST5EDT)))
         self.assertEqual(datetime(2003, 10, 26, 0, 59, tzinfo=tz).tzname(), "EDT")
@@ -4007,6 +4007,6 @@ END:VTIMEZONE
 
 
 if __name__ == "__main__":
-	unittest.main()
+    unittest.main()
 
 # vim:ts=4:sw=4
