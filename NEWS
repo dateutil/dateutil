@@ -1,3 +1,12 @@
+Version 2.2
+-----------
+
+- Updated zoneinfo to 2013h
+
+- fuzzy_with_tokens parse addon from Christopher Corley
+
+- Bug with LANG=C fixed by Mike Gilbert
+
 Version 2.1
 -----------
 

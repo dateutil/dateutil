@@ -1206,6 +1206,10 @@ Additionally, the following keyword arguments are available:
     If {{{fuzzy}}} is set to True, unknown tokens in the string
     will be ignored.
 
+    fuzzy_with_tokens::
+    Similar to {{{fuzzy}}}, but will result a tuple of the normal
+    results and the skipped tokens.
+
     parserinfo::
     This parameter allows one to change how the string is parsed,
     by using a different parserinfo class instance. Using it you
