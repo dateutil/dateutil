@@ -1973,7 +1973,8 @@ Example:
 tzfile('Brazil/East')
 }}}
 
-== Building ==
+
+== Building and releasing ==
 When you get the source, it does not contain the internal zoneinfo
 database. To get (and update) the database, run the updatezinfo.py script. Make sure
 that the zic command is in your path, and that you have network connectivity
@@ -1981,9 +1982,19 @@ to get the latest timezone information from IANA. If you have downloaded
 the timezone data earlier, you can give the tarball as a parameter to
 updatezinfo.py.
 
+After testing any changes, changing the version information in dateutil/__init__.py
+and updating NEWS, a new release can be uploaded to PyPI with
+{{{
+python setup.py sdist upload
+}}}
+
+
 == Testing ==
 dateutil has a comprehensive test suite, which can be run simply by running the
 test.py script in the project root. Note that if you don't have the internal
 zoneinfo database, some tests will fail. Apart from that, all tests should pass.
+
+To easily test dateutil against all supported Python versions, you can use
+[[[http://tox.readthedocs.org/en/latest/ tox]]].
 
 ## vim:ft=moin
