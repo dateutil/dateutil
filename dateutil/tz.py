@@ -211,9 +211,11 @@ class tzfile(datetime.tzinfo):
     # ftp://ftp.iana.org/tz/tz*.tar.gz
     
     def __init__(self, fileobj):
+        file_opened_here = False
         if isinstance(fileobj, string_types):
             self._filename = fileobj
             fileobj = open(fileobj, 'rb')
+            file_opened_here = True
         elif hasattr(fileobj, "name"):
             self._filename = fileobj.name
         else:
@@ -228,120 +230,123 @@ class tzfile(datetime.tzinfo):
         # six four-byte values of type long, written in a
         # ``standard'' byte order (the high-order  byte
         # of the value is written first).
+        try:
+            if fileobj.read(4).decode() != "TZif":
+                raise ValueError("magic not found")
 
-        if fileobj.read(4).decode() != "TZif":
-            raise ValueError("magic not found")
+            fileobj.read(16)
 
-        fileobj.read(16)
+            (
+             # The number of UTC/local indicators stored in the file.
+             ttisgmtcnt,
 
-        (
-         # The number of UTC/local indicators stored in the file.
-         ttisgmtcnt,
+             # The number of standard/wall indicators stored in the file.
+             ttisstdcnt,
 
-         # The number of standard/wall indicators stored in the file.
-         ttisstdcnt,
-         
-         # The number of leap seconds for which data is
-         # stored in the file.
-         leapcnt,
+             # The number of leap seconds for which data is
+             # stored in the file.
+             leapcnt,
 
-         # The number of "transition times" for which data
-         # is stored in the file.
-         timecnt,
+             # The number of "transition times" for which data
+             # is stored in the file.
+             timecnt,
 
-         # The number of "local time types" for which data
-         # is stored in the file (must not be zero).
-         typecnt,
+             # The number of "local time types" for which data
+             # is stored in the file (must not be zero).
+             typecnt,
 
-         # The  number  of  characters  of "time zone
-         # abbreviation strings" stored in the file.
-         charcnt,
+             # The  number  of  characters  of "time zone
+             # abbreviation strings" stored in the file.
+             charcnt,
 
-        ) = struct.unpack(">6l", fileobj.read(24))
+            ) = struct.unpack(">6l", fileobj.read(24))
 
-        # The above header is followed by tzh_timecnt four-byte
-        # values  of  type long,  sorted  in ascending order.
-        # These values are written in ``standard'' byte order.
-        # Each is used as a transition time (as  returned  by
-        # time(2)) at which the rules for computing local time
-        # change.
+            # The above header is followed by tzh_timecnt four-byte
+            # values  of  type long,  sorted  in ascending order.
+            # These values are written in ``standard'' byte order.
+            # Each is used as a transition time (as  returned  by
+            # time(2)) at which the rules for computing local time
+            # change.
 
-        if timecnt:
-            self._trans_list = struct.unpack(">%dl" % timecnt,
-                                             fileobj.read(timecnt*4))
-        else:
-            self._trans_list = []
+            if timecnt:
+                self._trans_list = struct.unpack(">%dl" % timecnt,
+                                                 fileobj.read(timecnt*4))
+            else:
+                self._trans_list = []
 
-        # Next come tzh_timecnt one-byte values of type unsigned
-        # char; each one tells which of the different types of
-        # ``local time'' types described in the file is associated
-        # with the same-indexed transition time. These values
-        # serve as indices into an array of ttinfo structures that
-        # appears next in the file.
-        
-        if timecnt:
-            self._trans_idx = struct.unpack(">%dB" % timecnt,
-                                            fileobj.read(timecnt))
-        else:
-            self._trans_idx = []
-        
-        # Each ttinfo structure is written as a four-byte value
-        # for tt_gmtoff  of  type long,  in  a  standard  byte
-        # order, followed  by a one-byte value for tt_isdst
-        # and a one-byte  value  for  tt_abbrind.   In  each
-        # structure, tt_gmtoff  gives  the  number  of
-        # seconds to be added to UTC, tt_isdst tells whether
-        # tm_isdst should be set by  localtime(3),  and
-        # tt_abbrind serves  as an index into the array of
-        # time zone abbreviation characters that follow the
-        # ttinfo structure(s) in the file.
+            # Next come tzh_timecnt one-byte values of type unsigned
+            # char; each one tells which of the different types of
+            # ``local time'' types described in the file is associated
+            # with the same-indexed transition time. These values
+            # serve as indices into an array of ttinfo structures that
+            # appears next in the file.
 
-        ttinfo = []
+            if timecnt:
+                self._trans_idx = struct.unpack(">%dB" % timecnt,
+                                                fileobj.read(timecnt))
+            else:
+                self._trans_idx = []
 
-        for i in range(typecnt):
-            ttinfo.append(struct.unpack(">lbb", fileobj.read(6)))
+            # Each ttinfo structure is written as a four-byte value
+            # for tt_gmtoff  of  type long,  in  a  standard  byte
+            # order, followed  by a one-byte value for tt_isdst
+            # and a one-byte  value  for  tt_abbrind.   In  each
+            # structure, tt_gmtoff  gives  the  number  of
+            # seconds to be added to UTC, tt_isdst tells whether
+            # tm_isdst should be set by  localtime(3),  and
+            # tt_abbrind serves  as an index into the array of
+            # time zone abbreviation characters that follow the
+            # ttinfo structure(s) in the file.
 
-        abbr = fileobj.read(charcnt).decode()
+            ttinfo = []
 
-        # Then there are tzh_leapcnt pairs of four-byte
-        # values, written in  standard byte  order;  the
-        # first  value  of  each pair gives the time (as
-        # returned by time(2)) at which a leap second
-        # occurs;  the  second  gives the  total  number of
-        # leap seconds to be applied after the given time.
-        # The pairs of values are sorted in ascending order
-        # by time.
+            for i in range(typecnt):
+                ttinfo.append(struct.unpack(">lbb", fileobj.read(6)))
 
-        # Not used, for now
-        if leapcnt:
-            leap = struct.unpack(">%dl" % (leapcnt*2),
-                                 fileobj.read(leapcnt*8))
+            abbr = fileobj.read(charcnt).decode()
 
-        # Then there are tzh_ttisstdcnt standard/wall
-        # indicators, each stored as a one-byte value;
-        # they tell whether the transition times associated
-        # with local time types were specified as standard
-        # time or wall clock time, and are used when
-        # a time zone file is used in handling POSIX-style
-        # time zone environment variables.
+            # Then there are tzh_leapcnt pairs of four-byte
+            # values, written in  standard byte  order;  the
+            # first  value  of  each pair gives the time (as
+            # returned by time(2)) at which a leap second
+            # occurs;  the  second  gives the  total  number of
+            # leap seconds to be applied after the given time.
+            # The pairs of values are sorted in ascending order
+            # by time.
 
-        if ttisstdcnt:
-            isstd = struct.unpack(">%db" % ttisstdcnt,
-                                  fileobj.read(ttisstdcnt))
+            # Not used, for now
+            if leapcnt:
+                leap = struct.unpack(">%dl" % (leapcnt*2),
+                                     fileobj.read(leapcnt*8))
 
-        # Finally, there are tzh_ttisgmtcnt UTC/local
-        # indicators, each stored as a one-byte value;
-        # they tell whether the transition times associated
-        # with local time types were specified as UTC or
-        # local time, and are used when a time zone file
-        # is used in handling POSIX-style time zone envi-
-        # ronment variables.
+            # Then there are tzh_ttisstdcnt standard/wall
+            # indicators, each stored as a one-byte value;
+            # they tell whether the transition times associated
+            # with local time types were specified as standard
+            # time or wall clock time, and are used when
+            # a time zone file is used in handling POSIX-style
+            # time zone environment variables.
 
-        if ttisgmtcnt:
-            isgmt = struct.unpack(">%db" % ttisgmtcnt,
-                                  fileobj.read(ttisgmtcnt))
+            if ttisstdcnt:
+                isstd = struct.unpack(">%db" % ttisstdcnt,
+                                      fileobj.read(ttisstdcnt))
 
-        # ** Everything has been read **
+            # Finally, there are tzh_ttisgmtcnt UTC/local
+            # indicators, each stored as a one-byte value;
+            # they tell whether the transition times associated
+            # with local time types were specified as UTC or
+            # local time, and are used when a time zone file
+            # is used in handling POSIX-style time zone envi-
+            # ronment variables.
+
+            if ttisgmtcnt:
+                isgmt = struct.unpack(">%db" % ttisgmtcnt,
+                                      fileobj.read(ttisgmtcnt))
+
+            # ** Everything has been read **
+        finally:
+            if file_opened_here:
+                fileobj.close()
 
         # Build ttinfo list
         self._ttinfo_list = []
