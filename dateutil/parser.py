@@ -306,8 +306,10 @@ class parser(object):
             default = datetime.datetime.now().replace(hour=0, minute=0,
                                                       second=0, microsecond=0)
 
-
-        res, skipped_tokens = self._parse(timestr, **kwargs)
+        if kwargs.get('fuzzy_with_tokens',False):
+            res, skipped_tokens = self._parse(timestr, **kwargs)
+        else:
+            res = self._parse(timestr,**kwargs)
 
         if res is None:
             raise ValueError("unknown string format")
@@ -343,10 +345,10 @@ class parser(object):
             elif res.tzoffset:
                 ret = ret.replace(tzinfo=tz.tzoffset(res.tzname, res.tzoffset))
 
-        if skipped_tokens:
+        if kwargs.get('fuzzy_with_tokens',False):
             return ret, skipped_tokens
-
-        return ret
+        else:
+            return ret
 
     class _result(_resultbase):
         __slots__ = ["year", "month", "day", "weekday",
@@ -732,8 +734,8 @@ class parser(object):
 
         if fuzzy_with_tokens:
             return res, tuple(skipped_tokens)
-
-        return res, None
+        else:
+            return res
 
 DEFAULTPARSER = parser()
 def parse(timestr, parserinfo=None, **kwargs):

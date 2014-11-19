@@ -3611,6 +3611,10 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(parse("2004 10 Apr 11h30m", default=self.default),
                          datetime(2004, 4, 10, 11, 30))
 
+    def testErrorType01(self):
+        self.assertRaises(ValueError,
+                          parse,'shouldfail')
+
     def testIncreasingCTime(self):
         # This test will check 200 different years, every month, every day,
         # every hour, every minute, every second, and every weekday, using
