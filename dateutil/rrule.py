@@ -1,6 +1,4 @@
 """
-Copyright (c) 2003-2010  Gustavo Niemeyer <gustavo@niemeyer.net>
-
 This module offers extensions to the standard Python
 datetime module.
 """
@@ -230,6 +228,7 @@ class rrulebase(object):
         return l
 
 class rrule(rrulebase):
+    """  The basic rrule class """
     def __init__(self, freq, dtstart=None,
                  interval=1, wkst=None, count=None, until=None, bysetpos=None,
                  bymonth=None, bymonthday=None, byyearday=None, byeaster=None,
