@@ -11,4 +11,4 @@ install:
   - pip install six
   - python updatezinfo.py
 script:
-  - python test.py
+  - python setup.py test
