@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 import datetime
 import calendar
 
@@ -40,16 +39,17 @@ MO, TU, WE, TH, FR, SA, SU = weekdays = tuple([weekday(x) for x in range(7)])
 class relativedelta(object):
     """
 The relativedelta type is based on the specification of the excelent
-work done by M.-A. Lemburg in his mx.DateTime extension. However,
+work done by M.-A. Lemburg in his
+`mx.DateTime <http://www.egenix.com/files/python/mxDateTime.html>`_ extension. However,
 notice that this type does *NOT* implement the same algorithm as
 his work. Do *NOT* expect it to behave like mx.DateTime's counterpart.
 
 There's two different ways to build a relativedelta instance. The
-first one is passing it two date/datetime classes:
+first one is passing it two date/datetime classes::
 
     relativedelta(datetime1, datetime2)
 
-And the other way is to use the following keyword arguments:
+And the other way is to use the following keyword arguments::
 
     year, month, day, hour, minute, second, microsecond:
         Absolute information.
@@ -74,26 +74,26 @@ And the other way is to use the following keyword arguments:
 
 Here is the behavior of operations with relativedelta:
 
-1) Calculate the absolute year, using the 'year' argument, or the
+1. Calculate the absolute year, using the 'year' argument, or the
    original datetime year, if the argument is not present.
 
-2) Add the relative 'years' argument to the absolute year.
+2. Add the relative 'years' argument to the absolute year.
 
-3) Do steps 1 and 2 for month/months.
+3. Do steps 1 and 2 for month/months.
 
-4) Calculate the absolute day, using the 'day' argument, or the
+4. Calculate the absolute day, using the 'day' argument, or the
    original datetime day, if the argument is not present. Then,
    subtract from the day until it fits in the year and month
    found after their operations.
 
-5) Add the relative 'days' argument to the absolute day. Notice
+5. Add the relative 'days' argument to the absolute day. Notice
    that the 'weeks' argument is multiplied by 7 and added to
    'days'.
 
-6) Do steps 1 and 2 for hour/hours, minute/minutes, second/seconds,
+6. Do steps 1 and 2 for hour/hours, minute/minutes, second/seconds,
    microsecond/microseconds.
 
-7) If the 'weekday' argument is present, calculate the weekday,
+7. If the 'weekday' argument is present, calculate the weekday,
    with the given (wday, nth) tuple. wday is the index of the
    weekday (0-6, 0=Mon), and nth is the number of weeks to add
    forward or backward, depending on its signal. Notice that if

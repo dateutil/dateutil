@@ -1,4 +1,8 @@
 # -*- coding:iso-8859-1 -*-
+"""
+This module offers a generic date/time string parser which is able to parse
+most known formats to represent a date and/or time.
+"""
 from __future__ import unicode_literals
 
 import datetime

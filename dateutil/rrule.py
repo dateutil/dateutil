@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
-
+"""
+The rrule module offers a small, complete, and very fast, implementation of
+the recurrence rules documented in the
+`iCalendar RFC <http://www.ietf.org/rfc/rfc2445.txt>`_,
+including support for caching of results.
+"""
 import itertools
 import datetime
 import calendar
@@ -157,11 +162,13 @@ class rrulebase(object):
 
     # __len__() introduces a large performance penality.
     def count(self):
+        """ Returns the number of recurrences in this set. It will have go trough the whole recurrence, if this hasn't been done before. """
         if self._len is None:
             for x in self: pass
         return self._len
 
     def before(self, dt, inc=False):
+        """ Returns the last recurrence before the given datetime instance. The inc keyword defines what happens if dt is an occurrence. With inc == True, if dt itself is an occurrence, it will be returned. """
         if self._cache_complete:
             gen = self._cache
         else:
@@ -180,6 +187,7 @@ class rrulebase(object):
         return last
 
     def after(self, dt, inc=False):
+        """ Returns the first recurrence after the given datetime instance. The inc keyword defines what happens if dt is an occurrence. With inc == True, if dt itself is an occurrence, it will be returned.  """
         if self._cache_complete:
             gen = self._cache
         else:
@@ -195,6 +203,7 @@ class rrulebase(object):
         return None
 
     def between(self, after, before, inc=False):
+        """ Returns all the occurrences of the rrule between after and before. The inc keyword defines what happens if after and/or before are themselves occurrences. With inc == True, they will be included in the list, if they are found in the recurrence set. """
         if self._cache_complete:
             gen = self._cache
         else:
@@ -224,7 +233,57 @@ class rrulebase(object):
         return l
 
 class rrule(rrulebase):
-    """  The basic rrule class """
+    """
+    That's the base of the rrule operation. It accepts all the keywords
+    defined in the RFC as its constructor parameters (except byday,
+    which was renamed to byweekday) and more. The constructor prototype is::
+
+            rrule(freq)
+
+    Where freq must be one of YEARLY, MONTHLY, WEEKLY, DAILY, HOURLY, MINUTELY, or SECONDLY.
+
+    Additionally, it supports the following keyword arguments:
+
+    :param cache:
+        If given, it must be a boolean value specifying to enable or disable caching of results. If you will use the same
+        rrule instance multiple times, enabling caching will improve the performance considerably.
+    :param dtstart:
+        The recurrence start. Besides being the base for the recurrence, missing parameters in the final recurrence instances will also be extracted from this date. If not
+        given, datetime.now() will be used instead.
+    :param interval:
+        The interval between each freq iteration. For example, when using YEARLY, an interval of 2 means once every two years, but with HOURLY, it means once every two hours. The default interval is 1.
+    :param wkst:
+        The week start day. Must be one of the MO, TU, WE constants, or an integer, specifying the first day of the week. This will affect recurrences based on weekly periods. The default week start is got from calendar.firstweekday(), and may be modified by calendar.setfirstweekday().
+    :param count:
+        How many occurrences will be generated.
+    :param until:
+        If given, this must be a datetime instance, that will specify the limit of the recurrence. If a recurrence instance happens to be the same as the datetime instance given in the until keyword, this will be the last occurrence.
+    :param bysetpos:
+        If given, it must be either an integer, or a sequence of integers, positive or negative. Each given integer will specify an occurrence number, corresponding to the nth occurrence of the rule inside the frequency period. For
+        example, a bysetpos of -1 if combined with a MONTHLY frequency, and a byweekday of (MO, TU, WE, TH, FR), will result in the last work day of every month.
+    :param bymonth:
+        If given, it must be either an integer, or a sequence of integers, meaning the months to apply the recurrence to.
+    :param bymonthday:
+        If given, it must be either an integer, or a sequence of integers, meaning the month days to apply the recurrence to.
+    :param byyearday:
+        If given, it must be either an integer, or a sequence of integers, meaning the year days to apply the recurrence to.
+    :param byweekno:
+        If given, it must be either an integer, or a sequence of integers, meaning the week numbers to apply the recurrence to. Week numbers have the meaning described in ISO8601, that is, the first week of the year is that containing at least four days of the new year.
+    :param byweekday:
+        If given, it must be either an integer (0 == MO), a sequence of integers, one of the weekday constants (MO, TU, etc), or a sequence of these constants. When given, these variables will define the weekdays where the recurrence will be applied. It's also possible to use an argument n for the weekday instances, which will mean the nth occurrence of this weekday in the period. For example, with MONTHLY, or with YEARLY and BYMONTH, using FR(+1) in byweekday will specify the first friday of the month where the recurrence happens. Notice that in the RFC documentation, this is specified as BYDAY, but was renamed to avoid the ambiguity of that keyword.
+    :param byhour:
+        If given, it must be either an integer, or a sequence of integers, meaning the hours to apply the recurrence to.
+    :param byminute:
+        If given, it must be either an integer, or a sequence of integers, meaning the minutes to apply the recurrence to.
+    :param bysecond:
+        If given, it must be either an integer, or a sequence of integers, meaning the seconds to apply the recurrence to.
+    :param byeaster:
+        If given, it must be either an integer, or a sequence of integers, positive or negative. Each integer will define an offset from the Easter Sunday. Passing the offset
+
+        0 to byeaster will yield the Easter Sunday itself. This is an extension to the RFC specification.
+
+
+     """
     def __init__(self, freq, dtstart=None,
                  interval=1, wkst=None, count=None, until=None, bysetpos=None,
                  bymonth=None, bymonthday=None, byyearday=None, byeaster=None,
@@ -426,7 +485,7 @@ class rrule(rrulebase):
                      HOURLY:ii.ddayset,
                      MINUTELY:ii.ddayset,
                      SECONDLY:ii.ddayset}[freq]
-        
+
         if freq < HOURLY:
             timeset = self._timeset
         else:
@@ -821,6 +880,12 @@ class _iterinfo(object):
 
 
 class rruleset(rrulebase):
+    """ The rruleset type allows more complex recurrence setups, mixing
+    multiple rules, dates, exclusion rules, and exclusion dates. The type
+    constructor takes the following keyword arguments:
+
+    :param cache: If True, caching of results will be enabled, improving
+                  performance of multiple queries considerably. """
 
     class _genitem(object):
         def __init__(self, genlist, gen):
@@ -860,15 +925,21 @@ class rruleset(rrulebase):
         self._exdate = []
 
     def rrule(self, rrule):
+        """ Include the given :py:`rrule` instance in the recurrence set generation. """
         self._rrule.append(rrule)
 
     def rdate(self, rdate):
+        """ Include the given :py:`datetime` instance in the recurrence set generation. """
         self._rdate.append(rdate)
 
     def exrule(self, exrule):
+        """ Include the given rrule instance in the recurrence set
+        exclusion list. Dates which are part of the given recurrence
+        rules will not be generated, even if some inclusive rrule or rdate matches them."""
         self._exrule.append(exrule)
 
     def exdate(self, exdate):
+        """ Include the given datetime instance in the recurrence set exclusion list. Dates included that way will not be generated, even if some inclusive rrule or rdate matches them. """
         self._exdate.append(exdate)
 
     def _iter(self):

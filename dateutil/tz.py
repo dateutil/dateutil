@@ -1,5 +1,12 @@
 # -*- coding: utf-8 -*-
-
+"""
+This module offers timezone implementations subclassing the abstract
+:py:`datetime.tzinfo` type. There are classes to handle tzfile format files
+(usually are in :file:`/etc/localtime`, :file:`/usr/share/zoneinfo`, etc), TZ
+environment string (in all known formats), given ranges (with help from
+relative deltas), local machine timezone, fixed offset timezone, and UTC
+timezone.
+"""
 import datetime
 import platform
 import struct
@@ -42,7 +49,7 @@ class tzutc(datetime.tzinfo):
 
     def utcoffset(self, dt):
         return ZERO
-     
+
     def dst(self, dt):
         return ZERO
 
@@ -119,7 +126,7 @@ class tzlocal(datetime.tzinfo):
     def _isdst(self, dt):
         # We can't use mktime here. It is unstable when deciding if
         # the hour near to a change is DST or not.
-        # 
+        #
         # timestamp = time.mktime((dt.year, dt.month, dt.day, dt.hour,
         #                         dt.minute, dt.second, dt.weekday(), 0, -1))
         # return time.localtime(timestamp).tm_isdst
@@ -205,7 +212,7 @@ class tzfile(datetime.tzinfo):
 
     # http://www.twinsun.com/tz/tz-link.htm
     # ftp://ftp.iana.org/tz/tz*.tar.gz
-    
+
     def __init__(self, fileobj, filename=None):
         file_opened_here = False
         if isinstance(fileobj, string_types):
@@ -467,7 +474,7 @@ class tzfile(datetime.tzinfo):
         # However, this class stores historical changes in the
         # dst offset, so I belive that this wouldn't be the right
         # way to implement this.
-        
+
     @tzname_in_python2
     def tzname(self, dt):
         if not self._ttinfo_std:
@@ -574,7 +581,7 @@ class tzrange(datetime.tzinfo):
     __reduce__ = object.__reduce__
 
 class tzstr(tzrange):
-    
+
     def __init__(self, s):
         global parser
         if not parser:
