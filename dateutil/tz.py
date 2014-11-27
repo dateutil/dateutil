@@ -203,12 +203,14 @@ class tzfile(datetime.tzinfo):
     # http://www.twinsun.com/tz/tz-link.htm
     # ftp://ftp.iana.org/tz/tz*.tar.gz
     
-    def __init__(self, fileobj):
+    def __init__(self, fileobj, filename=None):
         file_opened_here = False
         if isinstance(fileobj, string_types):
             self._filename = fileobj
             fileobj = open(fileobj, 'rb')
             file_opened_here = True
+        elif filename is not None:
+            self._filename = filename
         elif hasattr(fileobj, "name"):
             self._filename = fileobj.name
         else:

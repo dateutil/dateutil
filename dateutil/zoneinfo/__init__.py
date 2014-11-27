@@ -26,8 +26,12 @@ class ZoneInfoFile(object):
         self.zonefile = zonefile
         if zonefile is not None and os.path.isfile(zonefile):
             with TarFile.open(zonefile,'r') as tf:
-                self.zones = {zf.name: tzfile(tf.extractfile(zf))
+                self.zones = {zf.name: tzfile(tf.extractfile(zf), filename = zf.name)
                               for zf in tf.getmembers() if zf.isfile()}
+                # deal with links: They'll point to their parent object. Less waste of memory
+                links = {zl.name: self.zones[zl.linkname]
+                         for zl in tf.getmembers() if zl.islnk() or zl.issym()}
+                self.zones.update(links)
         else:
             self.zones = dict()
 
