@@ -1,18 +1,15 @@
-"""
-Copyright (c) 2003-2007  Gustavo Niemeyer <gustavo@niemeyer.net>
-
-This module offers extensions to the standard Python
-datetime module.
-"""
-__license__ = "Simplified BSD"
-
-from six import string_types, PY3
+# -*- coding: utf-8 -*-
 
 import datetime
+import platform
 import struct
 import time
 import sys
 import os
+
+from six import string_types, PY3
+
+from dateutil.tzwin import tzwin, tzwinlocal
 
 relativedelta = None
 parser = None
@@ -21,10 +18,6 @@ rrule = None
 __all__ = ["tzutc", "tzoffset", "tzlocal", "tzfile", "tzrange",
            "tzstr", "tzical", "tzwin", "tzwinlocal", "gettz"]
 
-try:
-    from dateutil.tzwin import tzwin, tzwinlocal
-except (ImportError, OSError):
-    tzwin, tzwinlocal = None, None
 
 def tzname_in_python2(myfunc):
     """Change unicode output into bytestrings in Python 2
@@ -938,11 +931,8 @@ def gettz(name=None):
                     pass
             else:
                 tz = None
-                if tzwin:
-                    try:
-                        tz = tzwin(name)
-                    except OSError:
-                        pass
+                if platform.platform().startswith('Windows'):
+                    tz = tzwin(name)
                 if not tz:
                     from dateutil.zoneinfo import gettz
                     tz = gettz(name)

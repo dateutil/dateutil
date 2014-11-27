@@ -3,6 +3,8 @@ Version 2.3
 
 - Cleanup directory structure, moved test.py to dateutil/tests/test.py
 
+- Fixed tzwin silently not imported on windows python2
+
 
 Version 2.2
 -----------

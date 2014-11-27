@@ -1,7 +1,20 @@
 # This code was originally contributed by Jeffrey Harris.
 import datetime
 import struct
-import winreg
+import platform
+import warnings
+
+
+running_on_windows = platform.platform().startswith('Windows')
+if running_on_windows:
+    from six.moves import winreg
+    tzwin = _tzwin
+    tzwinlocal = _tzwinlocal
+else:
+    def tzwin(*args):
+        warnings.warn('tzwin is implemented only on Windows')
+        return None
+    tzwinlocal = tzwin
 
 
 __all__ = ["tzwin", "tzwinlocal"]
@@ -11,6 +24,7 @@ ONEWEEK = datetime.timedelta(7)
 TZKEYNAMENT = r"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Time Zones"
 TZKEYNAME9X = r"SOFTWARE\Microsoft\Windows\CurrentVersion\Time Zones"
 TZLOCALKEYNAME = r"SYSTEM\CurrentControlSet\Control\TimeZoneInformation"
+
 
 def _settzkeyname():
     global TZKEYNAME
@@ -22,7 +36,8 @@ def _settzkeyname():
         TZKEYNAME = TZKEYNAME9X
     handle.Close()
 
-_settzkeyname()
+if running_on_windows:
+    _settzkeyname()
 
 class tzwinbase(datetime.tzinfo):
     """tzinfo class based on win32's timezones available in the registry."""
@@ -73,7 +88,7 @@ class tzwinbase(datetime.tzinfo):
             return not dstoff <= dt.replace(tzinfo=None) < dston
 
 
-class tzwin(tzwinbase):
+class _tzwin(tzwinbase):
 
     def __init__(self, name):
         self._name = name
@@ -113,7 +128,7 @@ class tzwin(tzwinbase):
         return (self.__class__, (self._name,))
 
 
-class tzwinlocal(tzwinbase):
+class _tzwinlocal(tzwinbase):
     
     def __init__(self):
 
