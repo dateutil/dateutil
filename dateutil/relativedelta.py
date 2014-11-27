@@ -1,10 +1,4 @@
-"""
-Copyright (c) 2003-2010  Gustavo Niemeyer <gustavo@niemeyer.net>
-
-This module offers extensions to the standard Python
-datetime module.
-"""
-__license__ = "Simplified BSD"
+# -*- coding: utf-8 -*-
 
 import datetime
 import calendar

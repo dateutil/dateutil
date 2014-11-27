@@ -1,23 +1,14 @@
-#!/usr/bin/env python
-# -*- encoding: utf-8 -*-
+# -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from six import StringIO, BytesIO, PY3
 import unittest
 import calendar
 import base64
 import os
 
-# Add build directory to search path
-if os.path.exists("build"):
-    from distutils.util import get_platform
-    import sys
-    if sys.version_info >= (3, 2):
-        s = "build/lib"
-    else:
-        s = "build/lib.%s-%.3s" % (get_platform(), sys.version)
-    s = os.path.join(os.getcwd(), s)
-    sys.path.insert(0, s)
+from datetime import *
+
+from six import StringIO, BytesIO, PY3
 
 from dateutil.relativedelta import *
 from dateutil.parser import *
@@ -26,7 +17,6 @@ from dateutil.rrule import *
 from dateutil.tz import *
 from dateutil import zoneinfo
 
-from datetime import *
 
 
 class RelativeDeltaTest(unittest.TestCase):
@@ -4019,8 +4009,5 @@ END:VTIMEZONE
         self.assertEqual(dt.astimezone(tz=gettz("UTC-2")),
                           datetime(2007, 8, 6, 2, 10, tzinfo=tzstr("UTC-2")))
 
-
-if __name__ == "__main__":
-    unittest.main()
 
 # vim:ts=4:sw=4

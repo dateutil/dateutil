@@ -1,19 +1,10 @@
 # -*- coding: utf-8 -*-
-"""
-Copyright (c) 2003-2005  Gustavo Niemeyer <gustavo@niemeyer.net>
-
-This module offers extensions to the standard Python
-datetime module.
-"""
 import logging
 import os
 from subprocess import call
 from tarfile import TarFile
 
 from dateutil.tz import tzfile
-
-__author__ = "Tomi Pieviläinen <tomi.pievilainen@iki.fi>"
-__license__ = "Simplified BSD"
 
 __all__ = ["setcachesize", "gettz", "rebuild"]
 

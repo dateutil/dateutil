@@ -1,13 +1,5 @@
 # -*- coding:iso-8859-1 -*-
-"""
-Copyright (c) 2003-2007  Gustavo Niemeyer <gustavo@niemeyer.net>
-
-This module offers extensions to the standard Python
-datetime module.
-"""
 from __future__ import unicode_literals
-__license__ = "Simplified BSD"
-
 
 import datetime
 import string
@@ -15,17 +7,12 @@ import time
 import sys
 import os
 import collections
-
-try:
-    from io import StringIO
-except ImportError:
-    from io import StringIO
+from io import StringIO
 
 from six import text_type, binary_type, integer_types
 
 from . import relativedelta
 from . import tz
-
 
 __all__ = ["parse", "parserinfo"]
 

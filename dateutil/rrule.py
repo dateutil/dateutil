@@ -1,17 +1,13 @@
-"""
-This module offers extensions to the standard Python
-datetime module.
-"""
-__license__ = "Simplified BSD"
+# -*- coding: utf-8 -*-
 
 import itertools
 import datetime
 import calendar
+import sys
 try:
     import _thread
 except ImportError:
     import thread as _thread
-import sys
 
 from six import advance_iterator, integer_types
 
