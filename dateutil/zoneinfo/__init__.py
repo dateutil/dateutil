@@ -3,6 +3,8 @@ import logging
 import os
 from subprocess import check_call
 from tarfile import TarFile
+from pkgutil import get_data
+from io import BytesIO
 
 from dateutil.tz import tzfile
 
@@ -14,18 +16,13 @@ class tzfile(tzfile):
     def __reduce__(self):
         return (gettz, (self._filename,))
 
-def getzoneinfofile():
-    zonefilename = os.path.join(os.path.dirname(__file__), _ZONEFILENAME)
-    if os.path.isfile(zonefilename):
-        return zonefilename
-    else:
-        return None
+def getzoneinfofile_stream():
+    return BytesIO(get_data(__name__, _ZONEFILENAME))
 
 class ZoneInfoFile(object):
-    def __init__(self, zonefile=None):
-        self.zonefile = zonefile
-        if zonefile is not None and os.path.isfile(zonefile):
-            with TarFile.open(zonefile,'r') as tf:
+    def __init__(self, zonefile_stream=None):
+        if zonefile_stream is not None:
+            with TarFile.open(fileobj=zonefile_stream,mode='r') as tf:
                 self.zones = {zf.name: tzfile(tf.extractfile(zf), filename = zf.name)
                               for zf in tf.getmembers() if zf.isfile()}
                 # deal with links: They'll point to their parent object. Less waste of memory
@@ -35,7 +32,7 @@ class ZoneInfoFile(object):
         else:
             self.zones = dict()
 
-_CLASS_ZONE_INSTANCE = ZoneInfoFile(getzoneinfofile())
+_CLASS_ZONE_INSTANCE = ZoneInfoFile(getzoneinfofile_stream())
 def gettz(name):
     return _CLASS_ZONE_INSTANCE.zones.get(name)
 

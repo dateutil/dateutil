@@ -20,9 +20,9 @@ VERSION = re.search('__version__ = "([^"]+)"',
 setup(name="python-dateutil",
       version = VERSION,
       description = "Extensions to the standard Python datetime module",
-      author = "Tomi Pievilaeinen",
-      author_email = "tomi.pievilainen@iki.fi",
-      url = "http://labix.org/python-dateutil",
+      author = "Yaron de Leeuw",
+      author_email = "me@jarondl.net",
+      url = "https://dateutil.readthedocs.org",
       license = "Simplified BSD",
       long_description =
 """\
@@ -30,9 +30,8 @@ The dateutil module provides powerful extensions to the
 datetime module available in the Python standard library.
 """,
       packages = ["dateutil", "dateutil.zoneinfo"],
-      package_data = {"": ["*.tar.gz"]},
-      include_package_data = True,
-      zip_safe = False,
+      package_data = {"dateutil.zoneinfo": ["dateutil-zoneinfo.tar.gz"]},
+      zip_safe = True,
       requires = ["six"],
       install_requires = ["six"], # XXX fix when packaging is sane again
       classifiers = [
@@ -46,6 +45,7 @@ datetime module available in the Python standard library.
           'Programming Language :: Python :: 3',
           'Programming Language :: Python :: 3.2',
           'Programming Language :: Python :: 3.3',
+          'Programming Language :: Python :: 3.4',
           'Topic :: Software Development :: Libraries',
       ],
       test_suite = "dateutil.test.test"
