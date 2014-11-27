@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
 import os
+import warnings
 from subprocess import check_call
 from tarfile import TarFile
 from pkgutil import get_data
@@ -17,7 +18,11 @@ class tzfile(tzfile):
         return (gettz, (self._filename,))
 
 def getzoneinfofile_stream():
-    return BytesIO(get_data(__name__, _ZONEFILENAME))
+    try:
+        return BytesIO(get_data(__name__, _ZONEFILENAME))
+    except IOError as e: # TODO  switch to FileNotFoundError?
+        warnings.warn("I/O error({0}): {1}".format(e.errno, e.strerror))
+        return None
 
 class ZoneInfoFile(object):
     def __init__(self, zonefile_stream=None):
