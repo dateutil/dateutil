@@ -3,6 +3,13 @@ Version 2.3
 
 - Cleanup directory structure, moved test.py to dateutil/tests/test.py
 
+- Changed many aspects of dealing with the zone info file. Instead of a cache,
+  all the zones are loaded to memory, but symbolic links are loaded only once,
+  so not much memory is used.
+
+- The package is now zip-safe, and universal-wheelable, thanks to changes in 
+  the handling of the zoneinfo file. 
+
 - Fixed tzwin silently not imported on windows python2
 
 

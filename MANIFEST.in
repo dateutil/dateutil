@@ -1,4 +1,1 @@
-recursive-include dateutil *.py *.tar.*
-recursive-include sandbox *.py
-include setup.py setup.cfg MANIFEST.in README LICENSE NEWS Makefile
-include test.py example.py
+include LICENSE NEWS zonefile_metadata.json updatezinfo.py
