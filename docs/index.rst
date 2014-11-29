@@ -3,9 +3,11 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to dateutil's documentation!
-====================================
 
+.. include:: ../README.rst
+
+Documentation
+=============
 Contents:
 
 .. toctree::
@@ -18,6 +20,7 @@ Contents:
    rrule
    tz
    zoneinfo
+   examples
 
 Indices and tables
 ==================

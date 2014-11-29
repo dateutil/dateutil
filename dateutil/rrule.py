@@ -925,11 +925,11 @@ class rruleset(rrulebase):
         self._exdate = []
 
     def rrule(self, rrule):
-        """ Include the given :py:`rrule` instance in the recurrence set generation. """
+        """ Include the given :py:class:`rrule` instance in the recurrence set generation. """
         self._rrule.append(rrule)
 
     def rdate(self, rdate):
-        """ Include the given :py:`datetime` instance in the recurrence set generation. """
+        """ Include the given :py:class:`datetime` instance in the recurrence set generation. """
         self._rdate.append(rdate)
 
     def exrule(self, exrule):

@@ -12,6 +12,7 @@ Version 2.3
 
 - Fixed tzwin silently not imported on windows python2
 
+- New maintainer, together with new hosting: GitHub, Travis, Read-The-Docs
 
 Version 2.2
 -----------
