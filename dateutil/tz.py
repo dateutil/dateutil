@@ -9,7 +9,10 @@ import os
 
 from six import string_types, PY3
 
-from dateutil.tzwin import tzwin, tzwinlocal
+try:
+    from dateutil.tzwin import tzwin, tzwinlocal
+except ImportError:
+    tzwin = tzwinlocal = None
 
 relativedelta = None
 parser = None
@@ -931,7 +934,7 @@ def gettz(name=None):
                     pass
             else:
                 tz = None
-                if platform.platform().startswith('Windows'):
+                if tzwin is not None:
                     tz = tzwin(name)
                 if not tz:
                     from dateutil.zoneinfo import gettz
