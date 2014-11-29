@@ -43,15 +43,19 @@ class ZoneInfoFile(object):
             with _tar_open(fileobj=zonefile_stream, mode='r') as tf:
                 # dict comprehension does not work on python2.6
                 # TODO: get back to the nicer syntax when we ditch python2.6
-                # self.zones = {zf.name: tzfile(tf.extractfile(zf), filename = zf.name)
+                # self.zones = {zf.name: tzfile(tf.extractfile(zf),
+                #               filename = zf.name)
                 #              for zf in tf.getmembers() if zf.isfile()}
-                self.zones = dict((zf.name, tzfile(tf.extractfile(zf), filename=zf.name))
+                self.zones = dict((zf.name, tzfile(tf.extractfile(zf),
+                                                   filename=zf.name))
                                   for zf in tf.getmembers() if zf.isfile())
-                # deal with links: They'll point to their parent object. Less waste of memory
+                # deal with links: They'll point to their parent object. Less
+                # waste of memory
                 # links = {zl.name: self.zones[zl.linkname]
-                #         for zl in tf.getmembers() if zl.islnk() or zl.issym()}
+                #        for zl in tf.getmembers() if zl.islnk() or zl.issym()}
                 links = dict((zl.name, self.zones[zl.linkname])
-                             for zl in tf.getmembers() if zl.islnk() or zl.issym())
+                             for zl in tf.getmembers() if
+                             zl.islnk() or zl.issym())
                 self.zones.update(links)
         else:
             self.zones = dict()
@@ -83,8 +87,6 @@ def rebuild(filename, tag=None, format="gz", zonegroups=[]):
     moduledir = os.path.dirname(__file__)
     try:
         with _tar_open(filename) as tf:
-            # The "backwards" zone file contains links to other files, so must be
-            # processed as last
             for name in zonegroups:
                 tf.extract(name, tmpdir)
             filepaths = [os.path.join(tmpdir, n) for n in zonegroups]

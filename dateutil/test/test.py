@@ -4,7 +4,6 @@ from __future__ import unicode_literals
 import unittest
 import calendar
 import base64
-import os
 
 from datetime import *
 
@@ -18,7 +17,6 @@ from dateutil.tz import *
 from dateutil import zoneinfo
 
 
-
 class RelativeDeltaTest(unittest.TestCase):
     now = datetime(2003, 9, 17, 20, 54, 47, 282310)
     today = date(2003, 9, 17)
@@ -30,6 +28,7 @@ class RelativeDeltaTest(unittest.TestCase):
     def testNextMonthPlusOneWeek(self):
         self.assertEqual(self.now+relativedelta(months=+1, weeks=+1),
                          datetime(2003, 10, 24, 20, 54, 47, 282310))
+
     def testNextMonthPlusOneWeek10am(self):
         self.assertEqual(self.today +
                          relativedelta(months=+1, weeks=+1, hour=10),
@@ -85,7 +84,6 @@ class RelativeDeltaTest(unittest.TestCase):
     def testNextWednesdayIsToday(self):
         self.assertEqual(self.today+relativedelta(weekday=WE),
                          date(2003, 9, 17))
-
 
     def testNextWenesdayNotToday(self):
         self.assertEqual(self.today+relativedelta(days=+1, weekday=WE),
@@ -180,8 +178,8 @@ class RelativeDeltaTest(unittest.TestCase):
         self.assertEqual(datetime(2000, 1, 1) + relativedelta(days=28) / 28,
                          datetime(2000, 1, 2))
 
-class RRuleTest(unittest.TestCase):
 
+class RRuleTest(unittest.TestCase):
     def testYearly(self):
         self.assertEqual(list(rrule(YEARLY,
                               count=3,
@@ -552,7 +550,6 @@ class RRuleTest(unittest.TestCase):
                           datetime(1998, 3, 2, 9, 0),
                           datetime(1999, 1, 2, 9, 0)])
 
-
     def testMonthlyByMonthDay(self):
         self.assertEqual(list(rrule(MONTHLY,
                               count=3,
@@ -691,7 +688,6 @@ class RRuleTest(unittest.TestCase):
                           datetime(1998, 7, 19, 9, 0),
                           datetime(1999, 4, 10, 9, 0),
                           datetime(1999, 7, 19, 9, 0)])
-
 
     def testMonthlyByWeekNo(self):
         self.assertEqual(list(rrule(MONTHLY,
@@ -2534,7 +2530,7 @@ class RRuleTest(unittest.TestCase):
 
     def testGetItemSlice(self):
         self.assertEqual(rrule(DAILY,
-                               #count=3,
+                               # count=3,
                                dtstart=parse("19970902T090000"))[1:2],
                          [datetime(1997, 9, 3, 9, 0)])
 
@@ -2568,10 +2564,8 @@ class RRuleTest(unittest.TestCase):
         self.assertEqual(datetime(1997, 9, 3, 9, 0) not in rr, False)
 
     def testBefore(self):
-        self.assertEqual(rrule(DAILY,
-                               #count=5,
-                               dtstart=parse("19970902T090000"))
-                               .before(parse("19970905T090000")),
+        self.assertEqual(rrule(DAILY,  # count=5
+            dtstart=parse("19970902T090000")).before(parse("19970905T090000")),
                          datetime(1997, 9, 4, 9, 0))
 
     def testBeforeInc(self):

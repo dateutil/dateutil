@@ -9,12 +9,9 @@ import itertools
 import datetime
 import calendar
 import sys
-try:
-    import _thread
-except ImportError:
-    import thread as _thread
 
 from six import advance_iterator, integer_types
+from six.moves import _thread
 
 __all__ = ["rrule", "rruleset", "rrulestr",
            "YEARLY", "MONTHLY", "WEEKLY", "DAILY",
@@ -22,7 +19,7 @@ __all__ = ["rrule", "rruleset", "rrulestr",
            "MO", "TU", "WE", "TH", "FR", "SA", "SU"]
 
 # Every mask is 7 days longer to handle cross-year weekly periods.
-M366MASK = tuple([1]*31+[2]*29+[3]*31+[4]*30+[5]*31+[6]*30+
+M366MASK = tuple([1]*31+[2]*29+[3]*31+[4]*30+[5]*31+[6]*30 +
                  [7]*31+[8]*31+[9]*30+[10]*31+[11]*30+[12]*31+[1]*7)
 M365MASK = list(M366MASK)
 M29, M30, M31 = list(range(1, 30)), list(range(1, 31)), list(range(1, 32))
@@ -49,6 +46,7 @@ M365MASK = tuple(M365MASK)
 # Imported on demand.
 easter = None
 parser = None
+
 
 class weekday(object):
     __slots__ = ["weekday", "n"]
@@ -82,12 +80,13 @@ class weekday(object):
 
 MO, TU, WE, TH, FR, SA, SU = weekdays = tuple([weekday(x) for x in range(7)])
 
+
 class rrulebase(object):
     def __init__(self, cache=False):
         if cache:
             self._cache = []
             self._cache_lock = _thread.allocate_lock()
-            self._cache_gen  = self._iter()
+            self._cache_gen = self._iter()
             self._cache_complete = False
         else:
             self._cache = None
@@ -162,13 +161,17 @@ class rrulebase(object):
 
     # __len__() introduces a large performance penality.
     def count(self):
-        """ Returns the number of recurrences in this set. It will have go trough the whole recurrence, if this hasn't been done before. """
+        """ Returns the number of recurrences in this set. It will have go
+            trough the whole recurrence, if this hasn't been done before. """
         if self._len is None:
-            for x in self: pass
+            for x in self:
+                pass
         return self._len
 
     def before(self, dt, inc=False):
-        """ Returns the last recurrence before the given datetime instance. The inc keyword defines what happens if dt is an occurrence. With inc == True, if dt itself is an occurrence, it will be returned. """
+        """ Returns the last recurrence before the given datetime instance. The
+            inc keyword defines what happens if dt is an occurrence. With
+            inc=True, if dt itself is an occurrence, it will be returned. """
         if self._cache_complete:
             gen = self._cache
         else:
@@ -187,7 +190,9 @@ class rrulebase(object):
         return last
 
     def after(self, dt, inc=False):
-        """ Returns the first recurrence after the given datetime instance. The inc keyword defines what happens if dt is an occurrence. With inc == True, if dt itself is an occurrence, it will be returned.  """
+        """ Returns the first recurrence after the given datetime instance. The
+            inc keyword defines what happens if dt is an occurrence. With
+            inc=True, if dt itself is an occurrence, it will be returned.  """
         if self._cache_complete:
             gen = self._cache
         else:
@@ -203,7 +208,10 @@ class rrulebase(object):
         return None
 
     def between(self, after, before, inc=False):
-        """ Returns all the occurrences of the rrule between after and before. The inc keyword defines what happens if after and/or before are themselves occurrences. With inc == True, they will be included in the list, if they are found in the recurrence set. """
+        """ Returns all the occurrences of the rrule between after and before.
+        The inc keyword defines what happens if after and/or before are
+        themselves occurrences. With inc=True, they will be included in the
+        list, if they are found in the recurrence set. """
         if self._cache_complete:
             gen = self._cache
         else:
@@ -232,6 +240,7 @@ class rrulebase(object):
                     l.append(i)
         return l
 
+
 class rrule(rrulebase):
     """
     That's the base of the rrule operation. It accepts all the keywords
@@ -240,49 +249,83 @@ class rrule(rrulebase):
 
             rrule(freq)
 
-    Where freq must be one of YEARLY, MONTHLY, WEEKLY, DAILY, HOURLY, MINUTELY, or SECONDLY.
+    Where freq must be one of YEARLY, MONTHLY, WEEKLY, DAILY, HOURLY, MINUTELY,
+    or SECONDLY.
 
     Additionally, it supports the following keyword arguments:
 
     :param cache:
-        If given, it must be a boolean value specifying to enable or disable caching of results. If you will use the same
-        rrule instance multiple times, enabling caching will improve the performance considerably.
+        If given, it must be a boolean value specifying to enable or disable
+        caching of results. If you will use the same rrule instance multiple
+        times, enabling caching will improve the performance considerably.
     :param dtstart:
-        The recurrence start. Besides being the base for the recurrence, missing parameters in the final recurrence instances will also be extracted from this date. If not
-        given, datetime.now() will be used instead.
+        The recurrence start. Besides being the base for the recurrence,
+        missing parameters in the final recurrence instances will also be
+        extracted from this date. If not given, datetime.now() will be used
+        instead.
     :param interval:
-        The interval between each freq iteration. For example, when using YEARLY, an interval of 2 means once every two years, but with HOURLY, it means once every two hours. The default interval is 1.
+        The interval between each freq iteration. For example, when using
+        YEARLY, an interval of 2 means once every two years, but with HOURLY,
+        it means once every two hours. The default interval is 1.
     :param wkst:
-        The week start day. Must be one of the MO, TU, WE constants, or an integer, specifying the first day of the week. This will affect recurrences based on weekly periods. The default week start is got from calendar.firstweekday(), and may be modified by calendar.setfirstweekday().
+        The week start day. Must be one of the MO, TU, WE constants, or an
+        integer, specifying the first day of the week. This will affect
+        recurrences based on weekly periods. The default week start is got
+        from calendar.firstweekday(), and may be modified by
+        calendar.setfirstweekday().
     :param count:
         How many occurrences will be generated.
     :param until:
-        If given, this must be a datetime instance, that will specify the limit of the recurrence. If a recurrence instance happens to be the same as the datetime instance given in the until keyword, this will be the last occurrence.
+        If given, this must be a datetime instance, that will specify the
+        limit of the recurrence. If a recurrence instance happens to be the
+        same as the datetime instance given in the until keyword, this will
+        be the last occurrence.
     :param bysetpos:
-        If given, it must be either an integer, or a sequence of integers, positive or negative. Each given integer will specify an occurrence number, corresponding to the nth occurrence of the rule inside the frequency period. For
-        example, a bysetpos of -1 if combined with a MONTHLY frequency, and a byweekday of (MO, TU, WE, TH, FR), will result in the last work day of every month.
+        If given, it must be either an integer, or a sequence of integers,
+        positive or negative. Each given integer will specify an occurrence
+        number, corresponding to the nth occurrence of the rule inside the
+        frequency period. For example, a bysetpos of -1 if combined with a
+        MONTHLY frequency, and a byweekday of (MO, TU, WE, TH, FR), will
+        result in the last work day of every month.
     :param bymonth:
-        If given, it must be either an integer, or a sequence of integers, meaning the months to apply the recurrence to.
+        If given, it must be either an integer, or a sequence of integers,
+        meaning the months to apply the recurrence to.
     :param bymonthday:
-        If given, it must be either an integer, or a sequence of integers, meaning the month days to apply the recurrence to.
+        If given, it must be either an integer, or a sequence of integers,
+        meaning the month days to apply the recurrence to.
     :param byyearday:
-        If given, it must be either an integer, or a sequence of integers, meaning the year days to apply the recurrence to.
+        If given, it must be either an integer, or a sequence of integers,
+        meaning the year days to apply the recurrence to.
     :param byweekno:
-        If given, it must be either an integer, or a sequence of integers, meaning the week numbers to apply the recurrence to. Week numbers have the meaning described in ISO8601, that is, the first week of the year is that containing at least four days of the new year.
+        If given, it must be either an integer, or a sequence of integers,
+        meaning the week numbers to apply the recurrence to. Week numbers
+        have the meaning described in ISO8601, that is, the first week of
+        the year is that containing at least four days of the new year.
     :param byweekday:
-        If given, it must be either an integer (0 == MO), a sequence of integers, one of the weekday constants (MO, TU, etc), or a sequence of these constants. When given, these variables will define the weekdays where the recurrence will be applied. It's also possible to use an argument n for the weekday instances, which will mean the nth occurrence of this weekday in the period. For example, with MONTHLY, or with YEARLY and BYMONTH, using FR(+1) in byweekday will specify the first friday of the month where the recurrence happens. Notice that in the RFC documentation, this is specified as BYDAY, but was renamed to avoid the ambiguity of that keyword.
+        If given, it must be either an integer (0 == MO), a sequence of
+        integers, one of the weekday constants (MO, TU, etc), or a sequence
+        of these constants. When given, these variables will define the
+        weekdays where the recurrence will be applied. It's also possible to
+        use an argument n for the weekday instances, which will mean the nth
+        occurrence of this weekday in the period. For example, with MONTHLY,
+        or with YEARLY and BYMONTH, using FR(+1) in byweekday will specify the
+        first friday of the month where the recurrence happens. Notice that in
+        the RFC documentation, this is specified as BYDAY, but was renamed to
+        avoid the ambiguity of that keyword.
     :param byhour:
-        If given, it must be either an integer, or a sequence of integers, meaning the hours to apply the recurrence to.
+        If given, it must be either an integer, or a sequence of integers,
+        meaning the hours to apply the recurrence to.
     :param byminute:
-        If given, it must be either an integer, or a sequence of integers, meaning the minutes to apply the recurrence to.
+        If given, it must be either an integer, or a sequence of integers,
+        meaning the minutes to apply the recurrence to.
     :param bysecond:
-        If given, it must be either an integer, or a sequence of integers, meaning the seconds to apply the recurrence to.
+        If given, it must be either an integer, or a sequence of integers,
+        meaning the seconds to apply the recurrence to.
     :param byeaster:
-        If given, it must be either an integer, or a sequence of integers, positive or negative. Each integer will define an offset from the Easter Sunday. Passing the offset
-
-        0 to byeaster will yield the Easter Sunday itself. This is an extension to the RFC specification.
-
-
+        If given, it must be either an integer, or a sequence of integers,
+        positive or negative. Each integer will define an offset from the
+        Easter Sunday. Passing the offset 0 to byeaster will yield the Easter
+        Sunday itself. This is an extension to the RFC specification.
      """
     def __init__(self, freq, dtstart=None,
                  interval=1, wkst=None, count=None, until=None, bysetpos=None,
@@ -449,8 +492,8 @@ class rrule(rrulebase):
                 for minute in self._byminute:
                     for second in self._bysecond:
                         self._timeset.append(
-                                datetime.time(hour, minute, second,
-                                                    tzinfo=self._tzinfo))
+                            datetime.time(hour, minute, second,
+                                          tzinfo=self._tzinfo))
             self._timeset.sort()
             self._timeset = tuple(self._timeset)
 
@@ -478,20 +521,20 @@ class rrule(rrulebase):
         ii = _iterinfo(self)
         ii.rebuild(year, month)
 
-        getdayset = {YEARLY:ii.ydayset,
-                     MONTHLY:ii.mdayset,
-                     WEEKLY:ii.wdayset,
-                     DAILY:ii.ddayset,
-                     HOURLY:ii.ddayset,
-                     MINUTELY:ii.ddayset,
-                     SECONDLY:ii.ddayset}[freq]
+        getdayset = {YEARLY: ii.ydayset,
+                     MONTHLY: ii.mdayset,
+                     WEEKLY: ii.wdayset,
+                     DAILY: ii.ddayset,
+                     HOURLY: ii.ddayset,
+                     MINUTELY: ii.ddayset,
+                     SECONDLY: ii.ddayset}[freq]
 
         if freq < HOURLY:
             timeset = self._timeset
         else:
-            gettimeset = {HOURLY:ii.htimeset,
-                          MINUTELY:ii.mtimeset,
-                          SECONDLY:ii.stimeset}[freq]
+            gettimeset = {HOURLY: ii.htimeset,
+                          MINUTELY: ii.mtimeset,
+                          SECONDLY: ii.stimeset}[freq]
             if ((freq >= HOURLY and
                  self._byhour and hour not in self._byhour) or
                 (freq >= MINUTELY and
@@ -520,11 +563,10 @@ class rrule(rrulebase):
                      ii.mdaymask[i] not in bymonthday and
                      ii.nmdaymask[i] not in bynmonthday) or
                     (byyearday and
-                     ((i < ii.yearlen and i+1 not in byyearday
-                                      and -ii.yearlen+i not in byyearday) or
-                      (i >= ii.yearlen and i+1-ii.yearlen not in byyearday
-                                       and -ii.nextyearlen+i-ii.yearlen
-                                           not in byyearday)))):
+                     ((i < ii.yearlen and i+1 not in byyearday and
+                       -ii.yearlen+i not in byyearday) or
+                      (i >= ii.yearlen and i+1-ii.yearlen not in byyearday and
+                       -ii.nextyearlen+i-ii.yearlen not in byyearday)))):
                     dayset[i] = None
                     filtered = True
 
@@ -538,7 +580,7 @@ class rrule(rrulebase):
                         daypos, timepos = divmod(pos-1, len(timeset))
                     try:
                         i = [x for x in dayset[start:end]
-                                if x is not None][daypos]
+                             if x is not None][daypos]
                         time = timeset[timepos]
                     except IndexError:
                         pass
@@ -640,14 +682,14 @@ class rrule(rrulebase):
                             fixday = True
                             filtered = False
                     if ((not byhour or hour in byhour) and
-                        (not byminute or minute in byminute)):
+                            (not byminute or minute in byminute)):
                         break
                 timeset = gettimeset(hour, minute, second)
             elif freq == SECONDLY:
                 if filtered:
                     # Jump to one iteration before next day
                     second += (((86399-(hour*3600+minute*60+second))
-                                //interval)*interval)
+                                // interval)*interval)
                 while True:
                     second += self._interval
                     div, mod = divmod(second, 60)
@@ -664,8 +706,8 @@ class rrule(rrulebase):
                                 day += div
                                 fixday = True
                     if ((not byhour or hour in byhour) and
-                        (not byminute or minute in byminute) and
-                        (not bysecond or second in bysecond)):
+                            (not byminute or minute in byminute) and
+                            (not bysecond or second in bysecond)):
                         break
                 timeset = gettimeset(hour, minute, second)
 
@@ -683,6 +725,7 @@ class rrule(rrulebase):
                                 return
                         daysinmonth = calendar.monthrange(year, month)[1]
                     ii.rebuild(year, month)
+
 
 class _iterinfo(object):
     __slots__ = ["rrule", "lastyear", "lastmonth",
@@ -723,13 +766,13 @@ class _iterinfo(object):
                 self.wnomask = None
             else:
                 self.wnomask = [0]*(self.yearlen+7)
-                #no1wkst = firstwkst = self.wdaymask.index(rr._wkst)
-                no1wkst = firstwkst = (7-self.yearweekday+rr._wkst)%7
+                # no1wkst = firstwkst = self.wdaymask.index(rr._wkst)
+                no1wkst = firstwkst = (7-self.yearweekday+rr._wkst) % 7
                 if no1wkst >= 4:
                     no1wkst = 0
                     # Number of days in the year, plus the days we got
                     # from last year.
-                    wyearlen = self.yearlen+(self.yearweekday-rr._wkst)%7
+                    wyearlen = self.yearlen+(self.yearweekday-rr._wkst) % 7
                 else:
                     # Number of days in the year, minus the days we
                     # left in last year.
@@ -775,22 +818,22 @@ class _iterinfo(object):
                     # this year.
                     if -1 not in rr._byweekno:
                         lyearweekday = datetime.date(year-1, 1, 1).weekday()
-                        lno1wkst = (7-lyearweekday+rr._wkst)%7
+                        lno1wkst = (7-lyearweekday+rr._wkst) % 7
                         lyearlen = 365+calendar.isleap(year-1)
                         if lno1wkst >= 4:
                             lno1wkst = 0
-                            lnumweeks = 52+(lyearlen+
-                                           (lyearweekday-rr._wkst)%7)%7//4
+                            lnumweeks = 52+(lyearlen +
+                                            (lyearweekday-rr._wkst) % 7) % 7//4
                         else:
-                            lnumweeks = 52+(self.yearlen-no1wkst)%7//4
+                            lnumweeks = 52+(self.yearlen-no1wkst) % 7//4
                     else:
                         lnumweeks = -1
                     if lnumweeks in rr._byweekno:
                         for i in range(no1wkst):
                             self.wnomask[i] = 1
 
-        if (rr._bynweekday and
-            (month != self.lastmonth or year != self.lastyear)):
+        if (rr._bynweekday and (month != self.lastmonth or
+                                year != self.lastyear)):
             ranges = []
             if rr._freq == YEARLY:
                 if rr._bymonth:
@@ -809,10 +852,10 @@ class _iterinfo(object):
                     for wday, n in rr._bynweekday:
                         if n < 0:
                             i = last+(n+1)*7
-                            i -= (self.wdaymask[i]-wday)%7
+                            i -= (self.wdaymask[i]-wday) % 7
                         else:
                             i = first+(n-1)*7
-                            i += (7-self.wdaymask[i]+wday)%7
+                            i += (7-self.wdaymask[i]+wday) % 7
                         if first <= i <= last:
                             self.nwdaymask[i] = 1
 
@@ -843,7 +886,7 @@ class _iterinfo(object):
         for j in range(7):
             set[i] = i
             i += 1
-            #if (not (0 <= i < self.yearlen) or
+            # if (not (0 <= i < self.yearlen) or
             #    self.wdaymask[i] == self.rrule._wkst):
             # This will cross the year boundary, if necessary.
             if self.wdaymask[i] == self.rrule._wkst:
@@ -925,21 +968,26 @@ class rruleset(rrulebase):
         self._exdate = []
 
     def rrule(self, rrule):
-        """ Include the given :py:class:`rrule` instance in the recurrence set generation. """
+        """ Include the given :py:class:`rrule` instance in the recurrence set
+            generation. """
         self._rrule.append(rrule)
 
     def rdate(self, rdate):
-        """ Include the given :py:class:`datetime` instance in the recurrence set generation. """
+        """ Include the given :py:class:`datetime` instance in the recurrence
+            set generation. """
         self._rdate.append(rdate)
 
     def exrule(self, exrule):
-        """ Include the given rrule instance in the recurrence set
-        exclusion list. Dates which are part of the given recurrence
-        rules will not be generated, even if some inclusive rrule or rdate matches them."""
+        """ Include the given rrule instance in the recurrence set exclusion
+            list. Dates which are part of the given recurrence rules will not
+            be generated, even if some inclusive rrule or rdate matches them.
+        """
         self._exrule.append(exrule)
 
     def exdate(self, exdate):
-        """ Include the given datetime instance in the recurrence set exclusion list. Dates included that way will not be generated, even if some inclusive rrule or rdate matches them. """
+        """ Include the given datetime instance in the recurrence set
+            exclusion list. Dates included that way will not be generated,
+            even if some inclusive rrule or rdate matches them. """
         self._exdate.append(exdate)
 
     def _iter(self):
@@ -971,6 +1019,7 @@ class rruleset(rrulebase):
             rlist.sort()
         self._len = total
 
+
 class _rrulestr(object):
 
     _freq_map = {"YEARLY": YEARLY,
@@ -981,7 +1030,8 @@ class _rrulestr(object):
                  "MINUTELY": MINUTELY,
                  "SECONDLY": SECONDLY}
 
-    _weekday_map = {"MO":0,"TU":1,"WE":2,"TH":3,"FR":4,"SA":5,"SU":6}
+    _weekday_map = {"MO": 0, "TU": 1, "WE": 2, "TH": 3,
+                    "FR": 4, "SA": 5, "SU": 6}
 
     def _handle_int(self, rrkwargs, name, value, **kwargs):
         rrkwargs[name.lower()] = int(value)
@@ -989,17 +1039,17 @@ class _rrulestr(object):
     def _handle_int_list(self, rrkwargs, name, value, **kwargs):
         rrkwargs[name.lower()] = [int(x) for x in value.split(',')]
 
-    _handle_INTERVAL   = _handle_int
-    _handle_COUNT      = _handle_int
-    _handle_BYSETPOS   = _handle_int_list
-    _handle_BYMONTH    = _handle_int_list
+    _handle_INTERVAL = _handle_int
+    _handle_COUNT = _handle_int
+    _handle_BYSETPOS = _handle_int_list
+    _handle_BYMONTH = _handle_int_list
     _handle_BYMONTHDAY = _handle_int_list
-    _handle_BYYEARDAY  = _handle_int_list
-    _handle_BYEASTER   = _handle_int_list
-    _handle_BYWEEKNO   = _handle_int_list
-    _handle_BYHOUR     = _handle_int_list
-    _handle_BYMINUTE   = _handle_int_list
-    _handle_BYSECOND   = _handle_int_list
+    _handle_BYYEARDAY = _handle_int_list
+    _handle_BYEASTER = _handle_int_list
+    _handle_BYWEEKNO = _handle_int_list
+    _handle_BYHOUR = _handle_int_list
+    _handle_BYMINUTE = _handle_int_list
+    _handle_BYSECOND = _handle_int_list
 
     def _handle_FREQ(self, rrkwargs, name, value, **kwargs):
         rrkwargs["freq"] = self._freq_map[value]
@@ -1010,8 +1060,8 @@ class _rrulestr(object):
             from dateutil import parser
         try:
             rrkwargs["until"] = parser.parse(value,
-                                           ignoretz=kwargs.get("ignoretz"),
-                                           tzinfos=kwargs.get("tzinfos"))
+                                             ignoretz=kwargs.get("ignoretz"),
+                                             tzinfos=kwargs.get("tzinfos"))
         except ValueError:
             raise ValueError("invalid until date")
 
@@ -1026,7 +1076,8 @@ class _rrulestr(object):
                     break
             n = wday[:i] or None
             w = wday[i:]
-            if n: n = int(n)
+            if n:
+                n = int(n)
             l.append(weekdays[self._weekday_map[w]](n))
         rrkwargs["byweekday"] = l
 
@@ -1087,8 +1138,8 @@ class _rrulestr(object):
                     i += 1
         else:
             lines = s.split()
-        if (not forceset and len(lines) == 1 and
-            (s.find(':') == -1 or s.startswith('RRULE:'))):
+        if (not forceset and len(lines) == 1 and (s.find(':') == -1 or
+                                                  s.startswith('RRULE:'))):
             return self._parse_rfc_rrule(lines[0], cache=cache,
                                          dtstart=dtstart, ignoretz=ignoretz,
                                          tzinfos=tzinfos)
@@ -1137,8 +1188,8 @@ class _rrulestr(object):
                                            tzinfos=tzinfos)
                 else:
                     raise ValueError("unsupported property: "+name)
-            if (forceset or len(rrulevals) > 1 or
-                rdatevals or exrulevals or exdatevals):
+            if (forceset or len(rrulevals) > 1 or rdatevals
+                    or exrulevals or exdatevals):
                 if not parser and (rdatevals or exdatevals):
                     from dateutil import parser
                 set = rruleset(cache=cache)

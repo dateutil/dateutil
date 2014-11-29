@@ -6,6 +6,7 @@ from six import integer_types
 
 __all__ = ["relativedelta", "MO", "TU", "WE", "TH", "FR", "SA", "SU"]
 
+
 class weekday(object):
     __slots__ = ["weekday", "n"]
 
@@ -36,12 +37,13 @@ class weekday(object):
 
 MO, TU, WE, TH, FR, SA, SU = weekdays = tuple([weekday(x) for x in range(7)])
 
+
 class relativedelta(object):
     """
 The relativedelta type is based on the specification of the excelent
 work done by M.-A. Lemburg in his
-`mx.DateTime <http://www.egenix.com/files/python/mxDateTime.html>`_ extension. However,
-notice that this type does *NOT* implement the same algorithm as
+`mx.DateTime <http://www.egenix.com/files/python/mxDateTime.html>`_ extension.
+However, notice that this type does *NOT* implement the same algorithm as
 his work. Do *NOT* expect it to behave like mx.DateTime's counterpart.
 
 There's two different ways to build a relativedelta instance. The
@@ -108,9 +110,10 @@ Here is the behavior of operations with relativedelta:
                  yearday=None, nlyearday=None,
                  hour=None, minute=None, second=None, microsecond=None):
         if dt1 and dt2:
-            if (not isinstance(dt1, datetime.date)) or (not isinstance(dt2, datetime.date)):
+            if not (isinstance(dt1, datetime.date) and
+                    isinstance(dt2, datetime.date)):
                 raise TypeError("relativedelta only diffs datetime/date")
-            if not type(dt1) == type(dt2): #isinstance(dt1, type(dt2)):
+            if not type(dt1) == type(dt2):
                 if not isinstance(dt1, datetime.datetime):
                     dt1 = datetime.datetime.fromordinal(dt1.toordinal())
                 elif not isinstance(dt2, datetime.datetime):
@@ -179,7 +182,8 @@ Here is the behavior of operations with relativedelta:
                 if yearday > 59:
                     self.leapdays = -1
             if yday:
-                ydayidx = [31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 366]
+                ydayidx = [31, 59, 90, 120, 151, 181, 212,
+                           243, 273, 304, 334, 366]
                 for idx, ydays in enumerate(ydayidx):
                     if yday <= ydays:
                         self.month = idx+1
@@ -219,9 +223,9 @@ Here is the behavior of operations with relativedelta:
             div, mod = divmod(self.months*s, 12)
             self.months = mod*s
             self.years += div*s
-        if (self.hours or self.minutes or self.seconds or self.microseconds or
-            self.hour is not None or self.minute is not None or
-            self.second is not None or self.microsecond is not None):
+        if (self.hours or self.minutes or self.seconds or self.microseconds
+                or self.hour is not None or self.minute is not None or
+                self.second is not None or self.microsecond is not None):
             self._has_time = 1
         else:
             self._has_time = 0
@@ -239,21 +243,23 @@ Here is the behavior of operations with relativedelta:
     def __add__(self, other):
         if isinstance(other, relativedelta):
             return relativedelta(years=other.years+self.years,
-                             months=other.months+self.months,
-                             days=other.days+self.days,
-                             hours=other.hours+self.hours,
-                             minutes=other.minutes+self.minutes,
-                             seconds=other.seconds+self.seconds,
-                             microseconds=other.microseconds+self.microseconds,
-                             leapdays=other.leapdays or self.leapdays,
-                             year=other.year or self.year,
-                             month=other.month or self.month,
-                             day=other.day or self.day,
-                             weekday=other.weekday or self.weekday,
-                             hour=other.hour or self.hour,
-                             minute=other.minute or self.minute,
-                             second=other.second or self.second,
-                             microsecond=other.microsecond or self.microsecond)
+                                 months=other.months+self.months,
+                                 days=other.days+self.days,
+                                 hours=other.hours+self.hours,
+                                 minutes=other.minutes+self.minutes,
+                                 seconds=other.seconds+self.seconds,
+                                 microseconds=(other.microseconds +
+                                               self.microseconds),
+                                 leapdays=other.leapdays or self.leapdays,
+                                 year=other.year or self.year,
+                                 month=other.month or self.month,
+                                 day=other.day or self.day,
+                                 weekday=other.weekday or self.weekday,
+                                 hour=other.hour or self.hour,
+                                 minute=other.minute or self.minute,
+                                 second=other.second or self.second,
+                                 microsecond=(other.microsecond or
+                                              self.microsecond))
         if not isinstance(other, datetime.date):
             raise TypeError("unsupported type for add operation")
         elif self._has_time and not isinstance(other, datetime.datetime):
@@ -289,9 +295,9 @@ Here is the behavior of operations with relativedelta:
             weekday, nth = self.weekday.weekday, self.weekday.n or 1
             jumpdays = (abs(nth)-1)*7
             if nth > 0:
-                jumpdays += (7-ret.weekday()+weekday)%7
+                jumpdays += (7-ret.weekday()+weekday) % 7
             else:
-                jumpdays += (ret.weekday()-weekday)%7
+                jumpdays += (ret.weekday()-weekday) % 7
                 jumpdays *= -1
             ret += datetime.timedelta(days=jumpdays)
         return ret

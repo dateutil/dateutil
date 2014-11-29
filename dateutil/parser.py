@@ -8,8 +8,6 @@ from __future__ import unicode_literals
 import datetime
 import string
 import time
-import sys
-import os
 import collections
 from io import StringIO
 
@@ -74,9 +72,9 @@ class _timelex(object):
                     state = '0'
                 elif nextchar in whitespace:
                     token = ' '
-                    break # emit token
+                    break  # emit token
                 else:
-                    break # emit token
+                    break  # emit token
             elif state == 'a':
                 seenletters = True
                 if nextchar in wordchars:
@@ -86,7 +84,7 @@ class _timelex(object):
                     state = 'a.'
                 else:
                     self.charstack.append(nextchar)
-                    break # emit token
+                    break  # emit token
             elif state == '0':
                 if nextchar in numchars:
                     token += nextchar
@@ -95,7 +93,7 @@ class _timelex(object):
                     state = '0.'
                 else:
                     self.charstack.append(nextchar)
-                    break # emit token
+                    break  # emit token
             elif state == 'a.':
                 seenletters = True
                 if nextchar == '.' or nextchar in wordchars:
@@ -105,7 +103,7 @@ class _timelex(object):
                     state = '0.'
                 else:
                     self.charstack.append(nextchar)
-                    break # emit token
+                    break  # emit token
             elif state == '0.':
                 if nextchar == '.' or nextchar in numchars:
                     token += nextchar
@@ -114,9 +112,9 @@ class _timelex(object):
                     state = 'a.'
                 else:
                     self.charstack.append(nextchar)
-                    break # emit token
-        if (state in ('a.', '0.') and
-            (seenletters or token.count('.') > 1 or token[-1] == '.')):
+                    break  # emit token
+        if (state in ('a.', '0.') and (seenletters or token.count('.') > 1 or
+                                       token[-1] == '.')):
             l = token.split('.')
             token = l[0]
             for tok in l[1:]:
@@ -174,18 +172,18 @@ class parserinfo(object):
                 ("Fri", "Friday"),
                 ("Sat", "Saturday"),
                 ("Sun", "Sunday")]
-    MONTHS   = [("Jan", "January"),
-                ("Feb", "February"),
-                ("Mar", "March"),
-                ("Apr", "April"),
-                ("May", "May"),
-                ("Jun", "June"),
-                ("Jul", "July"),
-                ("Aug", "August"),
-                ("Sep", "Sept", "September"),
-                ("Oct", "October"),
-                ("Nov", "November"),
-                ("Dec", "December")]
+    MONTHS = [("Jan", "January"),
+              ("Feb", "February"),
+              ("Mar", "March"),
+              ("Apr", "April"),
+              ("May", "May"),
+              ("Jun", "June"),
+              ("Jul", "July"),
+              ("Aug", "August"),
+              ("Sep", "Sept", "September"),
+              ("Oct", "October"),
+              ("Nov", "November"),
+              ("Dec", "December")]
     HMS = [("h", "hour", "hours"),
            ("m", "minute", "minutes"),
            ("s", "second", "seconds")]
@@ -290,17 +288,16 @@ class parser(object):
     def __init__(self, info=None):
         self.info = info or parserinfo()
 
-    def parse(self, timestr, default=None,
-                    ignoretz=False, tzinfos=None,
-                    **kwargs):
+    def parse(self, timestr, default=None, ignoretz=False, tzinfos=None,
+              **kwargs):
         if not default:
             default = datetime.datetime.now().replace(hour=0, minute=0,
                                                       second=0, microsecond=0)
 
-        if kwargs.get('fuzzy_with_tokens',False):
+        if kwargs.get('fuzzy_with_tokens', False):
             res, skipped_tokens = self._parse(timestr, **kwargs)
         else:
-            res = self._parse(timestr,**kwargs)
+            res = self._parse(timestr, **kwargs)
 
         if res is None:
             raise ValueError("unknown string format")
@@ -314,7 +311,8 @@ class parser(object):
         if res.weekday is not None and not res.day:
             ret = ret+relativedelta.relativedelta(weekday=res.weekday)
         if not ignoretz:
-            if isinstance(tzinfos, collections.Callable) or tzinfos and res.tzname in tzinfos:
+            if (isinstance(tzinfos, collections.Callable) or
+                    tzinfos and res.tzname in tzinfos):
                 if isinstance(tzinfos, collections.Callable):
                     tzdata = tzinfos(res.tzname, res.tzoffset)
                 else:
@@ -326,8 +324,8 @@ class parser(object):
                 elif isinstance(tzdata, integer_types):
                     tzinfo = tz.tzoffset(res.tzname, tzdata)
                 else:
-                    raise ValueError("offset must be tzinfo subclass, " \
-                                      "tz string, or int offset")
+                    raise ValueError("offset must be tzinfo subclass, "
+                                     "tz string, or int offset")
                 ret = ret.replace(tzinfo=tzinfo)
             elif res.tzname and res.tzname in time.tzname:
                 ret = ret.replace(tzinfo=tz.tzlocal())
@@ -336,7 +334,7 @@ class parser(object):
             elif res.tzoffset:
                 ret = ret.replace(tzinfo=tz.tzoffset(res.tzname, res.tzoffset))
 
-        if kwargs.get('fuzzy_with_tokens',False):
+        if kwargs.get('fuzzy_with_tokens', False):
             return ret, skipped_tokens
         else:
             return ret
@@ -346,7 +344,8 @@ class parser(object):
                      "hour", "minute", "second", "microsecond",
                      "tzname", "tzoffset"]
 
-    def _parse(self, timestr, dayfirst=None, yearfirst=None, fuzzy=False, fuzzy_with_tokens=False):
+    def _parse(self, timestr, dayfirst=None, yearfirst=None, fuzzy=False,
+               fuzzy_with_tokens=False):
         if fuzzy_with_tokens:
             fuzzy = True
 
@@ -357,7 +356,6 @@ class parser(object):
             yearfirst = info.yearfirst
         res = self._result()
         l = _timelex.split(timestr)
-
 
         # keep up with the last token skipped so we can recombine
         # consecutively skipped tokens (-2 for when i begins at 0).
@@ -433,12 +431,12 @@ class parser(object):
                         while True:
                             if idx == 0:
                                 res.hour = int(value)
-                                if value%1:
-                                    res.minute = int(60*(value%1))
+                                if value % 1:
+                                    res.minute = int(60*(value % 1))
                             elif idx == 1:
                                 res.minute = int(value)
-                                if value%1:
-                                    res.second = int(60*(value%1))
+                                if value % 1:
+                                    res.second = int(60*(value % 1))
                             elif idx == 2:
                                 res.second, res.microsecond = \
                                     _parsems(value_repr)
@@ -458,16 +456,17 @@ class parser(object):
                                     newidx = info.hms(l[i])
                                     if newidx is not None:
                                         idx = newidx
-                    elif i == len_l and l[i-2] == ' ' and info.hms(l[i-3]) is not None:
+                    elif (i == len_l and l[i-2] == ' ' and
+                          info.hms(l[i-3]) is not None):
                         # X h MM or X m SS
                         idx = info.hms(l[i-3]) + 1
                         if idx == 1:
                             res.minute = int(value)
-                            if value%1:
-                                res.second = int(60*(value%1))
+                            if value % 1:
+                                res.second = int(60*(value % 1))
                             elif idx == 2:
                                 res.second, res.microsecond = \
-                                        _parsems(value_repr)
+                                    _parsems(value_repr)
                                 i += 1
                     elif i+1 < len_l and l[i] == ':':
                         # HH:MM[:SS[.ss]]
@@ -475,8 +474,8 @@ class parser(object):
                         i += 1
                         value = float(l[i])
                         res.minute = int(value)
-                        if value%1:
-                            res.second = int(60*(value%1))
+                        if value % 1:
+                            res.second = int(60*(value % 1))
                         i += 1
                         if i < len_l and l[i] == ':':
                             res.second, res.microsecond = _parsems(l[i+1])
@@ -590,8 +589,9 @@ class parser(object):
 
                 # Check for a timezone name
                 if (res.hour is not None and len(l[i]) <= 5 and
-                    res.tzname is None and res.tzoffset is None and
-                    not [x for x in l[i] if x not in string.ascii_uppercase]):
+                        res.tzname is None and res.tzoffset is None and
+                        not [x for x in l[i] if x not in
+                             string.ascii_uppercase]):
                     res.tzname = l[i]
                     res.tzoffset = info.tzoffset(res.tzname)
                     i += 1
@@ -636,7 +636,7 @@ class parser(object):
                         info.jump(l[i]) and l[i+1] == '(' and l[i+3] == ')' and
                         3 <= len(l[i+2]) <= 5 and
                         not [x for x in l[i+2]
-                                if x not in string.ascii_uppercase]):
+                             if x not in string.ascii_uppercase]):
                         # -0300 (BRST)
                         res.tzname = l[i+2]
                         i += 4
@@ -729,6 +729,8 @@ class parser(object):
             return res
 
 DEFAULTPARSER = parser()
+
+
 def parse(timestr, parserinfo=None, **kwargs):
     # Python 2.x support: datetimes return their string presentation as
     # bytes in 2.x and unicode in 3.x, so it's reasonable to expect that
@@ -772,7 +774,7 @@ class _tzparser(object):
                 # BRST+3[BRDT[+2]]
                 j = i
                 while j < len_l and not [x for x in l[j]
-                                            if x in "0123456789:,-+"]:
+                                         if x in "0123456789:,-+"]:
                     j += 1
                 if j != i:
                     if not res.stdabbr:
@@ -782,8 +784,8 @@ class _tzparser(object):
                         offattr = "dstoffset"
                         res.dstabbr = "".join(l[i:j])
                     i = j
-                    if (i < len_l and
-                        (l[i] in ('+', '-') or l[i][0] in "0123456789")):
+                    if (i < len_l and (l[i] in ('+', '-') or l[i][0] in
+                                       "0123456789")):
                         if l[i] in ('+', '-'):
                             # Yes, that's right.  See the TZ variable
                             # documentation.
@@ -794,8 +796,8 @@ class _tzparser(object):
                         len_li = len(l[i])
                         if len_li == 4:
                             # -0300
-                            setattr(res, offattr,
-                                    (int(l[i][:2])*3600+int(l[i][2:])*60)*signal)
+                            setattr(res, offattr, (int(l[i][:2])*3600 +
+                                                   int(l[i][2:])*60)*signal)
                         elif i+1 < len_l and l[i+1] == ':':
                             # -03:00
                             setattr(res, offattr,
@@ -815,7 +817,8 @@ class _tzparser(object):
 
             if i < len_l:
                 for j in range(i, len_l):
-                    if l[j] == ';': l[j] = ','
+                    if l[j] == ';':
+                        l[j] = ','
 
                 assert l[i] == ','
 
@@ -824,7 +827,7 @@ class _tzparser(object):
             if i >= len_l:
                 pass
             elif (8 <= l.count(',') <= 9 and
-                not [y for x in l[i:] if x != ','
+                  not [y for x in l[i:] if x != ','
                        for y in x if y not in "0123456789"]):
                 # GMT0BST,3,0,30,3600,10,0,26,7200[,3600]
                 for x in (res.start, res.end):
@@ -838,7 +841,7 @@ class _tzparser(object):
                     i += 2
                     if value:
                         x.week = value
-                        x.weekday = (int(l[i])-1)%7
+                        x.weekday = (int(l[i])-1) % 7
                     else:
                         x.day = int(l[i])
                     i += 2
@@ -854,7 +857,7 @@ class _tzparser(object):
             elif (l.count(',') == 2 and l[i:].count('/') <= 2 and
                   not [y for x in l[i:] if x not in (',', '/', 'J', 'M',
                                                      '.', '-', ':')
-                         for y in x if y not in "0123456789"]):
+                       for y in x if y not in "0123456789"]):
                 for x in (res.start, res.end):
                     if l[i] == 'J':
                         # non-leap year day (1 based)
@@ -873,7 +876,7 @@ class _tzparser(object):
                         i += 1
                         assert l[i] in ('-', '.')
                         i += 1
-                        x.weekday = (int(l[i])-1)%7
+                        x.weekday = (int(l[i])-1) % 7
                     else:
                         # year day (zero based)
                         x.yday = int(l[i])+1
@@ -914,6 +917,8 @@ class _tzparser(object):
 
 
 DEFAULTTZPARSER = _tzparser()
+
+
 def _parsetz(tzstr):
     return DEFAULTTZPARSER.parse(tzstr)
 
