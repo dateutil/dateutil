@@ -28,18 +28,33 @@ class ZoneInfoFile(object):
     def __init__(self, zonefile_stream=None):
         if zonefile_stream is not None:
             with TarFile.open(fileobj=zonefile_stream,mode='r') as tf:
-                self.zones = {zf.name: tzfile(tf.extractfile(zf), filename = zf.name)
-                              for zf in tf.getmembers() if zf.isfile()}
+                # dict comprehension does not work on python2.6 which we still support
+                # TODO: get back to the nicer syntax when we ditch python2.6
+                #self.zones = {zf.name: tzfile(tf.extractfile(zf), filename = zf.name)
+                #              for zf in tf.getmembers() if zf.isfile()}
+                self.zones = dict((zf.name, tzfile(tf.extractfile(zf), filename = zf.name))
+                                  for zf in tf.getmembers() if zf.isfile())
                 # deal with links: They'll point to their parent object. Less waste of memory
-                links = {zl.name: self.zones[zl.linkname]
-                         for zl in tf.getmembers() if zl.islnk() or zl.issym()}
+                #links = {zl.name: self.zones[zl.linkname]
+                #         for zl in tf.getmembers() if zl.islnk() or zl.issym()}
+                links = dict((zl.name, self.zones[zl.linkname])
+                             for zl in tf.getmembers() if zl.islnk() or zl.issym())
                 self.zones.update(links)
         else:
             self.zones = dict()
 
-_CLASS_ZONE_INSTANCE = ZoneInfoFile(getzoneinfofile_stream())
+
+# The current API has gettz as a module function, although in fact it taps into
+# a stateful class. So as a workaround for now, without changing the API, we
+# will create a new "global" class instance the first time a user requests a
+# timezone. Ugly, but adheres to the api.
+#
+# TODO: deprecate this.
+_CLASS_ZONE_INSTANCE = list()
 def gettz(name):
-    return _CLASS_ZONE_INSTANCE.zones.get(name)
+    if len(_CLASS_ZONE_INSTANCE) == 0:
+        _CLASS_ZONE_INSTANCE.append(ZoneInfoFile(getzoneinfofile_stream()))
+    return _CLASS_ZONE_INSTANCE[0].zones.get(name)
 
 
 
