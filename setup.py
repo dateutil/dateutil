@@ -1,7 +1,6 @@
 #!/usr/bin/python
-from os.path import isfile, join
+from os.path import isfile
 import codecs
-import glob
 import os
 import re
 
@@ -14,27 +13,27 @@ if isfile("MANIFEST"):
 
 TOPDIR = os.path.dirname(__file__) or "."
 VERSION = re.search('__version__ = "([^"]+)"',
-                    codecs.open(TOPDIR + "/dateutil/__init__.py", encoding='utf-8').read()).group(1)
+                    codecs.open(TOPDIR + "/dateutil/__init__.py",
+                                encoding='utf-8').read()).group(1)
 
 
 setup(name="python-dateutil",
-      version = VERSION,
-      description = "Extensions to the standard Python datetime module",
-      author = "Yaron de Leeuw",
-      author_email = "me@jarondl.net",
-      url = "https://dateutil.readthedocs.org",
-      license = "Simplified BSD",
-      long_description =
-"""\
-The dateutil module provides powerful extensions to the 
+      version=VERSION,
+      description="Extensions to the standard Python datetime module",
+      author="Yaron de Leeuw",
+      author_email="me@jarondl.net",
+      url="https://dateutil.readthedocs.org",
+      license="Simplified BSD",
+      long_description="""
+The dateutil module provides powerful extensions to the
 datetime module available in the Python standard library.
 """,
-      packages = ["dateutil", "dateutil.zoneinfo"],
-      package_data = {"dateutil.zoneinfo": ["dateutil-zoneinfo.tar.gz"]},
-      zip_safe = True,
-      requires = ["six"],
-      install_requires = ["six"], # XXX fix when packaging is sane again
-      classifiers = [
+      packages=["dateutil", "dateutil.zoneinfo"],
+      package_data={"dateutil.zoneinfo": ["dateutil-zoneinfo.tar.gz"]},
+      zip_safe=True,
+      requires=["six"],
+      install_requires=["six"],  # XXX fix when packaging is sane again
+      classifiers=[
           'Development Status :: 5 - Production/Stable',
           'Intended Audience :: Developers',
           'License :: OSI Approved :: BSD License',
@@ -48,5 +47,5 @@ datetime module available in the Python standard library.
           'Programming Language :: Python :: 3.4',
           'Topic :: Software Development :: Libraries',
       ],
-      test_suite = "dateutil.test.test"
+      test_suite="dateutil.test.test"
       )

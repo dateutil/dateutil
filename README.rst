@@ -80,9 +80,9 @@ in 2003
 
 It is maintained by:
 
-* Gustavo Niemeyer <gustavo@niemeyer.net> 2003-2013
-* Tomi Pieviläinen <tomi.pievilainen@iki.fi> 2013-2014
-* Yaron de Leeuw <me@jarond.net> 2014-
+* Gustavo Niemeyer <gustavo@niemeyer.net> 2003-2011
+* Tomi Pieviläinen <tomi.pievilainen@iki.fi> 2012-2014
+* Yaron de Leeuw <me@jarondl.net> 2014-
 
 Building and releasing
 ======================

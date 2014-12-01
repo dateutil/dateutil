@@ -1,7 +1,8 @@
 dateutil - Extensions to the standard Python datetime module.
 
 Copyright (c) 2003-2011 - Gustavo Niemeyer <gustavo@niemeyer.net>
-Copyright (c) 2012 - Tomi Pieviläinen <tomi.pievilainen@iki.fi>
+Copyright (c) 2012-2014 - Tomi Pieviläinen <tomi.pievilainen@iki.fi>
+Copyright (c) 2014      - Yaron de Leeuw <me@jarondl.net>
 
 All rights reserved.
 

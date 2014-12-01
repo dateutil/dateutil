@@ -246,27 +246,27 @@ class tzfile(datetime.tzinfo):
             fileobj.read(16)
 
             (
-             # The number of UTC/local indicators stored in the file.
-             ttisgmtcnt,
+                # The number of UTC/local indicators stored in the file.
+                ttisgmtcnt,
 
-             # The number of standard/wall indicators stored in the file.
-             ttisstdcnt,
+                # The number of standard/wall indicators stored in the file.
+                ttisstdcnt,
 
-             # The number of leap seconds for which data is
-             # stored in the file.
-             leapcnt,
+                # The number of leap seconds for which data is
+                # stored in the file.
+                leapcnt,
 
-             # The number of "transition times" for which data
-             # is stored in the file.
-             timecnt,
+                # The number of "transition times" for which data
+                # is stored in the file.
+                timecnt,
 
-             # The number of "local time types" for which data
-             # is stored in the file (must not be zero).
-             typecnt,
+                # The number of "local time types" for which data
+                # is stored in the file (must not be zero).
+                typecnt,
 
-             # The  number  of  characters  of "time zone
-             # abbreviation strings" stored in the file.
-             charcnt,
+                # The  number  of  characters  of "time zone
+                # abbreviation strings" stored in the file.
+                charcnt,
 
             ) = struct.unpack(">6l", fileobj.read(24))
 
