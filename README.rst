@@ -1,5 +1,5 @@
-dateutil - powerfull extensions to datetime
-===========================================
+dateutil - powerful extensions to datetime
+==========================================
 The `dateutil` module provides powerful extensions to
 the standard `datetime` module, available in Python.
 
