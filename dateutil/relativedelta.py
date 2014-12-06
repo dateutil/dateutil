@@ -110,10 +110,14 @@ Here is the behavior of operations with relativedelta:
                  yearday=None, nlyearday=None,
                  hour=None, minute=None, second=None, microsecond=None):
         if dt1 and dt2:
+            # datetime is a subclass of date. So both must be date
             if not (isinstance(dt1, datetime.date) and
                     isinstance(dt2, datetime.date)):
                 raise TypeError("relativedelta only diffs datetime/date")
-            if not type(dt1) == type(dt2):
+            # We allow two dates, or two datetimes, so we coerce them to be
+            # of the same type
+            if (isinstance(dt1, datetime.datetime) !=
+                    isinstance(dt2, datetime.datetime)):
                 if not isinstance(dt1, datetime.datetime):
                     dt1 = datetime.datetime.fromordinal(dt1.toordinal())
                 elif not isinstance(dt2, datetime.datetime):
