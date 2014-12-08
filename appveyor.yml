@@ -1,0 +1,18 @@
+build: false
+environment:
+  matrix:
+    - PYTHON: "C:/Python27"
+    - PYTHON: "C:/Python27-x64"
+    - PYTHON: "C:/Python33"
+    - PYTHON: "C:/Python33-x64"
+    - PYTHON: "C:/Python34"
+    - PYTHON: "C:/Python34-x64"
+install:
+  - ps: Start-FileDownload 'https://raw.github.com/pypa/pip/master/contrib/get-pip.py'
+  - "%PYTHON%/python.exe get-pip.py"
+  - "%PYTHON%/Scripts/pip.exe install six"
+  # use postgres' zic
+  - set path=c:\Program Files\PostgreSQL\9.3\bin\;%PATH%
+  - "%PYTHON%/python.exe updatezinfo.py"
+test_script:
+  - "%PYTHON%/python.exe setup.py test"
