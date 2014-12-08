@@ -1,3 +1,4 @@
+build: false
 environment:
   matrix:
     - PYTHON: "C:/Python27"
