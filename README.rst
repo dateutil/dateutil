@@ -1,5 +1,24 @@
 dateutil - powerful extensions to datetime
 ==========================================
+
+.. image:: https://img.shields.io/travis/dateutil/dateutil/master.svg?style=flat-square
+    :target: https://travis-ci.org/dateutil/dateutil
+    :alt: travis build status
+
+.. image:: https://img.shields.io/appveyor/ci/dateutil/dateutil.svg?style=flat-square
+    :target: https://ci.appveyor.com/project/dateutil/dateutil
+    :alt: appveyor build status
+
+.. image:: https://img.shields.io/pypi/dd/python-dateutil.svg?style=flat-square
+    :target: https://pypi.python.org/pypi/python-dateutil/
+    :alt: pypi downloads per day
+
+.. image:: https://img.shields.io/pypi/v/python-dateutil.svg?style=flat-square
+    :target: https://pypi.python.org/pypi/python-dateutil/
+    :alt: pypi version
+
+
+
 The `dateutil` module provides powerful extensions to
 the standard `datetime` module, available in Python.
 
