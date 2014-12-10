@@ -13,7 +13,7 @@ try:
     # if you have python >= 2.7, you don't need unittest2
     from unittest2 import skipUnless
 except ImportError:
-    pass
+    from unittest import skipUnless
 
 from datetime import *
 
