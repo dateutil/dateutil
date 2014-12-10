@@ -63,6 +63,9 @@ class tzwinbase(datetime.tzinfo):
         return self._display
 
     def _isdst(self, dt):
+        if not self._dstmonth:
+            # dstmonth == 0 signals the zone has no daylight saving time
+            return False
         dston = picknthweekday(dt.year, self._dstmonth, self._dstdayofweek,
                                self._dsthour, self._dstminute,
                                self._dstweeknumber)
@@ -96,6 +99,8 @@ class tzwin(tzwinbase):
         self._stdoffset = -tup[0]-tup[1]          # Bias + StandardBias * -1
         self._dstoffset = self._stdoffset-tup[2]  # + DaylightBias * -1
 
+        # for the meaning see the win32 TIME_ZONE_INFORMATION structure docs
+        # http://msdn.microsoft.com/en-us/library/windows/desktop/ms725481(v=vs.85).aspx
         (self._stdmonth,
          self._stddayofweek,   # Sunday = 0
          self._stdweeknumber,  # Last = 5

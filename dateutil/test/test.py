@@ -4,6 +4,8 @@ from __future__ import unicode_literals
 import unittest
 import calendar
 import base64
+import sys
+
 
 from datetime import *
 
@@ -15,6 +17,11 @@ from dateutil.easter import *
 from dateutil.rrule import *
 from dateutil.tz import *
 from dateutil import zoneinfo
+
+try:
+    from dateutil import tzwin
+except ImportError:
+    pass
 
 
 class RelativeDeltaTest(unittest.TestCase):
@@ -4003,5 +4010,10 @@ END:VTIMEZONE
         self.assertEqual(dt.astimezone(tz=gettz("UTC-2")),
                           datetime(2007, 8, 6, 2, 10, tzinfo=tzstr("UTC-2")))
 
+    @unittest.skipUnless(sys.platform.startswith("win"), "requires Windows")
+    def testIsdstZoneWithNoDaylightSaving(self):
+        tz = tzwin.tzwin("UTC")
+        dt = parse("2013-03-06 19:08:15")
+        self.assertFalse(tz._isdst(dt))
 
 # vim:ts=4:sw=4
