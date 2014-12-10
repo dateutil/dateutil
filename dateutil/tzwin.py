@@ -83,11 +83,11 @@ class tzwin(tzwinbase):
     def __init__(self, name):
         self._name = name
 
-        handle = winreg.ConnectRegistry(None, winreg.HKEY_LOCAL_MACHINE)
-        tzkey = winreg.OpenKey(handle, "%s\%s" % (TZKEYNAME, name))
-        keydict = valuestodict(tzkey)
-        tzkey.Close()
-        handle.Close()
+        # multiple contexts only possible in 2.7 and 3.1, we still support 2.6
+        with winreg.ConnectRegistry(None, winreg.HKEY_LOCAL_MACHINE) as handle:
+            with winreg.OpenKey(handle,
+                                "%s\%s" % (TZKEYNAME, name)) as tzkey:
+                keydict = valuestodict(tzkey)
 
         self._stdname = keydict["Std"].encode("iso-8859-1")
         self._dstname = keydict["Dlt"].encode("iso-8859-1")
@@ -124,25 +124,21 @@ class tzwinlocal(tzwinbase):
 
     def __init__(self):
 
-        handle = winreg.ConnectRegistry(None, winreg.HKEY_LOCAL_MACHINE)
+        with winreg.ConnectRegistry(None, winreg.HKEY_LOCAL_MACHINE) as handle:
 
-        tzlocalkey = winreg.OpenKey(handle, TZLOCALKEYNAME)
-        keydict = valuestodict(tzlocalkey)
-        tzlocalkey.Close()
+            with winreg.OpenKey(handle, TZLOCALKEYNAME) as tzlocalkey:
+                keydict = valuestodict(tzlocalkey)
 
-        self._stdname = keydict["StandardName"].encode("iso-8859-1")
-        self._dstname = keydict["DaylightName"].encode("iso-8859-1")
+            self._stdname = keydict["StandardName"].encode("iso-8859-1")
+            self._dstname = keydict["DaylightName"].encode("iso-8859-1")
 
-        try:
-            tzkey = winreg.OpenKey(handle, "%s\%s" % (TZKEYNAME,
-                                                      self._stdname))
-            _keydict = valuestodict(tzkey)
-            self._display = _keydict["Display"]
-            tzkey.Close()
-        except OSError:
-            self._display = None
-
-        handle.Close()
+            try:
+                with winreg.OpenKey(
+                        handle, "%s\%s" % (TZKEYNAME, self._stdname)) as tzkey:
+                    _keydict = valuestodict(tzkey)
+                    self._display = _keydict["Display"]
+            except OSError:
+                self._display = None
 
         self._stdoffset = -keydict["Bias"]-keydict["StandardBias"]
         self._dstoffset = self._stdoffset-keydict["DaylightBias"]
