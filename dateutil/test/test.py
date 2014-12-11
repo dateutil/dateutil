@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-import unittest
 import calendar
 import base64
 import sys
@@ -10,10 +9,10 @@ from six import StringIO, BytesIO, PY3
 
 try:
     # python2.6 unittest has no skipUnless. So we use unittest2.
-    # if you have python >= 2.7, you don't need unittest2
-    from unittest2 import skipUnless
+    # if you have python >= 2.7, you don't need unittest2, but it won't harm
+    import unittest2 as unittest
 except ImportError:
-    from unittest import skipUnless
+    import unittest
 
 from datetime import *
 
@@ -4016,7 +4015,7 @@ END:VTIMEZONE
         self.assertEqual(dt.astimezone(tz=gettz("UTC-2")),
                           datetime(2007, 8, 6, 2, 10, tzinfo=tzstr("UTC-2")))
 
-    @skipUnless(sys.platform.startswith("win"), "requires Windows")
+    @unittest.skipUnless(sys.platform.startswith("win"), "requires Windows")
     def testIsdstZoneWithNoDaylightSaving(self):
         tz = tzwin.tzwin("UTC")
         dt = parse("2013-03-06 19:08:15")
