@@ -960,7 +960,10 @@ def gettz(name=None):
             else:
                 tz = None
                 if tzwin is not None:
-                    tz = tzwin(name)
+                    try:
+                        tz = tzwin(name)
+                    except WindowsError:
+                        tz = None
                 if not tz:
                     from dateutil.zoneinfo import gettz
                     tz = gettz(name)

@@ -63,6 +63,9 @@ class tzwinbase(datetime.tzinfo):
         return self._display
 
     def _isdst(self, dt):
+        if not self._dstmonth:
+            # dstmonth == 0 signals the zone has no daylight saving time
+            return False
         dston = picknthweekday(dt.year, self._dstmonth, self._dstdayofweek,
                                self._dsthour, self._dstminute,
                                self._dstweeknumber)
@@ -80,11 +83,11 @@ class tzwin(tzwinbase):
     def __init__(self, name):
         self._name = name
 
-        handle = winreg.ConnectRegistry(None, winreg.HKEY_LOCAL_MACHINE)
-        tzkey = winreg.OpenKey(handle, "%s\%s" % (TZKEYNAME, name))
-        keydict = valuestodict(tzkey)
-        tzkey.Close()
-        handle.Close()
+        # multiple contexts only possible in 2.7 and 3.1, we still support 2.6
+        with winreg.ConnectRegistry(None, winreg.HKEY_LOCAL_MACHINE) as handle:
+            with winreg.OpenKey(handle,
+                                "%s\%s" % (TZKEYNAME, name)) as tzkey:
+                keydict = valuestodict(tzkey)
 
         self._stdname = keydict["Std"].encode("iso-8859-1")
         self._dstname = keydict["Dlt"].encode("iso-8859-1")
@@ -96,6 +99,8 @@ class tzwin(tzwinbase):
         self._stdoffset = -tup[0]-tup[1]          # Bias + StandardBias * -1
         self._dstoffset = self._stdoffset-tup[2]  # + DaylightBias * -1
 
+        # for the meaning see the win32 TIME_ZONE_INFORMATION structure docs
+        # http://msdn.microsoft.com/en-us/library/windows/desktop/ms725481(v=vs.85).aspx
         (self._stdmonth,
          self._stddayofweek,   # Sunday = 0
          self._stdweeknumber,  # Last = 5
@@ -119,25 +124,21 @@ class tzwinlocal(tzwinbase):
 
     def __init__(self):
 
-        handle = winreg.ConnectRegistry(None, winreg.HKEY_LOCAL_MACHINE)
+        with winreg.ConnectRegistry(None, winreg.HKEY_LOCAL_MACHINE) as handle:
 
-        tzlocalkey = winreg.OpenKey(handle, TZLOCALKEYNAME)
-        keydict = valuestodict(tzlocalkey)
-        tzlocalkey.Close()
+            with winreg.OpenKey(handle, TZLOCALKEYNAME) as tzlocalkey:
+                keydict = valuestodict(tzlocalkey)
 
-        self._stdname = keydict["StandardName"].encode("iso-8859-1")
-        self._dstname = keydict["DaylightName"].encode("iso-8859-1")
+            self._stdname = keydict["StandardName"].encode("iso-8859-1")
+            self._dstname = keydict["DaylightName"].encode("iso-8859-1")
 
-        try:
-            tzkey = winreg.OpenKey(handle, "%s\%s" % (TZKEYNAME,
-                                                      self._stdname))
-            _keydict = valuestodict(tzkey)
-            self._display = _keydict["Display"]
-            tzkey.Close()
-        except OSError:
-            self._display = None
-
-        handle.Close()
+            try:
+                with winreg.OpenKey(
+                        handle, "%s\%s" % (TZKEYNAME, self._stdname)) as tzkey:
+                    _keydict = valuestodict(tzkey)
+                    self._display = _keydict["Display"]
+            except OSError:
+                self._display = None
 
         self._stdoffset = -keydict["Bias"]-keydict["StandardBias"]
         self._dstoffset = self._stdoffset-keydict["DaylightBias"]

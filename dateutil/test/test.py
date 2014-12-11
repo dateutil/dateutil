@@ -1,13 +1,20 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-import unittest
 import calendar
 import base64
-
-from datetime import *
+import sys
 
 from six import StringIO, BytesIO, PY3
+
+try:
+    # python2.6 unittest has no skipUnless. So we use unittest2.
+    # if you have python >= 2.7, you don't need unittest2, but it won't harm
+    import unittest2 as unittest
+except ImportError:
+    import unittest
+
+from datetime import *
 
 from dateutil.relativedelta import *
 from dateutil.parser import *
@@ -15,6 +22,11 @@ from dateutil.easter import *
 from dateutil.rrule import *
 from dateutil.tz import *
 from dateutil import zoneinfo
+
+try:
+    from dateutil import tzwin
+except ImportError:
+    pass
 
 
 class RelativeDeltaTest(unittest.TestCase):
@@ -4003,5 +4015,10 @@ END:VTIMEZONE
         self.assertEqual(dt.astimezone(tz=gettz("UTC-2")),
                           datetime(2007, 8, 6, 2, 10, tzinfo=tzstr("UTC-2")))
 
+    @unittest.skipUnless(sys.platform.startswith("win"), "requires Windows")
+    def testIsdstZoneWithNoDaylightSaving(self):
+        tz = tzwin.tzwin("UTC")
+        dt = parse("2013-03-06 19:08:15")
+        self.assertFalse(tz._isdst(dt))
 
 # vim:ts=4:sw=4
