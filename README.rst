@@ -5,7 +5,7 @@ dateutil - powerful extensions to datetime
     :target: https://travis-ci.org/dateutil/dateutil
     :alt: travis build status
 
-.. image:: https://img.shields.io/appveyor/ci/dateutil/dateutil.svg?style=flat-square
+.. image:: https://img.shields.io/appveyor/ci/dateutil/dateutil/master.svg?style=flat-square
     :target: https://ci.appveyor.com/project/dateutil/dateutil
     :alt: appveyor build status
 
