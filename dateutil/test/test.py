@@ -14,6 +14,9 @@ try:
 except ImportError:
     import unittest
 
+MISSING_TARBALL = ("This test fails if you don't have the dateutil "
+                   "timezone file installed. Please read the README")
+
 from datetime import *
 
 from dateutil.relativedelta import *
@@ -3948,18 +3951,20 @@ END:VTIMEZONE
 
     def testZoneInfoFileStart1(self):
         tz = zoneinfo.gettz("EST5EDT")
-        self.assertEqual(datetime(2003, 4, 6, 1, 59, tzinfo=tz).tzname(), "EST")
+        self.assertEqual(datetime(2003, 4, 6, 1, 59, tzinfo=tz).tzname(), "EST",
+                         MISSING_TARBALL)
         self.assertEqual(datetime(2003, 4, 6, 2, 00, tzinfo=tz).tzname(), "EDT")
 
     def testZoneInfoFileEnd1(self):
         tz = zoneinfo.gettz("EST5EDT")
-        self.assertEqual(datetime(2003, 10, 26, 0, 59, tzinfo=tz).tzname(), "EDT")
+        self.assertEqual(datetime(2003, 10, 26, 0, 59, tzinfo=tz).tzname(), "EDT",
+                         MISSING_TARBALL)
         self.assertEqual(datetime(2003, 10, 26, 1, 00, tzinfo=tz).tzname(), "EST")
 
     def testZoneInfoOffsetSignal(self):
         utc = zoneinfo.gettz("UTC")
         nyc = zoneinfo.gettz("America/New_York")
-        self.assertNotEqual(utc, None)
+        self.assertNotEqual(utc, None, MISSING_TARBALL)
         self.assertNotEqual(nyc, None)
         t0 = datetime(2007, 11, 4, 0, 30, tzinfo=nyc)
         t1 = t0.astimezone(utc)
