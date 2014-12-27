@@ -368,10 +368,10 @@ class rrule(rrulebase):
                 if pos == 0 or not (-366 <= pos <= 366):
                     raise ValueError("bysetpos must be between 1 and 366, "
                                      "or between -366 and -1")
-        if not (byweekno or byyearday or bymonthday or
-                byweekday is not None or byeaster is not None):
+        if (byweekno is None and byyearday is None and bymonthday is None and
+                byweekday is None and byeaster is None):
             if freq == YEARLY:
-                if not bymonth:
+                if bymonth is None:
                     bymonth = dtstart.month
                 bymonthday = dtstart.day
             elif freq == MONTHLY:
