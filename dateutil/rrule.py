@@ -379,14 +379,14 @@ class rrule(rrulebase):
             elif freq == WEEKLY:
                 byweekday = dtstart.weekday()
         # bymonth
-        if not bymonth:
+        if bymonth is None:
             self._bymonth = None
         elif isinstance(bymonth, integer_types):
             self._bymonth = (bymonth,)
         else:
             self._bymonth = tuple(bymonth)
         # byyearday
-        if not byyearday:
+        if byyearday is None:
             self._byyearday = None
         elif isinstance(byyearday, integer_types):
             self._byyearday = (byyearday,)
@@ -403,7 +403,7 @@ class rrule(rrulebase):
         else:
             self._byeaster = None
         # bymonthay
-        if not bymonthday:
+        if bymonthday is None:
             self._bymonthday = ()
             self._bynmonthday = ()
         elif isinstance(bymonthday, integer_types):
