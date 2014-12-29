@@ -40,24 +40,32 @@ MO, TU, WE, TH, FR, SA, SU = weekdays = tuple([weekday(x) for x in range(7)])
 
 class relativedelta(object):
     """
-The relativedelta type is based on the specification of the excelent
+The relativedelta type is based on the specification of the excellent
 work done by M.-A. Lemburg in his
 `mx.DateTime <http://www.egenix.com/files/python/mxDateTime.html>`_ extension.
 However, notice that this type does *NOT* implement the same algorithm as
 his work. Do *NOT* expect it to behave like mx.DateTime's counterpart.
 
-There's two different ways to build a relativedelta instance. The
+There are two different ways to build a relativedelta instance. The
 first one is passing it two date/datetime classes::
 
     relativedelta(datetime1, datetime2)
 
-And the other way is to use the following keyword arguments::
+The second one is passing it any number of the following keyword arguments::
+
+    relativedelta(arg1=x,arg2=y,arg3=z...)
 
     year, month, day, hour, minute, second, microsecond:
-        Absolute information.
+        Absolute information (argument is singular); adding or subtracting a
+        relativedelta with absolute information does not perform an aritmetic
+        operation, but rather REPLACES the corresponding value in the
+        original datetime with the value(s) in relativedelta.
 
     years, months, weeks, days, hours, minutes, seconds, microseconds:
-        Relative information, may be negative.
+        Relative information, may be negative (argument is plural); adding
+        or subtracting a relativedelta with relative information performs
+        the corresponding aritmetic operation on the original datetime value
+        with the information in the relativedelta.  
 
     weekday:
         One of the weekday instances (MO, TU, etc). These instances may
