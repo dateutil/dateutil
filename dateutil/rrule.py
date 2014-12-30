@@ -10,6 +10,8 @@ import datetime
 import calendar
 import sys
 
+from fractions import gcd
+
 from six import advance_iterator, integer_types
 from six.moves import _thread
 
@@ -346,15 +348,18 @@ class rrule(rrulebase):
         self._freq = freq
         self._interval = interval
         self._count = count
+
         if until and not isinstance(until, datetime.datetime):
             until = datetime.datetime.fromordinal(until.toordinal())
         self._until = until
+
         if wkst is None:
             self._wkst = calendar.firstweekday()
         elif isinstance(wkst, integer_types):
             self._wkst = wkst
         else:
             self._wkst = wkst.weekday
+
         if bysetpos is None:
             self._bysetpos = None
         elif isinstance(bysetpos, integer_types):
@@ -368,6 +373,7 @@ class rrule(rrulebase):
                 if pos == 0 or not (-366 <= pos <= 366):
                     raise ValueError("bysetpos must be between 1 and 366, "
                                      "or between -366 and -1")
+
         if (byweekno is None and byyearday is None and bymonthday is None and
                 byweekday is None and byeaster is None):
             if freq == YEARLY:
@@ -378,6 +384,7 @@ class rrule(rrulebase):
                 bymonthday = dtstart.day
             elif freq == WEEKLY:
                 byweekday = dtstart.weekday()
+
         # bymonth
         if bymonth is None:
             self._bymonth = None
@@ -385,6 +392,7 @@ class rrule(rrulebase):
             self._bymonth = (bymonth,)
         else:
             self._bymonth = tuple(bymonth)
+
         # byyearday
         if byyearday is None:
             self._byyearday = None
@@ -392,6 +400,7 @@ class rrule(rrulebase):
             self._byyearday = (byyearday,)
         else:
             self._byyearday = tuple(byyearday)
+
         # byeaster
         if byeaster is not None:
             if not easter:
@@ -402,6 +411,7 @@ class rrule(rrulebase):
                 self._byeaster = tuple(byeaster)
         else:
             self._byeaster = None
+
         # bymonthay
         if bymonthday is None:
             self._bymonthday = ()
@@ -416,6 +426,7 @@ class rrule(rrulebase):
         else:
             self._bymonthday = tuple([x for x in bymonthday if x > 0])
             self._bynmonthday = tuple([x for x in bymonthday if x < 0])
+
         # byweekno
         if byweekno is None:
             self._byweekno = None
@@ -423,6 +434,7 @@ class rrule(rrulebase):
             self._byweekno = (byweekno,)
         else:
             self._byweekno = tuple(byweekno)
+
         # byweekday / bynweekday
         if byweekday is None:
             self._byweekday = None
@@ -453,36 +465,57 @@ class rrule(rrulebase):
                 self._byweekday = None
             elif not self._bynweekday:
                 self._bynweekday = None
+
         # byhour
         if byhour is None:
             if freq < HOURLY:
                 self._byhour = (dtstart.hour,)
             else:
                 self._byhour = None
-        elif isinstance(byhour, integer_types):
-            self._byhour = (byhour,)
         else:
-            self._byhour = tuple(byhour)
+            if isinstance(byhour, integer_types):
+                self._byhour = (byhour,)
+            else:
+                self._byhour = tuple(byhour)
+
+            if freq == HOURLY:
+                self._byhour = self.__construct_byset(start=dtstart.hour,
+                                                      byxxx=self._byhour,
+                                                      base=24)
+
         # byminute
         if byminute is None:
             if freq < MINUTELY:
                 self._byminute = (dtstart.minute,)
             else:
                 self._byminute = None
-        elif isinstance(byminute, integer_types):
-            self._byminute = (byminute,)
         else:
-            self._byminute = tuple(byminute)
+            if isinstance(byminute, integer_types):
+                self._byminute = (byminute,)
+            else:
+                self._byminute = tuple(byminute)
+
+            if freq == MINUTELY:
+                self._byminute = self.__construct_byset(start=dtstart.minute,
+                                                        byxxx=self._byminute,
+                                                        base=60)
+
         # bysecond
         if bysecond is None:
             if freq < SECONDLY:
                 self._bysecond = (dtstart.second,)
             else:
                 self._bysecond = None
-        elif isinstance(bysecond, integer_types):
-            self._bysecond = (bysecond,)
         else:
-            self._bysecond = tuple(bysecond)
+            if isinstance(bysecond, integer_types):
+                self._bysecond = (bysecond,)
+            else:
+                self._bysecond = tuple(bysecond)
+
+            if freq == SECONDLY:
+                self._bysecond = self.__construct_byset(start=dtstart.minute,
+                                                        byxxx=self._byminute,
+                                                        base=60)
 
         if self._freq >= HOURLY:
             self._timeset = None
@@ -655,44 +688,68 @@ class rrule(rrulebase):
                 if filtered:
                     # Jump to one iteration before next day
                     hour += ((23-hour)//interval)*interval
-                while True:
-                    hour += interval
-                    div, mod = divmod(hour, 24)
-                    if div:
-                        hour = mod
-                        day += div
-                        fixday = True
-                    if not byhour or hour in byhour:
-                        break
+
+                if byhour:
+                    ndays, nhours = self.__mod_distance(start=hour,
+                                                        byxxx=self._byhour,
+                                                        base=24)
+                else:
+                    ndays, nhours = divmod(hour+interval, 24)
+
+                if ndays:
+                    day += ndays
+                    fixday = True
+
+                hour = divmod(hour + nhours, 24)[1]
+
                 timeset = gettimeset(hour, minute, second)
             elif freq == MINUTELY:
                 if filtered:
                     # Jump to one iteration before next day
                     minute += ((1439-(hour*60+minute))//interval)*interval
-                while True:
-                    minute += interval
-                    div, mod = divmod(minute, 60)
+
+                valid = False
+                rep_rate = (24)
+                for ii in range(rep_rate / gcd(interval, rep_rate)):
+                    if byminute:
+                        nhours, nminutes = self.__mod_distance(start=minute,
+                                                        byxxx=self._byminute,
+                                                        base=60)
+                    else:
+                        nhours, nminutes = divmod(minute, 60)
+
+                    minute += nminutes
+
+                    div, mod = divmod(hour, 24)
                     if div:
-                        minute = mod
-                        hour += div
-                        div, mod = divmod(hour, 24)
-                        if div:
-                            hour = mod
-                            day += div
-                            fixday = True
-                            filtered = False
-                    if ((not byhour or hour in byhour) and
-                            (not byminute or minute in byminute)):
+                        hour = mod
+                        day += div
+                        fixday = True
+                        filtered = False
+
+                    if not byhour or hour in byhour:
+                        valid = True
                         break
+
+                if not valid:
+                    raise ValueError('Invalid combination of interval and ' +
+                                     'byhour resulting in empty rule.')
+
                 timeset = gettimeset(hour, minute, second)
             elif freq == SECONDLY:
                 if filtered:
                     # Jump to one iteration before next day
                     second += (((86399-(hour*3600+minute*60+second))
                                 // interval)*interval)
-                while True:
-                    second += self._interval
-                    div, mod = divmod(second, 60)
+
+                rep_rate = (24*60)
+                valid = False
+                for ii in range(0, rep_rate / gcd(interval, rep_rate)):
+                    nseconds, nminutes = self.__mod_distance(start=second,
+                                                        byxxx=self._bysecond,
+                                                        base=60)
+
+                    div, mod = divmod(second+nseconds, 60)
                     if div:
                         second = mod
                         minute += div
@@ -705,10 +762,18 @@ class rrule(rrulebase):
                                 hour = mod
                                 day += div
                                 fixday = True
+
                     if ((not byhour or hour in byhour) and
                             (not byminute or minute in byminute) and
                             (not bysecond or second in bysecond)):
+                        valid = True
                         break
+
+                if not valid:
+                    raise ValueError('Invalid combination of interval, ' +
+                                     'byhour and byminute resulting in empty' +
+                                     ' rule.')
+
                 timeset = gettimeset(hour, minute, second)
 
             if fixday and day > 28:
@@ -725,6 +790,78 @@ class rrule(rrulebase):
                                 return
                         daysinmonth = calendar.monthrange(year, month)[1]
                     ii.rebuild(year, month)
+    
+    def __construct_byset(self, start, byxxx, base):
+        """
+        If a `BYXXX` sequence is passed to the constructor at the same level as
+        `FREQ` (e.g. `FREQ=HOURLY,BYHOUR={2,4,7},INTERVAL=3`), there are some
+        specifications which cannot be reached given some starting conditions.
+
+        This occurs whenever the interval is not coprime with the base of a
+        given unit and the difference between the starting position and the
+        ending position is not coprime with the greatest common denominator
+        between the interval and the base. For example, with a FREQ of hourly
+        starting at 17:00 and an interval of 4, the only valid values for
+        BYHOUR would be {21, 1, 5, 9, 13, 17}, because 4 and 24 are not
+        coprime.
+
+        :param:`start` specifies the starting position.
+        :param:`byxxx` is an iterable containing the list of allowed values.
+        :param:`base` is the largest allowable value for the specified
+                      frequency (e.g. 24 hours, 60 minutes).
+
+        This does not preserve the type of the iterable, returning a set, since
+        the values should be unique and the order is irrelevant, this will
+        speed up later lookups.
+
+        In the event of an empty set, raises a :exception:`ValueError`, as this
+        results in an empty rrule.
+        """
+
+        cset = set()
+
+        # Support a single byxxx value.
+        if isinstance(byxxx, integer_types):
+            byxxx = (byxxx)
+
+        for num in byxxx:
+            i_gcd = gcd(self._interval, base)
+            # Use divmod rather than % because we need to wrap negative nums.
+            if i_gcd == 1 or divmod(num - start, i_gcd)[1] == 0:
+                cset.add(num)
+
+        if len(cset) == 0:
+            raise ValueError("Invalid rrule byxxx generates an empty set.")
+
+        return cset
+
+    def __mod_distance(self, value, byxxx, base):
+        """
+        Calculates the next value in a sequence where the `FREQ` parameter is
+        specified along with a `BYXXX` parameter at the same "level"
+        (e.g. `HOURLY` specified with `BYHOUR`).
+
+        :param:`value` is the old value of the component.
+        :param:`byxxx` is the `BYXXX` set, which should have been generated
+                       by `rrule._construct_byset`, or something else which
+                       checks that a valid rule is present.
+        :param:`base` is the largest allowable value for the specified
+                      frequency (e.g. 24 hours, 60 minutes).
+
+        If a valid value is not found after `base` iterations (the maximum
+        number before the sequence would start to repeat), this raises a
+        :exception:`ValueError`, as no valid values were found.
+
+        This returns a tuple of `divmod(n*interval, base)`, where `n` is the
+        smallest number of `interval` repetitions until the next specified
+        value in `byxxx` is found.
+        """
+        for ii in range(1, base + 1):
+            # Using divmod() over % to account for negative intervals
+            value = divmod(value + self._interval, base)[1]
+            if value in byxxx:
+                return divmod(ii * self._interval, base)
+
 
 
 class _iterinfo(object):
@@ -1227,3 +1364,4 @@ class _rrulestr(object):
 rrulestr = _rrulestr()
 
 # vim:ts=4:sw=4:et
+    
