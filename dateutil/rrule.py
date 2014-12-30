@@ -420,8 +420,8 @@ class rrule(rrulebase):
             self._bynmonthday = ()
         else:
             if isinstance(bymonthday, integer_types):
-                if bymonthday < 0:
-                    bymonthday = (bymonthday,)
+                bymonthday = (bymonthday,)
+
             self._bymonthday = set([x for x in bymonthday if x > 0])
             self._bynmonthday = set([x for x in bymonthday if x < 0])
 
@@ -431,7 +431,7 @@ class rrule(rrulebase):
         else:
             if isinstance(byweekno, integer_types):
                 byweekno = (byweekno,)
-        
+
             self._byweekno = set(byweekno)
 
         # byweekday / bynweekday
@@ -462,7 +462,7 @@ class rrule(rrulebase):
         # byhour
         if byhour is None:
             if freq < HOURLY:
-                self._byhour = (dtstart.hour,)
+                self._byhour = set((dtstart.hour,))
             else:
                 self._byhour = None
         else:
@@ -471,15 +471,15 @@ class rrule(rrulebase):
 
             if freq == HOURLY:
                 self._byhour = self.__construct_byset(start=dtstart.hour,
-                                                      byxxx=self._byhour,
+                                                      byxxx=byhour,
                                                       base=24)
             else:
-                self.byhour = set(byhour)
+                self._byhour = set(byhour)
 
         # byminute
         if byminute is None:
             if freq < MINUTELY:
-                self._byminute = set(dtstart.minute,)
+                self._byminute = set((dtstart.minute,))
             else:
                 self._byminute = None
         else:
@@ -488,7 +488,7 @@ class rrule(rrulebase):
 
             if freq == MINUTELY:
                 self._byminute = self.__construct_byset(start=dtstart.minute,
-                                                        byxxx=self._byminute,
+                                                        byxxx=byminute,
                                                         base=60)
             else:
                 self._byminute = set(byminute)
@@ -496,7 +496,7 @@ class rrule(rrulebase):
         # bysecond
         if bysecond is None:
             if freq < SECONDLY:
-                self._bysecond = (dtstart.second,)
+                self._bysecond = ((dtstart.second,))
             else:
                 self._bysecond = None
         else:
@@ -506,8 +506,8 @@ class rrule(rrulebase):
             self._bysecond = set(bysecond)
 
             if freq == SECONDLY:
-                self._bysecond = self.__construct_byset(start=dtstart.minute,
-                                                        byxxx=self._byminute,
+                self._bysecond = self.__construct_byset(start=dtstart.second,
+                                                        byxxx=bysecond,
                                                         base=60)
             else:
                 self._bysecond = set(bysecond)
@@ -685,17 +685,15 @@ class rrule(rrulebase):
                     hour += ((23-hour)//interval)*interval
 
                 if byhour:
-                    ndays, nhours = self.__mod_distance(start=hour,
-                                                        byxxx=self._byhour,
-                                                        base=24)
+                    ndays, hour = self.__mod_distance(value=hour,
+                                                      byxxx=self._byhour,
+                                                      base=24)
                 else:
-                    ndays, nhours = divmod(hour+interval, 24)
+                    ndays, hour = divmod(hour+interval, 24)
 
                 if ndays:
                     day += ndays
                     fixday = True
-
-                hour = divmod(hour + nhours, 24)[1]
 
                 timeset = gettimeset(hour, minute, second)
             elif freq == MINUTELY:
@@ -704,20 +702,18 @@ class rrule(rrulebase):
                     minute += ((1439-(hour*60+minute))//interval)*interval
 
                 valid = False
-                rep_rate = (24)
-                for ii in range(rep_rate / gcd(interval, rep_rate)):
+                rep_rate = (24*60)
+                for j in range(rep_rate / gcd(interval, rep_rate)):
                     if byminute:
-                        nhours, nminutes = self.__mod_distance(start=minute,
-                                                        byxxx=self._byminute,
-                                                        base=60)
+                        nhours, minute = \
+                            self.__mod_distance(value=minute,
+                                                byxxx=self._byminute,
+                                                base=60)
                     else:
-                        nhours, nminutes = divmod(minute, 60)
+                        nhours, minute = divmod(minute+interval, 60)
 
-                    minute += nminutes
-
-                    div, mod = divmod(hour, 24)
+                    div, hour = divmod(hour+nhours, 24)
                     if div:
-                        hour = mod
                         day += div
                         fixday = True
                         filtered = False
@@ -737,26 +733,24 @@ class rrule(rrulebase):
                     second += (((86399-(hour*3600+minute*60+second))
                                 // interval)*interval)
 
-                rep_rate = (24*60)
+                rep_rate = (24*3600)
                 valid = False
-                for ii in range(0, rep_rate / gcd(interval, rep_rate)):
-                    nseconds, nminutes = self.__mod_distance(start=second,
-                                                        byxxx=self._bysecond,
-                                                        base=60)
+                for j in range(0, rep_rate / gcd(interval, rep_rate)):
+                    if bysecond:
+                        nminutes, second = \
+                            self.__mod_distance(value=second,
+                                                byxxx=self._bysecond,
+                                                base=60)
+                    else:
+                        nminutes, second = divmod(second+interval, 60)
 
-                    div, mod = divmod(second+nseconds, 60)
+                    div, minute = divmod(minute+nminutes, 60)
                     if div:
-                        second = mod
-                        minute += div
-                        div, mod = divmod(minute, 60)
+                        hour += div
+                        div, hour = divmod(hour, 24)
                         if div:
-                            minute = mod
-                            hour += div
-                            div, mod = divmod(hour, 24)
-                            if div:
-                                hour = mod
-                                day += div
-                                fixday = True
+                            day += div
+                            fixday = True
 
                     if ((not byhour or hour in byhour) and
                             (not byminute or minute in byminute) and
@@ -785,7 +779,7 @@ class rrule(rrulebase):
                                 return
                         daysinmonth = calendar.monthrange(year, month)[1]
                     ii.rebuild(year, month)
-    
+
     def __construct_byset(self, start, byxxx, base):
         """
         If a `BYXXX` sequence is passed to the constructor at the same level as
@@ -851,12 +845,13 @@ class rrule(rrulebase):
         smallest number of `interval` repetitions until the next specified
         value in `byxxx` is found.
         """
+        accumulator = 0
         for ii in range(1, base + 1):
             # Using divmod() over % to account for negative intervals
-            value = divmod(value + self._interval, base)[1]
+            div, value = divmod(value + self._interval, base)
+            accumulator += div
             if value in byxxx:
-                return divmod(ii * self._interval, base)
-
+                return (accumulator, value)
 
 
 class _iterinfo(object):
