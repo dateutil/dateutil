@@ -388,18 +388,20 @@ class rrule(rrulebase):
         # bymonth
         if bymonth is None:
             self._bymonth = None
-        elif isinstance(bymonth, integer_types):
-            self._bymonth = (bymonth,)
         else:
-            self._bymonth = tuple(bymonth)
+            if isinstance(bymonth, integer_types):
+                bymonth = (bymonth,)
+
+            self._bymonth = set(bymonth)
 
         # byyearday
         if byyearday is None:
             self._byyearday = None
-        elif isinstance(byyearday, integer_types):
-            self._byyearday = (byyearday,)
         else:
-            self._byyearday = tuple(byyearday)
+            if isinstance(byyearday, integer_types):
+                byyearday = (byyearday,)
+
+            self._byyearday = set(byyearday)
 
         # byeaster
         if byeaster is not None:
@@ -416,51 +418,42 @@ class rrule(rrulebase):
         if bymonthday is None:
             self._bymonthday = ()
             self._bynmonthday = ()
-        elif isinstance(bymonthday, integer_types):
-            if bymonthday < 0:
-                self._bynmonthday = (bymonthday,)
-                self._bymonthday = ()
-            else:
-                self._bymonthday = (bymonthday,)
-                self._bynmonthday = ()
         else:
-            self._bymonthday = tuple([x for x in bymonthday if x > 0])
-            self._bynmonthday = tuple([x for x in bymonthday if x < 0])
+            if isinstance(bymonthday, integer_types):
+                if bymonthday < 0:
+                    bymonthday = (bymonthday,)
+            self._bymonthday = set([x for x in bymonthday if x > 0])
+            self._bynmonthday = set([x for x in bymonthday if x < 0])
 
         # byweekno
         if byweekno is None:
             self._byweekno = None
-        elif isinstance(byweekno, integer_types):
-            self._byweekno = (byweekno,)
         else:
-            self._byweekno = tuple(byweekno)
+            if isinstance(byweekno, integer_types):
+                byweekno = (byweekno,)
+        
+            self._byweekno = set(byweekno)
 
         # byweekday / bynweekday
         if byweekday is None:
             self._byweekday = None
             self._bynweekday = None
-        elif isinstance(byweekday, integer_types):
-            self._byweekday = (byweekday,)
-            self._bynweekday = None
-        elif hasattr(byweekday, "n"):
-            if not byweekday.n or freq > MONTHLY:
-                self._byweekday = (byweekday.weekday,)
-                self._bynweekday = None
-            else:
-                self._bynweekday = ((byweekday.weekday, byweekday.n),)
-                self._byweekday = None
         else:
-            self._byweekday = []
-            self._bynweekday = []
+            if isinstance(byweekday, integer_types):
+                byweekday = (byweekday,)
+            elif hasattr(byweekday, "n"):
+                byweekday = (byweekday.weekday,)
+
+            self._byweekday = set()
+            self._bynweekday = set()
             for wday in byweekday:
                 if isinstance(wday, integer_types):
-                    self._byweekday.append(wday)
+                    self._byweekday.add(wday)
                 elif not wday.n or freq > MONTHLY:
-                    self._byweekday.append(wday.weekday)
+                    self._byweekday.add(wday.weekday)
                 else:
-                    self._bynweekday.append((wday.weekday, wday.n))
-            self._byweekday = tuple(self._byweekday)
-            self._bynweekday = tuple(self._bynweekday)
+                    self._bynweekday.add((wday.weekday, wday.n))
+
             if not self._byweekday:
                 self._byweekday = None
             elif not self._bynweekday:
@@ -474,31 +467,31 @@ class rrule(rrulebase):
                 self._byhour = None
         else:
             if isinstance(byhour, integer_types):
-                self._byhour = (byhour,)
-            else:
-                self._byhour = tuple(byhour)
+                byhour = (byhour,)
 
             if freq == HOURLY:
                 self._byhour = self.__construct_byset(start=dtstart.hour,
                                                       byxxx=self._byhour,
                                                       base=24)
+            else:
+                self.byhour = set(byhour)
 
         # byminute
         if byminute is None:
             if freq < MINUTELY:
-                self._byminute = (dtstart.minute,)
+                self._byminute = set(dtstart.minute,)
             else:
                 self._byminute = None
         else:
             if isinstance(byminute, integer_types):
-                self._byminute = (byminute,)
-            else:
-                self._byminute = tuple(byminute)
+                byminute = (byminute,)
 
             if freq == MINUTELY:
                 self._byminute = self.__construct_byset(start=dtstart.minute,
                                                         byxxx=self._byminute,
                                                         base=60)
+            else:
+                self._byminute = set(byminute)
 
         # bysecond
         if bysecond is None:
@@ -508,14 +501,16 @@ class rrule(rrulebase):
                 self._bysecond = None
         else:
             if isinstance(bysecond, integer_types):
-                self._bysecond = (bysecond,)
-            else:
-                self._bysecond = tuple(bysecond)
+                bysecond = (bysecond,)
+
+            self._bysecond = set(bysecond)
 
             if freq == SECONDLY:
                 self._bysecond = self.__construct_byset(start=dtstart.minute,
                                                         byxxx=self._byminute,
                                                         base=60)
+            else:
+                self._bysecond = set(bysecond)
 
         if self._freq >= HOURLY:
             self._timeset = None
