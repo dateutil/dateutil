@@ -703,7 +703,7 @@ class rrule(rrulebase):
 
                 valid = False
                 rep_rate = (24*60)
-                for j in range(rep_rate / gcd(interval, rep_rate)):
+                for j in range(rep_rate // gcd(interval, rep_rate)):
                     if byminute:
                         nhours, minute = \
                             self.__mod_distance(value=minute,
@@ -735,7 +735,7 @@ class rrule(rrulebase):
 
                 rep_rate = (24*3600)
                 valid = False
-                for j in range(0, rep_rate / gcd(interval, rep_rate)):
+                for j in range(0, rep_rate // gcd(interval, rep_rate)):
                     if bysecond:
                         nminutes, second = \
                             self.__mod_distance(value=second,
