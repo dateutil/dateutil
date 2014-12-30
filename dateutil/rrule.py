@@ -1009,50 +1009,50 @@ class _iterinfo(object):
         return list(range(self.yearlen)), 0, self.yearlen
 
     def mdayset(self, year, month, day):
-        set = [None]*self.yearlen
+        dset = [None]*self.yearlen
         start, end = self.mrange[month-1:month+1]
         for i in range(start, end):
-            set[i] = i
-        return set, start, end
+            dset[i] = i
+        return dset, start, end
 
     def wdayset(self, year, month, day):
         # We need to handle cross-year weeks here.
-        set = [None]*(self.yearlen+7)
+        dset = [None]*(self.yearlen+7)
         i = datetime.date(year, month, day).toordinal()-self.yearordinal
         start = i
         for j in range(7):
-            set[i] = i
+            dset[i] = i
             i += 1
             # if (not (0 <= i < self.yearlen) or
             #    self.wdaymask[i] == self.rrule._wkst):
             # This will cross the year boundary, if necessary.
             if self.wdaymask[i] == self.rrule._wkst:
                 break
-        return set, start, i
+        return dset, start, i
 
     def ddayset(self, year, month, day):
-        set = [None]*self.yearlen
+        dset = [None]*self.yearlen
         i = datetime.date(year, month, day).toordinal()-self.yearordinal
-        set[i] = i
-        return set, i, i+1
+        dset[i] = i
+        return dset, i, i+1
 
     def htimeset(self, hour, minute, second):
-        set = []
+        tset = []
         rr = self.rrule
         for minute in rr._byminute:
             for second in rr._bysecond:
-                set.append(datetime.time(hour, minute, second,
+                tset.append(datetime.time(hour, minute, second,
                                          tzinfo=rr._tzinfo))
-        set.sort()
-        return set
+        tset.sort()
+        return tset
 
     def mtimeset(self, hour, minute, second):
-        set = []
+        tset = []
         rr = self.rrule
         for second in rr._bysecond:
-            set.append(datetime.time(hour, minute, second, tzinfo=rr._tzinfo))
-        set.sort()
-        return set
+            tset.append(datetime.time(hour, minute, second, tzinfo=rr._tzinfo))
+        tset.sort()
+        return tset
 
     def stimeset(self, hour, minute, second):
         return (datetime.time(hour, minute, second,
@@ -1329,28 +1329,28 @@ class _rrulestr(object):
                     or exrulevals or exdatevals):
                 if not parser and (rdatevals or exdatevals):
                     from dateutil import parser
-                set = rruleset(cache=cache)
+                rset = rruleset(cache=cache)
                 for value in rrulevals:
-                    set.rrule(self._parse_rfc_rrule(value, dtstart=dtstart,
-                                                    ignoretz=ignoretz,
-                                                    tzinfos=tzinfos))
-                for value in rdatevals:
-                    for datestr in value.split(','):
-                        set.rdate(parser.parse(datestr,
-                                               ignoretz=ignoretz,
-                                               tzinfos=tzinfos))
-                for value in exrulevals:
-                    set.exrule(self._parse_rfc_rrule(value, dtstart=dtstart,
+                    rset.rrule(self._parse_rfc_rrule(value, dtstart=dtstart,
                                                      ignoretz=ignoretz,
                                                      tzinfos=tzinfos))
-                for value in exdatevals:
+                for value in rdatevals:
                     for datestr in value.split(','):
-                        set.exdate(parser.parse(datestr,
+                        rset.rdate(parser.parse(datestr,
                                                 ignoretz=ignoretz,
                                                 tzinfos=tzinfos))
+                for value in exrulevals:
+                    rset.exrule(self._parse_rfc_rrule(value, dtstart=dtstart,
+                                                      ignoretz=ignoretz,
+                                                      tzinfos=tzinfos))
+                for value in exdatevals:
+                    for datestr in value.split(','):
+                        rset.exdate(parser.parse(datestr,
+                                                 ignoretz=ignoretz,
+                                                 tzinfos=tzinfos))
                 if compatible and dtstart:
-                    set.rdate(dtstart)
-                return set
+                    rset.rdate(dtstart)
+                return rset
             else:
                 return self._parse_rfc_rrule(rrulevals[0],
                                              dtstart=dtstart,
@@ -1364,4 +1364,3 @@ class _rrulestr(object):
 rrulestr = _rrulestr()
 
 # vim:ts=4:sw=4:et
-    
