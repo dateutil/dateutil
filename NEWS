@@ -1,3 +1,13 @@
+Version 2.4.0
+-------------
+
+- Fix an issue with relativedelta and freezegun (lp:1374022)
+- Fix tzinfo in windows for timezones without dst (lp:1010050, gh #2)
+- Ignore missing timezones in windows like in POSIX
+- Fix minimal version requirement for six (gh #6)
+- Many rrule changes and fixes by @pganssle (gh pull requests #13 #14 #17),
+    including defusing some infinite loops (gh #4)
+
 Version 2.3
 -----------
 
