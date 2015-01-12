@@ -20,6 +20,7 @@ MISSING_TARBALL = ("This test fails if you don't have the dateutil "
 from datetime import *
 
 from dateutil.relativedelta import *
+from dateutil.formatter import *
 from dateutil.parser import *
 from dateutil.easter import *
 from dateutil.rrule import *
@@ -3725,6 +3726,38 @@ class ParserTest(unittest.TestCase):
         myparser = parser(myparserinfo())
         dt = myparser.parse("01/Foo/2007")
         self.assertEqual(dt, datetime(2007, 1, 1))
+
+
+class FormatterTest(unittest.TestCase):
+    def setUp(self):
+        self.brsttz = tzoffset("BRST", -10800)
+        self.default = datetime(2003, 9, 25)
+
+    def testISOFormatZulu(self):
+        self.assertEqual(
+            isoformat(parse("2003-09-17T20:54:47.282310Z")),
+            "2003-09-17T20:54:47.282310Z"
+        )
+
+    def testISOFormatNoZulu(self):
+        self.assertEqual(
+            isoformat(parse("2003-09-17T20:54:47.282310Z"), utc_zulu=False),
+            "2003-09-17T20:54:47.282310+00:00"
+        )
+
+    def testISOFormatNoTimezone(self):
+        self.assertEqual(
+            isoformat(
+                parse("2003-09-17T20:54:47.282310Z").replace(tzinfo=None)
+            ),
+            "2003-09-17T20:54:47.282310"
+        )
+
+    def testISOFormatEETTimezone(self):
+        self.assertEqual(
+            isoformat(parse("2003-09-17T20:54:47.282310+02:00")),
+            "2003-09-17T20:54:47.282310+02:00"
+        )
 
 
 class EasterTest(unittest.TestCase):

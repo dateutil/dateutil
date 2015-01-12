@@ -206,6 +206,51 @@ We can use the non-leap year day to ignore this:
     >>> date(2000, 1, 1)+relativedelta(nlyearday=260)
     datetime.date(2000, 9, 17)
 
+formatter examples
+------------------
+
+.. testsetup:: formatter
+
+    from dateutil.formatter import *
+    from dateutil.tzinfo import *
+    from datetime import *
+    import pprint
+    import sys
+    sys.displayhook = pprint.pprint
+
+UTC formatting (zulu).
+
+.. doctest:: formatter
+
+    >>> now = datetime(2003, 9, 17, 20, 54, 47, 282310, tzutc())
+    >>> isoformat(now)
+    '2003-09-17T20:54:47.282310Z'
+
+UTC formatting (no zulu).
+
+.. doctest:: formatter
+
+    >>> now = datetime(2003, 9, 17, 20, 54, 47, 282310, tzutc())
+    >>> isoformat(now, utc_zulu=False)
+    '2003-09-17T20:54:47.282310+00:00'
+
+No timezone.
+
+.. doctest:: formatter
+
+    >>> now = datetime(2003, 9, 17, 20, 54, 47, 282310)
+    >>> isoformat(now)
+    '2003-09-17T20:54:47.282310'
+
+Non-UTC timezone.
+
+.. doctest:: formatter
+
+    >>> now = datetime(2003, 9, 17, 20, 54, 47, 282310, tzoffset("EET", 60*60*2))
+    >>> isoformat(now)
+    '2003-09-17T20:54:47.282310+02:00'
+
+
 rrule examples
 --------------
 These examples were converted from the RFC.

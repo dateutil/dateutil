@@ -20,6 +20,7 @@ Contents:
    rrule
    tz
    zoneinfo
+   formatter
    examples
 
 Indices and tables
