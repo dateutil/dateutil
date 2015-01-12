@@ -37,8 +37,12 @@ def tzname_in_python2(myfunc):
     def inner_func(*args, **kwargs):
         if PY3:
             return myfunc(*args, **kwargs)
-        else:
-            return myfunc(*args, **kwargs).encode()
+
+        ret = myfunc(*args, **kwargs)
+        if ret is not None:
+            return ret.encode()
+
+        return ret
     return inner_func
 
 ZERO = datetime.timedelta(0)
