@@ -585,7 +585,7 @@ class parser(object):
                         raise ValueError('No hour specified with AM or PM flag.')
 
                     # If AM/PM is found, it's a 12 hour clock, so raise an error for invalid range
-                    if not 1 <= res.hour <= 12:
+                    if not 0 <= res.hour <= 12:
                         raise ValueError('Invalid hour specified for 12-hour clock.')
 
                     if value == 1 and res.hour < 12:
