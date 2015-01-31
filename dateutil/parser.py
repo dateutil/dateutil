@@ -17,7 +17,7 @@ a date/time stamp is omitted, the following rules are applied:
 - If AM or PM is left unspecified, a 24-hour clock is assumed, however, an hour
   on a 12-hour clock (`0 <= hour <= 12`) *must* be specified if AM or PM is
   specified.
-- If a time zone is omitted, no timezone is attached to the datetime object.
+- If a time zone is omitted, it is assumed to be UTC.
 
 
 Additional resources about date/time string formats can be found below:
@@ -224,8 +224,7 @@ class parserinfo(object):
 
     def _convert(self, lst):
         dct = {}
-        for i in range(len(lst)):
-            v = lst[i]
+        for i, v in enumerate(lst):
             if isinstance(v, tuple):
                 for v in v:
                     dct[v.lower()] = i
@@ -273,6 +272,7 @@ class parserinfo(object):
     def tzoffset(self, name):
         if name in self._utczone:
             return 0
+
         return self.TZOFFSET.get(name)
 
     def convertyear(self, year):
@@ -289,6 +289,7 @@ class parserinfo(object):
         # move to info
         if res.year is not None:
             res.year = self.convertyear(res.year)
+        
         if res.tzoffset == 0 and not res.tzname or res.tzname == 'Z':
             res.tzname = "UTC"
             res.tzoffset = 0
@@ -314,16 +315,20 @@ class parser(object):
             res = self._parse(timestr, **kwargs)
 
         if res is None:
-            raise ValueError("unknown string format")
+            raise ValueError("Unknown string format")
+        
         repl = {}
         for attr in ["year", "month", "day", "hour",
                      "minute", "second", "microsecond"]:
             value = getattr(res, attr)
             if value is not None:
                 repl[attr] = value
+        
         ret = default.replace(**repl)
+        
         if res.weekday is not None and not res.day:
             ret = ret+relativedelta.relativedelta(weekday=res.weekday)
+        
         if not ignoretz:
             if (isinstance(tzinfos, collections.Callable) or
                     tzinfos and res.tzname in tzinfos):
@@ -338,8 +343,8 @@ class parser(object):
                 elif isinstance(tzdata, integer_types):
                     tzinfo = tz.tzoffset(res.tzname, tzdata)
                 else:
-                    raise ValueError("offset must be tzinfo subclass, "
-                                     "tz string, or int offset")
+                    raise ValueError("Offset must be tzinfo subclass, "
+                                     "tz string, or int offset.")
                 ret = ret.replace(tzinfo=tzinfo)
             elif res.tzname and res.tzname in time.tzname:
                 ret = ret.replace(tzinfo=tz.tzlocal())
@@ -366,8 +371,10 @@ class parser(object):
         info = self.info
         if dayfirst is None:
             dayfirst = info.dayfirst
+        
         if yearfirst is None:
             yearfirst = info.yearfirst
+        
         res = self._result()
         l = _timelex.split(timestr)
 
@@ -706,7 +713,7 @@ class parser(object):
                 else:
                     # 01-13
                     res.month, res.day = ymd
-            if len_ymd == 3:
+            elif len_ymd == 3:
                 # Three members
                 if mstridx == 0:
                     res.month, res.day, res.year = ymd
@@ -759,6 +766,7 @@ def parse(timestr, parserinfo=None, **kwargs):
     # the parser will get both kinds. Internally we use unicode only.
     if isinstance(timestr, binary_type):
         timestr = timestr.decode()
+
     if parserinfo:
         return parser(parserinfo).parse(timestr, **kwargs)
     else:
