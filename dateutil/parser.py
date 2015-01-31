@@ -2,6 +2,30 @@
 """
 This module offers a generic date/time string parser which is able to parse
 most known formats to represent a date and/or time.
+
+This module attempts to be forgiving with regards to unlikely input formats,
+returning a datetime object even for dates which are ambiguous. If an element of
+a date/time stamp is omitted, the following rules are applied:
+- If the omitted element is smaller than the largest specified element, select
+  the *earliest* time matching the specified conditions; so `"June 2010"` is
+  interpreted as `June 1, 2010 0:00:00`) and the (somewhat strange)
+  `"Feb 1997 3:15 PM"` is interpreted as `February 1, 1997 15:15:00`.
+- If the element is larger than the largest specified element, select the
+  *most recent* time matching the specified conditions (e.g parsing `"May"`
+  in June 2015 returns the date May 1st, 2015, whereas parsing it in April 2015
+  returns May 1st 2014).
+- If AM or PM is left unspecified, a 24-hour clock is assumed, however, an hour
+  on a 12-hour clock (`0 <= hour <= 12`) *must* be specified if AM or PM is
+  specified.
+- If a time zone is omitted, no timezone is attached to the datetime object.
+
+
+Additional resources about date/time string formats can be found below:
+- [A summary of the international standard date and time notation](http://www.cl.cam.ac.uk/~mgk25/iso-time.html)
+- [W3C Date and Time Formats](http://www.w3.org/TR/NOTE-datetime)
+- [Time Formats (Planetary Rings Node)](http://pds-rings.seti.org/tools/time_formats.html)
+- [CPAN ParseDate module](http://search.cpan.org/~muir/Time-modules-2013.0912/lib/Time/ParseDate.pm)
+- [Java SimpleDateFormat Class](https://docs.oracle.com/javase/6/docs/api/java/text/SimpleDateFormat.html)
 """
 from __future__ import unicode_literals
 
@@ -17,16 +41,6 @@ from . import relativedelta
 from . import tz
 
 __all__ = ["parse", "parserinfo"]
-
-
-# Some pointers:
-#
-# http://www.cl.cam.ac.uk/~mgk25/iso-time.html
-# http://www.iso.ch/iso/en/prods-services/popstds/datesandtime.html
-# http://www.w3.org/TR/NOTE-datetime
-# http://ringmaster.arc.nasa.gov/tools/time_formats.html
-# http://search.cpan.org/author/MUIR/Time-modules-2003.0211/lib/Time/ParseDate.pm
-# http://stein.cshl.org/jade/distrib/docs/java.text.SimpleDateFormat.html
 
 
 class _timelex(object):
