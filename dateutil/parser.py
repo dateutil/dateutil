@@ -19,6 +19,8 @@ a date/time stamp is omitted, the following rules are applied:
   specified.
 - If a time zone is omitted, it is assumed to be UTC.
 
+**NOTE**: The above has not yet been implemented and is aspirational. This
+message will be removed when the above behavior has been implemented.
 
 Additional resources about date/time string formats can be found below:
 - [A summary of the international standard date and time notation](http://www.cl.cam.ac.uk/~mgk25/iso-time.html)
@@ -173,6 +175,10 @@ class _resultbase(object):
 
 
 class parserinfo(object):
+    """
+    Class which handles what inputs are accepted. Subclass this to customize the
+    language and acceptable values for each parameter.
+    """
 
     # m from a.m/p.m, t from ISO T separator
     JUMP = [" ", ".", ",", ";", "-", "/", "'",
@@ -305,7 +311,31 @@ class parser(object):
 
     def parse(self, timestr, default=None, ignoretz=False, tzinfos=None,
               **kwargs):
-        if not default:
+        """
+        Parse the date/time string into a datetime object.
+        
+        :param str timestr: Any date/time string using the supported formats.
+
+        :param datetime.datetime default: The default datetime object, if this
+                is a datetime object and not `None`, elements specified in
+                `timestr` replace elements in the default object.
+
+        :param bool ignoretz: Whether or not to ignore the time zone.
+
+        :param tzinfos: A time zone, to be applied to the date, if `ignoretz` is
+                        `True`. This can be either a subclass of `tzinfo`, a
+                        time zone string or an integer offset.
+
+        :param **kwargs: Keyword arguments as passed to `_parse()`.
+
+        :return: Returns a `datetime.datetime` object.
+
+        :raises ValueError: Raised for invalid or unknown string format.
+        :raises ValueError: Raised if provided `tzinfos` are not in a valid
+                           format.
+        """
+
+        if default is None:
             default = datetime.datetime.now().replace(hour=0, minute=0,
                                                       second=0, microsecond=0)
 
@@ -332,10 +362,12 @@ class parser(object):
         if not ignoretz:
             if (isinstance(tzinfos, collections.Callable) or
                     tzinfos and res.tzname in tzinfos):
+
                 if isinstance(tzinfos, collections.Callable):
                     tzdata = tzinfos(res.tzname, res.tzoffset)
                 else:
                     tzdata = tzinfos.get(res.tzname)
+
                 if isinstance(tzdata, datetime.tzinfo):
                     tzinfo = tzdata
                 elif isinstance(tzdata, text_type):
@@ -365,10 +397,33 @@ class parser(object):
 
     def _parse(self, timestr, dayfirst=None, yearfirst=None, fuzzy=False,
                fuzzy_with_tokens=False):
+        """
+        Private method which performs the heavy lifting of parsing, called from
+        `parse()`, which passes on its `kwargs` to this function.
+
+        :param str timestr: The string to parse.
+
+        :param bool dayfirst: Whether to interpret the first value in an
+                              ambiguous 3-integer date (e.g. 01/05/09) as the
+                              day (`True`) or month (`False`). If `yearfirst` is
+                              set to `True`, this distinguishes between YDM and
+                              YMD. If set to `None`, this value is retrieved
+                              from the current `parserinfo` object (which
+                              itself defaults to `False`).
+
+        :param bool yearfirst: Whether to interpret the first value in an
+                               ambiguous 3-integer date (e.g. 01/05/09) as the
+                               year. If `True`, the first number is taken to
+                               be the year, otherwise the last number is taken
+                               to be the year. If this is set to `None`, the
+                               value is retrieved from the current `parserinfo`
+                               object (which itself defaults to `False`).
+        """
         if fuzzy_with_tokens:
             fuzzy = True
 
         info = self.info
+
         if dayfirst is None:
             dayfirst = info.dayfirst
         
@@ -376,7 +431,7 @@ class parser(object):
             yearfirst = info.yearfirst
         
         res = self._result()
-        l = _timelex.split(timestr)
+        l = _timelex.split(timestr)         # Splits the timestr into tokens
 
         # keep up with the last token skipped so we can recombine
         # consecutively skipped tokens (-2 for when i begins at 0).
@@ -406,17 +461,21 @@ class parser(object):
                     # Token is a number
                     len_li = len(l[i])
                     i += 1
+
                     if (len(ymd) == 3 and len_li in (2, 4)
                         and (i >= len_l or (l[i] != ':' and
                                             info.hms(l[i]) is None))):
                         # 19990101T23[59]
                         s = l[i-1]
                         res.hour = int(s[:2])
+                    
                         if len_li == 4:
                             res.minute = int(s[2:])
+                    
                     elif len_li == 6 or (len_li > 6 and l[i-1].find('.') == 6):
                         # YYMMDD or HHMMSS[.ss]
                         s = l[i-1]
+                    
                         if not ymd and l[i-1].find('.') == -1:
                             ymd.append(info.convertyear(int(s[:2])))
                             ymd.append(int(s[2:4]))
@@ -426,12 +485,14 @@ class parser(object):
                             res.hour = int(s[:2])
                             res.minute = int(s[2:4])
                             res.second, res.microsecond = _parsems(s[4:])
+                    
                     elif len_li == 8:
                         # YYYYMMDD
                         s = l[i-1]
                         ymd.append(int(s[:4]))
                         ymd.append(int(s[4:6]))
                         ymd.append(int(s[6:]))
+                    
                     elif len_li in (12, 14):
                         # YYYYMMDDhhmm[ss]
                         s = l[i-1]
@@ -440,30 +501,42 @@ class parser(object):
                         ymd.append(int(s[6:8]))
                         res.hour = int(s[8:10])
                         res.minute = int(s[10:12])
+                    
                         if len_li == 14:
                             res.second = int(s[12:])
+                    
                     elif ((i < len_l and info.hms(l[i]) is not None) or
                           (i+1 < len_l and l[i] == ' ' and
                            info.hms(l[i+1]) is not None)):
+                    
                         # HH[ ]h or MM[ ]m or SS[.ss][ ]s
                         if l[i] == ' ':
                             i += 1
+                    
                         idx = info.hms(l[i])
+                    
                         while True:
                             if idx == 0:
                                 res.hour = int(value)
+                    
                                 if value % 1:
                                     res.minute = int(60*(value % 1))
+
                             elif idx == 1:
                                 res.minute = int(value)
+                    
                                 if value % 1:
                                     res.second = int(60*(value % 1))
+
                             elif idx == 2:
                                 res.second, res.microsecond = \
                                     _parsems(value_repr)
+
                             i += 1
+
                             if i >= len_l or idx == 2:
                                 break
+
                             # 12h00
                             try:
                                 value_repr = l[i]
@@ -473,38 +546,49 @@ class parser(object):
                             else:
                                 i += 1
                                 idx += 1
+
                                 if i < len_l:
                                     newidx = info.hms(l[i])
+                                
                                     if newidx is not None:
                                         idx = newidx
+                    
                     elif (i == len_l and l[i-2] == ' ' and
                           info.hms(l[i-3]) is not None):
                         # X h MM or X m SS
                         idx = info.hms(l[i-3]) + 1
+                        
                         if idx == 1:
                             res.minute = int(value)
+                        
                             if value % 1:
                                 res.second = int(60*(value % 1))
                             elif idx == 2:
                                 res.second, res.microsecond = \
                                     _parsems(value_repr)
                                 i += 1
+                    
                     elif i+1 < len_l and l[i] == ':':
                         # HH:MM[:SS[.ss]]
                         res.hour = int(value)
                         i += 1
                         value = float(l[i])
                         res.minute = int(value)
+
                         if value % 1:
                             res.second = int(60*(value % 1))
+
                         i += 1
+
                         if i < len_l and l[i] == ':':
                             res.second, res.microsecond = _parsems(l[i+1])
                             i += 2
+
                     elif i < len_l and l[i] in ('-', '/', '.'):
                         sep = l[i]
                         ymd.append(int(value))
                         i += 1
+
                         if i < len_l and not info.jump(l[i]):
                             try:
                                 # 01-01[-01]
@@ -512,45 +596,55 @@ class parser(object):
                             except ValueError:
                                 # 01-Jan[-01]
                                 value = info.month(l[i])
+
                                 if value is not None:
                                     ymd.append(value)
                                     assert mstridx == -1
                                     mstridx = len(ymd)-1
                                 else:
                                     return None
+
                             i += 1
+
                             if i < len_l and l[i] == sep:
                                 # We have three members
                                 i += 1
                                 value = info.month(l[i])
+
                                 if value is not None:
                                     ymd.append(value)
                                     mstridx = len(ymd)-1
                                     assert mstridx == -1
                                 else:
                                     ymd.append(int(l[i]))
+
                                 i += 1
                     elif i >= len_l or info.jump(l[i]):
                         if i+1 < len_l and info.ampm(l[i+1]) is not None:
                             # 12 am
                             res.hour = int(value)
+
                             if res.hour < 12 and info.ampm(l[i+1]) == 1:
                                 res.hour += 12
                             elif res.hour == 12 and info.ampm(l[i+1]) == 0:
                                 res.hour = 0
+
                             i += 1
                         else:
                             # Year, month or day
                             ymd.append(int(value))
                         i += 1
                     elif info.ampm(l[i]) is not None:
+
                         # 12am
                         res.hour = int(value)
+
                         if res.hour < 12 and info.ampm(l[i]) == 1:
                             res.hour += 12
                         elif res.hour == 12 and info.ampm(l[i]) == 0:
                             res.hour = 0
                         i += 1
+
                     elif not fuzzy:
                         return None
                     else:
@@ -570,6 +664,7 @@ class parser(object):
                     ymd.append(value)
                     assert mstridx == -1
                     mstridx = len(ymd)-1
+
                     i += 1
                     if i < len_l:
                         if l[i] in ('-', '/'):
@@ -578,11 +673,13 @@ class parser(object):
                             i += 1
                             ymd.append(int(l[i]))
                             i += 1
+
                             if i < len_l and l[i] == sep:
                                 # Jan-01-99
                                 i += 1
                                 ymd.append(int(l[i]))
                                 i += 1
+
                         elif (i+3 < len_l and l[i] == l[i+2] == ' '
                               and info.pertain(l[i+1])):
                             # Jan of 01
@@ -645,6 +742,7 @@ class parser(object):
                     signal = (-1, 1)[l[i] == '+']
                     i += 1
                     len_li = len(l[i])
+
                     if len_li == 4:
                         # -0300
                         res.tzoffset = int(l[i][:2])*3600+int(l[i][2:])*60
@@ -658,6 +756,7 @@ class parser(object):
                     else:
                         return None
                     i += 1
+
                     res.tzoffset *= signal
 
                     # Look for a timezone name between parenthesis
@@ -694,11 +793,13 @@ class parser(object):
                 if mstridx != -1:
                     res.month = ymd[mstridx]
                     del ymd[mstridx]
+
                 if len_ymd > 1 or mstridx == -1:
                     if ymd[0] > 31:
                         res.year = ymd[0]
                     else:
                         res.day = ymd[0]
+
             elif len_ymd == 2:
                 # Two members with numbers
                 if ymd[0] > 31:
@@ -713,6 +814,7 @@ class parser(object):
                 else:
                     # 01-13
                     res.month, res.day = ymd
+
             elif len_ymd == 3:
                 # Three members
                 if mstridx == 0:
@@ -726,6 +828,7 @@ class parser(object):
                         # Give precendence to day-first, since
                         # two-digit years is usually hand-written.
                         res.day, res.month, res.year = ymd
+
                 elif mstridx == 2:
                     # WTF!?
                     if ymd[1] > 31:
@@ -734,6 +837,7 @@ class parser(object):
                     else:
                         # 99-01-Jan
                         res.year, res.day, res.month = ymd
+
                 else:
                     if ymd[0] > 31 or \
                        (yearfirst and ymd[1] <= 12 and ymd[2] <= 31):
