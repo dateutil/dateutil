@@ -63,6 +63,19 @@ class _timelex(object):
         self.eof = False
 
     def get_token(self):
+        """
+        This function breaks the time string into lexical units (tokens), which
+        can be parsed by the parser. Lexical units are demarcated by changes in
+        the character set, so any continuous string of letters is considered one
+        unit, any continuous string of numbers is considered one unit.
+
+        The main complication arises from the fact that dots ('.') can be used
+        both as separators (e.g. "Sep.20.2009") or decimal points (e.g.
+        "4:30:21.447"). As such, it is necessary to read the full context of
+        any dot-separated strings before breaking it into tokens; as such, this
+        function maintains a "token stack", for when the ambiguous context
+        demands that multiple tokens be parsed at once.
+        """
         if self.tokenstack:
             return self.tokenstack.pop(0)
 
@@ -125,6 +138,8 @@ class _timelex(object):
                     self.charstack.append(nextchar)
                     break  # emit token
             elif state == 'a.':
+                # If we've seen some letters and a dot separator, continue
+                # parsing, and the tokens will be broken up later.
                 seenletters = True
                 if nextchar == '.' or nextchar in wordchars:
                     token += nextchar
@@ -135,6 +150,8 @@ class _timelex(object):
                     self.charstack.append(nextchar)
                     break  # emit token
             elif state == '0.':
+                # If we've seen at least one dot separator, keep going, we'll
+                # break up the tokens later.
                 if nextchar == '.' or nextchar in numchars:
                     token += nextchar
                 elif nextchar in wordchars and token[-1] == '.':
@@ -331,21 +348,30 @@ class parser(object):
         """
         Parse the date/time string into a datetime object.
         
-        :param str timestr: Any date/time string using the supported formats.
+        :param timestr: 
+            Any date/time string using the supported formats.
 
-        :param datetime.datetime default: The default datetime object, if this
-                is a datetime object and not `None`, elements specified in
-                `timestr` replace elements in the default object.
+        :param default:
+            The default datetime object, if this is a datetime object and not
+            `None`, elements specified in `timestr` replace elements in the
+            default object.
 
-        :param bool ignoretz: Whether or not to ignore the time zone.
+        :param ignoretz:
+            Whether or not to ignore the time zone.
 
-        :param tzinfos: A time zone, to be applied to the date, if `ignoretz` is
-                        `True`. This can be either a subclass of `tzinfo`, a
-                        time zone string or an integer offset.
+        :param tzinfos:
+            A time zone, to be applied to the date, if `ignoretz` is `True`.
+            This can be either a subclass of `tzinfo`, a time zone string or an
+            integer offset.
 
-        :param **kwargs: Keyword arguments as passed to `_parse()`.
+        :param **kwargs:
+            Keyword arguments as passed to `_parse()`.
 
-        :return: Returns a `datetime.datetime` object.
+        :return:
+            Returns a `datetime.datetime` object or, if the `fuzzy_with_tokens`
+            option is `True`, returns a tuple, the first element being a
+            `datetime.datetime` object, the second a tuple containing the
+            fuzzy tokens.
 
         :raises ValueError: Raised for invalid or unknown string format.
         :raises ValueError: Raised if provided `tzinfos` are not in a valid
