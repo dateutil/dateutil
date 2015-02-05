@@ -50,6 +50,7 @@ class _timelex(object):
     def __init__(self, instream):
         if isinstance(instream, text_type):
             instream = StringIO(instream)
+
         self.instream = instream
         self.wordchars = ('abcdfeghijklmnopqrstuvwxyz'
                           'ABCDEFGHIJKLMNOPQRSTUVWXYZ_'
@@ -64,23 +65,32 @@ class _timelex(object):
     def get_token(self):
         if self.tokenstack:
             return self.tokenstack.pop(0)
+
         seenletters = False
         token = None
         state = None
         wordchars = self.wordchars
         numchars = self.numchars
         whitespace = self.whitespace
+
         while not self.eof:
+            # We only realize that we've reached the end of a token when we find
+            # a character that's not part of the current token - since that
+            # character may be part of the next token, it's stored in the
+            # charstack.
             if self.charstack:
                 nextchar = self.charstack.pop(0)
             else:
                 nextchar = self.instream.read(1)
                 while nextchar == '\x00':
                     nextchar = self.instream.read(1)
+
             if not nextchar:
                 self.eof = True
                 break
             elif not state:
+                # First character of the token - determines if we're starting
+                # to parse a word, a number or something else.
                 token = nextchar
                 if nextchar in wordchars:
                     state = 'a'
@@ -92,6 +102,8 @@ class _timelex(object):
                 else:
                     break  # emit token
             elif state == 'a':
+                # If we've already started reading a word, we keep reading
+                # letters until we find something that's not part of a word.
                 seenletters = True
                 if nextchar in wordchars:
                     token += nextchar
@@ -102,6 +114,8 @@ class _timelex(object):
                     self.charstack.append(nextchar)
                     break  # emit token
             elif state == '0':
+                # If we've already started reading a number, we keep reading
+                # numbers until we find something that doesn't fit.
                 if nextchar in numchars:
                     token += nextchar
                 elif nextchar == '.':
@@ -129,6 +143,7 @@ class _timelex(object):
                 else:
                     self.charstack.append(nextchar)
                     break  # emit token
+
         if (state in ('a.', '0.') and (seenletters or token.count('.') > 1 or
                                        token[-1] == '.')):
             l = token.split('.')
@@ -137,6 +152,7 @@ class _timelex(object):
                 self.tokenstack.append('.')
                 if tok:
                     self.tokenstack.append(tok)
+
         return token
 
     def __iter__(self):
@@ -146,6 +162,7 @@ class _timelex(object):
         token = self.get_token()
         if token is None:
             raise StopIteration
+
         return token
 
     def next(self):
@@ -401,23 +418,34 @@ class parser(object):
         Private method which performs the heavy lifting of parsing, called from
         `parse()`, which passes on its `kwargs` to this function.
 
-        :param str timestr: The string to parse.
+        :param timestr: 
+            The string to parse.
 
-        :param bool dayfirst: Whether to interpret the first value in an
-                              ambiguous 3-integer date (e.g. 01/05/09) as the
-                              day (`True`) or month (`False`). If `yearfirst` is
-                              set to `True`, this distinguishes between YDM and
-                              YMD. If set to `None`, this value is retrieved
-                              from the current `parserinfo` object (which
-                              itself defaults to `False`).
+        :param dayfirst: 
+            Whether to interpret the first value in an ambiguous 3-integer date
+            (e.g. 01/05/09) as the day (`True`) or month (`False`). If
+            `yearfirst` is set to `True`, this distinguishes between YDM and
+            YMD. If set to `None`, this value is retrieved from the current
+            `parserinfo` object (which itself defaults to `False`).
 
-        :param bool yearfirst: Whether to interpret the first value in an
-                               ambiguous 3-integer date (e.g. 01/05/09) as the
-                               year. If `True`, the first number is taken to
-                               be the year, otherwise the last number is taken
-                               to be the year. If this is set to `None`, the
-                               value is retrieved from the current `parserinfo`
-                               object (which itself defaults to `False`).
+        :param yearfirst: 
+            Whether to interpret the first value in an ambiguous 3-integer date
+            (e.g. 01/05/09) as the year. If `True`, the first number is taken to
+            be the year, otherwise the last number is taken to be the year. If
+            this is set to `None`, the value is retrieved from the current
+            `parserinfo` object (which itself defaults to `False`).
+
+        :param fuzzy:
+            Whether to allow fuzzy parsing, allowing for string like "Today is
+            January 1, 2047 at 8:21:00AM".
+
+        :param fuzzy_with_tokens:
+            If `True`, `fuzzy` is automatically set to True, and the parser will
+            return a tuple where the first element is the parsed
+            `datetime.datetime` datetimestamp and the second element is a tuple
+            containing the portions of the string which were ignored, e.g.
+            "Today is January 1, 2047 at 8:21:00AM" should return
+            `(datetime.datetime(2011, 1, 1, 8, 21), (u'Today is ', u' ', u'at '))`
         """
         if fuzzy_with_tokens:
             fuzzy = True
