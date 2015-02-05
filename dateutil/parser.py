@@ -463,15 +463,14 @@ class parser(object):
                     if res.month == default.month:
                         if res.day is not None:
                             if res.day < default.day and date_in_future:
-                                default += datetime.timedelta(years=1)
+                                default = default.replace(year=default.year+1)
                             elif res.day > default.day and not date_in_future:
-                                default -= datetime.timedelta(years=1)
+                                default = default.replace(year=default.year-1)
                     elif res.month < default.month:
                         if date_in_future:
-                            default += datetime.timedelta(years=1)
-                    else:
-                        if not date_in_future:
-                            default -= datetime.timedelta(years=1)
+                            default = default.replace(year=default.year+1)
+                    elif not date_in_future:
+                        default = default.replace(year=default.year-1)
 
             # Select a proper month
             if res.month is None:
