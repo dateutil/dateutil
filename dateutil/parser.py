@@ -3,25 +3,6 @@
 This module offers a generic date/time string parser which is able to parse
 most known formats to represent a date and/or time.
 
-This module attempts to be forgiving with regards to unlikely input formats,
-returning a datetime object even for dates which are ambiguous. If an element of
-a date/time stamp is omitted, the following rules are applied:
-- If the omitted element is smaller than the largest specified element, select
-  the *earliest* time matching the specified conditions; so `"June 2010"` is
-  interpreted as `June 1, 2010 0:00:00`) and the (somewhat strange)
-  `"Feb 1997 3:15 PM"` is interpreted as `February 1, 1997 15:15:00`.
-- If the element is larger than the largest specified element, select the
-  *most recent* time matching the specified conditions (e.g parsing `"May"`
-  in June 2015 returns the date May 1st, 2015, whereas parsing it in April 2015
-  returns May 1st 2014).
-- If AM or PM is left unspecified, a 24-hour clock is assumed, however, an hour
-  on a 12-hour clock (`0 <= hour <= 12`) *must* be specified if AM or PM is
-  specified.
-- If a time zone is omitted, it is assumed to be UTC.
-
-**NOTE**: The above has not yet been implemented and is aspirational. This
-message will be removed when the above behavior has been implemented.
-
 Additional resources about date/time string formats can be found below:
 - [A summary of the international standard date and time notation](http://www.cl.cam.ac.uk/~mgk25/iso-time.html)
 - [W3C Date and Time Formats](http://www.w3.org/TR/NOTE-datetime)
@@ -260,7 +241,7 @@ class parserinfo(object):
         self.yearfirst = yearfirst
 
         self._year = time.localtime().tm_year
-        self._century = self._year//100*100
+        self._century = self._year // 100*100
 
     def _convert(self, lst):
         dct = {}
@@ -329,7 +310,7 @@ class parserinfo(object):
         # move to info
         if res.year is not None:
             res.year = self.convertyear(res.year)
-        
+
         if res.tzoffset == 0 and not res.tzname or res.tzname == 'Z':
             res.tzname = "UTC"
             res.tzoffset = 0
@@ -347,8 +328,8 @@ class parser(object):
               **kwargs):
         """
         Parse the date/time string into a datetime object.
-        
-        :param timestr: 
+
+        :param timestr:
             Any date/time string using the supported formats.
 
         :param default:
@@ -378,7 +359,9 @@ class parser(object):
                            format.
         """
 
-        if default is None:
+        default_specified = default is not None
+
+        if not default_specified:
             default = datetime.datetime.now().replace(hour=0, minute=0,
                                                       second=0, microsecond=0)
 
@@ -389,19 +372,19 @@ class parser(object):
 
         if res is None:
             raise ValueError("Unknown string format")
-        
+
         repl = {}
         for attr in ["year", "month", "day", "hour",
                      "minute", "second", "microsecond"]:
             value = getattr(res, attr)
             if value is not None:
                 repl[attr] = value
-        
+
         ret = default.replace(**repl)
-        
+
         if res.weekday is not None and not res.day:
             ret = ret+relativedelta.relativedelta(weekday=res.weekday)
-        
+
         if not ignoretz:
             if (isinstance(tzinfos, collections.Callable) or
                     tzinfos and res.tzname in tzinfos):
@@ -444,17 +427,17 @@ class parser(object):
         Private method which performs the heavy lifting of parsing, called from
         `parse()`, which passes on its `kwargs` to this function.
 
-        :param timestr: 
+        :param timestr:
             The string to parse.
 
-        :param dayfirst: 
+        :param dayfirst:
             Whether to interpret the first value in an ambiguous 3-integer date
             (e.g. 01/05/09) as the day (`True`) or month (`False`). If
             `yearfirst` is set to `True`, this distinguishes between YDM and
             YMD. If set to `None`, this value is retrieved from the current
             `parserinfo` object (which itself defaults to `False`).
 
-        :param yearfirst: 
+        :param yearfirst:
             Whether to interpret the first value in an ambiguous 3-integer date
             (e.g. 01/05/09) as the year. If `True`, the first number is taken to
             be the year, otherwise the last number is taken to be the year. If
@@ -480,10 +463,10 @@ class parser(object):
 
         if dayfirst is None:
             dayfirst = info.dayfirst
-        
+
         if yearfirst is None:
             yearfirst = info.yearfirst
-        
+
         res = self._result()
         l = _timelex.split(timestr)         # Splits the timestr into tokens
 
@@ -493,7 +476,6 @@ class parser(object):
         skipped_tokens = list()
 
         try:
-
             # year/month/day list
             ymd = []
 
@@ -522,14 +504,14 @@ class parser(object):
                         # 19990101T23[59]
                         s = l[i-1]
                         res.hour = int(s[:2])
-                    
+
                         if len_li == 4:
                             res.minute = int(s[2:])
-                    
+
                     elif len_li == 6 or (len_li > 6 and l[i-1].find('.') == 6):
                         # YYMMDD or HHMMSS[.ss]
                         s = l[i-1]
-                    
+
                         if not ymd and l[i-1].find('.') == -1:
                             ymd.append(info.convertyear(int(s[:2])))
                             ymd.append(int(s[2:4]))
@@ -539,14 +521,14 @@ class parser(object):
                             res.hour = int(s[:2])
                             res.minute = int(s[2:4])
                             res.second, res.microsecond = _parsems(s[4:])
-                    
+
                     elif len_li == 8:
                         # YYYYMMDD
                         s = l[i-1]
                         ymd.append(int(s[:4]))
                         ymd.append(int(s[4:6]))
                         ymd.append(int(s[6:]))
-                    
+
                     elif len_li in (12, 14):
                         # YYYYMMDDhhmm[ss]
                         s = l[i-1]
@@ -555,30 +537,30 @@ class parser(object):
                         ymd.append(int(s[6:8]))
                         res.hour = int(s[8:10])
                         res.minute = int(s[10:12])
-                    
+
                         if len_li == 14:
                             res.second = int(s[12:])
-                    
+
                     elif ((i < len_l and info.hms(l[i]) is not None) or
                           (i+1 < len_l and l[i] == ' ' and
                            info.hms(l[i+1]) is not None)):
-                    
+
                         # HH[ ]h or MM[ ]m or SS[.ss][ ]s
                         if l[i] == ' ':
                             i += 1
-                    
+
                         idx = info.hms(l[i])
-                    
+
                         while True:
                             if idx == 0:
                                 res.hour = int(value)
-                    
+
                                 if value % 1:
                                     res.minute = int(60*(value % 1))
 
                             elif idx == 1:
                                 res.minute = int(value)
-                    
+
                                 if value % 1:
                                     res.second = int(60*(value % 1))
 
@@ -603,25 +585,25 @@ class parser(object):
 
                                 if i < len_l:
                                     newidx = info.hms(l[i])
-                                
+
                                     if newidx is not None:
                                         idx = newidx
-                    
+
                     elif (i == len_l and l[i-2] == ' ' and
                           info.hms(l[i-3]) is not None):
                         # X h MM or X m SS
                         idx = info.hms(l[i-3]) + 1
-                        
+
                         if idx == 1:
                             res.minute = int(value)
-                        
+
                             if value % 1:
                                 res.second = int(60*(value % 1))
                             elif idx == 2:
                                 res.second, res.microsecond = \
                                     _parsems(value_repr)
                                 i += 1
-                    
+
                     elif i+1 < len_l and l[i] == ':':
                         # HH:MM[:SS[.ss]]
                         res.hour = int(value)
