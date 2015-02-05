@@ -474,6 +474,10 @@ class parser(object):
 
             # Select a proper month
             if res.month is None:
+                if res.year is not None:
+                    default = default.replace(month=1)
+
+                # I'm not sure if this is even possible.
                 if res.day is not None:
                     if res.day < default.day and date_in_future:
                         default += datetime.timedelta(months=1)
