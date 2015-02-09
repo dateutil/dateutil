@@ -499,8 +499,8 @@ class parser(object):
                     i += 1
 
                     if (len(ymd) == 3 and len_li in (2, 4)
-                        and (i >= len_l or (l[i] != ':' and
-                                            info.hms(l[i]) is None))):
+                        and res.hour is None and (i >= len_l or (l[i] != ':' and
+                                                  info.hms(l[i]) is None))):
                         # 19990101T23[59]
                         s = l[i-1]
                         res.hour = int(s[:2])
