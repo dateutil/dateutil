@@ -602,6 +602,16 @@ class RRuleTest(unittest.TestCase):
                           datetime(1997, 9, 25, 9, 0),
                           datetime(1997, 10, 7, 9, 0)])
 
+        # Third Monday of the month
+        self.assertEqual(rrule(MONTHLY,
+                         byweekday=(MO(+3)),
+                         dtstart=datetime(1997, 9, 1)).between(datetime(1997, 9, 1),
+                                                               datetime(1997, 12, 1)),
+                         [datetime(1997, 9, 15, 0, 0),
+                          datetime(1997, 10, 20, 0, 0),
+                          datetime(1997, 11, 17, 0, 0)])
+
+
     def testMonthlyByNWeekDayLarge(self):
         self.assertEqual(list(rrule(MONTHLY,
                               count=3,
