@@ -44,7 +44,7 @@ Features
   date and/or datetime objects;
 * Computing of dates based on very flexible recurrence rules,
   using a superset of the
-  [ftp://ftp.rfc-editor.org/in-notes/rfc2445.txt iCalendar]
+  `iCalendar <ftp://ftp.rfc-editor.org/in-notes/rfc2445.txt>`
   specification. Parsing of RFC strings is supported as well.
 * Generic parsing of dates in almost any string format;
 * Timezone (tzinfo) implementations for tzfile(5) format
