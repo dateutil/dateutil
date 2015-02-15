@@ -43,8 +43,7 @@ Features
 * Computing of relative deltas between two given
   date and/or datetime objects;
 * Computing of dates based on very flexible recurrence rules,
-  using a superset of the
-  `iCalendar <ftp://ftp.rfc-editor.org/in-notes/rfc2445.txt>`
+  using a superset of the `iCalendar <https://www.ietf.org/rfc/rfc2445.txt>`_
   specification. Parsing of RFC strings is supported as well.
 * Generic parsing of dates in almost any string format;
 * Timezone (tzinfo) implementations for tzfile(5) format
