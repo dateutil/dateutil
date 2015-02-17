@@ -2676,6 +2676,40 @@ class RRuleTest(unittest.TestCase):
                                .after(datetime(1997, 9, 4, 9, 0), inc=True),
                          datetime(1997, 9, 4, 9, 0))
 
+    def testXAfter(self):
+        self.assertEqual(list(rrule(DAILY,
+                                    dtstart=datetime(1997, 9, 2, 9, 0))
+                                    .xafter(datetime(1997, 9, 8, 9, 0), count=12)),
+                                    [datetime(1997, 9, 9, 9, 0),
+                                     datetime(1997, 9, 10, 9, 0),
+                                     datetime(1997, 9, 11, 9, 0),
+                                     datetime(1997, 9, 12, 9, 0),
+                                     datetime(1997, 9, 13, 9, 0),
+                                     datetime(1997, 9, 14, 9, 0),
+                                     datetime(1997, 9, 15, 9, 0),
+                                     datetime(1997, 9, 16, 9, 0),
+                                     datetime(1997, 9, 17, 9, 0),
+                                     datetime(1997, 9, 18, 9, 0),
+                                     datetime(1997, 9, 19, 9, 0),
+                                     datetime(1997, 9, 20, 9, 0)])
+
+    def testXAfterInc(self):
+        self.assertEqual(list(rrule(DAILY,
+                                    dtstart=datetime(1997, 9, 2, 9, 0))
+                                    .xafter(datetime(1997, 9, 8, 9, 0), count=12, inc=True)),
+                                    [datetime(1997, 9, 8, 9, 0),
+                                     datetime(1997, 9, 9, 9, 0),
+                                     datetime(1997, 9, 10, 9, 0),
+                                     datetime(1997, 9, 11, 9, 0),
+                                     datetime(1997, 9, 12, 9, 0),
+                                     datetime(1997, 9, 13, 9, 0),
+                                     datetime(1997, 9, 14, 9, 0),
+                                     datetime(1997, 9, 15, 9, 0),
+                                     datetime(1997, 9, 16, 9, 0),
+                                     datetime(1997, 9, 17, 9, 0),
+                                     datetime(1997, 9, 18, 9, 0),
+                                     datetime(1997, 9, 19, 9, 0)])
+
     def testBetween(self):
         self.assertEqual(rrule(DAILY,
                                #count=5,
