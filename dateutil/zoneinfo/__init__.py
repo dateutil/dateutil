@@ -141,7 +141,8 @@ def rebuild(filename, tag=None, format="gz", zonegroups=[], version=None):
         if version is not None:
             # If we have a version, write it to a hidden file
             with open(version_floc, "w") as vfile:
-                vfile.write('{}={}'.format(_VERSIONLABEL, version))
+                vfile.write('{label}={value}'.format(label=_VERSIONLABEL,
+                                                     value=version))
 
         target = os.path.join(moduledir, _ZONEFILENAME)
         with _tar_open(target, "w:%s" % format) as tf:
