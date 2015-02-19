@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
 import os
+import re
 import warnings
 import tempfile
 import shutil
@@ -12,9 +13,11 @@ from contextlib import closing
 
 from dateutil.tz import tzfile
 
-__all__ = ["setcachesize", "gettz", "rebuild"]
+__all__ = ["setcachesize", "gettz", "gettz_db_version", "rebuild"]
 
 _ZONEFILENAME = "dateutil-zoneinfo.tar.gz"
+_VERSIONFNAME = ".version"
+_VERSIONLABEL = "version"
 
 # python2.6 compatability. Note that TarFile.__exit__ != TarFile.close, but
 # it's close enough for python2.6
@@ -37,6 +40,30 @@ def getzoneinfofile_stream():
         return None
 
 
+def gettz_db_version(zonefile_stream=None):
+    """
+    Retrieve the version of a ZoneInfoFile that has been built with a .version
+    file containing "version=the_version", as output by rebuild().
+
+    :returns:
+        Returns a version string or `None` if no version was found.
+    """
+    if zonefile_stream is None:
+        zonefile_stream = getzoneinfofile_stream()
+
+    with _tar_open(fileobj=zonefile_stream, mode='r') as tf:
+        try:
+            vf = tf.extractfile(tf.getmember(_VERSIONFNAME))
+            for line in vf:
+                lsplit = line.split('=')
+                if lsplit[0] == _VERSIONLABEL:
+                    return lsplit[1]
+        except KeyError:
+            pass
+
+    return None
+
+
 class ZoneInfoFile(object):
     def __init__(self, zonefile_stream=None):
         if zonefile_stream is not None:
@@ -48,7 +75,9 @@ class ZoneInfoFile(object):
                 #              for zf in tf.getmembers() if zf.isfile()}
                 self.zones = dict((zf.name, tzfile(tf.extractfile(zf),
                                                    filename=zf.name))
-                                  for zf in tf.getmembers() if zf.isfile())
+                                  for zf in tf.getmembers()
+                                  if zf.isfile() and zf.name != _VERSIONFNAME)
+
                 # deal with links: They'll point to their parent object. Less
                 # waste of memory
                 # links = {zl.name: self.zones[zl.linkname]
@@ -76,7 +105,7 @@ def gettz(name):
     return _CLASS_ZONE_INSTANCE[0].zones.get(name)
 
 
-def rebuild(filename, tag=None, format="gz", zonegroups=[]):
+def rebuild(filename, tag=None, format="gz", zonegroups=[], version=None):
     """Rebuild the internal timezone info in dateutil/zoneinfo/zoneinfo*tar*
 
     filename is the timezone tarball from ftp.iana.org/tz.
@@ -99,8 +128,26 @@ def rebuild(filename, tag=None, format="gz", zonegroups=[]):
                         "libc-bin or some other package that provides it, "
                         "or it's not in your PATH?")
                     raise
+
+        # Write the version of the database used to a file in our
+        # rebuilt tarball
+        version_floc = os.path.join(tmpdir, _VERSIONFNAME)
+        if version is None:
+            # If version is not specified, try to infer it from the filename
+            m = re.match(".*?tzdata(?P<vnum>.*?)\.tar\.gz", filename)
+            if m is not None:
+                version = m.group('vnum')
+
+        if version is not None:
+            # If we have a version, write it to a hidden file
+            with open(version_floc, "w") as vfile:
+                vfile.write('{}={}'.format(_VERSIONLABEL, version))
+
         target = os.path.join(moduledir, _ZONEFILENAME)
         with _tar_open(target, "w:%s" % format) as tf:
+            if os.path.exists(version_floc):
+                tf.add(version_floc, _VERSIONFNAME)
+
             for entry in os.listdir(zonedir):
                 entrypath = os.path.join(zonedir, entry)
                 tf.add(entrypath, entry)
