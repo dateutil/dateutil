@@ -197,6 +197,18 @@ class parserinfo(object):
     """
     Class which handles what inputs are accepted. Subclass this to customize the
     language and acceptable values for each parameter.
+
+    :param dayfirst:
+            Whether to interpret the first value in an ambiguous 3-integer date
+            (e.g. 01/05/09) as the day (`True`) or month (`False`). If
+            `yearfirst` is set to `True`, this distinguishes between YDM and
+            YMD. Default is `False`.
+
+    :param yearfirst:
+            Whether to interpret the first value in an ambiguous 3-integer date
+            (e.g. 01/05/09) as the year. If `True`, the first number is taken to
+            be the year, otherwise the last number is taken to be the year.
+            Default is `False`.
     """
 
     # m from a.m/p.m, t from ISO T separator
@@ -905,6 +917,59 @@ DEFAULTPARSER = parser()
 
 
 def parse(timestr, parserinfo=None, **kwargs):
+    """
+    Parse a string in one of the supported formats, using the `parserinfo`
+    parameters.
+
+    :param timestr:
+        A string containing a date/time stamp.
+
+    :param parserinfo:
+        A :class:`parserinfo` object containing parameters for the parser.
+        If `None`, the default arguments to the `parserinfo` constructor are
+        used.
+
+    The `**kwargs` parameter takes the following keyword arguments:
+
+    :param default:
+        The default datetime object, if this is a datetime object and not
+        `None`, elements specified in `timestr` replace elements in the
+        default object.
+
+    :param ignoretz:
+        Whether or not to ignore the time zone (boolean).
+
+    :param tzinfos:
+        A time zone, to be applied to the date, if `ignoretz` is `True`.
+        This can be either a subclass of `tzinfo`, a time zone string or an
+        integer offset.
+
+    :param dayfirst:
+        Whether to interpret the first value in an ambiguous 3-integer date
+        (e.g. 01/05/09) as the day (`True`) or month (`False`). If
+        `yearfirst` is set to `True`, this distinguishes between YDM and
+        YMD. If set to `None`, this value is retrieved from the current
+        :class:`parserinfo` object (which itself defaults to `False`).
+
+    :param yearfirst:
+        Whether to interpret the first value in an ambiguous 3-integer date
+        (e.g. 01/05/09) as the year. If `True`, the first number is taken to
+        be the year, otherwise the last number is taken to be the year. If
+        this is set to `None`, the value is retrieved from the current
+        :class:`parserinfo` object (which itself defaults to `False`).
+
+    :param fuzzy:
+        Whether to allow fuzzy parsing, allowing for string like "Today is
+        January 1, 2047 at 8:21:00AM".
+
+    :param fuzzy_with_tokens:
+        If `True`, `fuzzy` is automatically set to True, and the parser will
+        return a tuple where the first element is the parsed
+        `datetime.datetime` datetimestamp and the second element is a tuple
+        containing the portions of the string which were ignored, e.g.
+        "Today is January 1, 2047 at 8:21:00AM" should return
+        `(datetime.datetime(2011, 1, 1, 8, 21), (u'Today is ', u' ', u'at '))`
+    """
     # Python 2.x support: datetimes return their string presentation as
     # bytes in 2.x and unicode in 3.x, so it's reasonable to expect that
     # the parser will get both kinds. Internally we use unicode only.
