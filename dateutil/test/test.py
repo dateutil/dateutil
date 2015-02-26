@@ -193,6 +193,10 @@ class RelativeDeltaTest(unittest.TestCase):
         self.assertEqual(datetime(2000, 1, 1) + relativedelta(days=28) / 28,
                          datetime(2000, 1, 2))
 
+    def testBoolean(self):
+        self.assertFalse(relativedelta(days=0))
+        self.assertTrue(relativedelta(days=1))
+
 
 class RRuleTest(unittest.TestCase):
     def testYearly(self):
