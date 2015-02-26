@@ -7,6 +7,9 @@ Version 2.4.1
   handled properly. (gh pr #35, issue #34)
 - Fix error where parser allowed some invalid dates, overwriting existing hours
   with the last 2-digit number in the string. (gh pr #32, issue #31)
+- Fix and add test for Python 2.x compatibility with boolean checking of
+  relativedelta objects. Implemented by @nimasmi (gh pr #43) and Cédric Krier 
+  (lp: 1035038)
 - Replaced parse() calls with explicit datetime objects in unit tests unrelated
   to parser. (gh pr #36)
 - Additional documentation for parser (gh pr #29, #33, #41) and rrule.
