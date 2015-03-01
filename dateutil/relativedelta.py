@@ -75,7 +75,7 @@ The second one is passing it any number of the following keyword arguments::
         where 0=MO.
 
     leapdays:
-        Will add given days to the date found, if year is a leap
+        Will   given days to the date found, if year is a leap
         year, and the date found is post 28 of february.
 
     yearday, nlyearday:
@@ -167,7 +167,7 @@ Here is the behavior of operations with relativedelta:
         else:
             self.years = years
             self.months = months
-            self.days = days+weeks*7
+            self.days = days + weeks * 7
             self.leapdays = leapdays
             self.hours = hours
             self.minutes = minutes
@@ -241,6 +241,13 @@ Here is the behavior of operations with relativedelta:
             self._has_time = 1
         else:
             self._has_time = 0
+
+    @property
+    def weeks(self):
+        return self.days // 7
+    @weeks.setter
+    def weeks(self, value):
+        self.days = self.days - (self.weeks * 7) + value*7
 
     def _set_months(self, months):
         self.months = months
