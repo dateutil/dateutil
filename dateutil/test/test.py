@@ -35,6 +35,33 @@ except ImportError:
 class RelativeDeltaTest(unittest.TestCase):
     now = datetime(2003, 9, 17, 20, 54, 47, 282310)
     today = date(2003, 9, 17)
+    
+    def testInheritance(self):
+        # Ensure that relativedelta is inheritance-friendly.
+        class rdChildClass(relativedelta):
+            pass
+
+        ccRD = rdChildClass(years=1, months=1, days=1, leapdays=1, weeks=1,
+                            hours=1, minutes=1, seconds=1, microseconds=1)
+
+        rd = relativedelta(years=1, months=1, days=1, leapdays=1, weeks=1,
+                           hours=1, minutes=1, seconds=1, microseconds=1)
+
+        self.assertEqual(type(ccRD + rd), type(ccRD),
+                         msg='Addition does not inherit type.')
+
+        self.assertEqual(type(ccRD - rd), type(ccRD),
+                         msg='Subtraction does not inherit type.')
+
+        self.assertEqual(type(-ccRD), type(ccRD),
+                         msg='Negation does not inherit type.')
+
+        self.assertEqual(type(ccRD * 5.0), type(ccRD),
+                         msg='Multiplication does not inherit type.')
+        
+        self.assertEqual(type(ccRD / 5.0), type(ccRD),
+                         msg='Division does not inherit type.')
+
 
     def testNextMonth(self):
         self.assertEqual(self.now+relativedelta(months=+1),
