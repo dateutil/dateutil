@@ -35,7 +35,7 @@ except ImportError:
 class RelativeDeltaTest(unittest.TestCase):
     now = datetime(2003, 9, 17, 20, 54, 47, 282310)
     today = date(2003, 9, 17)
-    
+
     def testInheritance(self):
         # Ensure that relativedelta is inheritance-friendly.
         class rdChildClass(relativedelta):
@@ -223,6 +223,14 @@ class RelativeDeltaTest(unittest.TestCase):
     def testBoolean(self):
         self.assertFalse(relativedelta(days=0))
         self.assertTrue(relativedelta(days=1))
+
+    def testWeeks(self):
+        # Test that the weeks property is working properly.
+        rd = relativedelta(years=4, months=2, weeks=8, days=6)
+        self.assertEqual((rd.weeks, rd.days), (8, 8 * 7 + 6))
+        
+        rd.weeks = 3
+        self.assertEqual((rd.weeks, rd.days), (3, 3 * 7 + 6))
 
 
 class RRuleTest(unittest.TestCase):

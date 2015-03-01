@@ -75,7 +75,7 @@ The second one is passing it any number of the following keyword arguments::
         where 0=MO.
 
     leapdays:
-        Will   given days to the date found, if year is a leap
+        Will add given days to the date found, if year is a leap
         year, and the date found is post 28 of february.
 
     yearday, nlyearday:
