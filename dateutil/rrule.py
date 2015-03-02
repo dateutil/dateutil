@@ -15,6 +15,8 @@ from fractions import gcd
 from six import advance_iterator, integer_types
 from six.moves import _thread
 
+from .rfc2445 import rrule_to_rfc2445
+
 __all__ = ["rrule", "rruleset", "rrulestr",
            "YEARLY", "MONTHLY", "WEEKLY", "DAILY",
            "HOURLY", "MINUTELY", "SECONDLY",
@@ -525,6 +527,9 @@ class rrule(rrulebase):
                                           tzinfo=self._tzinfo))
             self._timeset.sort()
             self._timeset = tuple(self._timeset)
+
+    def __str__(self):
+        return rrule_to_rfc2445(self)
 
     def _iter(self):
         year, month, day, hour, minute, second, weekday, yearday, _ = \
