@@ -10,6 +10,7 @@ import datetime
 import calendar
 import sys
 
+from tz import gettz
 from fractions import gcd
 
 from six import advance_iterator, integer_types
@@ -334,6 +335,7 @@ class rrule(rrulebase):
                  bymonth=None, bymonthday=None, byyearday=None, byeaster=None,
                  byweekno=None, byweekday=None,
                  byhour=None, byminute=None, bysecond=None,
+                 tzid=None,
                  cache=False):
         super(rrule, self).__init__(cache)
         global easter
@@ -343,7 +345,24 @@ class rrule(rrulebase):
             dtstart = datetime.datetime.fromordinal(dtstart.toordinal())
         else:
             dtstart = dtstart.replace(microsecond=0)
+
+
         self._dtstart = dtstart
+
+        # <TIMEZONE HACK>
+
+        # if tzid is set, force the timezone on dtstart
+        # this is to support generating recurrences from events stored in PostgreSQL, 
+        # which converts all timezones to UTC on storage
+        if tzid:
+          tzid = gettz(tzid)
+          if dtstart.tzinfo:
+            dtstart = dtstart.astimezone(tz)
+          else:
+            dtstart = dtstart.replace(tzinfo=tzid)
+
+        # </TIMEZONE HACK>
+
         self._tzinfo = dtstart.tzinfo
         self._freq = freq
         self._interval = interval
