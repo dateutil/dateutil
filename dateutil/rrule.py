@@ -15,8 +15,6 @@ from fractions import gcd
 from six import advance_iterator, integer_types
 from six.moves import _thread
 
-from .rfc2445 import rrule_to_rfc2445
-
 __all__ = ["rrule", "rruleset", "rrulestr",
            "YEARLY", "MONTHLY", "WEEKLY", "DAILY",
            "HOURLY", "MINUTELY", "SECONDLY",
@@ -38,6 +36,8 @@ WDAYMASK = [0, 1, 2, 3, 4, 5, 6]*55
 del M29, M30, M31, M365MASK[59], MDAY365MASK[59], NMDAY365MASK[31]
 MDAY365MASK = tuple(MDAY365MASK)
 M365MASK = tuple(M365MASK)
+
+FREQNAMES = ['YEARLY','MONTHLY','WEEKLY','DAILY','HOURLY','MINUTELY','SECONDLY']
 
 (YEARLY,
  MONTHLY,
@@ -541,7 +541,56 @@ class rrule(rrulebase):
             self._timeset = tuple(self._timeset)
 
     def __str__(self):
-        return rrule_to_rfc2445(self)
+        """
+        Output a string that would generate this RRULE per RFC2445
+        """
+
+        output = []
+        h, m, s = [None] * 3
+        if self._dtstart:
+            output.append(self._dtstart.strftime('DTSTART:%Y%m%dT%H%M%S'))
+            h, m, s = self._dtstart.timetuple()[3:6]
+
+        print(self._byhour)
+
+        parts = ['FREQ=' + FREQNAMES[self._freq]]
+        if self._interval != 1:
+            parts.append('INTERVAL=' + str(self._interval))
+        
+        if self._wkst:
+            parts.append('WKST=' + str(self._wkst))
+        
+        if self._count:
+            parts.append('COUNT=' + str(self._count))
+
+        partfmt = '{name}={vals}'
+        for name, value in [
+                ('BYSETPOS', self._bysetpos),
+                ('BYMONTH', self._bymonth),
+                ('BYMONTHDAY', self._bymonthday),
+                ('BYYEARDAY', self._byyearday),
+                ('BYWEEKNO', self._byweekno),
+                ('BYWEEKDAY', self._byweekday),
+                ('BYHOUR', self._byhour),
+                ('BYMINUTE', self._byminute),
+                ('BYSECOND', self._bysecond)
+                ]:
+            if value:
+                parts.append(partfmt.format(name=name, vals=','.join(str(v) for v in value)))
+
+        # Some information seems to be lost in the conversion from dtstart to comp,
+        # byhour and bysecond. For now we can just check to see if the values are
+        # singletons and identical, but eventually we'll need to fix that.
+        for name, value, comp in [
+                ('BYHOUR', self._byhour, h),
+                ('BYMINUTE', self._byminute, m),
+                ('BYSECOND', self._bysecond, s)
+                ]:
+                if len(value) > 1 or (len(value) == 1 and next(iter(value)) != comp):
+                    parts.append(partfmt.format(name=name, vals=','.join(str(v) for v in value)))
+
+        output.append(';'.join(parts))
+        return '\n'.join(output)
 
     def _iter(self):
         year, month, day, hour, minute, second, weekday, yearday, _ = \
