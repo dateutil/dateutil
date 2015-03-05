@@ -392,7 +392,7 @@ class rrule(rrulebase):
             if isinstance(bymonth, integer_types):
                 bymonth = (bymonth,)
 
-            self._bymonth = set(bymonth)
+            self._bymonth = tuple(sorted(set(bymonth)))
 
         # byyearday
         if byyearday is None:
@@ -401,7 +401,7 @@ class rrule(rrulebase):
             if isinstance(byyearday, integer_types):
                 byyearday = (byyearday,)
 
-            self._byyearday = set(byyearday)
+            self._byyearday = tuple(sorted(set(byyearday)))
 
         # byeaster
         if byeaster is not None:
@@ -410,7 +410,7 @@ class rrule(rrulebase):
             if isinstance(byeaster, integer_types):
                 self._byeaster = (byeaster,)
             else:
-                self._byeaster = tuple(byeaster)
+                self._byeaster = tuple(sorted(byeaster))
         else:
             self._byeaster = None
 
@@ -422,8 +422,8 @@ class rrule(rrulebase):
             if isinstance(bymonthday, integer_types):
                 bymonthday = (bymonthday,)
 
-            self._bymonthday = set([x for x in bymonthday if x > 0])
-            self._bynmonthday = set([x for x in bymonthday if x < 0])
+            self._bymonthday = tuple(sorted(set([x for x in bymonthday if x > 0])))
+            self._bynmonthday = tuple(sorted(set([x for x in bymonthday if x < 0])))
 
         # byweekno
         if byweekno is None:
@@ -432,7 +432,7 @@ class rrule(rrulebase):
             if isinstance(byweekno, integer_types):
                 byweekno = (byweekno,)
 
-            self._byweekno = set(byweekno)
+            self._byweekno = tuple(sorted(set(byweekno)))
 
         # byweekday / bynweekday
         if byweekday is None:
@@ -460,6 +460,12 @@ class rrule(rrulebase):
             elif not self._bynweekday:
                 self._bynweekday = None
 
+            if self._byweekday is not None:
+                self._byweekday = tuple(sorted(self._byweekday))
+
+            if self._bynweekday is not None:
+                self._bynweekday = tuple(sorted(self._bynweekday))
+
         # byhour
         if byhour is None:
             if freq < HOURLY:
@@ -477,6 +483,8 @@ class rrule(rrulebase):
             else:
                 self._byhour = set(byhour)
 
+            self._byhour = tuple(sorted(self._byhour))
+
         # byminute
         if byminute is None:
             if freq < MINUTELY:
@@ -493,6 +501,8 @@ class rrule(rrulebase):
                                                         base=60)
             else:
                 self._byminute = set(byminute)
+
+            self._byminute = tuple(sorted(self._byminute))
 
         # bysecond
         if bysecond is None:
@@ -512,6 +522,8 @@ class rrule(rrulebase):
                                                         base=60)
             else:
                 self._bysecond = set(bysecond)
+
+            self._bysecond = tuple(sorted(self._bysecond))
 
         if self._freq >= HOURLY:
             self._timeset = None
@@ -815,7 +827,7 @@ class rrule(rrulebase):
 
         # Support a single byxxx value.
         if isinstance(byxxx, integer_types):
-            byxxx = (byxxx)
+            byxxx = (byxxx, )
 
         for num in byxxx:
             i_gcd = gcd(self._interval, base)
