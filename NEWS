@@ -1,3 +1,23 @@
+Version 2.4.1
+-------------
+
+- Added explicit check for valid hours if AM/PM is specified in parser.
+  (gh pr #22, issue #21)
+- Fix bug in rrule introduced in 2.4.0 where byweekday parameter was not
+  handled properly. (gh pr #35, issue #34)
+- Fix error where parser allowed some invalid dates, overwriting existing hours
+  with the last 2-digit number in the string. (gh pr #32, issue #31)
+- Fix and add test for Python 2.x compatibility with boolean checking of
+  relativedelta objects. Implemented by @nimasmi (gh pr #43) and Cédric Krier 
+  (lp: 1035038)
+- Replaced parse() calls with explicit datetime objects in unit tests unrelated
+  to parser. (gh pr #36)
+- Changed private _byxxx from sets to sorted tuples and fixed one currently
+  unreachable bug in _construct_byset. (gh pr #54)
+- Additional documentation for parser (gh pr #29, #33, #41) and rrule.
+- Formatting fixes to documentation of rrule and README.rst.
+- Updated zoneinfo to 2015a.
+
 Version 2.4.0
 -------------
 
