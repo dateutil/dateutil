@@ -12,6 +12,8 @@ Version 2.4.1
   (lp: 1035038)
 - Replaced parse() calls with explicit datetime objects in unit tests unrelated
   to parser. (gh pr #36)
+- Changed private _byxxx from sets to sorted tuples and fixed one currently
+  unreachable bug in _construct_byset. (gh pr #54)
 - Additional documentation for parser (gh pr #29, #33, #41) and rrule.
 - Formatting fixes to documentation of rrule and README.rst.
 - Updated zoneinfo to 2015a.
