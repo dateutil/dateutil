@@ -3993,6 +3993,14 @@ END:VTIMEZONE
         self.assertEqual(datetime(2003, 10, 26, 1, 00,
                                   tzinfo=tzstr(s)).tzname(), "EST")
 
+    def testStrStr(self):
+        # Test that tzstr() won't throw an error if given a str instead
+        # of a unicode literal.
+        self.assertEqual(datetime(2003, 4, 6, 1, 59,
+                                  tzinfo=tzstr(str("EST5EDT"))).tzname(), "EST")
+        self.assertEqual(datetime(2003, 4, 6, 2, 00,
+                                  tzinfo=tzstr(str("EST5EDT"))).tzname(), "EDT")
+
     def testStrCmp1(self):
         self.assertEqual(tzstr("EST5EDT"),
                          tzstr("EST5EDT4,M4.1.0/02:00:00,M10-5-0/02:00"))
