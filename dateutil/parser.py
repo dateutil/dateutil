@@ -1002,6 +1002,11 @@ class _tzparser(object):
             self.end = self._attr()
 
     def parse(self, tzstr):
+        # Python 2.x compatibility: tzstr should be converted to unicode before
+        # being passed to _timelex.
+        if isinstance(tzstr, binary_type):
+            tzstr = tzstr.decode()
+
         res = self._result()
         l = _timelex.split(tzstr)
         try:
