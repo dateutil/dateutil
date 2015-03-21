@@ -199,6 +199,17 @@ class RelativeDeltaTest(unittest.TestCase):
 
 
 class RRuleTest(unittest.TestCase):
+    def _rrulestr_reverse_test(self, rule):
+        """
+        Call with an `rrule` and it will test that `str(rrule)` generates a
+        string which generates the same `rrule` as the input when passed to
+        `rrulestr()`
+        """
+        rr_str = str(rule)
+        rrulestr_rrule = rrulestr(rr_str)
+
+        self.assertEqual(list(rule), list(rrulestr_rrule))
+
     def testYearly(self):
         self.assertEqual(list(rrule(YEARLY,
                               count=3,
@@ -3093,6 +3104,1552 @@ class RRuleTest(unittest.TestCase):
                                  count=1,
                                  bysetpos=(-1, 0, 1),
                                  dtstart=datetime(1997, 9, 2, 9, 0))
+
+    # Tests to ensure that str(rrule) works
+    def testToStrYearly(self):
+        rule = rrule(YEARLY, count=3, dtstart=datetime(1997, 9, 2, 9, 0))
+        self._rrulestr_reverse_test(rule)
+
+    def testToStrYearlyInterval(self):
+        rule = rrule(YEARLY, count=3, interval=2,
+                     dtstart=datetime(1997, 9, 2, 9, 0))
+        self._rrulestr_reverse_test(rule)
+
+    def testToStrYearlyByMonth(self):
+        rule = rrule(YEARLY, count=3, bymonth=(1, 3),
+                     dtstart=datetime(1997, 9, 2, 9, 0))
+
+        self._rrulestr_reverse_test(rule)
+
+    def testToStrYearlyByMonth(self):
+        self._rrulestr_reverse_test(rrule(YEARLY,
+                                          count=3,
+                                          bymonth=(1, 3),
+                                          dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrYearlyByMonthDay(self):
+        self._rrulestr_reverse_test(rrule(YEARLY,
+                                          count=3,
+                                          bymonthday=(1, 3),
+                                          dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrYearlyByMonthAndMonthDay(self):
+        self._rrulestr_reverse_test(rrule(YEARLY,
+                                          count=3,
+                                          bymonth=(1, 3),
+                                          bymonthday=(5, 7),
+                                          dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrYearlyByWeekDay(self):
+        self._rrulestr_reverse_test(rrule(YEARLY,
+                                          count=3,
+                                          byweekday=(TU, TH),
+                                          dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrYearlyByNWeekDay(self):
+        self._rrulestr_reverse_test(rrule(YEARLY,
+                                          count=3,
+                                          byweekday=(TU(1), TH(-1)),
+                                          dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrYearlyByNWeekDayLarge(self):
+        self._rrulestr_reverse_test(rrule(YEARLY,
+                              count=3,
+                              byweekday=(TU(3), TH(-3)),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrYearlyByMonthAndWeekDay(self):
+        self._rrulestr_reverse_test(rrule(YEARLY,
+                              count=3,
+                              bymonth=(1, 3),
+                              byweekday=(TU, TH),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrYearlyByMonthAndNWeekDay(self):
+        self._rrulestr_reverse_test(rrule(YEARLY,
+                              count=3,
+                              bymonth=(1, 3),
+                              byweekday=(TU(1), TH(-1)),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrYearlyByMonthAndNWeekDayLarge(self):
+        # This is interesting because the TH(-3) ends up before
+        # the TU(3).
+        self._rrulestr_reverse_test(rrule(YEARLY,
+                              count=3,
+                              bymonth=(1, 3),
+                              byweekday=(TU(3), TH(-3)),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrYearlyByMonthDayAndWeekDay(self):
+        self._rrulestr_reverse_test(rrule(YEARLY,
+                              count=3,
+                              bymonthday=(1, 3),
+                              byweekday=(TU, TH),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrYearlyByMonthAndMonthDayAndWeekDay(self):
+        self._rrulestr_reverse_test(rrule(YEARLY,
+                              count=3,
+                              bymonth=(1, 3),
+                              bymonthday=(1, 3),
+                              byweekday=(TU, TH),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrYearlyByYearDay(self):
+        self._rrulestr_reverse_test(rrule(YEARLY,
+                              count=4,
+                              byyearday=(1, 100, 200, 365),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrYearlyByYearDayNeg(self):
+        self._rrulestr_reverse_test(rrule(YEARLY,
+                              count=4,
+                              byyearday=(-365, -266, -166, -1),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrYearlyByMonthAndYearDay(self):
+        self._rrulestr_reverse_test(rrule(YEARLY,
+                              count=4,
+                              bymonth=(4, 7),
+                              byyearday=(1, 100, 200, 365),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrYearlyByMonthAndYearDayNeg(self):
+        self._rrulestr_reverse_test(rrule(YEARLY,
+                              count=4,
+                              bymonth=(4, 7),
+                              byyearday=(-365, -266, -166, -1),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrYearlyByWeekNo(self):
+        self._rrulestr_reverse_test(rrule(YEARLY,
+                              count=3,
+                              byweekno=20,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrYearlyByWeekNoAndWeekDay(self):
+        # That's a nice one. The first days of week number one
+        # may be in the last year.
+        self._rrulestr_reverse_test(rrule(YEARLY,
+                              count=3,
+                              byweekno=1,
+                              byweekday=MO,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrYearlyByWeekNoAndWeekDayLarge(self):
+        # Another nice test. The last days of week number 52/53
+        # may be in the next year.
+        self._rrulestr_reverse_test(rrule(YEARLY,
+                              count=3,
+                              byweekno=52,
+                              byweekday=SU,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrYearlyByWeekNoAndWeekDayLast(self):
+        self._rrulestr_reverse_test(rrule(YEARLY,
+                              count=3,
+                              byweekno=-1,
+                              byweekday=SU,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrYearlyByEaster(self):
+        self._rrulestr_reverse_test(rrule(YEARLY,
+                              count=3,
+                              byeaster=0,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrYearlyByEasterPos(self):
+        self._rrulestr_reverse_test(rrule(YEARLY,
+                              count=3,
+                              byeaster=1,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrYearlyByEasterNeg(self):
+        self._rrulestr_reverse_test(rrule(YEARLY,
+                              count=3,
+                              byeaster=-1,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrYearlyByWeekNoAndWeekDay53(self):
+        self._rrulestr_reverse_test(rrule(YEARLY,
+                              count=3,
+                              byweekno=53,
+                              byweekday=MO,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrYearlyByHour(self):
+        self._rrulestr_reverse_test(rrule(YEARLY,
+                              count=3,
+                              byhour=(6, 18),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrYearlyByMinute(self):
+        self._rrulestr_reverse_test(rrule(YEARLY,
+                              count=3,
+                              byminute=(6, 18),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrYearlyBySecond(self):
+        self._rrulestr_reverse_test(rrule(YEARLY,
+                              count=3,
+                              bysecond=(6, 18),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrYearlyByHourAndMinute(self):
+        self._rrulestr_reverse_test(rrule(YEARLY,
+                              count=3,
+                              byhour=(6, 18),
+                              byminute=(6, 18),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrYearlyByHourAndSecond(self):
+        self._rrulestr_reverse_test(rrule(YEARLY,
+                              count=3,
+                              byhour=(6, 18),
+                              bysecond=(6, 18),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrYearlyByMinuteAndSecond(self):
+        self._rrulestr_reverse_test(rrule(YEARLY,
+                              count=3,
+                              byminute=(6, 18),
+                              bysecond=(6, 18),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrYearlyByHourAndMinuteAndSecond(self):
+        self._rrulestr_reverse_test(rrule(YEARLY,
+                              count=3,
+                              byhour=(6, 18),
+                              byminute=(6, 18),
+                              bysecond=(6, 18),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrYearlyBySetPos(self):
+        self._rrulestr_reverse_test(rrule(YEARLY,
+                              count=3,
+                              bymonthday=15,
+                              byhour=(6, 18),
+                              bysetpos=(3, -3),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMonthly(self):
+        self._rrulestr_reverse_test(rrule(MONTHLY,
+                              count=3,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMonthlyInterval(self):
+        self._rrulestr_reverse_test(rrule(MONTHLY,
+                              count=3,
+                              interval=2,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMonthlyIntervalLarge(self):
+        self._rrulestr_reverse_test(rrule(MONTHLY,
+                              count=3,
+                              interval=18,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMonthlyByMonth(self):
+        self._rrulestr_reverse_test(rrule(MONTHLY,
+                              count=3,
+                              bymonth=(1, 3),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMonthlyByMonthDay(self):
+        self._rrulestr_reverse_test(rrule(MONTHLY,
+                              count=3,
+                              bymonthday=(1, 3),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMonthlyByMonthAndMonthDay(self):
+        self._rrulestr_reverse_test(rrule(MONTHLY,
+                              count=3,
+                              bymonth=(1, 3),
+                              bymonthday=(5, 7),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMonthlyByWeekDay(self):
+        self._rrulestr_reverse_test(rrule(MONTHLY,
+                              count=3,
+                              byweekday=(TU, TH),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+        # Third Monday of the month
+        self.assertEqual(rrule(MONTHLY,
+                         byweekday=(MO(+3)),
+                         dtstart=datetime(1997, 9, 1)).between(datetime(1997,
+                                                                        9,
+                                                                        1),
+                                                               datetime(1997,
+                                                                        12,
+                                                                        1)),
+                         [datetime(1997, 9, 15, 0, 0),
+                          datetime(1997, 10, 20, 0, 0),
+                          datetime(1997, 11, 17, 0, 0)])
+
+    def testToStrMonthlyByNWeekDay(self):
+        self._rrulestr_reverse_test(rrule(MONTHLY,
+                              count=3,
+                              byweekday=(TU(1), TH(-1)),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMonthlyByNWeekDayLarge(self):
+        self._rrulestr_reverse_test(rrule(MONTHLY,
+                              count=3,
+                              byweekday=(TU(3), TH(-3)),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMonthlyByMonthAndWeekDay(self):
+        self._rrulestr_reverse_test(rrule(MONTHLY,
+                              count=3,
+                              bymonth=(1, 3),
+                              byweekday=(TU, TH),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMonthlyByMonthAndNWeekDay(self):
+        self._rrulestr_reverse_test(rrule(MONTHLY,
+                              count=3,
+                              bymonth=(1, 3),
+                              byweekday=(TU(1), TH(-1)),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMonthlyByMonthAndNWeekDayLarge(self):
+        self._rrulestr_reverse_test(rrule(MONTHLY,
+                              count=3,
+                              bymonth=(1, 3),
+                              byweekday=(TU(3), TH(-3)),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMonthlyByMonthDayAndWeekDay(self):
+        self._rrulestr_reverse_test(rrule(MONTHLY,
+                              count=3,
+                              bymonthday=(1, 3),
+                              byweekday=(TU, TH),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMonthlyByMonthAndMonthDayAndWeekDay(self):
+        self._rrulestr_reverse_test(rrule(MONTHLY,
+                              count=3,
+                              bymonth=(1, 3),
+                              bymonthday=(1, 3),
+                              byweekday=(TU, TH),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMonthlyByYearDay(self):
+        self._rrulestr_reverse_test(rrule(MONTHLY,
+                              count=4,
+                              byyearday=(1, 100, 200, 365),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMonthlyByYearDayNeg(self):
+        self._rrulestr_reverse_test(rrule(MONTHLY,
+                              count=4,
+                              byyearday=(-365, -266, -166, -1),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMonthlyByMonthAndYearDay(self):
+        self._rrulestr_reverse_test(rrule(MONTHLY,
+                              count=4,
+                              bymonth=(4, 7),
+                              byyearday=(1, 100, 200, 365),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMonthlyByMonthAndYearDayNeg(self):
+        self._rrulestr_reverse_test(rrule(MONTHLY,
+                              count=4,
+                              bymonth=(4, 7),
+                              byyearday=(-365, -266, -166, -1),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMonthlyByWeekNo(self):
+        self._rrulestr_reverse_test(rrule(MONTHLY,
+                              count=3,
+                              byweekno=20,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMonthlyByWeekNoAndWeekDay(self):
+        # That's a nice one. The first days of week number one
+        # may be in the last year.
+        self._rrulestr_reverse_test(rrule(MONTHLY,
+                              count=3,
+                              byweekno=1,
+                              byweekday=MO,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMonthlyByWeekNoAndWeekDayLarge(self):
+        # Another nice test. The last days of week number 52/53
+        # may be in the next year.
+        self._rrulestr_reverse_test(rrule(MONTHLY,
+                              count=3,
+                              byweekno=52,
+                              byweekday=SU,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMonthlyByWeekNoAndWeekDayLast(self):
+        self._rrulestr_reverse_test(rrule(MONTHLY,
+                              count=3,
+                              byweekno=-1,
+                              byweekday=SU,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMonthlyByWeekNoAndWeekDay53(self):
+        self._rrulestr_reverse_test(rrule(MONTHLY,
+                              count=3,
+                              byweekno=53,
+                              byweekday=MO,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMonthlyByEaster(self):
+        self._rrulestr_reverse_test(rrule(MONTHLY,
+                              count=3,
+                              byeaster=0,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMonthlyByEasterPos(self):
+        self._rrulestr_reverse_test(rrule(MONTHLY,
+                              count=3,
+                              byeaster=1,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMonthlyByEasterNeg(self):
+        self._rrulestr_reverse_test(rrule(MONTHLY,
+                              count=3,
+                              byeaster=-1,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMonthlyByHour(self):
+        self._rrulestr_reverse_test(rrule(MONTHLY,
+                              count=3,
+                              byhour=(6, 18),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMonthlyByMinute(self):
+        self._rrulestr_reverse_test(rrule(MONTHLY,
+                              count=3,
+                              byminute=(6, 18),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMonthlyBySecond(self):
+        self._rrulestr_reverse_test(rrule(MONTHLY,
+                              count=3,
+                              bysecond=(6, 18),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMonthlyByHourAndMinute(self):
+        self._rrulestr_reverse_test(rrule(MONTHLY,
+                              count=3,
+                              byhour=(6, 18),
+                              byminute=(6, 18),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMonthlyByHourAndSecond(self):
+        self._rrulestr_reverse_test(rrule(MONTHLY,
+                              count=3,
+                              byhour=(6, 18),
+                              bysecond=(6, 18),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMonthlyByMinuteAndSecond(self):
+        self._rrulestr_reverse_test(rrule(MONTHLY,
+                              count=3,
+                              byminute=(6, 18),
+                              bysecond=(6, 18),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMonthlyByHourAndMinuteAndSecond(self):
+        self._rrulestr_reverse_test(rrule(MONTHLY,
+                              count=3,
+                              byhour=(6, 18),
+                              byminute=(6, 18),
+                              bysecond=(6, 18),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMonthlyBySetPos(self):
+        self._rrulestr_reverse_test(rrule(MONTHLY,
+                              count=3,
+                              bymonthday=(13, 17),
+                              byhour=(6, 18),
+                              bysetpos=(3, -3),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrWeekly(self):
+        self._rrulestr_reverse_test(rrule(WEEKLY,
+                              count=3,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrWeeklyInterval(self):
+        self._rrulestr_reverse_test(rrule(WEEKLY,
+                              count=3,
+                              interval=2,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrWeeklyIntervalLarge(self):
+        self._rrulestr_reverse_test(rrule(WEEKLY,
+                              count=3,
+                              interval=20,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrWeeklyByMonth(self):
+        self._rrulestr_reverse_test(rrule(WEEKLY,
+                              count=3,
+                              bymonth=(1, 3),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrWeeklyByMonthDay(self):
+        self._rrulestr_reverse_test(rrule(WEEKLY,
+                              count=3,
+                              bymonthday=(1, 3),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrWeeklyByMonthAndMonthDay(self):
+        self._rrulestr_reverse_test(rrule(WEEKLY,
+                              count=3,
+                              bymonth=(1, 3),
+                              bymonthday=(5, 7),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrWeeklyByWeekDay(self):
+        self._rrulestr_reverse_test(rrule(WEEKLY,
+                              count=3,
+                              byweekday=(TU, TH),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrWeeklyByNWeekDay(self):
+        self._rrulestr_reverse_test(rrule(WEEKLY,
+                              count=3,
+                              byweekday=(TU(1), TH(-1)),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrWeeklyByMonthAndWeekDay(self):
+        # This test is interesting, because it crosses the year
+        # boundary in a weekly period to find day '1' as a
+        # valid recurrence.
+        self._rrulestr_reverse_test(rrule(WEEKLY,
+                              count=3,
+                              bymonth=(1, 3),
+                              byweekday=(TU, TH),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrWeeklyByMonthAndNWeekDay(self):
+        self._rrulestr_reverse_test(rrule(WEEKLY,
+                              count=3,
+                              bymonth=(1, 3),
+                              byweekday=(TU(1), TH(-1)),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrWeeklyByMonthDayAndWeekDay(self):
+        self._rrulestr_reverse_test(rrule(WEEKLY,
+                              count=3,
+                              bymonthday=(1, 3),
+                              byweekday=(TU, TH),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrWeeklyByMonthAndMonthDayAndWeekDay(self):
+        self._rrulestr_reverse_test(rrule(WEEKLY,
+                              count=3,
+                              bymonth=(1, 3),
+                              bymonthday=(1, 3),
+                              byweekday=(TU, TH),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrWeeklyByYearDay(self):
+        self._rrulestr_reverse_test(rrule(WEEKLY,
+                              count=4,
+                              byyearday=(1, 100, 200, 365),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrWeeklyByYearDayNeg(self):
+        self._rrulestr_reverse_test(rrule(WEEKLY,
+                              count=4,
+                              byyearday=(-365, -266, -166, -1),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrWeeklyByMonthAndYearDay(self):
+        self._rrulestr_reverse_test(rrule(WEEKLY,
+                              count=4,
+                              bymonth=(1, 7),
+                              byyearday=(1, 100, 200, 365),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrWeeklyByMonthAndYearDayNeg(self):
+        self._rrulestr_reverse_test(rrule(WEEKLY,
+                              count=4,
+                              bymonth=(1, 7),
+                              byyearday=(-365, -266, -166, -1),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrWeeklyByWeekNo(self):
+        self._rrulestr_reverse_test(rrule(WEEKLY,
+                              count=3,
+                              byweekno=20,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrWeeklyByWeekNoAndWeekDay(self):
+        # That's a nice one. The first days of week number one
+        # may be in the last year.
+        self._rrulestr_reverse_test(rrule(WEEKLY,
+                              count=3,
+                              byweekno=1,
+                              byweekday=MO,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrWeeklyByWeekNoAndWeekDayLarge(self):
+        # Another nice test. The last days of week number 52/53
+        # may be in the next year.
+        self._rrulestr_reverse_test(rrule(WEEKLY,
+                              count=3,
+                              byweekno=52,
+                              byweekday=SU,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrWeeklyByWeekNoAndWeekDayLast(self):
+        self._rrulestr_reverse_test(rrule(WEEKLY,
+                              count=3,
+                              byweekno=-1,
+                              byweekday=SU,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrWeeklyByWeekNoAndWeekDay53(self):
+        self._rrulestr_reverse_test(rrule(WEEKLY,
+                              count=3,
+                              byweekno=53,
+                              byweekday=MO,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrWeeklyByEaster(self):
+        self._rrulestr_reverse_test(rrule(WEEKLY,
+                              count=3,
+                              byeaster=0,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrWeeklyByEasterPos(self):
+        self._rrulestr_reverse_test(rrule(WEEKLY,
+                              count=3,
+                              byeaster=1,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrWeeklyByEasterNeg(self):
+        self._rrulestr_reverse_test(rrule(WEEKLY,
+                              count=3,
+                              byeaster=-1,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrWeeklyByHour(self):
+        self._rrulestr_reverse_test(rrule(WEEKLY,
+                              count=3,
+                              byhour=(6, 18),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrWeeklyByMinute(self):
+        self._rrulestr_reverse_test(rrule(WEEKLY,
+                              count=3,
+                              byminute=(6, 18),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrWeeklyBySecond(self):
+        self._rrulestr_reverse_test(rrule(WEEKLY,
+                              count=3,
+                              bysecond=(6, 18),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrWeeklyByHourAndMinute(self):
+        self._rrulestr_reverse_test(rrule(WEEKLY,
+                              count=3,
+                              byhour=(6, 18),
+                              byminute=(6, 18),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrWeeklyByHourAndSecond(self):
+        self._rrulestr_reverse_test(rrule(WEEKLY,
+                              count=3,
+                              byhour=(6, 18),
+                              bysecond=(6, 18),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrWeeklyByMinuteAndSecond(self):
+        self._rrulestr_reverse_test(rrule(WEEKLY,
+                              count=3,
+                              byminute=(6, 18),
+                              bysecond=(6, 18),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrWeeklyByHourAndMinuteAndSecond(self):
+        self._rrulestr_reverse_test(rrule(WEEKLY,
+                              count=3,
+                              byhour=(6, 18),
+                              byminute=(6, 18),
+                              bysecond=(6, 18),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrWeeklyBySetPos(self):
+        self._rrulestr_reverse_test(rrule(WEEKLY,
+                              count=3,
+                              byweekday=(TU, TH),
+                              byhour=(6, 18),
+                              bysetpos=(3, -3),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrDaily(self):
+        self._rrulestr_reverse_test(rrule(DAILY,
+                              count=3,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrDailyInterval(self):
+        self._rrulestr_reverse_test(rrule(DAILY,
+                              count=3,
+                              interval=2,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrDailyIntervalLarge(self):
+        self._rrulestr_reverse_test(rrule(DAILY,
+                              count=3,
+                              interval=92,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrDailyByMonth(self):
+        self._rrulestr_reverse_test(rrule(DAILY,
+                              count=3,
+                              bymonth=(1, 3),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrDailyByMonthDay(self):
+        self._rrulestr_reverse_test(rrule(DAILY,
+                              count=3,
+                              bymonthday=(1, 3),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrDailyByMonthAndMonthDay(self):
+        self._rrulestr_reverse_test(rrule(DAILY,
+                              count=3,
+                              bymonth=(1, 3),
+                              bymonthday=(5, 7),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrDailyByWeekDay(self):
+        self._rrulestr_reverse_test(rrule(DAILY,
+                              count=3,
+                              byweekday=(TU, TH),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrDailyByNWeekDay(self):
+        self._rrulestr_reverse_test(rrule(DAILY,
+                              count=3,
+                              byweekday=(TU(1), TH(-1)),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrDailyByMonthAndWeekDay(self):
+        self._rrulestr_reverse_test(rrule(DAILY,
+                              count=3,
+                              bymonth=(1, 3),
+                              byweekday=(TU, TH),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrDailyByMonthAndNWeekDay(self):
+        self._rrulestr_reverse_test(rrule(DAILY,
+                              count=3,
+                              bymonth=(1, 3),
+                              byweekday=(TU(1), TH(-1)),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrDailyByMonthDayAndWeekDay(self):
+        self._rrulestr_reverse_test(rrule(DAILY,
+                              count=3,
+                              bymonthday=(1, 3),
+                              byweekday=(TU, TH),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrDailyByMonthAndMonthDayAndWeekDay(self):
+        self._rrulestr_reverse_test(rrule(DAILY,
+                              count=3,
+                              bymonth=(1, 3),
+                              bymonthday=(1, 3),
+                              byweekday=(TU, TH),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrDailyByYearDay(self):
+        self._rrulestr_reverse_test(rrule(DAILY,
+                              count=4,
+                              byyearday=(1, 100, 200, 365),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrDailyByYearDayNeg(self):
+        self._rrulestr_reverse_test(rrule(DAILY,
+                              count=4,
+                              byyearday=(-365, -266, -166, -1),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrDailyByMonthAndYearDay(self):
+        self._rrulestr_reverse_test(rrule(DAILY,
+                              count=4,
+                              bymonth=(1, 7),
+                              byyearday=(1, 100, 200, 365),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrDailyByMonthAndYearDayNeg(self):
+        self._rrulestr_reverse_test(rrule(DAILY,
+                              count=4,
+                              bymonth=(1, 7),
+                              byyearday=(-365, -266, -166, -1),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrDailyByWeekNo(self):
+        self._rrulestr_reverse_test(rrule(DAILY,
+                              count=3,
+                              byweekno=20,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrDailyByWeekNoAndWeekDay(self):
+        # That's a nice one. The first days of week number one
+        # may be in the last year.
+        self._rrulestr_reverse_test(rrule(DAILY,
+                              count=3,
+                              byweekno=1,
+                              byweekday=MO,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrDailyByWeekNoAndWeekDayLarge(self):
+        # Another nice test. The last days of week number 52/53
+        # may be in the next year.
+        self._rrulestr_reverse_test(rrule(DAILY,
+                              count=3,
+                              byweekno=52,
+                              byweekday=SU,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrDailyByWeekNoAndWeekDayLast(self):
+        self._rrulestr_reverse_test(rrule(DAILY,
+                              count=3,
+                              byweekno=-1,
+                              byweekday=SU,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrDailyByWeekNoAndWeekDay53(self):
+        self._rrulestr_reverse_test(rrule(DAILY,
+                              count=3,
+                              byweekno=53,
+                              byweekday=MO,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrDailyByEaster(self):
+        self._rrulestr_reverse_test(rrule(DAILY,
+                              count=3,
+                              byeaster=0,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrDailyByEasterPos(self):
+        self._rrulestr_reverse_test(rrule(DAILY,
+                              count=3,
+                              byeaster=1,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrDailyByEasterNeg(self):
+        self._rrulestr_reverse_test(rrule(DAILY,
+                              count=3,
+                              byeaster=-1,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrDailyByHour(self):
+        self._rrulestr_reverse_test(rrule(DAILY,
+                              count=3,
+                              byhour=(6, 18),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrDailyByMinute(self):
+        self._rrulestr_reverse_test(rrule(DAILY,
+                              count=3,
+                              byminute=(6, 18),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrDailyBySecond(self):
+        self._rrulestr_reverse_test(rrule(DAILY,
+                              count=3,
+                              bysecond=(6, 18),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrDailyByHourAndMinute(self):
+        self._rrulestr_reverse_test(rrule(DAILY,
+                              count=3,
+                              byhour=(6, 18),
+                              byminute=(6, 18),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrDailyByHourAndSecond(self):
+        self._rrulestr_reverse_test(rrule(DAILY,
+                              count=3,
+                              byhour=(6, 18),
+                              bysecond=(6, 18),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrDailyByMinuteAndSecond(self):
+        self._rrulestr_reverse_test(rrule(DAILY,
+                              count=3,
+                              byminute=(6, 18),
+                              bysecond=(6, 18),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrDailyByHourAndMinuteAndSecond(self):
+        self._rrulestr_reverse_test(rrule(DAILY,
+                              count=3,
+                              byhour=(6, 18),
+                              byminute=(6, 18),
+                              bysecond=(6, 18),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrDailyBySetPos(self):
+        self._rrulestr_reverse_test(rrule(DAILY,
+                              count=3,
+                              byhour=(6, 18),
+                              byminute=(15, 45),
+                              bysetpos=(3, -3),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrHourly(self):
+        self._rrulestr_reverse_test(rrule(HOURLY,
+                              count=3,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrHourlyInterval(self):
+        self._rrulestr_reverse_test(rrule(HOURLY,
+                              count=3,
+                              interval=2,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrHourlyIntervalLarge(self):
+        self._rrulestr_reverse_test(rrule(HOURLY,
+                              count=3,
+                              interval=769,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrHourlyByMonth(self):
+        self._rrulestr_reverse_test(rrule(HOURLY,
+                              count=3,
+                              bymonth=(1, 3),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrHourlyByMonthDay(self):
+        self._rrulestr_reverse_test(rrule(HOURLY,
+                              count=3,
+                              bymonthday=(1, 3),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrHourlyByMonthAndMonthDay(self):
+        self._rrulestr_reverse_test(rrule(HOURLY,
+                              count=3,
+                              bymonth=(1, 3),
+                              bymonthday=(5, 7),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrHourlyByWeekDay(self):
+        self._rrulestr_reverse_test(rrule(HOURLY,
+                              count=3,
+                              byweekday=(TU, TH),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrHourlyByNWeekDay(self):
+        self._rrulestr_reverse_test(rrule(HOURLY,
+                              count=3,
+                              byweekday=(TU(1), TH(-1)),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrHourlyByMonthAndWeekDay(self):
+        self._rrulestr_reverse_test(rrule(HOURLY,
+                              count=3,
+                              bymonth=(1, 3),
+                              byweekday=(TU, TH),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrHourlyByMonthAndNWeekDay(self):
+        self._rrulestr_reverse_test(rrule(HOURLY,
+                              count=3,
+                              bymonth=(1, 3),
+                              byweekday=(TU(1), TH(-1)),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrHourlyByMonthDayAndWeekDay(self):
+        self._rrulestr_reverse_test(rrule(HOURLY,
+                              count=3,
+                              bymonthday=(1, 3),
+                              byweekday=(TU, TH),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrHourlyByMonthAndMonthDayAndWeekDay(self):
+        self._rrulestr_reverse_test(rrule(HOURLY,
+                              count=3,
+                              bymonth=(1, 3),
+                              bymonthday=(1, 3),
+                              byweekday=(TU, TH),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrHourlyByYearDay(self):
+        self._rrulestr_reverse_test(rrule(HOURLY,
+                              count=4,
+                              byyearday=(1, 100, 200, 365),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrHourlyByYearDayNeg(self):
+        self._rrulestr_reverse_test(rrule(HOURLY,
+                              count=4,
+                              byyearday=(-365, -266, -166, -1),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrHourlyByMonthAndYearDay(self):
+        self._rrulestr_reverse_test(rrule(HOURLY,
+                              count=4,
+                              bymonth=(4, 7),
+                              byyearday=(1, 100, 200, 365),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrHourlyByMonthAndYearDayNeg(self):
+        self._rrulestr_reverse_test(rrule(HOURLY,
+                              count=4,
+                              bymonth=(4, 7),
+                              byyearday=(-365, -266, -166, -1),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrHourlyByWeekNo(self):
+        self._rrulestr_reverse_test(rrule(HOURLY,
+                              count=3,
+                              byweekno=20,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrHourlyByWeekNoAndWeekDay(self):
+        self._rrulestr_reverse_test(rrule(HOURLY,
+                              count=3,
+                              byweekno=1,
+                              byweekday=MO,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrHourlyByWeekNoAndWeekDayLarge(self):
+        self._rrulestr_reverse_test(rrule(HOURLY,
+                              count=3,
+                              byweekno=52,
+                              byweekday=SU,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrHourlyByWeekNoAndWeekDayLast(self):
+        self._rrulestr_reverse_test(rrule(HOURLY,
+                              count=3,
+                              byweekno=-1,
+                              byweekday=SU,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrHourlyByWeekNoAndWeekDay53(self):
+        self._rrulestr_reverse_test(rrule(HOURLY,
+                              count=3,
+                              byweekno=53,
+                              byweekday=MO,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrHourlyByEaster(self):
+        self._rrulestr_reverse_test(rrule(HOURLY,
+                              count=3,
+                              byeaster=0,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrHourlyByEasterPos(self):
+        self._rrulestr_reverse_test(rrule(HOURLY,
+                              count=3,
+                              byeaster=1,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrHourlyByEasterNeg(self):
+        self._rrulestr_reverse_test(rrule(HOURLY,
+                              count=3,
+                              byeaster=-1,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrHourlyByHour(self):
+        self._rrulestr_reverse_test(rrule(HOURLY,
+                              count=3,
+                              byhour=(6, 18),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrHourlyByMinute(self):
+        self._rrulestr_reverse_test(rrule(HOURLY,
+                              count=3,
+                              byminute=(6, 18),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrHourlyBySecond(self):
+        self._rrulestr_reverse_test(rrule(HOURLY,
+                              count=3,
+                              bysecond=(6, 18),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrHourlyByHourAndMinute(self):
+        self._rrulestr_reverse_test(rrule(HOURLY,
+                              count=3,
+                              byhour=(6, 18),
+                              byminute=(6, 18),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrHourlyByHourAndSecond(self):
+        self._rrulestr_reverse_test(rrule(HOURLY,
+                              count=3,
+                              byhour=(6, 18),
+                              bysecond=(6, 18),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrHourlyByMinuteAndSecond(self):
+        self._rrulestr_reverse_test(rrule(HOURLY,
+                              count=3,
+                              byminute=(6, 18),
+                              bysecond=(6, 18),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrHourlyByHourAndMinuteAndSecond(self):
+        self._rrulestr_reverse_test(rrule(HOURLY,
+                              count=3,
+                              byhour=(6, 18),
+                              byminute=(6, 18),
+                              bysecond=(6, 18),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrHourlyBySetPos(self):
+        self._rrulestr_reverse_test(rrule(HOURLY,
+                              count=3,
+                              byminute=(15, 45),
+                              bysecond=(15, 45),
+                              bysetpos=(3, -3),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMinutely(self):
+        self._rrulestr_reverse_test(rrule(MINUTELY,
+                              count=3,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMinutelyInterval(self):
+        self._rrulestr_reverse_test(rrule(MINUTELY,
+                              count=3,
+                              interval=2,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMinutelyIntervalLarge(self):
+        self._rrulestr_reverse_test(rrule(MINUTELY,
+                              count=3,
+                              interval=1501,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMinutelyByMonth(self):
+        self._rrulestr_reverse_test(rrule(MINUTELY,
+                              count=3,
+                              bymonth=(1, 3),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMinutelyByMonthDay(self):
+        self._rrulestr_reverse_test(rrule(MINUTELY,
+                              count=3,
+                              bymonthday=(1, 3),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMinutelyByMonthAndMonthDay(self):
+        self._rrulestr_reverse_test(rrule(MINUTELY,
+                              count=3,
+                              bymonth=(1, 3),
+                              bymonthday=(5, 7),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMinutelyByWeekDay(self):
+        self._rrulestr_reverse_test(rrule(MINUTELY,
+                              count=3,
+                              byweekday=(TU, TH),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMinutelyByNWeekDay(self):
+        self._rrulestr_reverse_test(rrule(MINUTELY,
+                              count=3,
+                              byweekday=(TU(1), TH(-1)),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMinutelyByMonthAndWeekDay(self):
+        self._rrulestr_reverse_test(rrule(MINUTELY,
+                              count=3,
+                              bymonth=(1, 3),
+                              byweekday=(TU, TH),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMinutelyByMonthAndNWeekDay(self):
+        self._rrulestr_reverse_test(rrule(MINUTELY,
+                              count=3,
+                              bymonth=(1, 3),
+                              byweekday=(TU(1), TH(-1)),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMinutelyByMonthDayAndWeekDay(self):
+        self._rrulestr_reverse_test(rrule(MINUTELY,
+                              count=3,
+                              bymonthday=(1, 3),
+                              byweekday=(TU, TH),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMinutelyByMonthAndMonthDayAndWeekDay(self):
+        self._rrulestr_reverse_test(rrule(MINUTELY,
+                              count=3,
+                              bymonth=(1, 3),
+                              bymonthday=(1, 3),
+                              byweekday=(TU, TH),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMinutelyByYearDay(self):
+        self._rrulestr_reverse_test(rrule(MINUTELY,
+                              count=4,
+                              byyearday=(1, 100, 200, 365),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMinutelyByYearDayNeg(self):
+        self._rrulestr_reverse_test(rrule(MINUTELY,
+                              count=4,
+                              byyearday=(-365, -266, -166, -1),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMinutelyByMonthAndYearDay(self):
+        self._rrulestr_reverse_test(rrule(MINUTELY,
+                              count=4,
+                              bymonth=(4, 7),
+                              byyearday=(1, 100, 200, 365),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMinutelyByMonthAndYearDayNeg(self):
+        self._rrulestr_reverse_test(rrule(MINUTELY,
+                              count=4,
+                              bymonth=(4, 7),
+                              byyearday=(-365, -266, -166, -1),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMinutelyByWeekNo(self):
+        self._rrulestr_reverse_test(rrule(MINUTELY,
+                              count=3,
+                              byweekno=20,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMinutelyByWeekNoAndWeekDay(self):
+        self._rrulestr_reverse_test(rrule(MINUTELY,
+                              count=3,
+                              byweekno=1,
+                              byweekday=MO,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMinutelyByWeekNoAndWeekDayLarge(self):
+        self._rrulestr_reverse_test(rrule(MINUTELY,
+                              count=3,
+                              byweekno=52,
+                              byweekday=SU,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMinutelyByWeekNoAndWeekDayLast(self):
+        self._rrulestr_reverse_test(rrule(MINUTELY,
+                              count=3,
+                              byweekno=-1,
+                              byweekday=SU,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMinutelyByWeekNoAndWeekDay53(self):
+        self._rrulestr_reverse_test(rrule(MINUTELY,
+                              count=3,
+                              byweekno=53,
+                              byweekday=MO,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMinutelyByEaster(self):
+        self._rrulestr_reverse_test(rrule(MINUTELY,
+                              count=3,
+                              byeaster=0,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMinutelyByEasterPos(self):
+        self._rrulestr_reverse_test(rrule(MINUTELY,
+                              count=3,
+                              byeaster=1,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMinutelyByEasterNeg(self):
+        self._rrulestr_reverse_test(rrule(MINUTELY,
+                              count=3,
+                              byeaster=-1,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMinutelyByHour(self):
+        self._rrulestr_reverse_test(rrule(MINUTELY,
+                              count=3,
+                              byhour=(6, 18),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMinutelyByMinute(self):
+        self._rrulestr_reverse_test(rrule(MINUTELY,
+                              count=3,
+                              byminute=(6, 18),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMinutelyBySecond(self):
+        self._rrulestr_reverse_test(rrule(MINUTELY,
+                              count=3,
+                              bysecond=(6, 18),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMinutelyByHourAndMinute(self):
+        self._rrulestr_reverse_test(rrule(MINUTELY,
+                              count=3,
+                              byhour=(6, 18),
+                              byminute=(6, 18),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMinutelyByHourAndSecond(self):
+        self._rrulestr_reverse_test(rrule(MINUTELY,
+                              count=3,
+                              byhour=(6, 18),
+                              bysecond=(6, 18),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMinutelyByMinuteAndSecond(self):
+        self._rrulestr_reverse_test(rrule(MINUTELY,
+                              count=3,
+                              byminute=(6, 18),
+                              bysecond=(6, 18),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMinutelyByHourAndMinuteAndSecond(self):
+        self._rrulestr_reverse_test(rrule(MINUTELY,
+                              count=3,
+                              byhour=(6, 18),
+                              byminute=(6, 18),
+                              bysecond=(6, 18),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMinutelyBySetPos(self):
+        self._rrulestr_reverse_test(rrule(MINUTELY,
+                              count=3,
+                              bysecond=(15, 30, 45),
+                              bysetpos=(3, -3),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrSecondly(self):
+        self._rrulestr_reverse_test(rrule(SECONDLY,
+                              count=3,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrSecondlyInterval(self):
+        self._rrulestr_reverse_test(rrule(SECONDLY,
+                              count=3,
+                              interval=2,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrSecondlyIntervalLarge(self):
+        self._rrulestr_reverse_test(rrule(SECONDLY,
+                              count=3,
+                              interval=90061,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrSecondlyByMonth(self):
+        self._rrulestr_reverse_test(rrule(SECONDLY,
+                              count=3,
+                              bymonth=(1, 3),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrSecondlyByMonthDay(self):
+        self._rrulestr_reverse_test(rrule(SECONDLY,
+                              count=3,
+                              bymonthday=(1, 3),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrSecondlyByMonthAndMonthDay(self):
+        self._rrulestr_reverse_test(rrule(SECONDLY,
+                              count=3,
+                              bymonth=(1, 3),
+                              bymonthday=(5, 7),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrSecondlyByWeekDay(self):
+        self._rrulestr_reverse_test(rrule(SECONDLY,
+                              count=3,
+                              byweekday=(TU, TH),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrSecondlyByNWeekDay(self):
+        self._rrulestr_reverse_test(rrule(SECONDLY,
+                              count=3,
+                              byweekday=(TU(1), TH(-1)),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrSecondlyByMonthAndWeekDay(self):
+        self._rrulestr_reverse_test(rrule(SECONDLY,
+                              count=3,
+                              bymonth=(1, 3),
+                              byweekday=(TU, TH),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrSecondlyByMonthAndNWeekDay(self):
+        self._rrulestr_reverse_test(rrule(SECONDLY,
+                              count=3,
+                              bymonth=(1, 3),
+                              byweekday=(TU(1), TH(-1)),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrSecondlyByMonthDayAndWeekDay(self):
+        self._rrulestr_reverse_test(rrule(SECONDLY,
+                              count=3,
+                              bymonthday=(1, 3),
+                              byweekday=(TU, TH),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrSecondlyByMonthAndMonthDayAndWeekDay(self):
+        self._rrulestr_reverse_test(rrule(SECONDLY,
+                              count=3,
+                              bymonth=(1, 3),
+                              bymonthday=(1, 3),
+                              byweekday=(TU, TH),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrSecondlyByYearDay(self):
+        self._rrulestr_reverse_test(rrule(SECONDLY,
+                              count=4,
+                              byyearday=(1, 100, 200, 365),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrSecondlyByYearDayNeg(self):
+        self._rrulestr_reverse_test(rrule(SECONDLY,
+                              count=4,
+                              byyearday=(-365, -266, -166, -1),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrSecondlyByMonthAndYearDay(self):
+        self._rrulestr_reverse_test(rrule(SECONDLY,
+                              count=4,
+                              bymonth=(4, 7),
+                              byyearday=(1, 100, 200, 365),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrSecondlyByMonthAndYearDayNeg(self):
+        self._rrulestr_reverse_test(rrule(SECONDLY,
+                              count=4,
+                              bymonth=(4, 7),
+                              byyearday=(-365, -266, -166, -1),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrSecondlyByWeekNo(self):
+        self._rrulestr_reverse_test(rrule(SECONDLY,
+                              count=3,
+                              byweekno=20,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrSecondlyByWeekNoAndWeekDay(self):
+        self._rrulestr_reverse_test(rrule(SECONDLY,
+                              count=3,
+                              byweekno=1,
+                              byweekday=MO,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrSecondlyByWeekNoAndWeekDayLarge(self):
+        self._rrulestr_reverse_test(rrule(SECONDLY,
+                              count=3,
+                              byweekno=52,
+                              byweekday=SU,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrSecondlyByWeekNoAndWeekDayLast(self):
+        self._rrulestr_reverse_test(rrule(SECONDLY,
+                              count=3,
+                              byweekno=-1,
+                              byweekday=SU,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrSecondlyByWeekNoAndWeekDay53(self):
+        self._rrulestr_reverse_test(rrule(SECONDLY,
+                              count=3,
+                              byweekno=53,
+                              byweekday=MO,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrSecondlyByEaster(self):
+        self._rrulestr_reverse_test(rrule(SECONDLY,
+                              count=3,
+                              byeaster=0,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrSecondlyByEasterPos(self):
+        self._rrulestr_reverse_test(rrule(SECONDLY,
+                              count=3,
+                              byeaster=1,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrSecondlyByEasterNeg(self):
+        self._rrulestr_reverse_test(rrule(SECONDLY,
+                              count=3,
+                              byeaster=-1,
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrSecondlyByHour(self):
+        self._rrulestr_reverse_test(rrule(SECONDLY,
+                              count=3,
+                              byhour=(6, 18),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrSecondlyByMinute(self):
+        self._rrulestr_reverse_test(rrule(SECONDLY,
+                              count=3,
+                              byminute=(6, 18),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrSecondlyBySecond(self):
+        self._rrulestr_reverse_test(rrule(SECONDLY,
+                              count=3,
+                              bysecond=(6, 18),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrSecondlyByHourAndMinute(self):
+        self._rrulestr_reverse_test(rrule(SECONDLY,
+                              count=3,
+                              byhour=(6, 18),
+                              byminute=(6, 18),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrSecondlyByHourAndSecond(self):
+        self._rrulestr_reverse_test(rrule(SECONDLY,
+                              count=3,
+                              byhour=(6, 18),
+                              bysecond=(6, 18),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrSecondlyByMinuteAndSecond(self):
+        self._rrulestr_reverse_test(rrule(SECONDLY,
+                              count=3,
+                              byminute=(6, 18),
+                              bysecond=(6, 18),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrSecondlyByHourAndMinuteAndSecond(self):
+        self._rrulestr_reverse_test(rrule(SECONDLY,
+                              count=3,
+                              byhour=(6, 18),
+                              byminute=(6, 18),
+                              bysecond=(6, 18),
+                              dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrSecondlyByHourAndMinuteAndSecondBug(self):
+        # This explores a bug found by Mathieu Bridon.
+        self._rrulestr_reverse_test(rrule(SECONDLY,
+                              count=3,
+                              bysecond=(0,),
+                              byminute=(1,),
+                              dtstart=datetime(2010, 3, 22, 12, 1)))
+
+    def testToStrLongIntegers(self):
+        if not PY3:  # There is no longs in python3
+            self._rrulestr_reverse_test(rrule(MINUTELY,
+                                  count=long(2),
+                                  interval=long(2),
+                                  bymonth=long(2),
+                                  byweekday=long(3),
+                                  byhour=long(6),
+                                  byminute=long(6),
+                                  bysecond=long(6),
+                                  dtstart=datetime(1997, 9, 2, 9, 0)))
+            
+            self._rrulestr_reverse_test(rrule(YEARLY,
+                                  count=long(2),
+                                  bymonthday=long(5),
+                                  byweekno=long(2),
+                                  dtstart=datetime(1997, 9, 2, 9, 0)))
 
 
 class ParserTest(unittest.TestCase):
