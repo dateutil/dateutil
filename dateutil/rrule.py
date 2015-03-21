@@ -392,10 +392,13 @@ class rrule(rrulebase):
                     bymonth = dtstart.month
                     self._original_rule['bymonth'] = None
                 bymonthday = dtstart.day
+                self._original_rule['bymonthday'] = None
             elif freq == MONTHLY:
                 bymonthday = dtstart.day
+                self._original_rule['bymonthday'] = None
             elif freq == WEEKLY:
                 byweekday = dtstart.weekday()
+                self._original_rule['byweekday'] = None
 
         # bymonth
         if bymonth is None:
@@ -446,8 +449,9 @@ class rrule(rrulebase):
             self._bynmonthday = tuple(sorted([x for x in bymonthday if x < 0]))
 
             # Storing positive numbers first, then negative numbers
-            self._original_rule['bymonthday'] = tuple(
-                itertools.chain(self._bymonthday, self._bynmonthday))
+            if 'bymonthday' not in self._original_rule:
+                self._original_rule['bymonthday'] = tuple(
+                    itertools.chain(self._bymonthday, self._bynmonthday))
 
         # byweekno
         if byweekno is None:
@@ -498,8 +502,9 @@ class rrule(rrulebase):
             else:
                 orig_bynweekday = tuple()
 
-            self._original_rule['byweekday'] = tuple(itertools.chain(
-                orig_byweekday, orig_bynweekday))
+            if 'byweekday' not in self._original_rule:
+                self._original_rule['byweekday'] = tuple(itertools.chain(
+                    orig_byweekday, orig_bynweekday))
 
         # byhour
         if byhour is None:
