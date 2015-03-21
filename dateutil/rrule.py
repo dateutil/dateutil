@@ -351,6 +351,12 @@ class rrule(rrulebase):
         self._interval = interval
         self._count = count
 
+        # Cache the original byxxx rules, if they are provided, as the _byxxx
+        # attributes do not necessarily map to the inputs, and this can be
+        # a problem in generating the strings. Only store things if they've
+        # been supplied (the string retrieval will just use .get())
+        self._original_rule = {}
+
         if until and not isinstance(until, datetime.datetime):
             until = datetime.datetime.fromordinal(until.toordinal())
         self._until = until
@@ -376,11 +382,15 @@ class rrule(rrulebase):
                     raise ValueError("bysetpos must be between 1 and 366, "
                                      "or between -366 and -1")
 
+        if self._bysetpos:
+            self._original_rule['bysetpos'] = self._bysetpos
+
         if (byweekno is None and byyearday is None and bymonthday is None and
                 byweekday is None and byeaster is None):
             if freq == YEARLY:
                 if bymonth is None:
                     bymonth = dtstart.month
+                    self._original_rule['bymonth'] = None
                 bymonthday = dtstart.day
             elif freq == MONTHLY:
                 bymonthday = dtstart.day
@@ -396,6 +406,9 @@ class rrule(rrulebase):
 
             self._bymonth = tuple(sorted(set(bymonth)))
 
+            if 'bymonth' not in self._original_rule:
+                self._original_rule['bymonth'] = self._bymonth
+
         # byyearday
         if byyearday is None:
             self._byyearday = None
@@ -404,6 +417,7 @@ class rrule(rrulebase):
                 byyearday = (byyearday,)
 
             self._byyearday = tuple(sorted(set(byyearday)))
+            self._original_rule['byyear'] = self._byyear
 
         # byeaster
         if byeaster is not None:
@@ -413,10 +427,12 @@ class rrule(rrulebase):
                 self._byeaster = (byeaster,)
             else:
                 self._byeaster = tuple(sorted(byeaster))
+
+            self._original_rule['byeaster'] = self._byeaster
         else:
             self._byeaster = None
 
-        # bymonthay
+        # bymonthday
         if bymonthday is None:
             self._bymonthday = ()
             self._bynmonthday = ()
@@ -424,10 +440,14 @@ class rrule(rrulebase):
             if isinstance(bymonthday, integer_types):
                 bymonthday = (bymonthday,)
 
-            self._bymonthday = tuple(sorted(set([x for x in bymonthday
-                                                 if x > 0])))
-            self._bynmonthday = tuple(sorted(set([x for x in bymonthday
-                                                  if x < 0])))
+            bymonthday = set(bymonthday)            # Ensure it's unique
+
+            self._bymonthday = tuple(sorted([x for x in bymonthday if x > 0]))
+            self._bynmonthday = tuple(sorted([x for x in bymonthday if x < 0]))
+
+            # Storing positive numbers first, then negative numbers
+            self._original_rule['bymonthday'] = tuple(
+                itertools.chain(self._bymonthday, self._bynmonthday))
 
         # byweekno
         if byweekno is None:
@@ -437,6 +457,8 @@ class rrule(rrulebase):
                 byweekno = (byweekno,)
 
             self._byweekno = tuple(sorted(set(byweekno)))
+
+            self._original_rule['byweekno'] = self._byweekno
 
         # byweekday / bynweekday
         if byweekday is None:
@@ -466,17 +488,18 @@ class rrule(rrulebase):
 
             if self._byweekday is not None:
                 self._byweekday = tuple(sorted(self._byweekday))
+                orig_byweekday = [weekday(x) for x in self._byweekday]
+            else:
+                orig_byweekday = tuple()
 
             if self._bynweekday is not None:
                 self._bynweekday = tuple(sorted(self._bynweekday))
+                orig_bynweekday = [weekday(*x) for x in self._bynweekday]
+            else:
+                orig_bynweekday = tuple()
 
-        # Cache the original byhour, byminute and bysecond, if we want to
-        # generate the string. If these aren't None, they will be set to
-        # sorted tuples. If there's a more elegant way to handle this, maybe
-        # we should do that.
-        self._original_rule = {'byhour': None,
-                               'byminute': None,
-                               'bysecond': None}
+            self._original_rule['byweekday'] = tuple(itertools.chain(
+                orig_byweekday, orig_bynweekday))
 
         # byhour
         if byhour is None:
@@ -575,16 +598,17 @@ class rrule(rrulebase):
             parts.append('COUNT=' + str(self._count))
 
         partfmt = '{name}={vals}'
-        for name, value in [('BYSETPOS', self._bysetpos),
-                            ('BYMONTH', self._bymonth),
-                            ('BYMONTHDAY', self._bymonthday),
-                            ('BYYEARDAY', self._byyearday),
-                            ('BYWEEKNO', self._byweekno),
-                            ('BYWEEKDAY', self._byweekday),
-                            ('BYHOUR', self._original_rule['byhour']),
-                            ('BYMINUTE', self._original_rule['byminute']),
-                            ('BYSECOND', self._original_rule['bysecond']),
-                            ('BYEASTER', self._byeaster)]:
+        for name in ['BYSETPOS',
+                     'BYMONTH',
+                     'BYMONTHDAY',
+                     'BYYEARDAY',
+                     'BYWEEKNO',
+                     'BYWEEKDAY',
+                     'BYHOUR',
+                     'BYMINUTE',
+                     'BYSECOND',
+                     'BYEASTER']:
+            value = self._original_rule.get(name.lower())
             if value:
                 parts.append(partfmt.format(name=name, vals=(','.join(str(v)
                                                              for v in value))))
