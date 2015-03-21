@@ -863,9 +863,9 @@ class rrule(rrulebase):
 
         :param start:
             Specifies the starting position.
-        :param byxxx: 
+        :param byxxx:
             An iterable containing the list of allowed values.
-        :param base: 
+        :param base:
             The largest allowable value for the specified frequency (e.g.
             24 hours, 60 minutes).
 
@@ -1094,10 +1094,10 @@ class _iterinfo(object):
         return dset, start, i
 
     def ddayset(self, year, month, day):
-        dset = [None]*self.yearlen
-        i = datetime.date(year, month, day).toordinal()-self.yearordinal
+        dset = [None] * self.yearlen
+        i = datetime.date(year, month, day).toordinal() - self.yearordinal
         dset[i] = i
-        return dset, i, i+1
+        return dset, i, i + 1
 
     def htimeset(self, hour, minute, second):
         tset = []
@@ -1105,7 +1105,7 @@ class _iterinfo(object):
         for minute in rr._byminute:
             for second in rr._bysecond:
                 tset.append(datetime.time(hour, minute, second,
-                                         tzinfo=rr._tzinfo))
+                                          tzinfo=rr._tzinfo))
         tset.sort()
         return tset
 
