@@ -417,7 +417,7 @@ class rrule(rrulebase):
                 byyearday = (byyearday,)
 
             self._byyearday = tuple(sorted(set(byyearday)))
-            self._original_rule['byyear'] = self._byyear
+            self._original_rule['byyearday'] = self._byyearday
 
         # byeaster
         if byeaster is not None:
