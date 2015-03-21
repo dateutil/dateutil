@@ -424,8 +424,10 @@ class rrule(rrulebase):
             if isinstance(bymonthday, integer_types):
                 bymonthday = (bymonthday,)
 
-            self._bymonthday = tuple(sorted(set([x for x in bymonthday if x > 0])))
-            self._bynmonthday = tuple(sorted(set([x for x in bymonthday if x < 0])))
+            self._bymonthday = tuple(sorted(set([x for x in bymonthday
+                                                 if x > 0])))
+            self._bynmonthday = tuple(sorted(set([x for x in bymonthday
+                                                  if x < 0])))
 
         # byweekno
         if byweekno is None:
@@ -468,6 +470,14 @@ class rrule(rrulebase):
             if self._bynweekday is not None:
                 self._bynweekday = tuple(sorted(self._bynweekday))
 
+        # Cache the original byhour, byminute and bysecond, if we want to
+        # generate the string. If these aren't None, they will be set to
+        # sorted tuples. If there's a more elegant way to handle this, maybe
+        # we should do that.
+        self._original_rule = {'byhour': None,
+                               'byminute': None,
+                               'bysecond': None}
+
         # byhour
         if byhour is None:
             if freq < HOURLY:
@@ -486,6 +496,7 @@ class rrule(rrulebase):
                 self._byhour = set(byhour)
 
             self._byhour = tuple(sorted(self._byhour))
+            self._original_rule['byhour'] = self._byhour
 
         # byminute
         if byminute is None:
@@ -505,6 +516,7 @@ class rrule(rrulebase):
                 self._byminute = set(byminute)
 
             self._byminute = tuple(sorted(self._byminute))
+            self._original_rule['byminute'] = self._byminute
 
         # bysecond
         if bysecond is None:
@@ -526,6 +538,7 @@ class rrule(rrulebase):
                 self._bysecond = set(bysecond)
 
             self._bysecond = tuple(sorted(self._bysecond))
+            self._original_rule['bysecond'] = self._bysecond
 
         if self._freq >= HOURLY:
             self._timeset = None
@@ -551,43 +564,30 @@ class rrule(rrulebase):
             output.append(self._dtstart.strftime('DTSTART:%Y%m%dT%H%M%S'))
             h, m, s = self._dtstart.timetuple()[3:6]
 
-        print(self._byhour)
-
         parts = ['FREQ=' + FREQNAMES[self._freq]]
         if self._interval != 1:
             parts.append('INTERVAL=' + str(self._interval))
-        
+
         if self._wkst:
             parts.append('WKST=' + str(self._wkst))
-        
+
         if self._count:
             parts.append('COUNT=' + str(self._count))
 
         partfmt = '{name}={vals}'
-        for name, value in [
-                ('BYSETPOS', self._bysetpos),
-                ('BYMONTH', self._bymonth),
-                ('BYMONTHDAY', self._bymonthday),
-                ('BYYEARDAY', self._byyearday),
-                ('BYWEEKNO', self._byweekno),
-                ('BYWEEKDAY', self._byweekday),
-                ('BYHOUR', self._byhour),
-                ('BYMINUTE', self._byminute),
-                ('BYSECOND', self._bysecond)
-                ]:
+        for name, value in [('BYSETPOS', self._bysetpos),
+                            ('BYMONTH', self._bymonth),
+                            ('BYMONTHDAY', self._bymonthday),
+                            ('BYYEARDAY', self._byyearday),
+                            ('BYWEEKNO', self._byweekno),
+                            ('BYWEEKDAY', self._byweekday),
+                            ('BYHOUR', self._original_rule['byhour']),
+                            ('BYMINUTE', self._original_rule['byminute']),
+                            ('BYSECOND', self._original_rule['bysecond']),
+                            ('BYEASTER', self._byeaster)]:
             if value:
-                parts.append(partfmt.format(name=name, vals=','.join(str(v) for v in value)))
-
-        # Some information seems to be lost in the conversion from dtstart to comp,
-        # byhour and bysecond. For now we can just check to see if the values are
-        # singletons and identical, but eventually we'll need to fix that.
-        for name, value, comp in [
-                ('BYHOUR', self._byhour, h),
-                ('BYMINUTE', self._byminute, m),
-                ('BYSECOND', self._bysecond, s)
-                ]:
-                if len(value) > 1 or (len(value) == 1 and next(iter(value)) != comp):
-                    parts.append(partfmt.format(name=name, vals=','.join(str(v) for v in value)))
+                parts.append(partfmt.format(name=name, vals=(','.join(str(v)
+                                                             for v in value))))
 
         output.append(';'.join(parts))
         return '\n'.join(output)
@@ -700,7 +700,7 @@ class rrule(rrulebase):
             else:
                 for i in dayset[start:end]:
                     if i is not None:
-                        date = datetime.date.fromordinal(ii.yearordinal+i)
+                        date = datetime.date.fromordinal(ii.yearordinal + i)
                         for time in timeset:
                             res = datetime.datetime.combine(date, time)
                             if until and res > until:
@@ -797,10 +797,10 @@ class rrule(rrulebase):
             elif freq == SECONDLY:
                 if filtered:
                     # Jump to one iteration before next day
-                    second += (((86399-(hour*3600+minute*60+second))
-                                // interval)*interval)
+                    second += (((86399 - (hour * 3600 + minute * 60 + second))
+                                // interval) * interval)
 
-                rep_rate = (24*3600)
+                rep_rate = (24 * 3600)
                 valid = False
                 for j in range(0, rep_rate // gcd(interval, rep_rate)):
                     if bysecond:
@@ -942,8 +942,8 @@ class _iterinfo(object):
         # Every mask is 7 days longer to handle cross-year weekly periods.
         rr = self.rrule
         if year != self.lastyear:
-            self.yearlen = 365+calendar.isleap(year)
-            self.nextyearlen = 365+calendar.isleap(year+1)
+            self.yearlen = 365 + calendar.isleap(year)
+            self.nextyearlen = 365 + calendar.isleap(year + 1)
             firstyday = datetime.date(year, 1, 1)
             self.yearordinal = firstyday.toordinal()
             self.yearweekday = firstyday.weekday()
