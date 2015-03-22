@@ -440,7 +440,7 @@ class parser(object):
     class _result(_resultbase):
         __slots__ = ["year", "month", "day", "weekday",
                      "hour", "minute", "second", "microsecond",
-                     "tzname", "tzoffset"]
+                     "tzname", "tzoffset", "ampm"]
 
     def _parse(self, timestr, dayfirst=None, yearfirst=None, fuzzy=False,
                fuzzy_with_tokens=False):
@@ -760,6 +760,10 @@ class parser(object):
                     # here.
                     val_is_ampm = True
 
+                    # If there's already an AM/PM flag, this one isn't one.
+                    if fuzzy and res.ampm is not None:
+                        val_is_ampm = False
+
                     # If AM/PM is found and hour is not, raise a ValueError
                     if res.hour is None:
                         if fuzzy:
@@ -782,6 +786,8 @@ class parser(object):
                             res.hour += 12
                         elif value == 0 and res.hour == 12:
                             res.hour = 0
+
+                        res.ampm = value
 
                     i += 1
                     continue
