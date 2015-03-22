@@ -755,21 +755,34 @@ class parser(object):
                 # Check am/pm
                 value = info.ampm(l[i])
                 if value is not None:
+                    # For fuzzy parsing, 'a' or 'am' (both valid English words)
+                    # may erroneously trigger the AM/PM flag. Deal with that
+                    # here.
+                    val_is_ampm = True
+
                     # If AM/PM is found and hour is not, raise a ValueError
                     if res.hour is None:
-                        raise ValueError('No hour specified with ' +
-                                         'AM or PM flag.')
+                        if fuzzy:
+                            val_is_ampm = False
+                        else:
+                            raise ValueError('No hour specified with ' +
+                                             'AM or PM flag.')
 
                     # If AM/PM is found, it's a 12 hour clock, so raise 
                     # an error for invalid range
                     if not 0 <= res.hour <= 12:
-                        raise ValueError('Invalid hour specified for ' +
-                                         '12-hour clock.')
+                        if fuzzy:
+                            val_is_ampm = False
+                        else:
+                            raise ValueError('Invalid hour specified for ' +
+                                             '12-hour clock.')
 
-                    if value == 1 and res.hour < 12:
-                        res.hour += 12
-                    elif value == 0 and res.hour == 12:
-                        res.hour = 0
+                    if val_is_ampm:
+                        if value == 1 and res.hour < 12:
+                            res.hour += 12
+                        elif value == 0 and res.hour == 12:
+                            res.hour = 0
+
                     i += 1
                     continue
 
