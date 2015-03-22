@@ -370,9 +370,14 @@ class parser(object):
             `datetime.datetime` object, the second a tuple containing the
             fuzzy tokens.
 
-        :raises ValueError: Raised for invalid or unknown string format.
-        :raises ValueError: Raised if provided `tzinfos` are not in a valid
-                           format.
+        :raises ValueError:
+            Raised for invalid or unknown string format, if the provided
+            `tzinfo` is not in a valid format, or if an invalid date would
+            be created.
+
+        :raises OverFlowError:
+            Raised if the parsed date exceeds the largest valid C integer on
+            your system.
         """
 
         default_specified = default is not None
@@ -752,11 +757,14 @@ class parser(object):
                 if value is not None:
                     # If AM/PM is found and hour is not, raise a ValueError
                     if res.hour is None:
-                        raise ValueError('No hour specified with AM or PM flag.')
+                        raise ValueError('No hour specified with ' +
+                                         'AM or PM flag.')
 
-                    # If AM/PM is found, it's a 12 hour clock, so raise an error for invalid range
+                    # If AM/PM is found, it's a 12 hour clock, so raise 
+                    # an error for invalid range
                     if not 0 <= res.hour <= 12:
-                        raise ValueError('Invalid hour specified for 12-hour clock.')
+                        raise ValueError('Invalid hour specified for ' +
+                                         '12-hour clock.')
 
                     if value == 1 and res.hour < 12:
                         res.hour += 12
