@@ -370,9 +370,14 @@ class parser(object):
             `datetime.datetime` object, the second a tuple containing the
             fuzzy tokens.
 
-        :raises ValueError: Raised for invalid or unknown string format.
-        :raises ValueError: Raised if provided `tzinfos` are not in a valid
-                           format.
+        :raises ValueError:
+            Raised for invalid or unknown string format, if the provided
+            `tzinfo` is not in a valid format, or if an invalid date would
+            be created.
+
+        :raises OverFlowError:
+            Raised if the parsed date exceeds the largest valid C integer on
+            your system.
         """
 
         default_specified = default is not None
@@ -435,7 +440,7 @@ class parser(object):
     class _result(_resultbase):
         __slots__ = ["year", "month", "day", "weekday",
                      "hour", "minute", "second", "microsecond",
-                     "tzname", "tzoffset"]
+                     "tzname", "tzoffset", "ampm"]
 
     def _parse(self, timestr, dayfirst=None, yearfirst=None, fuzzy=False,
                fuzzy_with_tokens=False):
@@ -750,18 +755,39 @@ class parser(object):
                 # Check am/pm
                 value = info.ampm(l[i])
                 if value is not None:
+                    # For fuzzy parsing, 'a' or 'am' (both valid English words)
+                    # may erroneously trigger the AM/PM flag. Deal with that
+                    # here.
+                    val_is_ampm = True
+
+                    # If there's already an AM/PM flag, this one isn't one.
+                    if fuzzy and res.ampm is not None:
+                        val_is_ampm = False
+
                     # If AM/PM is found and hour is not, raise a ValueError
                     if res.hour is None:
-                        raise ValueError('No hour specified with AM or PM flag.')
+                        if fuzzy:
+                            val_is_ampm = False
+                        else:
+                            raise ValueError('No hour specified with ' +
+                                             'AM or PM flag.')
+                    elif not 0 <= res.hour <= 12:
+                        # If AM/PM is found, it's a 12 hour clock, so raise 
+                        # an error for invalid range
+                        if fuzzy:
+                            val_is_ampm = False
+                        else:
+                            raise ValueError('Invalid hour specified for ' +
+                                             '12-hour clock.')
 
-                    # If AM/PM is found, it's a 12 hour clock, so raise an error for invalid range
-                    if not 0 <= res.hour <= 12:
-                        raise ValueError('Invalid hour specified for 12-hour clock.')
+                    if val_is_ampm:
+                        if value == 1 and res.hour < 12:
+                            res.hour += 12
+                        elif value == 0 and res.hour == 12:
+                            res.hour = 0
 
-                    if value == 1 and res.hour < 12:
-                        res.hour += 12
-                    elif value == 0 and res.hour == 12:
-                        res.hour = 0
+                        res.ampm = value
+
                     i += 1
                     continue
 
