@@ -12,7 +12,7 @@ from contextlib import closing
 
 from dateutil.tz import tzfile
 
-__all__ = ["setcachesize", "gettz", "rebuild"]
+__all__ = ["gettz", "rebuild"]
 
 _ZONEFILENAME = "dateutil-zoneinfo.tar.gz"
 
