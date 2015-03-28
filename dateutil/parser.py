@@ -368,7 +368,7 @@ class parser(object):
         self.info = info or parserinfo()
 
     def parse(self, timestr, default=None, ignoretz=False, tzinfos=None,
-              smart_defaults=None, date_in_future=False,
+              smart_defaults=None, date_in_future=False, 
               fallback_on_invalid_day=None, **kwargs):
         """
         Parse the date/time string into a datetime object.
@@ -488,8 +488,8 @@ class parser(object):
                         next_year = default.year - 1
 
                     if ((res.month == default.month and res.day is not None and
-                         (res.day < default.day and date_in_future) or
-                         (res.day > default.day and not date_in_future)) or
+                         ((res.day < default.day and date_in_future) or
+                          (res.day > default.day and not date_in_future))) or
                         ((res.month < default.month and date_in_future) or
                          (res.month > default.month and not date_in_future))):
 
