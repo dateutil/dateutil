@@ -5352,6 +5352,17 @@ class ParserTest(unittest.TestCase):
                                smart_defaults=True), 
                          datetime(2014, 8, 3))
 
+    def testSmartDefaultsNoYearFeb29(self):
+        self.assertEqual(parse("February 29", default=datetime(2014, 12, 19),
+                               date_in_future=False, smart_defaults=True),
+                         datetime(2012, 2, 29))
+
+    def testSmartDefaultsNoYearFeb29Y2100(self):
+        # Year 2000 was not a leap year.
+        self.assertEqual(parse("February 29", default=datetime(2100, 12, 19),
+                               smart_defaults=True),
+                         datetime(2096, 2, 29))
+
     # Test that if a year is omitted, we use the most next matching value
     def testSmartDefaultsNoYearFutureDayEarlier(self):
         self.assertEqual(parse("August 3", default=datetime(2014, 5, 1),
@@ -5377,6 +5388,11 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(parse("August 3", default=datetime(2014, 12, 19),
                                date_in_future=True, smart_defaults=True),
                          datetime(2015, 8, 3))
+
+    def testSmartDefaultsNoYearFutureFeb29Y2100(self):
+        self.assertEqual(parse("February 29", default=datetime(2098, 12, 19),
+                               date_in_future=True, smart_defaults=True),
+                         datetime(2104, 2, 29))
 
     # Test that if only a month is provided, we select the beginning of the most recent
     # occurrence of the specified month
@@ -5435,14 +5451,9 @@ class ParserTest(unittest.TestCase):
 
     # Tests that invalid days fall back to the end of the month if that's
     # the desired behavior.
-    def testInvalidDayNoFallbackInvalidParse(self):
+    def testInvalidDayNoFallback(self):
         self.assertRaises(ValueError, parse, "Feb 30, 2007",
                           **{'fallback_on_invalid_day':False})
-
-    def testInvalidDayNoFallbackNoDay(self):
-        self.assertRaises(ValueError, parse, "April 2009",
-                          **{'fallback_on_invalid_day':False,
-                             'default':datetime(2010, 1, 31)})
 
     def testInvalidDayFallbackFebNoLeapYear(self):
         self.assertEqual(parse("Feb 31, 2007", fallback_on_invalid_day=True),
@@ -5452,10 +5463,27 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(parse("Feb 31, 2008", fallback_on_invalid_day=True),
                          datetime(2008, 2, 29))
 
-    def testInvalidDayFallbackNoDay(self):
-        self.assertEqual(parse("April 2009", fallback_on_invalid_day=True,
-                         default=datetime(2010, 1, 31)), datetime(2009, 4, 30))
+    def testUnspecifiedDayNoFallback(self):
+        self.assertRaises(ValueError, parse, "April 2009",
+                          **{'fallback_on_invalid_day':False,
+                             'default':datetime(2010, 1, 31)})
 
+    def testUnspecifiedDayUnspecifiedFallback(self):
+        self.assertEqual(parse("April 2009", default=datetime(2010, 1, 31)),
+                         datetime(2009, 4, 30))
+
+    def testUnspecifiedDayUnspecifiedFallback(self):
+        self.assertEqual(parse("April 2009", fallback_on_invalid_day=True,
+                               default=datetime(2010, 1, 31)),
+                         datetime(2009, 4, 30))
+
+    def testUnspecifiedDayUnspecifiedFallbackFebNoLeapYear(self):        
+        self.assertEqual(parse("Feb 2007", default=datetime(2010, 1, 31)),
+                         datetime(2007, 2, 28))
+
+    def testUnspecifiedDayUnspecifiedFallbackFebLeapYear(self):        
+        self.assertEqual(parse("Feb 2008", default=datetime(2010, 1, 31)),
+                         datetime(2008, 2, 29))
 
     def testErrorType01(self):
         self.assertRaises(ValueError,

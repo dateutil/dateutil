@@ -47,7 +47,7 @@ import string
 import time
 import collections
 from io import StringIO
-from calendar import monthrange
+from calendar import monthrange, isleap
 
 from six import text_type, binary_type, integer_types
 
@@ -369,7 +369,7 @@ class parser(object):
 
     def parse(self, timestr, default=None, ignoretz=False, tzinfos=None,
               effective_dt=None, smart_defaults=None, date_in_future=False,
-              fallback_on_invalid_day=False, **kwargs):
+              fallback_on_invalid_day=None, **kwargs):
         """
         Parse the date/time string into a datetime object.
 
@@ -400,7 +400,14 @@ class parser(object):
 
         :param fallback_on_invalid_day:
             If specified `True`, an otherwise invalid date such as "Feb 30" or
-            "June 32" falls back to the last day of the month.
+            "June 32" falls back to the last day of the month. If specified as
+            "False", the parser is strict about parsing otherwise valid dates
+            that would turn up as invalid because of the fallback rules (e.g.
+            "Feb 2010" run with a default of January 30, 2010 and `smartparser`
+            set to `False` would would throw an error, rather than falling
+            back to the end of February). If `None` or unspecified, the date
+            falls back to the most recent valid date only if the invalid date
+            is created as a result of an unspecified day in the time string.
 
         :param ignoretz:
             Whether or not to ignore the time zone.
@@ -460,17 +467,33 @@ class parser(object):
             # Determine if it refers to this year, last year or next year
             if res.year is None:
                 if res.month is not None:
-                    if res.month == default.month:
-                        if res.day is not None:
-                            if res.day < default.day and date_in_future:
-                                default = default.replace(year=default.year+1)
-                            elif res.day > default.day and not date_in_future:
-                                default = default.replace(year=default.year-1)
-                    elif res.month < default.month:
+                    # Explicitly deal with leap year problems
+                    if res.month == 2 and (res.day is not None and
+                                           res.day == 29):
+                        
+                        ly_offset = 4 if date_in_future else -4
+                        next_year = 4 * (default.year // 4)
+
                         if date_in_future:
-                            default = default.replace(year=default.year+1)
-                    elif not date_in_future:
-                        default = default.replace(year=default.year-1)
+                            next_year += ly_offset
+
+                        if not isleap(next_year):
+                            next_year += ly_offset
+                        
+                        if not isleap(default.year):
+                            default.replace(year=next_year)
+                    elif date_in_future:
+                        next_year = default.year + 1
+                    else:
+                        next_year = default.year - 1
+
+                    if ((res.month == default.month and res.day is not None and
+                         (res.day < default.day and date_in_future) or
+                         (res.day > default.day and not date_in_future)) or
+                        ((res.month < default.month and date_in_future) or
+                         (res.month > default.month and not date_in_future))):
+
+                        default = default.replace(year=next_year)
 
             # Select a proper month
             if res.month is None:
@@ -502,7 +525,8 @@ class parser(object):
                     # Otherwise it's the beginning of the month
                     default = default.replace(day=1)
 
-        if fallback_on_invalid_day:
+        if fallback_on_invalid_day or (fallback_on_invalid_day is None and
+                                       'day' not in repl):
             # If the default day exceeds the last day of the month, fall back to
             # the end of the month.
             cyear = default.year if res.year is None else res.year
