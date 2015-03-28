@@ -5326,98 +5326,140 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(parse("2004 10 Apr 11h30m", default=self.default),
                          datetime(2004, 4, 10, 11, 30))
 
-    def testSmartDefaultsNoYear(self):
-        # Test that if a year is omitted, we use the most recent matching value
-        self.assertEqual(parse("August 3", default=datetime(2014, 5, 1), smart_defaults=True),
-                         datetime(2013, 8, 3))
-        
-        self.assertEqual(parse("August 3", default=datetime(2014, 8, 1), smart_defaults=True),
+    # Test that if a year is omitted, we use the most recent matching value
+    def testSmartDefaultsNoYearMonthEarlier(self):
+        self.assertEqual(parse("August 3", default=datetime(2014, 5, 1),
+                               smart_defaults=True), 
                          datetime(2013, 8, 3))
 
-        self.assertEqual(parse("August 3", default=datetime(2014, 8, 3), smart_defaults=True),
+    def testSmartDefaultsNoYearDayEarlier(self):        
+        self.assertEqual(parse("August 3", default=datetime(2014, 8, 1),
+                               smart_defaults=True), 
+                         datetime(2013, 8, 3))
+
+    def testSmartDefaultsNoYearSameDay(self):
+        self.assertEqual(parse("August 3", default=datetime(2014, 8, 3),
+                               smart_defaults=True), 
                          datetime(2014, 8, 3))
 
-        self.assertEqual(parse("August 3", default=datetime(2014, 8, 4), smart_defaults=True),
+    def testSmartDefaultsNoYearDayLater(self):
+        self.assertEqual(parse("August 3", default=datetime(2014, 8, 4),
+                               smart_defaults=True), 
                          datetime(2014, 8, 3))
-        
-        self.assertEqual(parse("August 3", default=datetime(2014, 12, 19), smart_defaults=True),
+    
+    def testSmartDefaultsNoYearMonthLater(self):
+        self.assertEqual(parse("August 3", default=datetime(2014, 12, 19),
+                               smart_defaults=True), 
                          datetime(2014, 8, 3))
 
-    def testSmartDefaultsNoYearFuture(self):
-        # Test that if a year is omitted, we use the most next matching value
+    # Test that if a year is omitted, we use the most next matching value
+    def testSmartDefaultsNoYearFutureDayEarlier(self):
         self.assertEqual(parse("August 3", default=datetime(2014, 5, 1),
                                date_in_future=True, smart_defaults=True),
                          datetime(2014, 8, 3))
-        
+
+    def testSmartDefaultsNoYearFutureMonthEarlier(self):
         self.assertEqual(parse("August 3", default=datetime(2014, 8, 1),
                                date_in_future=True, smart_defaults=True),
                          datetime(2014, 8, 3))
 
+    def testSmartDefaultsNoYearFutureSameDay(self):
         self.assertEqual(parse("August 3", default=datetime(2014, 8, 3),
                                date_in_future=True, smart_defaults=True),
                          datetime(2014, 8, 3))
 
+    def testSmartDefaultsNoYearFutureDayLater(self):
         self.assertEqual(parse("August 3", default=datetime(2014, 8, 4),
                                date_in_future=True, smart_defaults=True),
                          datetime(2015, 8, 3))
-        
+    
+    def testSmartDefaultsNoYearFutureMonthLater(self):
         self.assertEqual(parse("August 3", default=datetime(2014, 12, 19),
                                date_in_future=True, smart_defaults=True),
                          datetime(2015, 8, 3))
 
-    def testSmartDefaultsMonthOnly(self):
-        # Test that if only a month is provided, we select the beginning of the most recent
-        # occurrence of the specified month
-        self.assertEqual(parse("September", default=datetime(2014, 5, 1), smart_defaults=True),
+    # Test that if only a month is provided, we select the beginning of the most recent
+    # occurrence of the specified month
+    def testSmartDefaultsMonthOnlyMonthEarlier(self):
+        self.assertEqual(parse("September", default=datetime(2014, 5, 1),
+                               smart_defaults=True),
                          datetime(2013, 9, 1))
 
-        self.assertEqual(parse("September", default=datetime(2014, 9, 1), smart_defaults=True),
-                         datetime(2014, 9, 1))
-        
-        self.assertEqual(parse("September", default=datetime(2014, 11, 1), smart_defaults=True),
+    def testSmartDefaultsMonthOnlySameMonthFirstDay(self):
+        self.assertEqual(parse("September", default=datetime(2014, 9, 1),
+                               smart_defaults=True),
                          datetime(2014, 9, 1))
 
-    def testSmartDefaultsMonthOnly(self):
-        # Test that if only a month is provided, we select the beginning of the most recent
-        # occurrence of the specified month
+    def testSmartDefaultsMonthOnlySameMonthLastDay(self):
+        self.assertEqual(parse("September", default=datetime(2014, 9, 30),
+                               smart_defaults=True),
+                         datetime(2014, 9, 1))
+
+    def testSmartDefaultMonthOnlyMonthLater(self):
+        self.assertEqual(parse("September", default=datetime(2014, 11, 1),
+                               smart_defaults=True),
+                         datetime(2014, 9, 1))
+
+    # Test that if only a month is provided, we select the beginning of the most recent
+    # occurrence of the specified month
+    def testSmartDefaultsMonthOnlyFutureMonthEarlier(self):
         self.assertEqual(parse("September", default=datetime(2014, 5, 1),
                                date_in_future=True, smart_defaults=True),
                          datetime(2014, 9, 1))
 
+    def testSmartDefaultsMonthOnlyFutureSameMonthFirstDay(self):
         self.assertEqual(parse("September", default=datetime(2014, 9, 1),
                                date_in_future=True, smart_defaults=True),
                          datetime(2014, 9, 1))
-        
+
+    def testSmartDefaultsMonthOnlyFutureSameMonthLastDay(self):
+        self.assertEqual(parse("September", default=datetime(2014, 9, 30),
+                               date_in_future=True, smart_defaults=True),
+                         datetime(2014, 9, 1))
+    
+    def testSmartDefaultsMonthOnlyFutureMonthLater(self):
         self.assertEqual(parse("September", default=datetime(2014, 11, 1),
                                date_in_future=True, smart_defaults=True),
                          datetime(2015, 9, 1))
 
+    # Test to ensure that if a year is specified, January 1st of that year is
+    # returned.
     def testSmartDefaultsYearOnly(self):
-        # Test to ensure that if a year is specified, January 1st of that year is returned.
-        self.assertEqual(parse("2009", smart_defaults=True), datetime(2009, 1, 1))
-        
-        self.assertEqual(parse("2009", smart_defaults=True, date_in_future=True),
+        self.assertEqual(parse("2009", smart_defaults=True),
                          datetime(2009, 1, 1))
 
-    def testInvalidDayFallback(self):
-        # Tests that invalid days fall back to the end of the month if that's the desired behavior.
-        self.assertRaises(ValueError, parse, "Feb 30, 2007", **{'fallback_on_invalid_day':False})
-        self.assertRaises(ValueError, parse, "April 2009", **{'fallback_on_invalid_day':False,
-                                            'default':datetime(2010, 1, 31)})
+    def testSmartDefaultsYearOnlyFuture(self):
+        self.assertEqual(parse("2009", smart_defaults=True,
+                               date_in_future=True),
+                         datetime(2009, 1, 1))
 
+    # Tests that invalid days fall back to the end of the month if that's
+    # the desired behavior.
+    def testInvalidDayNoFallbackInvalidParse(self):
+        self.assertRaises(ValueError, parse, "Feb 30, 2007",
+                          **{'fallback_on_invalid_day':False})
+
+    def testInvalidDayNoFallbackNoDay(self):
+        self.assertRaises(ValueError, parse, "April 2009",
+                          **{'fallback_on_invalid_day':False,
+                             'default':datetime(2010, 1, 31)})
+
+    def testInvalidDayFallbackFebNoLeapYear(self):
         self.assertEqual(parse("Feb 31, 2007", fallback_on_invalid_day=True),
                          datetime(2007, 2, 28))
 
+    def testInvalidDayFallbackFebLeapYear(self):
         self.assertEqual(parse("Feb 31, 2008", fallback_on_invalid_day=True),
                          datetime(2008, 2, 29))
 
+    def testInvalidDayFallbackNoDay(self):
         self.assertEqual(parse("April 2009", fallback_on_invalid_day=True,
                          default=datetime(2010, 1, 31)), datetime(2009, 4, 30))
 
 
     def testErrorType01(self):
         self.assertRaises(ValueError,
-                          parse,'shouldfail')
+                          parse, 'shouldfail')
 
     def testIncreasingCTime(self):
         # This test will check 200 different years, every month, every day,
