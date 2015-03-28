@@ -368,7 +368,7 @@ class parser(object):
         self.info = info or parserinfo()
 
     def parse(self, timestr, default=None, ignoretz=False, tzinfos=None,
-              effective_dt=None, smart_defaults=None, date_in_future=False,
+              smart_defaults=None, date_in_future=False,
               fallback_on_invalid_day=None, **kwargs):
         """
         Parse the date/time string into a datetime object.
@@ -393,7 +393,7 @@ class parser(object):
             If `smart_defaults` is `True`, the parser assumes by default that
             the timestamp refers to a date in the past, and will return the
             beginning of the most recent timespan which matches the time string
-            (e.g. if `effective_dt` is March 3rd, 2013,  "Feb" parses to
+            (e.g. if `default` is March 3rd, 2013,  "Feb" parses to
             "Feb 1, 2013" and "May 3" parses to May 3rd, 2012). Setting this
             parameter to `True` inverts this assumption, and returns the
             beginning of the *next* matching timespan.
