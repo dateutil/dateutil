@@ -479,9 +479,9 @@ class parser(object):
 
                         if not isleap(next_year):
                             next_year += ly_offset
-                        
+
                         if not isleap(default.year):
-                            default.replace(year=next_year)
+                            default = default.replace(year=next_year)
                     elif date_in_future:
                         next_year = default.year + 1
                     else:
