@@ -1,8 +1,8 @@
 {
     "metadata_version" : 0.1,
     "releases_url" : "ftp://ftp.iana.org/tz/releases/",
-    "tzdata_file" : "tzdata2015a.tar.gz",
-    "tzdata_file_sha512" : "ff36feb437238ba42fe67257e81ade0a2179d11f6c6449146e28e4b6553c62348b4131af75e440b4467109c9edba13e25ddaf701f2fcebb2a258b4ac9b57293c",
+    "tzdata_file" : "tzdata2015b.tar.gz",
+    "tzdata_file_sha512" : "767782b87e62a8f7a4dbcae595d16a54197c9e04ca974d7016d11f90ebaf2537b804d111f204af9052c68d4670afe0af0af9e5b150867a357fc199bb541368d0",
     "zonegroups" : [
         "africa",
         "antarctica",
