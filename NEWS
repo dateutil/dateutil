@@ -1,3 +1,16 @@
+Version 2.4.2
+-------------
+- Updated zoneinfo to 2015b.
+- Fixed issue with parsing of tzstr on Python 2.7.x; tzstr will now be decoded
+  if not a unicode type. gh #51 (lp:1331576), gh pr #55.
+- Fix a parser issue where AM and PM tokens were showing up in fuzzy date
+  stamps, triggering inappropriate errors. gh #56 (lp: 1428895), gh pr #63.
+- Missing function "setcachsize" removed from zoneinfo __all__ list by @ryanss,
+  fixing an issue with wildcard imports of dateutil.zoneinfo. (gh pr #66).
+- (PyPi only) Fix an issue with source distributions not including the test
+  suite.
+
+
 Version 2.4.1
 -------------
 
