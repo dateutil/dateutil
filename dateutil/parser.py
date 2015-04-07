@@ -31,8 +31,10 @@ __all__ = ["parse", "parserinfo"]
 
 
 class _timelex(object):
-
     def __init__(self, instream):
+        if isinstance(instream, binary_type):
+            instream = instream.decode()
+
         if isinstance(instream, text_type):
             instream = StringIO(instream)
 
@@ -996,12 +998,6 @@ def parse(timestr, parserinfo=None, **kwargs):
         "Today is January 1, 2047 at 8:21:00AM" should return
         `(datetime.datetime(2011, 1, 1, 8, 21), (u'Today is ', u' ', u'at '))`
     """
-    # Python 2.x support: datetimes return their string presentation as
-    # bytes in 2.x and unicode in 3.x, so it's reasonable to expect that
-    # the parser will get both kinds. Internally we use unicode only.
-    if isinstance(timestr, binary_type):
-        timestr = timestr.decode()
-
     if parserinfo:
         return parser(parserinfo).parse(timestr, **kwargs)
     else:
@@ -1028,11 +1024,6 @@ class _tzparser(object):
             self.end = self._attr()
 
     def parse(self, tzstr):
-        # Python 2.x compatibility: tzstr should be converted to unicode before
-        # being passed to _timelex.
-        if isinstance(tzstr, binary_type):
-            tzstr = tzstr.decode()
-
         res = self._result()
         l = _timelex.split(tzstr)
         try:

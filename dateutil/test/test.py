@@ -5380,6 +5380,26 @@ class ParserTest(unittest.TestCase):
         dt = myparser.parse("01/Foo/2007")
         self.assertEqual(dt, datetime(2007, 1, 1))
 
+    def testParseStr(self):
+        # Parser should be able to handle strings and unicode
+        base_str = '2004-04-10 8:30:00'
+        uni_str = unicode(base_str)
+        str_str = str(base_str)
+
+        self.assertEqual(parse(str_str),
+                         parse(uni_str))
+
+    def testParserParseStr(self):
+        # Parser should be able to handle strings and unicode
+        base_str = '2004-04-10 8:30:00'
+        uni_str = unicode(base_str)
+        str_str = str(base_str)
+
+        from dateutil.parser import parser
+
+        self.assertEqual(parser().parse(str_str),
+                         parser().parse(uni_str))
+
 
 class EasterTest(unittest.TestCase):
     easterlist = [
