@@ -4728,6 +4728,16 @@ class ParserTest(unittest.TestCase):
         self.brsttz = tzoffset("BRST", -10800)
         self.default = datetime(2003, 9, 25)
 
+        # Parser should be able to handle bytestring and unicode
+        base_str = '2014-05-01 08:00:00'
+        try:
+            # Python 2.x
+            self.uni_str = unicode(base_str)
+            self.str_str = str(base_str)
+        except NameError:
+            self.uni_str = str(base_str)
+            self.str_str = bytes(base_str.encode())
+
     def testDateCommandFormat(self):
         self.assertEqual(parse("Thu Sep 25 10:36:28 BRST 2003",
                                tzinfos=self.tzinfos),
@@ -5381,24 +5391,14 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(dt, datetime(2007, 1, 1))
 
     def testParseStr(self):
-        # Parser should be able to handle strings and unicode
-        base_str = '2004-04-10 8:30:00'
-        uni_str = unicode(base_str)
-        str_str = str(base_str)
-
-        self.assertEqual(parse(str_str),
-                         parse(uni_str))
+        self.assertEqual(parse(self.str_str),
+                         parse(self.uni_str))
 
     def testParserParseStr(self):
-        # Parser should be able to handle strings and unicode
-        base_str = '2004-04-10 8:30:00'
-        uni_str = unicode(base_str)
-        str_str = str(base_str)
-
         from dateutil.parser import parser
 
-        self.assertEqual(parser().parse(str_str),
-                         parser().parse(uni_str))
+        self.assertEqual(parser().parse(self.str_str),
+                         parser().parse(self.uni_str))
 
 
 class EasterTest(unittest.TestCase):
