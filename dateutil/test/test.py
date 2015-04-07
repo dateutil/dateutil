@@ -4728,6 +4728,16 @@ class ParserTest(unittest.TestCase):
         self.brsttz = tzoffset("BRST", -10800)
         self.default = datetime(2003, 9, 25)
 
+        # Parser should be able to handle bytestring and unicode
+        base_str = '2014-05-01 08:00:00'
+        try:
+            # Python 2.x
+            self.uni_str = unicode(base_str)
+            self.str_str = str(base_str)
+        except NameError:
+            self.uni_str = str(base_str)
+            self.str_str = bytes(base_str.encode())
+
     def testDateCommandFormat(self):
         self.assertEqual(parse("Thu Sep 25 10:36:28 BRST 2003",
                                tzinfos=self.tzinfos),
@@ -5380,6 +5390,16 @@ class ParserTest(unittest.TestCase):
         dt = myparser.parse("01/Foo/2007")
         self.assertEqual(dt, datetime(2007, 1, 1))
 
+    def testParseStr(self):
+        self.assertEqual(parse(self.str_str),
+                         parse(self.uni_str))
+
+    def testParserParseStr(self):
+        from dateutil.parser import parser
+
+        self.assertEqual(parser().parse(self.str_str),
+                         parser().parse(self.uni_str))
+
 
 class EasterTest(unittest.TestCase):
     easterlist = [
@@ -5700,6 +5720,12 @@ END:VTIMEZONE
         self.assertEqual(t0, t2)
         self.assertEqual(nyc.dst(t0), timedelta(hours=1))
 
+    def testTzNameNone(self):
+        gmt5 = tzoffset(None, -18000)       # -5:00
+        self.assertIs(datetime(2003, 10, 26, 0, 0, tzinfo=gmt5).tzname(),
+                      None)
+
+
     def testICalStart1(self):
         tz = tzical(StringIO(self.TZICAL_EST5EDT)).get()
         self.assertEqual(datetime(2003, 4, 6, 1, 59, tzinfo=tz).tzname(), "EST")
@@ -5714,7 +5740,7 @@ END:VTIMEZONE
         # This timezone has an offset of 5992 seconds in 1900-01-01.
         tz = tzfile(BytesIO(base64.decodestring(self.EUROPE_HELSINKI)))
         self.assertEqual(str(datetime(1900, 1, 1, 0, 0, tzinfo=tz)),
-                            "1900-01-01 00:00:00+01:40")
+                             "1900-01-01 00:00:00+01:40")
 
     def testLeapCountDecodesProperly(self):
         # This timezone has leapcnt, and failed to decode until
