@@ -5700,6 +5700,12 @@ END:VTIMEZONE
         self.assertEqual(t0, t2)
         self.assertEqual(nyc.dst(t0), timedelta(hours=1))
 
+    def testTzNameNone(self):
+        gmt5 = tzoffset(None, -18000)       # -5:00
+        self.assertIs(datetime(2003, 10, 26, 0, 0, tzinfo=gmt5).tzname(),
+                      None)
+
+
     def testICalStart1(self):
         tz = tzical(StringIO(self.TZICAL_EST5EDT)).get()
         self.assertEqual(datetime(2003, 4, 6, 1, 59, tzinfo=tz).tzname(), "EST")
@@ -5714,7 +5720,7 @@ END:VTIMEZONE
         # This timezone has an offset of 5992 seconds in 1900-01-01.
         tz = tzfile(BytesIO(base64.decodestring(self.EUROPE_HELSINKI)))
         self.assertEqual(str(datetime(1900, 1, 1, 0, 0, tzinfo=tz)),
-                            "1900-01-01 00:00:00+01:40")
+                             "1900-01-01 00:00:00+01:40")
 
     def testLeapCountDecodesProperly(self):
         # This timezone has leapcnt, and failed to decode until
