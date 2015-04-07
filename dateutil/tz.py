@@ -34,14 +34,14 @@ def tzname_in_python2(namefunc):
     tzname() API changed in Python 3. It used to return bytes, but was changed
     to unicode strings
     """
-    def as_bytestr(*args, **kwargs):
+    def adjust_encoding(*args, **kwargs):
         name = namefunc(*args, **kwargs)
         if name is not None and not PY3:
             name = name.encode()
 
         return name
 
-    return as_bytestr
+    return adjust_encoding
 
 ZERO = datetime.timedelta(0)
 EPOCHORDINAL = datetime.datetime.utcfromtimestamp(0).toordinal()
