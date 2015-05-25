@@ -4,6 +4,8 @@ import os
 import warnings
 import tempfile
 import shutil
+import json
+
 from subprocess import check_call
 from tarfile import TarFile
 from pkgutil import get_data
@@ -12,9 +14,10 @@ from contextlib import closing
 
 from dateutil.tz import tzfile
 
-__all__ = ["gettz", "rebuild"]
+__all__ = ["gettz", "gettz_db_metadata", "rebuild"]
 
 _ZONEFILENAME = "dateutil-zoneinfo.tar.gz"
+_METADATA_FN = 'METADATA'
 
 # python2.6 compatability. Note that TarFile.__exit__ != TarFile.close, but
 # it's close enough for python2.6
@@ -48,7 +51,8 @@ class ZoneInfoFile(object):
                 #              for zf in tf.getmembers() if zf.isfile()}
                 self.zones = dict((zf.name, tzfile(tf.extractfile(zf),
                                                    filename=zf.name))
-                                  for zf in tf.getmembers() if zf.isfile())
+                                  for zf in tf.getmembers()
+                                  if zf.isfile() and zf.name != _METADATA_FN)
                 # deal with links: They'll point to their parent object. Less
                 # waste of memory
                 # links = {zl.name: self.zones[zl.linkname]
@@ -57,8 +61,16 @@ class ZoneInfoFile(object):
                              for zl in tf.getmembers() if
                              zl.islnk() or zl.issym())
                 self.zones.update(links)
+                try:
+                    metadata_json = tf.extractfile(tf.getmember(_METADATA_FN))
+                    metadata_str = metadata_json.read().decode('UTF-8')
+                    self.metadata = json.loads(metadata_str)
+                except KeyError:
+                    # no metadata in tar file
+                    self.metadata = None
         else:
             self.zones = dict()
+            self.metadata = None
 
 
 # The current API has gettz as a module function, although in fact it taps into
@@ -76,7 +88,19 @@ def gettz(name):
     return _CLASS_ZONE_INSTANCE[0].zones.get(name)
 
 
-def rebuild(filename, tag=None, format="gz", zonegroups=[]):
+def gettz_db_metadata():
+    """ Get the zonefile metadata
+
+    See `zonefile_metadata`_
+
+    :returns: A dictionary with the database metadata
+    """
+    if len(_CLASS_ZONE_INSTANCE) == 0:
+        _CLASS_ZONE_INSTANCE.append(ZoneInfoFile(getzoneinfofile_stream()))
+    return _CLASS_ZONE_INSTANCE[0].metadata
+
+
+def rebuild(filename, tag=None, format="gz", zonegroups=[], metadata=None):
     """Rebuild the internal timezone info in dateutil/zoneinfo/zoneinfo*tar*
 
     filename is the timezone tarball from ftp.iana.org/tz.
@@ -99,6 +123,9 @@ def rebuild(filename, tag=None, format="gz", zonegroups=[]):
                         "libc-bin or some other package that provides it, "
                         "or it's not in your PATH?")
                     raise
+        # write metadata file
+        with open(os.path.join(zonedir, _METADATA_FN), 'w') as f:
+            json.dump(metadata, f, indent=4, sort_keys=True)
         target = os.path.join(moduledir, _ZONEFILENAME)
         with _tar_open(target, "w:%s" % format) as tf:
             for entry in os.listdir(zonedir):
