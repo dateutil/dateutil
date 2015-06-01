@@ -9,3 +9,6 @@ dist/
 
 # Sphinx documentation
 docs/_build/
+
+# Timezone information
+tzdata*.tar.gz
