@@ -449,7 +449,9 @@ class parser(object):
             effective_dt = default
 
         if kwargs.get('fuzzy_with_tokens', False):
-            res, skipped_tokens = self._parse(timestr, **kwargs)
+            res = self._parse(timestr, **kwargs)
+            if res is not None:
+                res, skipped_tokens = res
         else:
             res = self._parse(timestr, **kwargs)
 
