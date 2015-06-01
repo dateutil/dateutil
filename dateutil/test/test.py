@@ -5499,6 +5499,11 @@ class ParserTest(unittest.TestCase):
         self.assertRaises(ValueError,
                           parse, 'shouldfail')
 
+    def testCorrectErrorOnFuzzyWithTokens(self):
+        self.assertRaises(ValueError, parse, '04/04/32/423', fuzzy_with_tokens=True)
+        self.assertRaises(ValueError, parse, '04/04/04 +32423', fuzzy_with_tokens=True)
+        self.assertRaises(ValueError, parse, '04/04/0d4', fuzzy_with_tokens=True)
+
     def testIncreasingCTime(self):
         # This test will check 200 different years, every month, every day,
         # every hour, every minute, every second, and every weekday, using
