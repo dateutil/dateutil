@@ -26,7 +26,8 @@ def main():
         sha_512_file = sha_hasher.hexdigest()
         assert metadata['tzdata_file_sha512'] == sha_512_file, "SHA failed for"
     print("Updating timezone information...")
-    rebuild(metadata['tzdata_file'], zonegroups=metadata['zonegroups'])
+    rebuild(metadata['tzdata_file'], zonegroups=metadata['zonegroups'],
+            metadata=metadata)
     print("Done.")
 
 if __name__ == "__main__":
