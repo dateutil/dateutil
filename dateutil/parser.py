@@ -793,7 +793,7 @@ class parser(object):
                                     assert mstridx == -1
                                     mstridx = len(ymd)-1
                                 else:
-                                    return None
+                                    return None, None
 
                             i += 1
 
