@@ -448,10 +448,7 @@ class parser(object):
         else:
             effective_dt = default
 
-        if kwargs.get('fuzzy_with_tokens', False):
-            res, skipped_tokens = self._parse(timestr, **kwargs)
-        else:
-            res = self._parse(timestr, **kwargs)
+        res, skipped_tokens = self._parse(timestr, **kwargs)
 
         if res is None:
             raise ValueError("Unknown string format")
@@ -796,7 +793,7 @@ class parser(object):
                                     assert mstridx == -1
                                     mstridx = len(ymd)-1
                                 else:
-                                    return None
+                                    return None, None
 
                             i += 1
 
@@ -840,7 +837,7 @@ class parser(object):
                         i += 1
 
                     elif not fuzzy:
-                        return None
+                        return None, None
                     else:
                         i += 1
                     continue
@@ -969,7 +966,7 @@ class parser(object):
                         # -[0]3
                         res.tzoffset = int(l[i][:2])*3600
                     else:
-                        return None
+                        return None, None
                     i += 1
 
                     res.tzoffset *= signal
@@ -987,7 +984,7 @@ class parser(object):
 
                 # Check jumps
                 if not (info.jump(l[i]) or fuzzy):
-                    return None
+                    return None, None
 
                 if last_skipped_token_i == i - 1:
                     # recombine the tokens
@@ -1002,7 +999,7 @@ class parser(object):
             len_ymd = len(ymd)
             if len_ymd > 3:
                 # More than three members!?
-                return None
+                return None, None
             elif len_ymd == 1 or (mstridx != -1 and len_ymd == 2):
                 # One member, or two members with a month string
                 if mstridx != -1:
@@ -1066,15 +1063,15 @@ class parser(object):
                         res.month, res.day, res.year = ymd
 
         except (IndexError, ValueError, AssertionError):
-            return None
+            return None, None
 
         if not info.validate(res):
-            return None
+            return None, None
 
         if fuzzy_with_tokens:
             return res, tuple(skipped_tokens)
         else:
-            return res
+            return res, None
 
 DEFAULTPARSER = parser()
 
