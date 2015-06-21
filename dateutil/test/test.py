@@ -5558,6 +5558,12 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(parse('0099-01-01T00:00:00'),
                          datetime(99, 1, 1, 0, 0))
 
+    def test_31_ad(self):
+        self.assertEqual(
+            parse('0031-01-01T00:00:00'),
+            datetime(31, 1, 1, 0, 0)
+        )
+
     def testParseStr(self):
         self.assertEqual(parse(self.str_str),
                          parse(self.uni_str))
