@@ -342,20 +342,35 @@ class parserinfo(object):
 
         return self.TZOFFSET.get(name)
 
-    def convertyear(self, year):
-        if year < 100:
+    @staticmethod
+    def _find_potential_year_tokens(year, tokens):
+        result = []
+        for t in tokens:
+            try:
+                if int(t) == year:
+                    result.append(t)
+            except ValueError:
+                pass
+        return result
+
+    def convertyear(self, year, tokens=None):
+        potential_year_tokens = self._find_potential_year_tokens(year, tokens) if tokens else []
+        year_token_unambiguous = len(potential_year_tokens) == 1
+        if (year_token_unambiguous and len(potential_year_tokens[0]) > 2) or year >= 100:
+            return year
+        else:
             year += self._century
             if abs(year-self._year) >= 50:
                 if year < self._year:
                     year += 100
                 else:
                     year -= 100
-        return year
+            return year
 
-    def validate(self, res):
+    def validate(self, res, tokens):
         # move to info
         if res.year is not None:
-            res.year = self.convertyear(res.year)
+            res.year = self.convertyear(res.year, tokens)
 
         if res.tzoffset == 0 and not res.tzname or res.tzname == 'Z':
             res.tzname = "UTC"
@@ -1065,7 +1080,7 @@ class parser(object):
         except (IndexError, ValueError, AssertionError):
             return None, None
 
-        if not info.validate(res):
+        if not info.validate(res, l):
             return None, None
 
         if fuzzy_with_tokens:
