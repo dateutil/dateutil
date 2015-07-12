@@ -4,6 +4,8 @@ import struct
 
 from six.moves import winreg
 
+from .tz import tzname_in_python2
+
 __all__ = ["tzwin", "tzwinlocal"]
 
 ONEWEEK = datetime.timedelta(7)
@@ -42,6 +44,7 @@ class tzwinbase(datetime.tzinfo):
         else:
             return datetime.timedelta(0)
 
+    @tzname_in_python2
     def tzname(self, dt):
         if self._isdst(dt):
             return self._dstname
@@ -89,8 +92,8 @@ class tzwin(tzwinbase):
                                 "%s\%s" % (TZKEYNAME, name)) as tzkey:
                 keydict = valuestodict(tzkey)
 
-        self._stdname = keydict["Std"].encode("iso-8859-1")
-        self._dstname = keydict["Dlt"].encode("iso-8859-1")
+        self._stdname = keydict["Std"]
+        self._dstname = keydict["Dlt"]
 
         self._display = keydict["Display"]
 
@@ -129,8 +132,8 @@ class tzwinlocal(tzwinbase):
             with winreg.OpenKey(handle, TZLOCALKEYNAME) as tzlocalkey:
                 keydict = valuestodict(tzlocalkey)
 
-            self._stdname = keydict["StandardName"].encode("iso-8859-1")
-            self._dstname = keydict["DaylightName"].encode("iso-8859-1")
+            self._stdname = keydict["StandardName"]
+            self._dstname = keydict["DaylightName"]
 
             try:
                 with winreg.OpenKey(
