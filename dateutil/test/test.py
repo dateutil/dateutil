@@ -5946,6 +5946,7 @@ END:VTIMEZONE
         dt = parse("2013-03-06 19:08:15")
         self.assertFalse(tz._isdst(dt))
 
+    @unittest.skipIf(sys.platform.startswith("win"), "requires Unix")
     def testTZSetDoesntCorrupt(self):
         # if we start in non-UTC then tzset UTC make sure parse doesn't get
         # confused
