@@ -9,7 +9,7 @@ a date/time stamp is omitted, the following rules are applied:
 - If AM or PM is left unspecified, a 24-hour clock is assumed, however, an hour
   on a 12-hour clock (`0 <= hour <= 12`) *must* be specified if AM or PM is
   specified.
-- If a time zone is omitted, it is assumed to be UTC.
+- If a time zone is omitted, a timezone-naive datetime is returned.
 
 If any other elements are missing, they are taken from the `datetime.datetime`
 object passed to the parameter `default`. If this results in a day number
@@ -412,12 +412,31 @@ class parser(object):
             is created as a result of an unspecified day in the time string.
 
         :param ignoretz:
-            Whether or not to ignore the time zone.
+            If set `True`, time zones in parsed strings are ignored and a naive
+            datetime object is returned.
 
         :param tzinfos:
-            A time zone, to be applied to the date, if `ignoretz` is `True`.
-            This can be either a subclass of `tzinfo`, a time zone string or an
-            integer offset.
+            Additional time zone names / aliases which may be present in the
+            string. This argument maps time zone names (and optionally offsets
+            from those time zones) to time zones. This parameter can be a
+            dictionary with timezone aliases mapping time zone names to time
+            zones or a function taking two parameters (`tzname` and `tzoffset`)
+            and returning a time zone.
+
+            The timezones to which the names are mapped can be an integer
+            offset from UTC in minutes or a `tzinfo` object.
+
+            .. doctest::
+
+                >>> from dateutil.parser import parse
+                >>> from dateutil.tz import gettz
+                >>> tzinfos = {"BRST": -10800, "CST": gettz("America/Chicago")}
+                >>> parse("2012-01-19 17:21:00 BRST", tzinfos=tzinfos)
+                datetime.datetime(2014, 2, 19, 17, 21, tzinfo=tzoffset(u'BRST', -10800))
+                >>> parse("2012-01-19 17:21:00 CST", tzinfos=tzinfos)
+                datetime.datetime(2014, 2, 19, 17, 21, tzinfo=tzfile('America/Chicago'))
+
+            This parameter is ignored if `ignoretz` is set.
 
         :param **kwargs:
             Keyword arguments as passed to `_parse()`.
@@ -1097,12 +1116,31 @@ def parse(timestr, parserinfo=None, **kwargs):
         default object.
 
     :param ignoretz:
-        Whether or not to ignore the time zone (boolean).
+        If set `True`, time zones in parsed strings are ignored and a naive
+        datetime object is returned.
 
     :param tzinfos:
-        A time zone, to be applied to the date, if `ignoretz` is `True`.
-        This can be either a subclass of `tzinfo`, a time zone string or an
-        integer offset.
+            Additional time zone names / aliases which may be present in the
+            string. This argument maps time zone names (and optionally offsets
+            from those time zones) to time zones. This parameter can be a
+            dictionary with timezone aliases mapping time zone names to time
+            zones or a function taking two parameters (`tzname` and `tzoffset`)
+            and returning a time zone.
+
+            The timezones to which the names are mapped can be an integer
+            offset from UTC in minutes or a `tzinfo` object.
+
+            .. doctest::
+
+                >>> from dateutil.parser import parse
+                >>> from dateutil.tz import gettz
+                >>> tzinfos = {"BRST": -10800, "CST": gettz("America/Chicago")}
+                >>> parse("2012-01-19 17:21:00 BRST", tzinfos=tzinfos)
+                datetime.datetime(2014, 2, 19, 17, 21, tzinfo=tzoffset(u'BRST', -10800))
+                >>> parse("2012-01-19 17:21:00 CST", tzinfos=tzinfos)
+                datetime.datetime(2014, 2, 19, 17, 21, tzinfo=tzfile('America/Chicago'))
+
+            This parameter is ignored if `ignoretz` is set.
 
     :param dayfirst:
         Whether to interpret the first value in an ambiguous 3-integer date
