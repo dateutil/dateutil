@@ -559,7 +559,7 @@ class parser(object):
                     raise ValueError("Offset must be tzinfo subclass, "
                                      "tz string, or int offset.")
                 ret = ret.replace(tzinfo=tzinfo)
-            elif res.tzname and res.tzname in time.tzname:
+            elif res.tzname and res.tzname in tz.tzlocal._tzname:
                 ret = ret.replace(tzinfo=tz.tzlocal())
             elif res.tzoffset == 0:
                 ret = ret.replace(tzinfo=tz.tzutc())

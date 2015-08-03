@@ -110,6 +110,7 @@ class tzlocal(datetime.tzinfo):
         _dst_offset = datetime.timedelta(seconds=-time.altzone)
     else:
         _dst_offset = _std_offset
+    _tzname = tuple(time.tzname)
 
     def utcoffset(self, dt):
         if self._isdst(dt):
@@ -125,7 +126,7 @@ class tzlocal(datetime.tzinfo):
 
     @tzname_in_python2
     def tzname(self, dt):
-        return time.tzname[self._isdst(dt)]
+        return self._tzname[self._isdst(dt)]
 
     def _isdst(self, dt):
         # We can't use mktime here. It is unstable when deciding if
