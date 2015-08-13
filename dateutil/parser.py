@@ -46,6 +46,7 @@ import datetime
 import string
 import time
 import collections
+import re
 from io import StringIO
 from calendar import monthrange, isleap
 
@@ -58,6 +59,9 @@ __all__ = ["parse", "parserinfo"]
 
 
 class _timelex(object):
+    # Fractional seconds are sometimes split by a comma
+    _split_decimal = re.compile("([\.,])")
+
     def __init__(self, instream):
         if isinstance(instream, binary_type):
             instream = instream.decode()
@@ -145,7 +149,7 @@ class _timelex(object):
                 # numbers until we find something that doesn't fit.
                 if nextchar in numchars:
                     token += nextchar
-                elif nextchar == '.':
+                elif nextchar == '.' or (nextchar == ',' and len(token) >= 2):
                     token += nextchar
                     state = '0.'
                 else:
@@ -176,13 +180,15 @@ class _timelex(object):
                     break  # emit token
 
         if (state in ('a.', '0.') and (seenletters or token.count('.') > 1 or
-                                       token[-1] == '.')):
-            l = token.split('.')
+                                       token[-1] in '.,')):
+            l = self._split_decimal.split(token)
             token = l[0]
             for tok in l[1:]:
-                self.tokenstack.append('.')
                 if tok:
                     self.tokenstack.append(tok)
+
+        if state == '0.' and token.count('.') == 0:
+            token = token.replace(',', '.')
 
         return token
 

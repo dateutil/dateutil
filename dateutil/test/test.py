@@ -4873,6 +4873,10 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(parse("20030925"),
                          datetime(2003, 9, 25))
 
+    def testPythonLoggerFormat(self):
+        self.assertEqual(parse("2003-09-25 10:49:41,502"),
+                         datetime(2003, 9, 25, 10, 49, 41, 502000))
+
     def testNoSeparator1(self):
         self.assertEqual(parse("199709020908"),
                          datetime(1997, 9, 2, 9, 8))
