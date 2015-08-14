@@ -104,12 +104,12 @@ class tzoffset(datetime.tzinfo):
 
 
 class tzlocal(datetime.tzinfo):
-
-    _std_offset = datetime.timedelta(seconds=-time.timezone)
-    if time.daylight:
-        _dst_offset = datetime.timedelta(seconds=-time.altzone)
-    else:
-        _dst_offset = _std_offset
+    def __init__(self):
+        self._std_offset = datetime.timedelta(seconds=-time.timezone)
+        if time.daylight:
+            self._dst_offset = datetime.timedelta(seconds=-time.altzone)
+        else:
+            self._dst_offset = self._std_offset
 
     def utcoffset(self, dt):
         if self._isdst(dt):
