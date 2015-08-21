@@ -4,28 +4,29 @@ This module offers a generic date/time string parser which is able to parse
 most known formats to represent a date and/or time.
 
 This module attempts to be forgiving with regards to unlikely input formats,
-returning a datetime object even for dates which are ambiguous. If an element of
-a date/time stamp is omitted, the following rules are applied:
+returning a datetime object even for dates which are ambiguous. If an element
+of a date/time stamp is omitted, the following rules are applied:
 - If AM or PM is left unspecified, a 24-hour clock is assumed, however, an hour
-  on a 12-hour clock (`0 <= hour <= 12`) *must* be specified if AM or PM is
+  on a 12-hour clock (``0 <= hour <= 12``) *must* be specified if AM or PM is
   specified.
-- If a time zone is omitted, it is assumed to be UTC.
+- If a time zone is omitted, a timezone-naive datetime is returned.
 
-If any other elements are missing, they are taken from the `datetime.datetime`
-object passed to the parameter `default`. If this results in a day number
-exceeding the valid number of days per month, one can fall back to the last
-day of the month by setting `fallback_on_invalid_day` parameter to `True`.
+If any other elements are missing, they are taken from the
+:class:`datetime.datetime` object passed to the parameter ``default``. If this
+results in a day number exceeding the valid number of days per month, one can
+fall back to the last day of the month by setting ``fallback_on_invalid_day``
+parameter to ``True``.
 
-Also provided is the `smart_defaults` option, which attempts to fill in the
+Also provided is the ``smart_defaults`` option, which attempts to fill in the
 missing elements from context. If specified, the logic is:
 - If the omitted element is smaller than the largest specified element, select
-  the *earliest* time matching the specified conditions; so `"June 2010"` is
-  interpreted as `June 1, 2010 0:00:00`) and the (somewhat strange)
-  `"Feb 1997 3:15 PM"` is interpreted as `February 1, 1997 15:15:00`.
+  the *earliest* time matching the specified conditions; so ``"June 2010"`` is
+  interpreted as ``June 1, 2010 0:00:00``) and the (somewhat strange)
+  ``"Feb 1997 3:15 PM"`` is interpreted as ``February 1, 1997 15:15:00``.
 - If the element is larger than the largest specified element, select the
-  *most recent* time matching the specified conditions (e.g parsing `"May"`
+  *most recent* time matching the specified conditions (e.g parsing ``"May"``
   in June 2015 returns the date May 1st, 2015, whereas parsing it in April 2015
-  returns May 1st 2014). If using the `date_in_future` flag, this logic is
+  returns May 1st 2014). If using the ``date_in_future`` flag, this logic is
   inverted, and instead the *next* time matching the specified conditions is
   returned.
 
@@ -80,8 +81,8 @@ class _timelex(object):
         """
         This function breaks the time string into lexical units (tokens), which
         can be parsed by the parser. Lexical units are demarcated by changes in
-        the character set, so any continuous string of letters is considered one
-        unit, any continuous string of numbers is considered one unit.
+        the character set, so any continuous string of letters is considered
+        one unit, any continuous string of numbers is considered one unit.
 
         The main complication arises from the fact that dots ('.') can be used
         both as separators (e.g. "Sep.20.2009") or decimal points (e.g.
@@ -101,9 +102,9 @@ class _timelex(object):
         whitespace = self.whitespace
 
         while not self.eof:
-            # We only realize that we've reached the end of a token when we find
-            # a character that's not part of the current token - since that
-            # character may be part of the next token, it's stored in the
+            # We only realize that we've reached the end of a token when we
+            # find a character that's not part of the current token - since
+            # that character may be part of the next token, it's stored in the
             # charstack.
             if self.charstack:
                 nextchar = self.charstack.pop(0)
@@ -224,20 +225,20 @@ class _resultbase(object):
 
 class parserinfo(object):
     """
-    Class which handles what inputs are accepted. Subclass this to customize the
-    language and acceptable values for each parameter.
+    Class which handles what inputs are accepted. Subclass this to customize
+    the language and acceptable values for each parameter.
 
     :param dayfirst:
             Whether to interpret the first value in an ambiguous 3-integer date
-            (e.g. 01/05/09) as the day (`True`) or month (`False`). If
-            `yearfirst` is set to `True`, this distinguishes between YDM and
-            YMD. Default is `False`.
+            (e.g. 01/05/09) as the day (``True``) or month (``False``). If
+            ``yearfirst`` is set to ``True``, this distinguishes between YDM
+            and YMD. Default is ``False``.
 
     :param yearfirst:
             Whether to interpret the first value in an ambiguous 3-integer date
-            (e.g. 01/05/09) as the year. If `True`, the first number is taken to
-            be the year, otherwise the last number is taken to be the year.
-            Default is `False`.
+            (e.g. 01/05/09) as the year. If ``True``, the first number is taken
+            to be the year, otherwise the last number is taken to be the year.
+            Default is ``False``.
     """
 
     # m from a.m/p.m, t from ISO T separator
@@ -287,7 +288,7 @@ class parserinfo(object):
         self.smart_defaults = smart_defaults
 
         self._year = time.localtime().tm_year
-        self._century = self._year // 100*100
+        self._century = self._year // 100 * 100
 
     def _convert(self, lst):
         dct = {}
@@ -313,7 +314,7 @@ class parserinfo(object):
     def month(self, name):
         if len(name) >= 3:
             try:
-                return self._months[name.lower()]+1
+                return self._months[name.lower()] + 1
             except KeyError:
                 pass
         return None
@@ -345,7 +346,7 @@ class parserinfo(object):
     def convertyear(self, year):
         if year < 100:
             year += self._century
-            if abs(year-self._year) >= 50:
+            if abs(year - self._year) >= 50:
                 if year < self._year:
                     year += 100
                 else:
@@ -373,65 +374,85 @@ class parser(object):
               smart_defaults=None, date_in_future=False, 
               fallback_on_invalid_day=None, **kwargs):
         """
-        Parse the date/time string into a datetime object.
+        Parse the date/time string into a :class:`datetime.datetime` object.
 
         :param timestr:
             Any date/time string using the supported formats.
 
         :param default:
             The default datetime object, if this is a datetime object and not
-            `None`, elements specified in `timestr` replace elements in the
-            default object, unless `smart_defaults` is set to `True`, in which
-            case to the extent necessary, timestamps are calculated relative to
-            this date.
+            ``None``, elements specified in ``timestr`` replace elements in the
+            default object, unless ``smart_defaults`` is set to ``True``, in
+            which case to the extent necessary, timestamps are calculated
+            relative to this date.
 
         :param smart_defaults:
-            If using smart defaults, the `default` parameter is treated as the
-            effective parsing date/time, and the context of the datetime string
-            is determined relative to `default`. If `None`, this parameter is
-            inherited from the :class:`parserinfo` object.
+            If using smart defaults, the ``default`` parameter is treated as
+            the effective parsing date/time, and the context of the datetime
+            string is determined relative to ``default``. If ``None``, this
+            parameter is inherited from the :class:`parserinfo` object.
 
         :param date_in_future:
-            If `smart_defaults` is `True`, the parser assumes by default that
-            the timestamp refers to a date in the past, and will return the
-            beginning of the most recent timespan which matches the time string
-            (e.g. if `default` is March 3rd, 2013,  "Feb" parses to
+            If ``smart_defaults`` is ``True``, the parser assumes by default
+            that the timestamp refers to a date in the past, and will return
+            the beginning of the most recent timespan which matches the time
+            string (e.g. if ``default`` is March 3rd, 2013,  "Feb" parses to
             "Feb 1, 2013" and "May 3" parses to May 3rd, 2012). Setting this
-            parameter to `True` inverts this assumption, and returns the
+            parameter to ``True`` inverts this assumption, and returns the
             beginning of the *next* matching timespan.
 
         :param fallback_on_invalid_day:
-            If specified `True`, an otherwise invalid date such as "Feb 30" or
-            "June 32" falls back to the last day of the month. If specified as
-            "False", the parser is strict about parsing otherwise valid dates
-            that would turn up as invalid because of the fallback rules (e.g.
-            "Feb 2010" run with a default of January 30, 2010 and `smartparser`
-            set to `False` would would throw an error, rather than falling
-            back to the end of February). If `None` or unspecified, the date
-            falls back to the most recent valid date only if the invalid date
-            is created as a result of an unspecified day in the time string.
+            If specified ``True``, an otherwise invalid date such as "Feb 30"
+            or "June 32" falls back to the last day of the month. If specified
+            as "False", the parser is strict about parsing otherwise valid
+            dates that would turn up as invalid because of the fallback rules
+            (e.g. "Feb 2010" run with a default of January 30, 2010 and
+            ``smartparser`` set to ``False`` would would throw an error, rather
+            than falling back to the end of February). If ``None`` or
+            unspecified, the date falls back to the most recent valid date only
+            if the invalid date is created as a result of an unspecified day in
+            the time string.
 
         :param ignoretz:
-            Whether or not to ignore the time zone.
+            If set ``True``, time zones in parsed strings are ignored and a
+            naive :class:`datetime.datetime` object is returned.
 
         :param tzinfos:
-            A time zone, to be applied to the date, if `ignoretz` is `True`.
-            This can be either a subclass of `tzinfo`, a time zone string or an
-            integer offset.
+            Additional time zone names / aliases which may be present in the
+            string. This argument maps time zone names (and optionally offsets
+            from those time zones) to time zones. This parameter can be a
+            dictionary with timezone aliases mapping time zone names to time
+            zones or a function taking two parameters (``tzname`` and
+            ``tzoffset``) and returning a time zone.
+
+            The timezones to which the names are mapped can be an integer
+            offset from UTC in minutes or a :class:`tzinfo` object.
+
+            .. doctest::
+
+                >>> from dateutil.parser import parse
+                >>> from dateutil.tz import gettz
+                >>> tzinfos = {"BRST": -10800, "CST": gettz("America/Chicago")}
+                >>> parse("2012-01-19 17:21:00 BRST", tzinfos=tzinfos)
+                datetime.datetime(2014, 2, 19, 17, 21, tzinfo=tzoffset(u'BRST', -10800))
+                >>> parse("2012-01-19 17:21:00 CST", tzinfos=tzinfos)
+                datetime.datetime(2014, 2, 19, 17, 21, tzinfo=tzfile('America/Chicago'))
+
+            This parameter is ignored if ``ignoretz`` is set.
 
         :param **kwargs:
-            Keyword arguments as passed to `_parse()`.
+            Keyword arguments as passed to ``_parse()``.
 
         :return:
-            Returns a `datetime.datetime` object or, if the `fuzzy_with_tokens`
-            option is `True`, returns a tuple, the first element being a
-            `datetime.datetime` object, the second a tuple containing the
-            fuzzy tokens.
+            Returns a :class:`datetime.datetime` object or, if the
+            ``fuzzy_with_tokens`` option is ``True``, returns a tuple, the
+            first element being a :class:`datetime.datetime` object, the second
+            a tuple containing the fuzzy tokens.
 
         :raises ValueError:
             Raised for invalid or unknown string format, if the provided
-            `tzinfo` is not in a valid format, or if an invalid date would
-            be created.
+            :class:`tzinfo` is not in a valid format, or if an invalid date
+            would be created.
 
         :raises OverFlowError:
             Raised if the parsed date exceeds the largest valid C integer on
@@ -444,7 +465,7 @@ class parser(object):
         if default is None:
             effective_dt = datetime.datetime.now()
             default = datetime.datetime.now().replace(hour=0, minute=0,
-                                             second=0, microsecond=0)
+                                                      second=0, microsecond=0)
         else:
             effective_dt = default
 
@@ -461,7 +482,7 @@ class parser(object):
                 repl[attr] = value
 
         # Choose the correct fallback position if requested by the
-        # `smart_defaults` parameter.
+        # ``smart_defaults`` parameter.
         if smart_defaults:
             # Determine if it refers to this year, last year or next year
             if res.year is None:
@@ -469,7 +490,7 @@ class parser(object):
                     # Explicitly deal with leap year problems
                     if res.month == 2 and (res.day is not None and
                                            res.day == 29):
-                        
+
                         ly_offset = 4 if date_in_future else -4
                         next_year = 4 * (default.year // 4)
 
@@ -580,36 +601,42 @@ class parser(object):
                fuzzy_with_tokens=False):
         """
         Private method which performs the heavy lifting of parsing, called from
-        `parse()`, which passes on its `kwargs` to this function.
+        ``parse()``, which passes on its ``kwargs`` to this function.
 
         :param timestr:
             The string to parse.
 
         :param dayfirst:
             Whether to interpret the first value in an ambiguous 3-integer date
-            (e.g. 01/05/09) as the day (`True`) or month (`False`). If
-            `yearfirst` is set to `True`, this distinguishes between YDM and
-            YMD. If set to `None`, this value is retrieved from the current
-            `parserinfo` object (which itself defaults to `False`).
+            (e.g. 01/05/09) as the day (``True``) or month (``False``). If
+            ``yearfirst`` is set to ``True``, this distinguishes between YDM
+            and YMD. If set to ``None``, this value is retrieved from the
+            current :class:`parserinfo` object (which itself defaults to
+            ``False``).
 
         :param yearfirst:
             Whether to interpret the first value in an ambiguous 3-integer date
-            (e.g. 01/05/09) as the year. If `True`, the first number is taken to
-            be the year, otherwise the last number is taken to be the year. If
-            this is set to `None`, the value is retrieved from the current
-            `parserinfo` object (which itself defaults to `False`).
+            (e.g. 01/05/09) as the year. If ``True``, the first number is taken
+            to be the year, otherwise the last number is taken to be the year.
+            If this is set to ``None``, the value is retrieved from the current
+            :class:`parserinfo` object (which itself defaults to ``False``).
 
         :param fuzzy:
             Whether to allow fuzzy parsing, allowing for string like "Today is
             January 1, 2047 at 8:21:00AM".
 
         :param fuzzy_with_tokens:
-            If `True`, `fuzzy` is automatically set to True, and the parser will
-            return a tuple where the first element is the parsed
-            `datetime.datetime` datetimestamp and the second element is a tuple
-            containing the portions of the string which were ignored, e.g.
-            "Today is January 1, 2047 at 8:21:00AM" should return
-            `(datetime.datetime(2011, 1, 1, 8, 21), (u'Today is ', u' ', u'at '))`
+            If ``True``, ``fuzzy`` is automatically set to True, and the parser
+            will return a tuple where the first element is the parsed
+            :class:`datetime.datetime` datetimestamp and the second element is
+            a tuple containing the portions of the string which were ignored:
+
+            .. doctest::
+
+                >>> from dateutil.parser import parse
+                >>> parse("Today is January 1, 2047 at 8:21:00AM", fuzzy_with_tokens=True)
+                (datetime.datetime(2011, 1, 1, 8, 21), (u'Today is ', u' ', u'at '))
+
         """
         if fuzzy_with_tokens:
             fuzzy = True
@@ -1078,57 +1105,96 @@ DEFAULTPARSER = parser()
 
 def parse(timestr, parserinfo=None, **kwargs):
     """
-    Parse a string in one of the supported formats, using the `parserinfo`
-    parameters.
+
+    Parse a string in one of the supported formats, using the
+    ``parserinfo`` parameters.
 
     :param timestr:
         A string containing a date/time stamp.
 
     :param parserinfo:
         A :class:`parserinfo` object containing parameters for the parser.
-        If `None`, the default arguments to the `parserinfo` constructor are
-        used.
+        If ``None``, the default arguments to the :class:`parserinfo`
+        constructor are used.
 
-    The `**kwargs` parameter takes the following keyword arguments:
+    The ``**kwargs`` parameter takes the following keyword arguments:
 
     :param default:
         The default datetime object, if this is a datetime object and not
-        `None`, elements specified in `timestr` replace elements in the
+        ``None``, elements specified in ``timestr`` replace elements in the
         default object.
 
     :param ignoretz:
-        Whether or not to ignore the time zone (boolean).
+        If set ``True``, time zones in parsed strings are ignored and a naive
+        :class:`datetime` object is returned.
 
     :param tzinfos:
-        A time zone, to be applied to the date, if `ignoretz` is `True`.
-        This can be either a subclass of `tzinfo`, a time zone string or an
-        integer offset.
+            Additional time zone names / aliases which may be present in the
+            string. This argument maps time zone names (and optionally offsets
+            from those time zones) to time zones. This parameter can be a
+            dictionary with timezone aliases mapping time zone names to time
+            zones or a function taking two parameters (``tzname`` and
+            ``tzoffset``) and returning a time zone.
+
+            The timezones to which the names are mapped can be an integer
+            offset from UTC in minutes or a :class:`tzinfo` object.
+
+            .. doctest::
+
+                >>> from dateutil.parser import parse
+                >>> from dateutil.tz import gettz
+                >>> tzinfos = {"BRST": -10800, "CST": gettz("America/Chicago")}
+                >>> parse("2012-01-19 17:21:00 BRST", tzinfos=tzinfos)
+                datetime.datetime(2014, 2, 19, 17, 21, tzinfo=tzoffset(u'BRST', -10800))
+                >>> parse("2012-01-19 17:21:00 CST", tzinfos=tzinfos)
+                datetime.datetime(2014, 2, 19, 17, 21, tzinfo=tzfile('America/Chicago'))
+
+            This parameter is ignored if ``ignoretz`` is set.
 
     :param dayfirst:
         Whether to interpret the first value in an ambiguous 3-integer date
-        (e.g. 01/05/09) as the day (`True`) or month (`False`). If
-        `yearfirst` is set to `True`, this distinguishes between YDM and
-        YMD. If set to `None`, this value is retrieved from the current
-        :class:`parserinfo` object (which itself defaults to `False`).
+        (e.g. 01/05/09) as the day (``True``) or month (``False``). If
+        ``yearfirst`` is set to ``True``, this distinguishes between YDM and
+        YMD. If set to ``None``, this value is retrieved from the current
+        :class:`parserinfo` object (which itself defaults to ``False``).
 
     :param yearfirst:
         Whether to interpret the first value in an ambiguous 3-integer date
-        (e.g. 01/05/09) as the year. If `True`, the first number is taken to
+        (e.g. 01/05/09) as the year. If ``True``, the first number is taken to
         be the year, otherwise the last number is taken to be the year. If
-        this is set to `None`, the value is retrieved from the current
-        :class:`parserinfo` object (which itself defaults to `False`).
+        this is set to ``None``, the value is retrieved from the current
+        :class:`parserinfo` object (which itself defaults to ``False``).
 
     :param fuzzy:
         Whether to allow fuzzy parsing, allowing for string like "Today is
         January 1, 2047 at 8:21:00AM".
 
     :param fuzzy_with_tokens:
-        If `True`, `fuzzy` is automatically set to True, and the parser will
-        return a tuple where the first element is the parsed
-        `datetime.datetime` datetimestamp and the second element is a tuple
-        containing the portions of the string which were ignored, e.g.
-        "Today is January 1, 2047 at 8:21:00AM" should return
-        `(datetime.datetime(2011, 1, 1, 8, 21), (u'Today is ', u' ', u'at '))`
+        If ``True``, ``fuzzy`` is automatically set to True, and the parser
+        will return a tuple where the first element is the parsed
+        :class:`datetime.datetime` datetimestamp and the second element is
+        a tuple containing the portions of the string which were ignored:
+
+        .. doctest::
+
+            >>> from dateutil.parser import parse
+            >>> parse("Today is January 1, 2047 at 8:21:00AM", fuzzy_with_tokens=True)
+            (datetime.datetime(2011, 1, 1, 8, 21), (u'Today is ', u' ', u'at '))
+
+    :return:
+        Returns a :class:`datetime.datetime` object or, if the
+        ``fuzzy_with_tokens`` option is ``True``, returns a tuple, the
+        first element being a :class:`datetime.datetime` object, the second
+        a tuple containing the fuzzy tokens.
+
+    :raises ValueError:
+        Raised for invalid or unknown string format, if the provided
+        :class:`tzinfo` is not in a valid format, or if an invalid date
+        would be created.
+
+    :raises OverFlowError:
+        Raised if the parsed date exceeds the largest valid C integer on
+        your system.
     """
     if parserinfo:
         return parser(parserinfo).parse(timestr, **kwargs)
