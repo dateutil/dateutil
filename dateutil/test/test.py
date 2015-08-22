@@ -4,6 +4,8 @@ from __future__ import unicode_literals
 import calendar
 import base64
 import sys
+import os
+import time as _time
 
 from six import StringIO, BytesIO, PY3
 
@@ -5943,5 +5945,15 @@ END:VTIMEZONE
         tz = tzwin.tzwin("UTC")
         dt = parse("2013-03-06 19:08:15")
         self.assertFalse(tz._isdst(dt))
+
+    @unittest.skipIf(sys.platform.startswith("win"), "requires Unix")
+    def testTZSetDoesntCorrupt(self):
+        # if we start in non-UTC then tzset UTC make sure parse doesn't get
+        # confused
+        os.environ['TZ'] = 'UTC'
+        _time.tzset()
+        # this should parse to UTC timezone not the original timezone
+        dt = parse('2014-07-20T12:34:56+00:00')
+        self.assertEqual(str(dt), '2014-07-20 12:34:56+00:00')
 
 # vim:ts=4:sw=4
