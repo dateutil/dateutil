@@ -5866,12 +5866,12 @@ END:VTIMEZONE
                          tzrange("EST", -18000, "EDT"))
 
     def testFileStart1(self):
-        tz = tzfile(BytesIO(base64.decodestring(self.TZFILE_EST5EDT)))
+        tz = tzfile(BytesIO(base64.b64decode(self.TZFILE_EST5EDT)))
         self.assertEqual(datetime(2003, 4, 6, 1, 59, tzinfo=tz).tzname(), "EST")
         self.assertEqual(datetime(2003, 4, 6, 2, 00, tzinfo=tz).tzname(), "EDT")
 
     def testFileEnd1(self):
-        tz = tzfile(BytesIO(base64.decodestring(self.TZFILE_EST5EDT)))
+        tz = tzfile(BytesIO(base64.b64decode(self.TZFILE_EST5EDT)))
         self.assertEqual(datetime(2003, 10, 26, 0, 59, tzinfo=tz).tzname(),
                          "EDT")
         self.assertEqual(datetime(2003, 10, 26, 1, 00, tzinfo=tz).tzname(),
@@ -5919,14 +5919,14 @@ END:VTIMEZONE
 
     def testRoundNonFullMinutes(self):
         # This timezone has an offset of 5992 seconds in 1900-01-01.
-        tz = tzfile(BytesIO(base64.decodestring(self.EUROPE_HELSINKI)))
+        tz = tzfile(BytesIO(base64.b64decode(self.EUROPE_HELSINKI)))
         self.assertEqual(str(datetime(1900, 1, 1, 0, 0, tzinfo=tz)),
                              "1900-01-01 00:00:00+01:40")
 
     def testLeapCountDecodesProperly(self):
         # This timezone has leapcnt, and failed to decode until
         # Eugene Oden notified about the issue.
-        tz = tzfile(BytesIO(base64.decodestring(self.NEW_YORK)))
+        tz = tzfile(BytesIO(base64.b64decode(self.NEW_YORK)))
         self.assertEqual(datetime(2007, 3, 31, 20, 12).tzname(), None)
 
     def testGettz(self):
