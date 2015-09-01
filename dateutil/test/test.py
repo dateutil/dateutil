@@ -7,7 +7,7 @@ import sys
 import os
 import time as _time
 
-from six import StringIO, BytesIO, PY3
+from six import assertRaisesRegex, StringIO, BytesIO, PY3
 
 try:
     # python2.6 unittest has no skipUnless. So we use unittest2.
@@ -5517,9 +5517,12 @@ class ParserTest(unittest.TestCase):
                           parse, 'shouldfail')
 
     def testCorrectErrorOnFuzzyWithTokens(self):
-        self.assertRaisesRegexp(ValueError, 'Unknown string format', parse, '04/04/32/423', fuzzy_with_tokens=True)
-        self.assertRaisesRegexp(ValueError, 'Unknown string format', parse, '04/04/04 +32423', fuzzy_with_tokens=True)
-        self.assertRaisesRegexp(ValueError, 'Unknown string format', parse, '04/04/0d4', fuzzy_with_tokens=True)
+        assertRaisesRegex(self, ValueError, 'Unknown string format',
+                          parse, '04/04/32/423', fuzzy_with_tokens=True)
+        assertRaisesRegex(self, ValueError, 'Unknown string format',
+                          parse, '04/04/04 +32423', fuzzy_with_tokens=True)
+        assertRaisesRegex(self, ValueError, 'Unknown string format',
+                          parse, '04/04/0d4', fuzzy_with_tokens=True)
 
     def testIncreasingCTime(self):
         # This test will check 200 different years, every month, every day,
