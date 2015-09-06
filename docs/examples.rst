@@ -749,6 +749,19 @@ rruleset examples
 -----------------
 Daily, for 7 days, jumping Saturday and Sunday occurrences.
 
+.. testsetup:: rruleset
+
+    import datetime
+
+    from dateutil.parser import parse
+    from dateutil.rrule import rrule, rruleset
+    from dateutil.rrule import YEARLY, MONTHLY, WEEKLY, DAILY
+    from dateutil.rrule import MO, TU, WE, TH, FR, SA, SU
+
+    import pprint
+    import sys
+    sys.displayhook = pprint.pprint
+
 .. doctest:: rruleset
    :options: +NORMALIZE_WHITESPACE
 
@@ -786,6 +799,15 @@ rrulestr() examples
 -------------------
 
 Every 10 days, 5 occurrences.
+
+.. testsetup:: rrulestr
+
+    from dateutil.parser import parse
+    from dateutil.rrule import rruleset, rrulestr
+
+    import pprint
+    import sys
+    sys.displayhook = pprint.pprint
 
 .. doctest:: rrulestr
    :options: +NORMALIZE_WHITESPACE
@@ -1252,6 +1274,12 @@ Here is the example mentioned in the
 
 [http://www.python.org/doc/current/lib/module-time.html time module documentation].
 
+.. testsetup:: tzstr
+
+    import os
+    import time
+    from datetime import datetime
+    from dateutil.tz import tzstr
 
 .. doctest:: tzstr
 
@@ -1304,6 +1332,10 @@ Check the daylight limit.
 tzrange examples
 ----------------
 
+.. testsetup:: tzrange
+
+    from dateutil.tz import tzrange, tzstr
+
 .. doctest:: tzrange
 
     >>> tzstr('EST5EDT') == tzrange("EST", -18000, "EDT")
@@ -1333,6 +1365,11 @@ for more information.
 
 tzfile examples
 ---------------
+
+.. testsetup:: tzfile
+
+    from datetime import datetime
+    from dateutil.tz import tzfile, tzutc
 
 .. doctest:: tzfile
    :options: +NORMALIZE_WHITESPACE
