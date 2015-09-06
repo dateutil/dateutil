@@ -320,11 +320,14 @@ Everyday in January, for 3 years.
 Same thing, in another way.
 
 .. doctest:: rrule
+   :options: +NORMALIZE_WHITESPACE, +ELLIPSIS
 
     >>> list(rrule(DAILY, bymonth=1,
-                   dtstart=parse("19980101T090000"),
-               until=parse("20000131T090000")))
-    (...)
+    ...            dtstart=parse("19980101T090000"),
+    ...            until=parse("20000131T090000")))
+    [datetime.datetime(1998, 1, 1, 9, 0),
+     ...
+     datetime.datetime(2000, 1, 31, 9, 0)]
 
 Weekly for 10 occurrences.
 
