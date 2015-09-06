@@ -1412,25 +1412,8 @@ tzical examples
 Here is a sample file extracted from the RFC. This file defines
 the `EST5EDT` timezone, and will be used in the following example.
 
-    BEGIN:VTIMEZONE
-    TZID:US-Eastern
-    LAST-MODIFIED:19870101T000000Z
-    TZURL:http://zones.stds_r_us.net/tz/US-Eastern
-    BEGIN:STANDARD
-    DTSTART:19671029T020000
-    RRULE:FREQ=YEARLY;BYDAY=-1SU;BYMONTH=10
-    TZOFFSETFROM:-0400
-    TZOFFSETTO:-0500
-    TZNAME:EST
-    END:STANDARD
-    BEGIN:DAYLIGHT
-    DTSTART:19870405T020000
-    RRULE:FREQ=YEARLY;BYDAY=1SU;BYMONTH=4
-    TZOFFSETFROM:-0500
-    TZOFFSETTO:-0400
-    TZNAME:EDT
-    END:DAYLIGHT
-    END:VTIMEZONE
+.. include:: samples/EST5EDT.ics
+   :literal:
 
 And here is an example exploring a `tzical` type:
 
@@ -1438,7 +1421,7 @@ And here is an example exploring a `tzical` type:
 
     >>> from dateutil.tz import *; from datetime import *
 
-    >>> tz = tzical('EST5EDT.ics')
+    >>> tz = tzical('samples/EST5EDT.ics')
     >>> tz.keys()
     ['US-Eastern']
 
