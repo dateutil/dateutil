@@ -55,7 +55,7 @@ original datetime rather than performing an arithmetic operation on them.
 .. doctest:: relativedelta
 
     >>> NOW+relativedelta(year=1, month=1)
-    datetime(1, 1, 17, 20, 54, 47, 282310)
+    datetime.datetime(1, 1, 17, 20, 54, 47, 282310)
 
 Let's try the other way around. Notice that the
 hour setting we get in the relativedelta is relative,
@@ -313,8 +313,8 @@ Everyday in January, for 3 years.
      datetime.datetime(1999, 1, 31, 9, 0),
      datetime.datetime(2000, 1, 1, 9, 0),
      datetime.datetime(2000, 1, 2, 9, 0),
-     datetime.datetime(2000, 1, 29, 9, 0),
      ...
+     datetime.datetime(2000, 1, 30, 9, 0),
      datetime.datetime(2000, 1, 31, 9, 0)]
 
 Same thing, in another way.
@@ -879,7 +879,7 @@ The following code will prepare the environment:
     >>> from dateutil.tz import *
     >>> from datetime import *
     >>> TZOFFSETS = {"BRST": -10800}
-    >>> BRSTTZ = tzoffset(-10800, "BRST")
+    >>> BRSTTZ = tzoffset("BRST", -10800)
     >>> DEFAULT = datetime(2003, 9, 25)
 
 
@@ -947,7 +947,6 @@ Strip it further:
 
     >>> parse("10:36", default=DEFAULT)
     datetime.datetime(2003, 9, 25, 10, 36)
-    >>> 
 
 
 Strip in a different way:
@@ -1014,7 +1013,7 @@ ISO format, without separators:
 
     >>> parse("20030925T104941.5-0300")
     datetime.datetime(2003, 9, 25, 10, 49, 41, 500000,
-              tzinfo=tzinfo=tzoffset(None, -10800))
+                      tzinfo=tzoffset(None, -10800))
 
     >>> parse("20030925T104941-0300")
     datetime.datetime(2003, 9, 25, 10, 49, 41,
@@ -1319,6 +1318,7 @@ Check the daylight limit.
 
 .. doctest:: tzstr
 
+    >>> tz = tzstr('EST+05EDT,M4.1.0,M10.5.0')
     >>> datetime(2003, 4, 6, 1, 59, tzinfo=tz).tzname()
     'EST'
     >>> datetime(2003, 4, 6, 2, 00, tzinfo=tz).tzname()
