@@ -71,12 +71,6 @@ class _timelex(object):
             instream = StringIO(instream)
 
         self.instream = instream
-        self.wordchars = ('abcdfeghijklmnopqrstuvwxyz'
-                          'ABCDEFGHIJKLMNOPQRSTUVWXYZ_'
-                          'ßàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿ'
-                          'ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞ')
-        self.numchars = '0123456789'
-        self.whitespace = ' \t\r\n'
         self.charstack = []
         self.tokenstack = []
         self.eof = False
@@ -101,9 +95,6 @@ class _timelex(object):
         seenletters = False
         token = None
         state = None
-        wordchars = self.wordchars
-        numchars = self.numchars
-        whitespace = self.whitespace
 
         while not self.eof:
             # We only realize that we've reached the end of a token when we
@@ -124,11 +115,11 @@ class _timelex(object):
                 # First character of the token - determines if we're starting
                 # to parse a word, a number or something else.
                 token = nextchar
-                if nextchar in wordchars:
+                if self.isword(nextchar):
                     state = 'a'
-                elif nextchar in numchars:
+                elif self.isnum(nextchar):
                     state = '0'
-                elif nextchar in whitespace:
+                elif self.isspace(nextchar):
                     token = ' '
                     break  # emit token
                 else:
@@ -137,7 +128,7 @@ class _timelex(object):
                 # If we've already started reading a word, we keep reading
                 # letters until we find something that's not part of a word.
                 seenletters = True
-                if nextchar in wordchars:
+                if self.isword(nextchar):
                     token += nextchar
                 elif nextchar == '.':
                     token += nextchar
@@ -148,7 +139,7 @@ class _timelex(object):
             elif state == '0':
                 # If we've already started reading a number, we keep reading
                 # numbers until we find something that doesn't fit.
-                if nextchar in numchars:
+                if self.isnum(nextchar):
                     token += nextchar
                 elif nextchar == '.' or (nextchar == ',' and len(token) >= 2):
                     token += nextchar
@@ -160,9 +151,9 @@ class _timelex(object):
                 # If we've seen some letters and a dot separator, continue
                 # parsing, and the tokens will be broken up later.
                 seenletters = True
-                if nextchar == '.' or nextchar in wordchars:
+                if nextchar == '.' or self.isword(nextchar):
                     token += nextchar
-                elif nextchar in numchars and token[-1] == '.':
+                elif self.isnum(nextchar) and token[-1] == '.':
                     token += nextchar
                     state = '0.'
                 else:
@@ -171,9 +162,9 @@ class _timelex(object):
             elif state == '0.':
                 # If we've seen at least one dot separator, keep going, we'll
                 # break up the tokens later.
-                if nextchar == '.' or nextchar in numchars:
+                if nextchar == '.' or self.isnum(nextchar):
                     token += nextchar
-                elif nextchar in wordchars and token[-1] == '.':
+                elif self.isword(nextchar) and token[-1] == '.':
                     token += nextchar
                     state = 'a.'
                 else:
@@ -206,9 +197,24 @@ class _timelex(object):
     def next(self):
         return self.__next__()  # Python 2.x support
 
+    @classmethod
     def split(cls, s):
         return list(cls(s))
-    split = classmethod(split)
+
+    @classmethod
+    def isword(cls, nextchar):
+        """ Whether or not the next character is part of a word """
+        return nextchar.isalpha()
+
+    @classmethod
+    def isnum(cls, nextchar):
+        """ Whether the next character is part of a number """
+        return nextchar.isdigit()
+
+    @classmethod
+    def isspace(cls, nextchar):
+        """ Whether the next character is whitespace """
+        return nextchar.isspace()
 
 
 class _resultbase(object):
