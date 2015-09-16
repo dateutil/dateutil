@@ -5763,7 +5763,7 @@ END:VTIMEZONE
                                   tzinfo=tzstr("EST5EDT")).tzname(), "EDT")
 
     def testStrEnd1(self):
-        self.assertEqual(datetime(2003, 10, 26, 0, 59,
+        self.assertEqual(datetime(2003, 10, 26, 0, 59, fold=1,
                                   tzinfo=tzstr("EST5EDT")).tzname(), "EDT")
         self.assertEqual(datetime(2003, 10, 26, 1, 00,
                                   tzinfo=tzstr("EST5EDT")).tzname(), "EST")
@@ -5777,7 +5777,7 @@ END:VTIMEZONE
 
     def testStrEnd2(self):
         s = "EST5EDT,4,0,6,7200,10,0,26,7200,3600"
-        self.assertEqual(datetime(2003, 10, 26, 0, 59,
+        self.assertEqual(datetime(2003, 10, 26, 0, 59, fold=1,
                                   tzinfo=tzstr(s)).tzname(), "EDT")
         self.assertEqual(datetime(2003, 10, 26, 1, 00,
                                   tzinfo=tzstr(s)).tzname(), "EST")
@@ -5791,7 +5791,7 @@ END:VTIMEZONE
 
     def testStrEnd3(self):
         s = "EST5EDT,4,1,0,7200,10,-1,0,7200,3600"
-        self.assertEqual(datetime(2003, 10, 26, 0, 59,
+        self.assertEqual(datetime(2003, 10, 26, 0, 59, fold=1,
                                   tzinfo=tzstr(s)).tzname(), "EDT")
         self.assertEqual(datetime(2003, 10, 26, 1, 00,
                                   tzinfo=tzstr(s)).tzname(), "EST")
@@ -5805,7 +5805,7 @@ END:VTIMEZONE
 
     def testStrEnd4(self):
         s = "EST5EDT4,M4.1.0/02:00:00,M10-5-0/02:00"
-        self.assertEqual(datetime(2003, 10, 26, 0, 59,
+        self.assertEqual(datetime(2003, 10, 26, 0, 59, fold=1,
                                   tzinfo=tzstr(s)).tzname(), "EDT")
         self.assertEqual(datetime(2003, 10, 26, 1, 00,
                                   tzinfo=tzstr(s)).tzname(), "EST")
@@ -5819,7 +5819,7 @@ END:VTIMEZONE
 
     def testStrEnd5(self):
         s = "EST5EDT4,95/02:00:00,298/02"
-        self.assertEqual(datetime(2003, 10, 26, 0, 59,
+        self.assertEqual(datetime(2003, 10, 26, 0, 59, fold=1,
                                   tzinfo=tzstr(s)).tzname(), "EDT")
         self.assertEqual(datetime(2003, 10, 26, 1, 00,
                                   tzinfo=tzstr(s)).tzname(), "EST")
@@ -5833,7 +5833,7 @@ END:VTIMEZONE
 
     def testStrEnd6(self):
         s = "EST5EDT4,J96/02:00:00,J299/02"
-        self.assertEqual(datetime(2003, 10, 26, 0, 59,
+        self.assertEqual(datetime(2003, 10, 26, 0, 59, fold=1,
                                   tzinfo=tzstr(s)).tzname(), "EDT")
         self.assertEqual(datetime(2003, 10, 26, 1, 00,
                                   tzinfo=tzstr(s)).tzname(), "EST")
