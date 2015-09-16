@@ -555,6 +555,30 @@ class tzrange(datetime.tzinfo):
         else:
             return self._std_abbr
 
+    def fromutc(self, dt):
+        """datetime in UTC -> datetime in local time."""
+
+        if not isinstance(dt, datetime.datetime):
+            raise TypeError("fromutc() requires a datetime argument")
+        if dt.tzinfo is not self:
+            raise ValueError("dt.tzinfo is not self")
+
+        dtoff = dt.utcoffset()
+        if dtoff is None:
+            raise ValueError("fromutc() requires a non-None utcoffset() result")
+
+        dtdst = dt.dst()
+        if dtdst is None:
+            raise ValueError("fromutc() requires a non-None dst() result")
+        delta = dtoff - dtdst
+        if delta:
+            dt += delta
+            dtdst = dt.dst()
+            if dtdst is None:
+                raise ValueError("fromutc(): dt.dst gave inconsistent "
+                                 "results; cannot convert")
+        return dt + dtdst
+
     def _isdst(self, dt):
         if not self._start_delta:
             return False
