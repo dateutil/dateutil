@@ -610,7 +610,6 @@ class tzrange(datetime.tzinfo):
             if end <= dt < start:
                 return False
             else: # start <= dt < start + shift
-                # Spring-forward gap
                 return dt.fold == 0
 
     def __eq__(self, other):
