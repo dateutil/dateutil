@@ -6042,4 +6042,21 @@ class PEP495_TZTest(unittest.TestCase):
             t = tz.fromutc(u.replace(tzinfo=tz))
             self.assertEqual(t.replace(tzinfo=None) - t.utcoffset(), u)
 
+
+class PEP495_AustraliaTZTest(PEP495_TZTest):
+    # Australia/Sydney rules from 2000
+    dstoff = relativedelta(hours=+2, month=3, day=31, weekday=SU(-1))
+    dston = relativedelta(hours=+2, month=8, day=31, weekday=SU(-1))
+    tz = tzrange('AEST', 10 * HOUR, 'AEDT', 11 * HOUR,
+                 start=dston, end=dstoff)
+
+    utc_regular_dst = datetime(2000, 1, 1)
+    utc_regular_std = datetime(2000, 6, 1)
+    utc_fold_0 = datetime(2000, 3, 25, 15, 45)
+    utc_fold_1 = datetime(2000, 3, 25, 16, 45)
+
+    lmt_regular_dst = datetime(2000, 1, 1, 11)
+    lmt_regular_std = datetime(2000, 6, 1, 10)
+    lmt_fold = datetime(2000, 3, 26, 2, 45)
+    lmt_gap = datetime(2000, 8, 27, 2, 45)
 # vim:ts=4:sw=4
