@@ -532,9 +532,11 @@ class tzrange(datetime.tzinfo):
             Daylight Saving time UTC offset.  A ``timedelta`` that need to be added
             to UTC ``datetime`` to arrive at the Daylight Saving time.
         :param start: relativedelta
-            Start of DST relative to midnight of January 1st.
+            Start of DST relative to midnight of January 1st.  If not specified,
+            defaults to 02:00 AM (standard time) on the first Sunday in April.
         :param end: relativedelta
-            End of DST relative to midnight of January 1st.
+            End of DST relative to midnight of January 1st.  If not specified,
+            defaults to 01:00 AM (standard time) on the last Sunday in October.
         :return: None
         """
         global relativedelta
