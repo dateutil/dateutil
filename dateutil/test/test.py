@@ -5974,4 +5974,41 @@ END:VTIMEZONE
         dt = parse('2014-07-20T12:34:56+00:00')
         self.assertEqual(str(dt), '2014-07-20 12:34:56+00:00')
 
+HOUR = 3600
+
+class PEP495_TZTest(unittest.TestCase):
+    tz = tzrange('EST', -5 * HOUR, 'EDT', -4 * HOUR)
+
+    utc_regular_dst = datetime(2000, 6, 1)
+    utc_regular_std = datetime(2000, 1, 1)
+    utc_fold_0 = datetime(2000, 10, 29, 5, 45)
+    utc_fold_1 = datetime(2000, 10, 29, 6, 45)
+
+    lmt_regular_dst = datetime(2000, 5, 31, 20)
+    lmt_regular_std = datetime(1999, 12, 31, 19)
+    lmt_fold = datetime(2000, 10, 29, 1, 45)
+    lmt_gap = datetime(2000, 4, 2, 2, 45)
+
+    def test_fromutc(self):
+        tz = self.tz
+        u = self.utc_regular_dst.replace(tzinfo=tz)
+        t = self.lmt_regular_dst.replace(tzinfo=tz)
+        self.assertEqual(tz.fromutc(u), t)
+        self.assertEqual(t.fold, 0)
+
+        u = self.utc_regular_std.replace(tzinfo=tz)
+        t = self.lmt_regular_std.replace(tzinfo=tz)
+        self.assertEqual(tz.fromutc(u), t)
+        self.assertEqual(t.fold, 0)
+
+        u0 = self.utc_fold_0.replace(tzinfo=tz)
+        u1 = self.utc_fold_1.replace(tzinfo=tz)
+        t = self.lmt_fold.replace(tzinfo=tz)
+        t0, t1 = tz.fromutc(u0), tz.fromutc(u1)
+        self.assertEqual(t, t0)
+        self.assertEqual(t, t1)
+        self.assertEqual(t0.fold, 0)
+        self.assertEqual(t1.fold, 1)
+
+
 # vim:ts=4:sw=4

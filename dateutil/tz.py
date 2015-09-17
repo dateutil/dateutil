@@ -592,21 +592,32 @@ class tzrange(datetime.tzinfo):
         if dt.tzinfo is not self:
             raise ValueError("dt.tzinfo is not self")
 
-        dtoff = dt.utcoffset()
-        if dtoff is None:
-            raise ValueError("fromutc() requires a non-None utcoffset() result")
+        # Convert dt to standard time
+        dt = dt.replace(tzinfo=None) + self._std_offset
+        # Locate start and end of DST
+        year = datetime.datetime(dt.year, 1, 1)
+        start = year + self._start_delta
+        end = year + self._end_delta
+        shift = self._dst_offset - self._std_offset
+        if start < end:
+            if dt < start or dt >= end + shift:
+                # Regular STD time
+                return dt.replace(tzinfo=self)
+            if dt < end:
+                # Regular DST time
+                return dt.replace(tzinfo=self) + shift
+            # Fold (end <= dt < end + shift)
+            return dt.replace(tzinfo=self, fold=1)
+        else:
+            if end + shift <= dt < start:
+                # Regular STD time
+                return dt.replace(tzinfo=self)
+            if dt >= start or dt < end:
+                # Regular DST time
+                return dt.replace(tzinfo=self) + shift
+            # Fold (end <= dt < end + shift)
+            return dt.replace(tzinfo=self, fold=1)
 
-        dtdst = dt.dst()
-        if dtdst is None:
-            raise ValueError("fromutc() requires a non-None dst() result")
-        delta = dtoff - dtdst
-        if delta:
-            dt += delta
-            dtdst = dt.dst()
-            if dtdst is None:
-                raise ValueError("fromutc(): dt.dst gave inconsistent "
-                                 "results; cannot convert")
-        return dt + dtdst
 
     def _isdst(self, dt):
         if not self._start_delta:
