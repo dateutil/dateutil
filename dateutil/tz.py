@@ -507,9 +507,36 @@ class tzfile(datetime.tzinfo):
 
 
 class tzrange(datetime.tzinfo):
+    """Time zone with regular DST transitions.
+
+    The ``tzrange`` class provides a ``tzinfo`` implementation suitable for
+    timezones that alternate between STD and DST time at times that can be
+    computed as a ``relativedelta`` offset from midnight of January 1st of any
+    given year.
+    """
     def __init__(self, stdabbr, stdoffset=None,
                  dstabbr=None, dstoffset=None,
                  start=None, end=None):
+        """
+
+        :param stdabbr: str
+            Standard time abbreviation.  Winter time in the Northern and
+            summer time in the Southern Hemisphere.
+        :param stdoffset: datetime.timedelta
+            Standard time UTC offset.  A ``timedelta`` that need to be added
+            to UTC ``datetime`` to arrive at the standard time.
+        :param dstabbr: str
+            Daylight Saving time abbreviation.  Summer time in the Northern and
+            winter time in the Southern Hemisphere.
+        :param dstoffset: datetime.timedelta
+            Daylight Saving time UTC offset.  A ``timedelta`` that need to be added
+            to UTC ``datetime`` to arrive at the Daylight Saving time.
+        :param start: relativedelta
+            Start of DST relative to midnight of January 1st.
+        :param end: relativedelta
+            End of DST relative to midnight of January 1st.
+        :return: None
+        """
         global relativedelta
         if not relativedelta:
             from dateutil import relativedelta
