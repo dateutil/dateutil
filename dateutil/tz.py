@@ -594,6 +594,8 @@ class tzrange(datetime.tzinfo):
 
         # Convert dt to standard time
         dt = dt.replace(tzinfo=None) + self._std_offset
+        if self._start_delta is None:
+            return dt.replace(tzinfo=self)
         # Locate start and end of DST
         year = datetime.datetime(dt.year, 1, 1)
         start = year + self._start_delta
@@ -629,28 +631,28 @@ class tzrange(datetime.tzinfo):
         shift = self._dst_offset - self._std_offset
         if start < end:
             # Northern hemisphere: DST starts in the Spring and ends in the Fall.
-            if start + shift <= dt < end - shift:
+            if start + shift <= dt < end:
                 # DST is in effect
                 return True
-            if end - shift <= dt < end:
+            if end <= dt < end + shift:
                 # Fall-back fold
-                return dt.fold == 1
+                return dt.fold == 0
             if end <= dt or dt < start:
                 # STD is in effect
                 return False
             else: # start <= dt < start + shift
                 # Spring-forward gap
-                return dt.fold == 0
+                return dt.fold == 1
         else:
             # Southern hemisphere: DST starts in the Fall and ends in the Spring.
-            if start + shift <= dt or dt < end - shift:
+            if start + shift <= dt or dt < end:
                 return True
-            if end - shift <= dt < end:
-                return dt.fold == 1
+            if end <= dt < end + shift:
+                return dt.fold == 0
             if end <= dt < start:
                 return False
             else: # start <= dt < start + shift
-                return dt.fold == 0
+                return dt.fold == 1
 
     def __eq__(self, other):
         if not isinstance(other, tzrange):
