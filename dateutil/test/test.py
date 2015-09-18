@@ -5871,26 +5871,26 @@ END:VTIMEZONE
     def testFileStart1(self):
         tz = tzfile(BytesIO(base64.b64decode(self.TZFILE_EST5EDT)))
         self.assertEqual(datetime(2003, 4, 6, 1, 59, tzinfo=tz).tzname(), "EST")
-        self.assertEqual(datetime(2003, 4, 6, 2, 00, tzinfo=tz).tzname(), "EDT")
+        self.assertEqual(datetime(2003, 4, 6, 2, 00, tzinfo=tz, fold=1).tzname(), "EDT")
 
     def testFileEnd1(self):
         tz = tzfile(BytesIO(base64.b64decode(self.TZFILE_EST5EDT)))
         self.assertEqual(datetime(2003, 10, 26, 0, 59, tzinfo=tz).tzname(),
                          "EDT")
-        self.assertEqual(datetime(2003, 10, 26, 1, 00, tzinfo=tz).tzname(),
+        self.assertEqual(datetime(2003, 10, 26, 1, 00, tzinfo=tz, fold=1).tzname(),
                          "EST")
 
     def testZoneInfoFileStart1(self):
         tz = zoneinfo.gettz("EST5EDT")
         self.assertEqual(datetime(2003, 4, 6, 1, 59, tzinfo=tz).tzname(), "EST",
                          MISSING_TARBALL)
-        self.assertEqual(datetime(2003, 4, 6, 2, 00, tzinfo=tz).tzname(), "EDT")
+        self.assertEqual(datetime(2003, 4, 6, 2, 00, tzinfo=tz, fold=1).tzname(), "EDT")
 
     def testZoneInfoFileEnd1(self):
         tz = zoneinfo.gettz("EST5EDT")
         self.assertEqual(datetime(2003, 10, 26, 0, 59, tzinfo=tz).tzname(),
                          "EDT", MISSING_TARBALL)
-        self.assertEqual(datetime(2003, 10, 26, 1, 00, tzinfo=tz).tzname(),
+        self.assertEqual(datetime(2003, 10, 26, 1, 00, tzinfo=tz, fold=1).tzname(),
                          "EST")
 
     def testZoneInfoOffsetSignal(self):
@@ -6043,7 +6043,7 @@ class PEP495_TZTest(unittest.TestCase):
             self.assertEqual(t.replace(tzinfo=None) - t.utcoffset(), u)
 
 
-class PEP495_AustraliaTZTest(PEP495_TZTest):
+class PEP495_Australia_TZTest(PEP495_TZTest):
     # Australia/Sydney rules from 2000
     dstoff = relativedelta(hours=+2, month=3, day=31, weekday=SU(-1))
     dston = relativedelta(hours=+2, month=8, day=31, weekday=SU(-1))
@@ -6059,4 +6059,8 @@ class PEP495_AustraliaTZTest(PEP495_TZTest):
     lmt_regular_std = datetime(2000, 6, 1, 10)
     lmt_fold = datetime(2000, 3, 26, 2, 45)
     lmt_gap = datetime(2000, 8, 27, 2, 45)
+
+class PEP495_EST5EDT_TZFileTest(PEP495_TZTest):
+    tz = tzfile(BytesIO(base64.b64decode(TZTest.TZFILE_EST5EDT)))
+
 # vim:ts=4:sw=4

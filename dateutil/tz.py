@@ -7,6 +7,7 @@ environment string (in all known formats), given ranges (with help from
 relative deltas), local machine timezone, fixed offset timezone, and UTC
 timezone.
 """
+import bisect
 import datetime
 import struct
 import time
@@ -44,6 +45,7 @@ def tzname_in_python2(namefunc):
     return adjust_encoding
 
 ZERO = datetime.timedelta(0)
+SECOND = datetime.timedelta(0, 1)
 EPOCHORDINAL = datetime.datetime.utcfromtimestamp(0).toordinal()
 
 
@@ -419,6 +421,9 @@ class tzfile(datetime.tzinfo):
         # isgmt are off, so it should be in wall time. OTOH, it's
         # always in gmt time. Let me know if you have comments
         # about this.
+        # XXX: Trust the comment above and assume that all transitions
+        # XXX: are in UTC.  Save them for use in fromutc().
+        self._trans_list_utc = self._trans_list
         laststdoffset = 0
         self._trans_list = list(self._trans_list)
         for i in range(len(self._trans_list)):
@@ -431,6 +436,38 @@ class tzfile(datetime.tzinfo):
                 # This is dst time. Convert to std.
                 self._trans_list[i] += laststdoffset
         self._trans_list = tuple(self._trans_list)
+
+    def fromutc(self, dt):
+        """datetime in UTC -> datetime in local time."""
+
+        if not isinstance(dt, datetime.datetime):
+            raise TypeError("fromutc() requires a datetime argument")
+        if dt.tzinfo is not self:
+            raise ValueError("dt.tzinfo is not self")
+
+        if not self._trans_list_utc:
+            # No transitions at all: self must be UTC.
+            return dt
+
+        timestamp = ((dt.toordinal() - EPOCHORDINAL) * 86400
+                     + dt.hour * 3600
+                     + dt.minute * 60
+                     + dt.second)
+
+        if timestamp < self._trans_list_utc[0]:
+            tti = self._ttinfo_before
+            fold = 0
+        else:
+            idx = bisect.bisect_right(self._trans_list_utc, timestamp)
+            tti_prev, tti = self._trans_idx[idx-2:idx]
+            # Detect fold
+            fold_seconds = (tti_prev.delta - tti.delta) // SECOND
+            fold = (fold_seconds > timestamp - self._trans_list[idx])
+        dt += tti.delta
+        if fold:
+            return dt.replace(fold=1)
+        else:
+            return dt
 
     def _find_ttinfo(self, dt, laststd=0):
         timestamp = ((dt.toordinal() - EPOCHORDINAL) * 86400
@@ -455,7 +492,19 @@ class tzfile(datetime.tzinfo):
             else:
                 return self._ttinfo_std
         else:
-            return self._trans_idx[idx-1]
+            prev_tti, tti = self._trans_idx[idx-2:idx]
+            # Detect fold/gap
+            if tti.delta > prev_tti.delta:
+                # Clock is moved forward.  Possible gap.
+                gap_seconds = (tti.delta - prev_tti.delta) // SECOND
+                if timestamp - self._trans_list[idx-1] < gap_seconds:
+                    return (prev_tti, tti)[dt.fold]
+            else:
+                # Clock is moved back.  Possible fold.
+                fold_seconds = (prev_tti.delta - tti.delta) // SECOND
+                if timestamp - self._trans_list[idx-1] < fold_seconds:
+                    return (prev_tti, tti)[dt.fold]
+            return tti
 
     def utcoffset(self, dt):
         if not self._ttinfo_std:
