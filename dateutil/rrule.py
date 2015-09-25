@@ -10,7 +10,10 @@ import datetime
 import calendar
 import sys
 
-from fractions import gcd
+try:
+    from math import gcd
+except ImportError:
+    from fractions import gcd
 
 from six import advance_iterator, integer_types
 from six.moves import _thread
