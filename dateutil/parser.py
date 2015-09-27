@@ -355,8 +355,8 @@ class parserinfo(object):
 
         return self.TZOFFSET.get(name)
 
-    def convertyear(self, year):
-        if year < 100:
+    def convertyear(self, year, century_specified=False):
+        if year < 100 and not century_specified:
             year += self._century
             if abs(year - self._year) >= 50:
                 if year < self._year:
@@ -368,7 +368,7 @@ class parserinfo(object):
     def validate(self, res):
         # move to info
         if res.year is not None:
-            res.year = self.convertyear(res.year)
+            res.year = self.convertyear(res.year, res.century_specified)
 
         if res.tzoffset == 0 and not res.tzname or res.tzname == 'Z':
             res.tzname = "UTC"
@@ -376,6 +376,91 @@ class parserinfo(object):
         elif res.tzoffset != 0 and res.tzname and self.utczone(res.tzname):
             res.tzoffset = 0
         return True
+
+
+class _ymd(list):
+    def __init__(self, *args, **kwargs):
+        super(self.__class__, self).__init__(*args, **kwargs)
+        self.century_specified = False
+
+    def append(self, val):
+        if hasattr(val, '__len__'):
+            if val.isdigit() and len(val) > 2:
+                self.century_specified = True
+        elif val > 100:
+            self.century_specified = True
+
+        super(self.__class__, self).append(int(val))
+
+    def resolve_ymd(self, mstridx, yearfirst, dayfirst):
+        len_ymd = len(self)
+        year, month, day = (None, None, None)
+
+        if len_ymd > 3:
+            raise ValueError("More than three YMD values")
+        elif len_ymd == 1 or (mstridx != -1 and len_ymd == 2):
+            # One member, or two members with a month string
+            if mstridx != -1:
+                month = self[mstridx]
+                del self[mstridx]
+
+            if len_ymd > 1 or mstridx == -1:
+                if self[0] > 31:
+                    year = self[0]
+                else:
+                    day = self[0]
+
+        elif len_ymd == 2:
+            # Two members with numbers
+            if self[0] > 31:
+                # 99-01
+                year, month = self
+            elif self[1] > 31:
+                # 01-99
+                month, year = self
+            elif dayfirst and self[1] <= 12:
+                # 13-01
+                day, month = self
+            else:
+                # 01-13
+                month, day = self
+
+        elif len_ymd == 3:
+            # Three members
+            if mstridx == 0:
+                month, day, year = self
+            elif mstridx == 1:
+                if self[0] > 31 or (yearfirst and self[2] <= 31):
+                    # 99-Jan-01
+                    year, month, day = self
+                else:
+                    # 01-Jan-01
+                    # Give precendence to day-first, since
+                    # two-digit years is usually hand-written.
+                    day, month, year = self
+
+            elif mstridx == 2:
+                # WTF!?
+                if self[1] > 31:
+                    # 01-99-Jan
+                    day, year, month = self
+                else:
+                    # 99-01-Jan
+                    year, day, month = self
+
+            else:
+                if self[0] > 31 or \
+                   (yearfirst and self[1] <= 12 and self[2] <= 31):
+                    # 99-01-01
+                    year, month, day = self
+                elif self[0] > 12 or (dayfirst and self[1] <= 12):
+                    # 13-01-01
+                    day, month, year = self
+                else:
+                    # 01-13-01
+                    month, day, year = self
+
+        return year, month, day
 
 
 class parser(object):
@@ -673,7 +758,7 @@ class parser(object):
 
         try:
             # year/month/day list
-            ymd = []
+            ymd = _ymd()
 
             # Index of the month string in ymd
             mstridx = -1
@@ -709,33 +794,30 @@ class parser(object):
                         s = l[i-1]
 
                         if not ymd and l[i-1].find('.') == -1:
-                            ymd.append(info.convertyear(int(s[:2])))
-                            ymd.append(int(s[2:4]))
-                            ymd.append(int(s[4:]))
+                            #ymd.append(info.convertyear(int(s[:2])))
+
+                            ymd.append(s[:2])
+                            ymd.append(s[2:4])
+                            ymd.append(s[4:])
                         else:
                             # 19990101T235959[.59]
                             res.hour = int(s[:2])
                             res.minute = int(s[2:4])
                             res.second, res.microsecond = _parsems(s[4:])
 
-                    elif len_li == 8:
+                    elif len_li in (8, 12, 14):
                         # YYYYMMDD
                         s = l[i-1]
-                        ymd.append(int(s[:4]))
-                        ymd.append(int(s[4:6]))
-                        ymd.append(int(s[6:]))
+                        ymd.append(s[:4])
+                        ymd.append(s[4:6])
+                        ymd.append(s[6:8])
 
-                    elif len_li in (12, 14):
-                        # YYYYMMDDhhmm[ss]
-                        s = l[i-1]
-                        ymd.append(int(s[:4]))
-                        ymd.append(int(s[4:6]))
-                        ymd.append(int(s[6:8]))
-                        res.hour = int(s[8:10])
-                        res.minute = int(s[10:12])
+                        if len_li > 8:
+                            res.hour = int(s[8:10])
+                            res.minute = int(s[10:12])
 
-                        if len_li == 14:
-                            res.second = int(s[12:])
+                            if len_li > 12:
+                                res.second = int(s[12:])
 
                     elif ((i < len_l and info.hms(l[i]) is not None) or
                           (i+1 < len_l and l[i] == ' ' and
@@ -818,13 +900,13 @@ class parser(object):
 
                     elif i < len_l and l[i] in ('-', '/', '.'):
                         sep = l[i]
-                        ymd.append(int(value))
+                        ymd.append(value_repr)
                         i += 1
 
                         if i < len_l and not info.jump(l[i]):
                             try:
                                 # 01-01[-01]
-                                ymd.append(int(l[i]))
+                                ymd.append(l[i])
                             except ValueError:
                                 # 01-Jan[-01]
                                 value = info.month(l[i])
@@ -848,7 +930,7 @@ class parser(object):
                                     mstridx = len(ymd)-1
                                     assert mstridx == -1
                                 else:
-                                    ymd.append(int(l[i]))
+                                    ymd.append(l[i])
 
                                 i += 1
                     elif i >= len_l or info.jump(l[i]):
@@ -864,7 +946,7 @@ class parser(object):
                             i += 1
                         else:
                             # Year, month or day
-                            ymd.append(int(value))
+                            ymd.append(value)
                         i += 1
                     elif info.ampm(l[i]) is not None:
 
@@ -903,13 +985,13 @@ class parser(object):
                             # Jan-01[-99]
                             sep = l[i]
                             i += 1
-                            ymd.append(int(l[i]))
+                            ymd.append(l[i])
                             i += 1
 
                             if i < len_l and l[i] == sep:
                                 # Jan-01-99
                                 i += 1
-                                ymd.append(int(l[i]))
+                                ymd.append(l[i])
                                 i += 1
 
                         elif (i+3 < len_l and l[i] == l[i+2] == ' '
@@ -923,7 +1005,7 @@ class parser(object):
                                 pass
                             else:
                                 # Convert it here to become unambiguous
-                                ymd.append(info.convertyear(value))
+                                ymd.append(str(info.convertyear(value)))
                             i += 4
                     continue
 
@@ -1037,71 +1119,16 @@ class parser(object):
                 i += 1
 
             # Process year/month/day
-            len_ymd = len(ymd)
-            if len_ymd > 3:
-                # More than three members!?
-                return None, None
-            elif len_ymd == 1 or (mstridx != -1 and len_ymd == 2):
-                # One member, or two members with a month string
-                if mstridx != -1:
-                    res.month = ymd[mstridx]
-                    del ymd[mstridx]
+            year, month, day = ymd.resolve_ymd(mstridx, yearfirst, dayfirst)
+            if year is not None:
+                res.year = year
+                res.century_specified = ymd.century_specified
 
-                if len_ymd > 1 or mstridx == -1:
-                    if ymd[0] > 31:
-                        res.year = ymd[0]
-                    else:
-                        res.day = ymd[0]
+            if month is not None:
+                res.month = month
 
-            elif len_ymd == 2:
-                # Two members with numbers
-                if ymd[0] > 31:
-                    # 99-01
-                    res.year, res.month = ymd
-                elif ymd[1] > 31:
-                    # 01-99
-                    res.month, res.year = ymd
-                elif dayfirst and ymd[1] <= 12:
-                    # 13-01
-                    res.day, res.month = ymd
-                else:
-                    # 01-13
-                    res.month, res.day = ymd
-
-            elif len_ymd == 3:
-                # Three members
-                if mstridx == 0:
-                    res.month, res.day, res.year = ymd
-                elif mstridx == 1:
-                    if ymd[0] > 31 or (yearfirst and ymd[2] <= 31):
-                        # 99-Jan-01
-                        res.year, res.month, res.day = ymd
-                    else:
-                        # 01-Jan-01
-                        # Give precendence to day-first, since
-                        # two-digit years is usually hand-written.
-                        res.day, res.month, res.year = ymd
-
-                elif mstridx == 2:
-                    # WTF!?
-                    if ymd[1] > 31:
-                        # 01-99-Jan
-                        res.day, res.year, res.month = ymd
-                    else:
-                        # 99-01-Jan
-                        res.year, res.day, res.month = ymd
-
-                else:
-                    if ymd[0] > 31 or \
-                       (yearfirst and ymd[1] <= 12 and ymd[2] <= 31):
-                        # 99-01-01
-                        res.year, res.month, res.day = ymd
-                    elif ymd[0] > 12 or (dayfirst and ymd[1] <= 12):
-                        # 13-01-01
-                        res.day, res.month, res.year = ymd
-                    else:
-                        # 01-13-01
-                        res.month, res.day, res.year = ymd
+            if day is not None:
+                res.day = day
 
         except (IndexError, ValueError, AssertionError):
             return None, None

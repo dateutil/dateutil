@@ -5339,6 +5339,15 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(parse("2004 10 Apr 11h30m", default=self.default),
                          datetime(2004, 4, 10, 11, 30))
 
+    def test_99_ad(self):
+        self.assertEqual(parse('0099-01-01T00:00:00'),
+                         datetime(99, 1, 1, 0, 0))
+
+    @unittest.skip("Known failure")
+    def test_31_ad(self):
+        self.assertEqual(parse('0031-01-01T00:00:00'),
+                         datetime(31, 1, 1, 0, 0))
+
     # Test that if a year is omitted, we use the most recent matching value
     def testSmartDefaultsNoYearMonthEarlier(self):
         self.assertEqual(parse("August 3", default=datetime(2014, 5, 1),
