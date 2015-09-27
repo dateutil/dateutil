@@ -349,8 +349,12 @@ class parserinfo(object):
 
         return self.TZOFFSET.get(name)
 
-    def convertyear(self, year):
-        if year < 100:
+    def convertyear(self, year, tokens=None):
+        potential_year_tokens = _find_potential_year_tokens(year, tokens) if tokens else []
+        year_token_unambiguous = len(potential_year_tokens) == 1
+        year_at_least_three_digits = (year_token_unambiguous and
+                                      len(potential_year_tokens[0]) > 2) or year >= 100
+        if not year_at_least_three_digits:
             year += self._century
             if abs(year - self._year) >= 50:
                 if year < self._year:
@@ -359,10 +363,10 @@ class parserinfo(object):
                     year -= 100
         return year
 
-    def validate(self, res):
+    def validate(self, res, tokens):
         # move to info
         if res.year is not None:
-            res.year = self.convertyear(res.year)
+            res.year = self.convertyear(res.year, tokens)
 
         if res.tzoffset == 0 and not res.tzname or res.tzname == 'Z':
             res.tzname = "UTC"
@@ -1086,8 +1090,8 @@ class parser(object):
                         res.year, res.day, res.month = ymd
 
                 else:
-                    if ymd[0] > 31 or \
-                       (yearfirst and ymd[1] <= 12 and ymd[2] <= 31):
+                    if _find_probable_year_index(ymd, l) == 0 or (ymd[0] > 31 or
+                       (yearfirst and ymd[1] <= 12 and ymd[2] <= 31)):
                         # 99-01-01
                         res.year, res.month, res.day = ymd
                     elif ymd[0] > 12 or (dayfirst and ymd[1] <= 12):
@@ -1100,7 +1104,7 @@ class parser(object):
         except (IndexError, ValueError, AssertionError):
             return None, None
 
-        if not info.validate(res):
+        if not info.validate(res, l):
             return None, None
 
         if fuzzy_with_tokens:
@@ -1400,5 +1404,26 @@ def _parsems(value):
         i, f = value.split(".")
         return int(i), int(f.ljust(6, "0")[:6])
 
+
+def _token_could_be_year(token, year):
+    try:
+        return int(token) == year
+    except ValueError:
+        return False
+
+
+def _find_potential_year_tokens(year, tokens):
+    return [token for token in tokens if _token_could_be_year(token, year)]
+
+
+def _find_probable_year_index(ymd, tokens):
+    """
+    attempt to deduce if a pre 100 year was lost
+     due to padded zeros being taken off
+    """
+    for index, token in enumerate(ymd):
+        potential_year_tokens = _find_potential_year_tokens(token, tokens)
+        if len(potential_year_tokens) == 1 and len(potential_year_tokens[0]) > 2:
+            return index
 
 # vim:ts=4:sw=4:et

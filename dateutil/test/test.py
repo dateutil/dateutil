@@ -5574,6 +5574,16 @@ class ParserTest(unittest.TestCase):
         dt = myparser.parse("01/Foo/2007")
         self.assertEqual(dt, datetime(2007, 1, 1))
 
+    def test_99_ad(self):
+        self.assertEqual(parse('0099-01-01T00:00:00'),
+                         datetime(99, 1, 1, 0, 0))
+
+    def test_31_ad(self):
+        self.assertEqual(
+            parse('0031-01-01T00:00:00'),
+            datetime(31, 1, 1, 0, 0)
+        )
+
     def testParseStr(self):
         self.assertEqual(parse(self.str_str),
                          parse(self.uni_str))
