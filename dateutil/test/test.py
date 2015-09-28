@@ -5759,83 +5759,83 @@ END:VTIMEZONE
     def testStrStart1(self):
         self.assertEqual(datetime(2003, 4, 6, 1, 59,
                                   tzinfo=tzstr("EST5EDT")).tzname(), "EST")
-        self.assertEqual(datetime(2003, 4, 6, 2, 00,
+        self.assertEqual(datetime(2003, 4, 6, 2, 00, fold=1,
                                   tzinfo=tzstr("EST5EDT")).tzname(), "EDT")
 
     def testStrEnd1(self):
-        self.assertEqual(datetime(2003, 10, 26, 0, 59,
+        self.assertEqual(datetime(2003, 10, 26, 0, 59, fold=1,
                                   tzinfo=tzstr("EST5EDT")).tzname(), "EDT")
-        self.assertEqual(datetime(2003, 10, 26, 1, 00,
+        self.assertEqual(datetime(2003, 10, 26, 1, 00, fold=1,
                                   tzinfo=tzstr("EST5EDT")).tzname(), "EST")
 
     def testStrStart2(self):
         s = "EST5EDT,4,0,6,7200,10,0,26,7200,3600"
         self.assertEqual(datetime(2003, 4, 6, 1, 59,
                                   tzinfo=tzstr(s)).tzname(), "EST")
-        self.assertEqual(datetime(2003, 4, 6, 2, 00,
+        self.assertEqual(datetime(2003, 4, 6, 2, 00, fold=1,
                                   tzinfo=tzstr(s)).tzname(), "EDT")
 
     def testStrEnd2(self):
         s = "EST5EDT,4,0,6,7200,10,0,26,7200,3600"
-        self.assertEqual(datetime(2003, 10, 26, 0, 59,
+        self.assertEqual(datetime(2003, 10, 26, 0, 59, fold=1,
                                   tzinfo=tzstr(s)).tzname(), "EDT")
-        self.assertEqual(datetime(2003, 10, 26, 1, 00,
+        self.assertEqual(datetime(2003, 10, 26, 1, 00, fold=1,
                                   tzinfo=tzstr(s)).tzname(), "EST")
 
     def testStrStart3(self):
         s = "EST5EDT,4,1,0,7200,10,-1,0,7200,3600"
         self.assertEqual(datetime(2003, 4, 6, 1, 59,
                                   tzinfo=tzstr(s)).tzname(), "EST")
-        self.assertEqual(datetime(2003, 4, 6, 2, 00,
+        self.assertEqual(datetime(2003, 4, 6, 2, 00, fold=1,
                                   tzinfo=tzstr(s)).tzname(), "EDT")
 
     def testStrEnd3(self):
         s = "EST5EDT,4,1,0,7200,10,-1,0,7200,3600"
-        self.assertEqual(datetime(2003, 10, 26, 0, 59,
+        self.assertEqual(datetime(2003, 10, 26, 0, 59, fold=1,
                                   tzinfo=tzstr(s)).tzname(), "EDT")
-        self.assertEqual(datetime(2003, 10, 26, 1, 00,
+        self.assertEqual(datetime(2003, 10, 26, 1, 00, fold=1,
                                   tzinfo=tzstr(s)).tzname(), "EST")
 
     def testStrStart4(self):
         s = "EST5EDT4,M4.1.0/02:00:00,M10-5-0/02:00"
         self.assertEqual(datetime(2003, 4, 6, 1, 59,
                                   tzinfo=tzstr(s)).tzname(), "EST")
-        self.assertEqual(datetime(2003, 4, 6, 2, 00,
+        self.assertEqual(datetime(2003, 4, 6, 2, 00, fold=1,
                                   tzinfo=tzstr(s)).tzname(), "EDT")
 
     def testStrEnd4(self):
         s = "EST5EDT4,M4.1.0/02:00:00,M10-5-0/02:00"
-        self.assertEqual(datetime(2003, 10, 26, 0, 59,
+        self.assertEqual(datetime(2003, 10, 26, 0, 59, fold=1,
                                   tzinfo=tzstr(s)).tzname(), "EDT")
-        self.assertEqual(datetime(2003, 10, 26, 1, 00,
+        self.assertEqual(datetime(2003, 10, 26, 1, 00, fold=1,
                                   tzinfo=tzstr(s)).tzname(), "EST")
 
     def testStrStart5(self):
         s = "EST5EDT4,95/02:00:00,298/02:00"
         self.assertEqual(datetime(2003, 4, 6, 1, 59,
                                   tzinfo=tzstr(s)).tzname(), "EST")
-        self.assertEqual(datetime(2003, 4, 6, 2, 00,
+        self.assertEqual(datetime(2003, 4, 6, 2, 00, fold=1,
                                   tzinfo=tzstr(s)).tzname(), "EDT")
 
     def testStrEnd5(self):
         s = "EST5EDT4,95/02:00:00,298/02"
-        self.assertEqual(datetime(2003, 10, 26, 0, 59,
+        self.assertEqual(datetime(2003, 10, 26, 0, 59, fold=1,
                                   tzinfo=tzstr(s)).tzname(), "EDT")
-        self.assertEqual(datetime(2003, 10, 26, 1, 00,
+        self.assertEqual(datetime(2003, 10, 26, 1, 00, fold=1,
                                   tzinfo=tzstr(s)).tzname(), "EST")
 
     def testStrStart6(self):
         s = "EST5EDT4,J96/02:00:00,J299/02:00"
         self.assertEqual(datetime(2003, 4, 6, 1, 59,
                                   tzinfo=tzstr(s)).tzname(), "EST")
-        self.assertEqual(datetime(2003, 4, 6, 2, 00,
+        self.assertEqual(datetime(2003, 4, 6, 2, 00, fold=1,
                                   tzinfo=tzstr(s)).tzname(), "EDT")
 
     def testStrEnd6(self):
         s = "EST5EDT4,J96/02:00:00,J299/02"
-        self.assertEqual(datetime(2003, 10, 26, 0, 59,
+        self.assertEqual(datetime(2003, 10, 26, 0, 59, fold=1,
                                   tzinfo=tzstr(s)).tzname(), "EDT")
-        self.assertEqual(datetime(2003, 10, 26, 1, 00,
+        self.assertEqual(datetime(2003, 10, 26, 1, 00, fold=1,
                                   tzinfo=tzstr(s)).tzname(), "EST")
 
     def testStrStr(self):
@@ -5843,7 +5843,7 @@ END:VTIMEZONE
         # of a unicode literal.
         self.assertEqual(datetime(2003, 4, 6, 1, 59,
                                   tzinfo=tzstr(str("EST5EDT"))).tzname(), "EST")
-        self.assertEqual(datetime(2003, 4, 6, 2, 00,
+        self.assertEqual(datetime(2003, 4, 6, 2, 00, fold=1,
                                   tzinfo=tzstr(str("EST5EDT"))).tzname(), "EDT")
 
     def testStrCmp1(self):
@@ -5871,26 +5871,26 @@ END:VTIMEZONE
     def testFileStart1(self):
         tz = tzfile(BytesIO(base64.b64decode(self.TZFILE_EST5EDT)))
         self.assertEqual(datetime(2003, 4, 6, 1, 59, tzinfo=tz).tzname(), "EST")
-        self.assertEqual(datetime(2003, 4, 6, 2, 00, tzinfo=tz).tzname(), "EDT")
+        self.assertEqual(datetime(2003, 4, 6, 2, 00, tzinfo=tz, fold=1).tzname(), "EDT")
 
     def testFileEnd1(self):
         tz = tzfile(BytesIO(base64.b64decode(self.TZFILE_EST5EDT)))
         self.assertEqual(datetime(2003, 10, 26, 0, 59, tzinfo=tz).tzname(),
                          "EDT")
-        self.assertEqual(datetime(2003, 10, 26, 1, 00, tzinfo=tz).tzname(),
+        self.assertEqual(datetime(2003, 10, 26, 1, 00, tzinfo=tz, fold=1).tzname(),
                          "EST")
 
     def testZoneInfoFileStart1(self):
         tz = zoneinfo.gettz("EST5EDT")
         self.assertEqual(datetime(2003, 4, 6, 1, 59, tzinfo=tz).tzname(), "EST",
                          MISSING_TARBALL)
-        self.assertEqual(datetime(2003, 4, 6, 2, 00, tzinfo=tz).tzname(), "EDT")
+        self.assertEqual(datetime(2003, 4, 6, 2, 00, tzinfo=tz, fold=1).tzname(), "EDT")
 
     def testZoneInfoFileEnd1(self):
         tz = zoneinfo.gettz("EST5EDT")
         self.assertEqual(datetime(2003, 10, 26, 0, 59, tzinfo=tz).tzname(),
                          "EDT", MISSING_TARBALL)
-        self.assertEqual(datetime(2003, 10, 26, 1, 00, tzinfo=tz).tzname(),
+        self.assertEqual(datetime(2003, 10, 26, 1, 00, tzinfo=tz, fold=1).tzname(),
                          "EST")
 
     def testZoneInfoOffsetSignal(self):
@@ -5973,5 +5973,94 @@ END:VTIMEZONE
         # this should parse to UTC timezone not the original timezone
         dt = parse('2014-07-20T12:34:56+00:00')
         self.assertEqual(str(dt), '2014-07-20 12:34:56+00:00')
+
+HOUR = 3600
+
+class PEP495_TZTest(unittest.TestCase):
+    tz = tzrange('EST', -5 * HOUR, 'EDT', -4 * HOUR)
+
+    utc_regular_dst = datetime(2000, 6, 1)
+    utc_regular_std = datetime(2000, 1, 1)
+    utc_fold_0 = datetime(2000, 10, 29, 5, 45)
+    utc_fold_1 = datetime(2000, 10, 29, 6, 45)
+
+    lmt_regular_dst = datetime(2000, 5, 31, 20)
+    lmt_regular_std = datetime(1999, 12, 31, 19)
+    lmt_fold = datetime(2000, 10, 29, 1, 45)
+    lmt_gap = datetime(2000, 4, 2, 2, 45)
+
+    def test_fromutc(self):
+        tz = self.tz
+        u = self.utc_regular_dst.replace(tzinfo=tz)
+        t = self.lmt_regular_dst.replace(tzinfo=tz)
+        self.assertEqual(tz.fromutc(u), t)
+        self.assertEqual(t.fold, 0)
+
+        u = self.utc_regular_std.replace(tzinfo=tz)
+        t = self.lmt_regular_std.replace(tzinfo=tz)
+        self.assertEqual(tz.fromutc(u), t)
+        self.assertEqual(t.fold, 0)
+
+        u0 = self.utc_fold_0.replace(tzinfo=tz)
+        u1 = self.utc_fold_1.replace(tzinfo=tz)
+        t = self.lmt_fold.replace(tzinfo=tz)
+        t0, t1 = tz.fromutc(u0), tz.fromutc(u1)
+        self.assertEqual(t, t0)
+        self.assertEqual(t, t1)
+        self.assertEqual(t0.fold, 0)
+        self.assertEqual(t1.fold, 1)
+
+    def test_utcoffset(self):
+        tz = self.tz
+        std_offset = self.lmt_regular_std - self.utc_regular_std
+        dst_offset = self.lmt_regular_dst - self.utc_regular_dst
+
+        off_0 = self.lmt_regular_std.replace(tzinfo=tz).utcoffset()
+        off_1 = self.lmt_regular_std.replace(tzinfo=tz, fold=1).utcoffset()
+        self.assertEqual(off_0, std_offset)
+        self.assertEqual(off_1, std_offset)
+
+        off_0 = self.lmt_regular_dst.replace(tzinfo=tz).utcoffset()
+        off_1 = self.lmt_regular_dst.replace(tzinfo=tz, fold=1).utcoffset()
+        self.assertEqual(off_0, dst_offset)
+        self.assertEqual(off_1, dst_offset)
+
+        off_0 = self.lmt_fold.replace(tzinfo=tz).utcoffset()
+        off_1 = self.lmt_fold.replace(tzinfo=tz, fold=1).utcoffset()
+        self.assertEqual(off_0, dst_offset)
+        self.assertEqual(off_1, std_offset)
+
+        off_0 = self.lmt_gap.replace(tzinfo=tz).utcoffset()
+        off_1 = self.lmt_gap.replace(tzinfo=tz, fold=1).utcoffset()
+        self.assertEqual(off_0, std_offset)
+        self.assertEqual(off_1, dst_offset)
+
+    def test_roundtrip(self):
+        tz = self.tz
+        for u in [self.utc_regular_std, self.lmt_regular_dst,
+                  self.utc_fold_0, self.utc_fold_1]:
+            t = tz.fromutc(u.replace(tzinfo=tz))
+            self.assertEqual(t.replace(tzinfo=None) - t.utcoffset(), u)
+
+
+class PEP495_Australia_TZTest(PEP495_TZTest):
+    # Australia/Sydney rules from 2000
+    dstoff = relativedelta(hours=+2, month=3, day=31, weekday=SU(-1))
+    dston = relativedelta(hours=+2, month=8, day=31, weekday=SU(-1))
+    tz = tzrange('AEST', 10 * HOUR, 'AEDT', 11 * HOUR,
+                 start=dston, end=dstoff)
+
+    utc_regular_dst = datetime(2000, 1, 1)
+    utc_regular_std = datetime(2000, 6, 1)
+    utc_fold_0 = datetime(2000, 3, 25, 15, 45)
+    utc_fold_1 = datetime(2000, 3, 25, 16, 45)
+
+    lmt_regular_dst = datetime(2000, 1, 1, 11)
+    lmt_regular_std = datetime(2000, 6, 1, 10)
+    lmt_fold = datetime(2000, 3, 26, 2, 45)
+    lmt_gap = datetime(2000, 8, 27, 2, 45)
+
+class PEP495_EST5EDT_TZFileTest(PEP495_TZTest):
+    tz = tzfile(BytesIO(base64.b64decode(TZTest.TZFILE_EST5EDT)))
 
 # vim:ts=4:sw=4

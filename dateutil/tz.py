@@ -7,6 +7,7 @@ environment string (in all known formats), given ranges (with help from
 relative deltas), local machine timezone, fixed offset timezone, and UTC
 timezone.
 """
+import bisect
 import datetime
 import struct
 import time
@@ -44,6 +45,7 @@ def tzname_in_python2(namefunc):
     return adjust_encoding
 
 ZERO = datetime.timedelta(0)
+SECOND = datetime.timedelta(0, 1)
 EPOCHORDINAL = datetime.datetime.utcfromtimestamp(0).toordinal()
 
 
@@ -419,6 +421,9 @@ class tzfile(datetime.tzinfo):
         # isgmt are off, so it should be in wall time. OTOH, it's
         # always in gmt time. Let me know if you have comments
         # about this.
+        # XXX: Trust the comment above and assume that all transitions
+        # XXX: are in UTC.  Save them for use in fromutc().
+        self._trans_list_utc = self._trans_list
         laststdoffset = 0
         self._trans_list = list(self._trans_list)
         for i in range(len(self._trans_list)):
@@ -431,6 +436,38 @@ class tzfile(datetime.tzinfo):
                 # This is dst time. Convert to std.
                 self._trans_list[i] += laststdoffset
         self._trans_list = tuple(self._trans_list)
+
+    def fromutc(self, dt):
+        """datetime in UTC -> datetime in local time."""
+
+        if not isinstance(dt, datetime.datetime):
+            raise TypeError("fromutc() requires a datetime argument")
+        if dt.tzinfo is not self:
+            raise ValueError("dt.tzinfo is not self")
+
+        if not self._trans_list_utc:
+            # No transitions at all: self must be UTC.
+            return dt
+
+        timestamp = ((dt.toordinal() - EPOCHORDINAL) * 86400
+                     + dt.hour * 3600
+                     + dt.minute * 60
+                     + dt.second)
+
+        if timestamp < self._trans_list_utc[0]:
+            tti = self._ttinfo_before
+            fold = 0
+        else:
+            idx = bisect.bisect_right(self._trans_list_utc, timestamp)
+            tti_prev, tti = self._trans_idx[idx-2:idx]
+            # Detect fold
+            fold_seconds = (tti_prev.delta - tti.delta) // SECOND
+            fold = (fold_seconds > timestamp - self._trans_list[idx])
+        dt += tti.delta
+        if fold:
+            return dt.replace(fold=1)
+        else:
+            return dt
 
     def _find_ttinfo(self, dt, laststd=0):
         timestamp = ((dt.toordinal() - EPOCHORDINAL) * 86400
@@ -455,7 +492,19 @@ class tzfile(datetime.tzinfo):
             else:
                 return self._ttinfo_std
         else:
-            return self._trans_idx[idx-1]
+            prev_tti, tti = self._trans_idx[idx-2:idx]
+            # Detect fold/gap
+            if tti.delta > prev_tti.delta:
+                # Clock is moved forward.  Possible gap.
+                gap_seconds = (tti.delta - prev_tti.delta) // SECOND
+                if timestamp - self._trans_list[idx-1] < gap_seconds:
+                    return (prev_tti, tti)[dt.fold]
+            else:
+                # Clock is moved back.  Possible fold.
+                fold_seconds = (prev_tti.delta - tti.delta) // SECOND
+                if timestamp - self._trans_list[idx-1] < fold_seconds:
+                    return (prev_tti, tti)[dt.fold]
+            return tti
 
     def utcoffset(self, dt):
         if not self._ttinfo_std:
@@ -507,9 +556,38 @@ class tzfile(datetime.tzinfo):
 
 
 class tzrange(datetime.tzinfo):
+    """Time zone with regular DST transitions.
+
+    The ``tzrange`` class provides a ``tzinfo`` implementation suitable for
+    timezones that alternate between STD and DST time at times that can be
+    computed as a ``relativedelta`` offset from midnight of January 1st of any
+    given year.
+    """
     def __init__(self, stdabbr, stdoffset=None,
                  dstabbr=None, dstoffset=None,
                  start=None, end=None):
+        """
+
+        :param stdabbr: str
+            Standard time abbreviation.  Winter time in the Northern and
+            summer time in the Southern Hemisphere.
+        :param stdoffset: datetime.timedelta
+            Standard time UTC offset.  A ``timedelta`` that need to be added
+            to UTC ``datetime`` to arrive at the standard time.
+        :param dstabbr: str
+            Daylight Saving time abbreviation.  Summer time in the Northern and
+            winter time in the Southern Hemisphere.
+        :param dstoffset: datetime.timedelta
+            Daylight Saving time UTC offset.  A ``timedelta`` that need to be added
+            to UTC ``datetime`` to arrive at the Daylight Saving time.
+        :param start: relativedelta
+            Start of DST relative to midnight of January 1st.  If not specified,
+            defaults to 02:00 AM (standard time) on the first Sunday in April.
+        :param end: relativedelta
+            End of DST relative to midnight of January 1st.  If not specified,
+            defaults to 01:00 AM (standard time) on the last Sunday in October.
+        :return: None
+        """
         global relativedelta
         if not relativedelta:
             from dateutil import relativedelta
@@ -555,6 +633,43 @@ class tzrange(datetime.tzinfo):
         else:
             return self._std_abbr
 
+    def fromutc(self, dt):
+        """datetime in UTC -> datetime in local time."""
+
+        if not isinstance(dt, datetime.datetime):
+            raise TypeError("fromutc() requires a datetime argument")
+        if dt.tzinfo is not self:
+            raise ValueError("dt.tzinfo is not self")
+
+        # Convert dt to standard time
+        dt = dt.replace(tzinfo=None) + self._std_offset
+        if self._start_delta is None:
+            return dt.replace(tzinfo=self)
+        # Locate start and end of DST
+        year = datetime.datetime(dt.year, 1, 1)
+        start = year + self._start_delta
+        end = year + self._end_delta
+        shift = self._dst_offset - self._std_offset
+        if start < end:
+            if dt < start or dt >= end + shift:
+                # Regular STD time
+                return dt.replace(tzinfo=self)
+            if dt < end:
+                # Regular DST time
+                return dt.replace(tzinfo=self) + shift
+            # Fold (end <= dt < end + shift)
+            return dt.replace(tzinfo=self, fold=1)
+        else:
+            if end + shift <= dt < start:
+                # Regular STD time
+                return dt.replace(tzinfo=self)
+            if dt >= start or dt < end:
+                # Regular DST time
+                return dt.replace(tzinfo=self) + shift
+            # Fold (end <= dt < end + shift)
+            return dt.replace(tzinfo=self, fold=1)
+
+
     def _isdst(self, dt):
         if not self._start_delta:
             return False
@@ -562,10 +677,31 @@ class tzrange(datetime.tzinfo):
         start = year+self._start_delta
         end = year+self._end_delta
         dt = dt.replace(tzinfo=None)
+        shift = self._dst_offset - self._std_offset
         if start < end:
-            return dt >= start and dt < end
+            # Northern hemisphere: DST starts in the Spring and ends in the Fall.
+            if start + shift <= dt < end:
+                # DST is in effect
+                return True
+            if end <= dt < end + shift:
+                # Fall-back fold
+                return dt.fold == 0
+            if end <= dt or dt < start:
+                # STD is in effect
+                return False
+            else: # start <= dt < start + shift
+                # Spring-forward gap
+                return dt.fold == 1
         else:
-            return dt >= start or dt < end
+            # Southern hemisphere: DST starts in the Fall and ends in the Spring.
+            if start + shift <= dt or dt < end:
+                return True
+            if end <= dt < end + shift:
+                return dt.fold == 0
+            if end <= dt < start:
+                return False
+            else: # start <= dt < start + shift
+                return dt.fold == 1
 
     def __eq__(self, other):
         if not isinstance(other, tzrange):
