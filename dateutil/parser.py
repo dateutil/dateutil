@@ -379,9 +379,31 @@ class parserinfo(object):
 
 
 class _ymd(list):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, tzstr, *args, **kwargs):
         super(self.__class__, self).__init__(*args, **kwargs)
         self.century_specified = False
+        self.tzstr = tzstr
+
+    @staticmethod
+    def token_could_be_year(token, year):
+        try:
+            return int(token) == year
+        except ValueError:
+            return False
+
+    @staticmethod
+    def find_potential_year_tokens(year, tokens):
+        return [token for token in tokens if _ymd.token_could_be_year(token, year)]
+
+    def find_probable_year_index(self, tokens):
+        """
+        attempt to deduce if a pre 100 year was lost
+         due to padded zeros being taken off
+        """
+        for index, token in enumerate(self):
+            potential_year_tokens = _ymd.find_potential_year_tokens(token, tokens)
+            if len(potential_year_tokens) == 1 and len(potential_year_tokens[0]) > 2:
+                return index
 
     def append(self, val):
         if hasattr(val, '__len__'):
@@ -450,6 +472,7 @@ class _ymd(list):
 
             else:
                 if self[0] > 31 or \
+                    self.find_probable_year_index(_timelex.split(self.tzstr)) == 0 or \
                    (yearfirst and self[1] <= 12 and self[2] <= 31):
                     # 99-01-01
                     year, month, day = self
@@ -758,7 +781,7 @@ class parser(object):
 
         try:
             # year/month/day list
-            ymd = _ymd()
+            ymd = _ymd(timestr)
 
             # Index of the month string in ymd
             mstridx = -1
