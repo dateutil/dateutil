@@ -19,7 +19,6 @@ from dateutil.tzcommon import tzname_in_python2
 try:
     from dateutil.tzwin import tzwin, tzwinlocal
 except ImportError:
-    print 'import error'
     tzwin = tzwinlocal = None
 
 relativedelta = None
