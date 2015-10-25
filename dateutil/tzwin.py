@@ -4,7 +4,7 @@ import struct
 
 from six.moves import winreg
 
-from .tz import tzname_in_python2
+from dateutil.tzcommon import tzname_in_python2
 
 __all__ = ["tzwin", "tzwinlocal"]
 
