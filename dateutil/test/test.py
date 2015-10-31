@@ -5584,6 +5584,26 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(parser().parse(self.str_str),
                          parser().parse(self.uni_str))
 
+    def testParseUnicodeWords(self):
+
+        class rus_parserinfo(parserinfo):
+            MONTHS = [("янв", "Январь"),
+                      ("фев", "Февраль"),
+                      ("мар", "Март"),
+                      ("апр", "Апрель"),
+                      ("май", "Май"),
+                      ("июн", "Июнь"),
+                      ("июл", "Июль"),
+                      ("авг", "Август"),
+                      ("сен", "Сентябрь"),
+                      ("окт", "Октябрь"),
+                      ("ноя", "Ноябрь"),
+                      ("дек", "Декабрь")]
+
+        self.assertEqual(parse('10 Сентябрь 2015 10:20',
+                               parserinfo=rus_parserinfo()),
+                         datetime(2015, 9, 10, 10, 20))
+
 
 class EasterTest(unittest.TestCase):
     easterlist = [
