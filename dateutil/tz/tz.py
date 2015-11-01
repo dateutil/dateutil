@@ -14,19 +14,16 @@ import sys
 import os
 
 from six import string_types, PY3
-from dateutil.tzcommon import tzname_in_python2
+from .__init__ import tzname_in_python2
 
 try:
-    from dateutil.tzwin import tzwin, tzwinlocal
+    from .win import tzwin, tzwinlocal
 except ImportError:
     tzwin = tzwinlocal = None
 
 relativedelta = None
 parser = None
 rrule = None
-
-__all__ = ["tzutc", "tzoffset", "tzlocal", "tzfile", "tzrange",
-           "tzstr", "tzical", "tzwin", "tzwinlocal", "gettz"]
 
 ZERO = datetime.timedelta(0)
 EPOCHORDINAL = datetime.datetime.utcfromtimestamp(0).toordinal()

@@ -47,5 +47,5 @@ datetime module available in the Python standard library.
           'Programming Language :: Python :: 3.4',
           'Topic :: Software Development :: Libraries',
       ],
-      test_suite="dateutil.test.test"
+      test_suite="dateutil.test"
       )

@@ -40,75 +40,75 @@ MO, TU, WE, TH, FR, SA, SU = weekdays = tuple([weekday(x) for x in range(7)])
 
 class relativedelta(object):
     """
-The relativedelta type is based on the specification of the excellent
-work done by M.-A. Lemburg in his
-`mx.DateTime <http://www.egenix.com/files/python/mxDateTime.html>`_ extension.
-However, notice that this type does *NOT* implement the same algorithm as
-his work. Do *NOT* expect it to behave like mx.DateTime's counterpart.
+    The relativedelta type is based on the specification of the excellent
+    work done by M.-A. Lemburg in his
+    `mx.DateTime <http://www.egenix.com/files/python/mxDateTime.html>`_ extension.
+    However, notice that this type does *NOT* implement the same algorithm as
+    his work. Do *NOT* expect it to behave like mx.DateTime's counterpart.
 
-There are two different ways to build a relativedelta instance. The
-first one is passing it two date/datetime classes::
+    There are two different ways to build a relativedelta instance. The
+    first one is passing it two date/datetime classes::
 
-    relativedelta(datetime1, datetime2)
+        relativedelta(datetime1, datetime2)
 
-The second one is passing it any number of the following keyword arguments::
+    The second one is passing it any number of the following keyword arguments::
 
-    relativedelta(arg1=x,arg2=y,arg3=z...)
+        relativedelta(arg1=x,arg2=y,arg3=z...)
 
-    year, month, day, hour, minute, second, microsecond:
-        Absolute information (argument is singular); adding or subtracting a
-        relativedelta with absolute information does not perform an aritmetic
-        operation, but rather REPLACES the corresponding value in the
-        original datetime with the value(s) in relativedelta.
+        year, month, day, hour, minute, second, microsecond:
+            Absolute information (argument is singular); adding or subtracting a
+            relativedelta with absolute information does not perform an aritmetic
+            operation, but rather REPLACES the corresponding value in the
+            original datetime with the value(s) in relativedelta.
 
-    years, months, weeks, days, hours, minutes, seconds, microseconds:
-        Relative information, may be negative (argument is plural); adding
-        or subtracting a relativedelta with relative information performs
-        the corresponding aritmetic operation on the original datetime value
-        with the information in the relativedelta.  
+        years, months, weeks, days, hours, minutes, seconds, microseconds:
+            Relative information, may be negative (argument is plural); adding
+            or subtracting a relativedelta with relative information performs
+            the corresponding aritmetic operation on the original datetime value
+            with the information in the relativedelta.  
 
-    weekday:
-        One of the weekday instances (MO, TU, etc). These instances may
-        receive a parameter N, specifying the Nth weekday, which could
-        be positive or negative (like MO(+1) or MO(-2). Not specifying
-        it is the same as specifying +1. You can also use an integer,
-        where 0=MO.
+        weekday:
+            One of the weekday instances (MO, TU, etc). These instances may
+            receive a parameter N, specifying the Nth weekday, which could
+            be positive or negative (like MO(+1) or MO(-2). Not specifying
+            it is the same as specifying +1. You can also use an integer,
+            where 0=MO.
 
-    leapdays:
-        Will add given days to the date found, if year is a leap
-        year, and the date found is post 28 of february.
+        leapdays:
+            Will add given days to the date found, if year is a leap
+            year, and the date found is post 28 of february.
 
-    yearday, nlyearday:
-        Set the yearday or the non-leap year day (jump leap days).
-        These are converted to day/month/leapdays information.
+        yearday, nlyearday:
+            Set the yearday or the non-leap year day (jump leap days).
+            These are converted to day/month/leapdays information.
 
-Here is the behavior of operations with relativedelta:
+    Here is the behavior of operations with relativedelta:
 
-1. Calculate the absolute year, using the 'year' argument, or the
-   original datetime year, if the argument is not present.
+    1. Calculate the absolute year, using the 'year' argument, or the
+       original datetime year, if the argument is not present.
 
-2. Add the relative 'years' argument to the absolute year.
+    2. Add the relative 'years' argument to the absolute year.
 
-3. Do steps 1 and 2 for month/months.
+    3. Do steps 1 and 2 for month/months.
 
-4. Calculate the absolute day, using the 'day' argument, or the
-   original datetime day, if the argument is not present. Then,
-   subtract from the day until it fits in the year and month
-   found after their operations.
+    4. Calculate the absolute day, using the 'day' argument, or the
+       original datetime day, if the argument is not present. Then,
+       subtract from the day until it fits in the year and month
+       found after their operations.
 
-5. Add the relative 'days' argument to the absolute day. Notice
-   that the 'weeks' argument is multiplied by 7 and added to
-   'days'.
+    5. Add the relative 'days' argument to the absolute day. Notice
+       that the 'weeks' argument is multiplied by 7 and added to
+       'days'.
 
-6. Do steps 1 and 2 for hour/hours, minute/minutes, second/seconds,
-   microsecond/microseconds.
+    6. Do steps 1 and 2 for hour/hours, minute/minutes, second/seconds,
+       microsecond/microseconds.
 
-7. If the 'weekday' argument is present, calculate the weekday,
-   with the given (wday, nth) tuple. wday is the index of the
-   weekday (0-6, 0=Mon), and nth is the number of weeks to add
-   forward or backward, depending on its signal. Notice that if
-   the calculated date is already Monday, for example, using
-   (0, 1) or (0, -1) won't change the day.
+    7. If the 'weekday' argument is present, calculate the weekday,
+       with the given (wday, nth) tuple. wday is the index of the
+       weekday (0-6, 0=Mon), and nth is the number of weeks to add
+       forward or backward, depending on its signal. Notice that if
+       the calculated date is already Monday, for example, using
+       (0, 1) or (0, -1) won't change the day.
     """
 
     def __init__(self, dt1=None, dt2=None,

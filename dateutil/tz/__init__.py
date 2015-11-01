@@ -1,4 +1,8 @@
+from .tz import *
 from six import PY3
+
+__all__ = ["tzutc", "tzoffset", "tzlocal", "tzfile", "tzrange",
+           "tzstr", "tzical", "tzwin", "tzwinlocal", "gettz"]
 
 def tzname_in_python2(namefunc):
     """Change unicode output into bytestrings in Python 2
