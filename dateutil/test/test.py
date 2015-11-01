@@ -2,19 +2,9 @@
 from __future__ import unicode_literals
 
 import calendar
-import base64
-import sys
-import os
-import time as _time
 
-from six import assertRaisesRegex, StringIO, BytesIO, PY3
-
-try:
-    # python2.6 unittest has no skipUnless. So we use unittest2.
-    # if you have python >= 2.7, you don't need unittest2, but it won't harm
-    import unittest2 as unittest
-except ImportError:
-    import unittest
+import unittest
+from six import assertRaisesRegex, PY3
 
 from datetime import *
 
@@ -22,14 +12,8 @@ from dateutil.relativedelta import *
 from dateutil.parser import *
 from dateutil.easter import *
 from dateutil.rrule import *
-from dateutil.tz import *
-from dateutil import zoneinfo
 
-try:
-    from dateutil import tzwin
-except ImportError:
-    pass
-
+from dateutil.tz import tzoffset
 
 class RelativeDeltaTest(unittest.TestCase):
     now = datetime(2003, 9, 17, 20, 54, 47, 282310)

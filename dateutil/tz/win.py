@@ -133,6 +133,7 @@ class tzwinbase(datetime.tzinfo):
         else:
             return self._stdname
 
+    @staticmethod
     def list():
         """Return a list of all time zones known to the system."""
         handle = winreg.ConnectRegistry(None, winreg.HKEY_LOCAL_MACHINE)
@@ -142,7 +143,6 @@ class tzwinbase(datetime.tzinfo):
         tzkey.Close()
         handle.Close()
         return result
-    list = staticmethod(list)
 
     def display(self):
         return self._display
@@ -260,9 +260,25 @@ def picknthweekday(year, month, dayofweek, hour, minute, whichweek):
 
 def valuestodict(key):
     """Convert a registry key's values to a dictionary."""
-    dict = {}
+    dout = {}
     size = winreg.QueryInfoKey(key)[1]
+    tz_res = None
+
     for i in range(size):
-        data = winreg.EnumValue(key, i)
-        dict[data[0]] = data[1]
-    return dict
+        key_name, value, dtype = winreg.EnumValue(key, i)
+        if dtype == winreg.REG_DWORD or dtype == winreg.REG_DWORD_LITTLE_ENDIAN:
+            # If it's a DWORD (32-bit integer), it's stored as unsigned - convert
+            # that to a proper signed integer
+            if value & (1 << 31):
+                value = value - (1 << 32)
+        elif dtype == winreg.REG_SZ:
+            # If it's a reference to the tzres DLL, load the actual string
+            if value.startswith('@tzres'):
+                tz_res = tz_res or tzres()
+                value = tz_res.name_from_string(value)
+
+            value = value.rstrip('\x00')    # Remove trailing nulls
+
+        dout[key_name] = value
+
+    return dout

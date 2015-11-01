@@ -4,7 +4,9 @@ from __future__ import unicode_literals
 from datetime import datetime, timedelta
 from six import BytesIO, StringIO
 
+import os
 import sys
+import time as _time
 import base64
 import unittest
 IS_WIN = sys.platform.startswith('win')
@@ -354,3 +356,18 @@ class TzWinTest(unittest.TestCase):
         tz = tzwin.tzwin("UTC")
         dt = parse("2013-03-06 19:08:15")
         self.assertFalse(tz._isdst(dt))
+
+    def testOffset(self):
+        tz = tzwin.tzwin("Cape Verde Standard Time")
+        self.assertEqual(tz.utcoffset(datetime(1995, 5, 21, 12, 9, 13)),
+                         timedelta(-1, 82800))
+
+    def testLocal(self):
+        # Not sure how to pin a local time zone, so for now we're just going
+        # to run this and make sure it doesn't raise an error
+        # See Github Issue #135: https://github.com/dateutil/dateutil/issues/135
+        datetime.now(tzwin.tzwinlocal())
+
+        datetime(2014, 3, 11, tzinfo=tzwin.tzwinlocal()).utcoffset()
+
+
