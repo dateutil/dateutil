@@ -8,6 +8,9 @@ relative deltas), local machine timezone, fixed offset timezone, and UTC
 timezone.
 """
 import datetime
+from functools import partial
+from itertools import ifilter, imap
+import re
 import struct
 import time
 import sys
@@ -913,6 +916,19 @@ else:
     TZFILES = []
     TZPATHS = []
 
+def parserinfo():
+    if not hasattr(parserinfo, 'info'):
+        tmplst = set()
+        for path in TZPATHS:
+            if not os.path.isdir(path): continue
+            map(tmplst.add, ifilter(partial(re.match, '^[-\w][-+\w]*$'), os.listdir(path)))
+        from .zoneinfo import initclasszone
+        info = initclasszone().parserinfo()
+        map(tmplst.add, info[0])
+        parserinfo.info = (tmplst, max(3, info[1]))
+
+    return parserinfo.info
+
 
 def gettz(name=None):
     tz = None
@@ -979,6 +995,7 @@ def gettz(name=None):
                                 pass
                             break
                     else:
+                        # TODO Move this up to speed everything up
                         if name in ("GMT", "UTC"):
                             tz = tzutc()
                         elif name in time.tzname:

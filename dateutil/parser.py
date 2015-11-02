@@ -26,6 +26,7 @@ from six import text_type, binary_type, integer_types
 
 from . import relativedelta
 from . import tz
+from .zoneinfo import initclasszone
 
 __all__ = ["parse", "parserinfo"]
 
@@ -254,6 +255,7 @@ class parserinfo(object):
         self._ampm = self._convert(self.AMPM)
         self._utczone = self._convert(self.UTCZONE)
         self._pertain = self._convert(self.PERTAIN)
+        self.tzparseinfo = initclasszone().parserinfo()
 
         self.dayfirst = dayfirst
         self.yearfirst = yearfirst
@@ -433,6 +435,8 @@ class parser(object):
                 ret = ret.replace(tzinfo=tz.tzutc())
             elif res.tzoffset:
                 ret = ret.replace(tzinfo=tz.tzoffset(res.tzname, res.tzoffset))
+            elif res.tzinfo:
+                ret = ret.replace(tzinfo=res.tzinfo)
 
         if kwargs.get('fuzzy_with_tokens', False):
             return ret, skipped_tokens
@@ -442,7 +446,7 @@ class parser(object):
     class _result(_resultbase):
         __slots__ = ["year", "month", "day", "weekday",
                      "hour", "minute", "second", "microsecond",
-                     "tzname", "tzoffset", "ampm"]
+                     "tzname", "tzoffset", "ampm", "tzinfo"]
 
     def _parse(self, timestr, dayfirst=None, yearfirst=None, fuzzy=False,
                fuzzy_with_tokens=False):
@@ -795,7 +799,7 @@ class parser(object):
 
                 # Check for a timezone name
                 if (res.hour is not None and len(l[i]) <= 5 and
-                        res.tzname is None and res.tzoffset is None and
+                        res.tzname is None and res.tzoffset is None and res.tzinfo is None and
                         not [x for x in l[i] if x not in
                              string.ascii_uppercase]):
                     res.tzname = l[i]
@@ -816,6 +820,29 @@ class parser(object):
                             res.tzname = None
 
                     continue
+
+                # Check for a long time zone name
+                if (res.hour is not None and l[i] in info.tzparseinfo[0]
+                        and res.tzname is None and res.tzoffset is None and res.tzinfo is None):
+                    possible_tzname = ''
+                    possible_length = 0
+                    for k in xrange(i, len_l):
+                        if l[k] == '/':
+                            possible_tzname += l[k]
+                            continue
+                        else:
+                            possible_tzname += l[k]
+                            possible_length += 1
+
+                        tzinfo = tz.gettz(possible_tzname)
+                        if tzinfo:
+                            res.tzinfo = tzinfo
+                            i = k + 1
+                            break
+                        elif possible_length == info.tzparseinfo[1]:
+                            break
+                    if res.tzinfo:
+                        continue
 
                 # Check for a numbered timezone
                 if res.hour is not None and l[i] in ('+', '-'):

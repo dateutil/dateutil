@@ -5336,6 +5336,10 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(parse("2004 10 Apr 11h30m", default=self.default),
                          datetime(2004, 4, 10, 11, 30))
 
+    def testFullTimeZoneFormat(self):
+        self.assertEqual(parse("2003-04-12 04:05:06 America/New_York"),
+                         datetime(2003, 04, 12, tzinfo=gettz("America/New_York")))
+
     def testErrorType01(self):
         self.assertRaises(ValueError,
                           parse,'shouldfail')
