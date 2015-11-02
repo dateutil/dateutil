@@ -3,7 +3,12 @@ from __future__ import unicode_literals
 
 import calendar
 
-import unittest
+try:
+    # Needed in Python 2.6 or assertRaisesRegex
+    import unittest2 as unittest
+except ImportError:
+    import unittest
+
 from six import assertRaisesRegex, PY3
 
 from datetime import *

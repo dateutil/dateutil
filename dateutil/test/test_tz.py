@@ -8,8 +8,13 @@ import os
 import sys
 import time as _time
 import base64
-import unittest
 IS_WIN = sys.platform.startswith('win')
+
+try:
+    # Needed in Python 2.6 for conditional test skipping
+    import unittest2 as unittest
+except ImportError:
+    import unittest
 
 # dateutil imports
 from dateutil.relativedelta import relativedelta
@@ -334,7 +339,7 @@ class TZTest(unittest.TestCase):
         dt = parse('2014-07-20T12:34:56+00:00')
         self.assertEqual(str(dt), '2014-07-20 12:34:56+00:00')
 
-@unittest.skipIf(not IS_WIN, "Requires Windows")
+@unittest.skipUnless(IS_WIN, "Requires Windows")
 class TzWinTest(unittest.TestCase):
     def testTzResLoadName(self):
         # This may not work right on non-US locales.
