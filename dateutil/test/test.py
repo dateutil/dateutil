@@ -5949,8 +5949,52 @@ END:VTIMEZONE
     def testLeapCountDecodesProperly(self):
         # This timezone has leapcnt, and failed to decode until
         # Eugene Oden notified about the issue.
-        tz = tzfile(BytesIO(base64.b64decode(self.NEW_YORK)))
+        
+        # As leap information is currently unused (and unstored) by tzfile() we
+        # can only indirectly test this: Take advantage of tzfile() not closing
+        # the input file if handed in as an opened file and assert that the
+        # full file content has been read by tzfile(). Note: For this test to
+        # work NEW_YORK must be in TZif version 1 format i.e. no more data
+        # after TZif v1 header + data has been read
+        fileobj = BytesIO(base64.b64decode(self.NEW_YORK))
+        tz = tzfile(fileobj)
+        # we expect no remaining file content now, i.e. zero-length; if there's
+        # still data we haven't read the file format correctly
+        remaining_tzfile_content = fileobj.read()
+        self.assertEqual(len(remaining_tzfile_content), 0)
         self.assertEqual(datetime(2007, 3, 31, 20, 12).tzname(), None)
+
+    def testIsStd(self):
+        # NEW_YORK tzfile contains this isstd information:
+        isstd_expected = (0, 0, 0, 1)
+        tz = tzfile(BytesIO(base64.b64decode(self.NEW_YORK)))
+        # gather the actual information as parsed by the tzfile class
+        isstd = []
+        for ttinfo in tz._ttinfo_list:
+            # ttinfo objects contain boolean values
+            isstd.append(int(ttinfo.isstd))
+        # ttinfo list may contain more entries than isstd file content
+        isstd = tuple(isstd[:len(isstd_expected)])
+        self.assertEqual(
+            isstd_expected, isstd,
+            "isstd standard/wall indicators parsed: %s != tzfile contents: %s"
+            % (isstd, isstd_expected)) 
+
+    def testIsGmt(self):
+        # NEW_YORK tzfile contains this isgmt information:
+        isgmt_expected = (0, 0, 0, 1)
+        tz = tzfile(BytesIO(base64.b64decode(self.NEW_YORK)))
+        # gather the actual information as parsed by the tzfile class
+        isgmt = []
+        for ttinfo in tz._ttinfo_list:
+            # ttinfo objects contain boolean values
+            isgmt.append(int(ttinfo.isgmt))
+        # ttinfo list might contain more entries than isgmt file content
+        isgmt = tuple(isgmt[:len(isgmt_expected)])
+        self.assertEqual(
+            isgmt_expected, isgmt,
+            "isgmt standard/wall indicators parsed: %s != tzfile contents: %s"
+            % (isgmt, isgmt_expected)) 
 
     def testGettz(self):
         # bug 892569
