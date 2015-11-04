@@ -5993,7 +5993,7 @@ END:VTIMEZONE
         isgmt = tuple(isgmt[:len(isgmt_expected)])
         self.assertEqual(
             isgmt_expected, isgmt,
-            "isgmt standard/wall indicators parsed: %s != tzfile contents: %s"
+            "isgmt UTC/local indicators parsed: %s != tzfile contents: %s"
             % (isgmt, isgmt_expected)) 
 
     def testGettz(self):
