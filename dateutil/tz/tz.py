@@ -9,7 +9,7 @@ timezone.
 """
 import datetime
 from functools import partial
-from itertools import ifilter, imap
+
 import re
 import struct
 import time
@@ -17,6 +17,11 @@ import sys
 import os
 
 from six import string_types, PY3
+if PY3:
+    ifilter = filter
+else:
+    from itertools import ifilter
+
 from .__init__ import tzname_in_python2
 
 try:
@@ -907,7 +912,7 @@ def tz_parserinfo():
             map(tmplst.add, ifilter(partial(re.match, '^[-\w][-+\w]*$'), os.listdir(path)))
         from ..zoneinfo import initclasszone
         info = initclasszone().parserinfo()
-        map(tmplst.add, info[0])
+        tmplst = tmplst.union(info[0])
         tz_parserinfo.info = (tmplst, max(3, info[1]))
 
     return tz_parserinfo.info

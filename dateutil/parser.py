@@ -998,7 +998,7 @@ class parser(object):
                         and res.tzname is None and res.tzoffset is None and res.tzinfo is None):
                     possible_tzname = ''
                     possible_length = 0
-                    for k in xrange(i, len_l):
+                    for k in range(i, len_l):
                         if l[k] in ('/', '_'):
                             possible_tzname += l[k]
                             continue
