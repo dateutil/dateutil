@@ -5353,6 +5353,31 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(parse("2004 10 Apr 11h30m", default=self.default),
                          datetime(2004, 4, 10, 11, 30))
 
+    def testFullTimeZoneFormat(self):
+        # Test with a valid timezone
+        self.assertEqual(parse("2003-04-12 04:05:06 America/New_York"),
+                         datetime(2003, 4, 12, 4, 5, 6, tzinfo=gettz("America/New_York")))
+
+        # Invalid timezone, in this case it must be ignored
+        # in this case unmatched name must be returned as a token
+        parseresult = parse("2003-04-12 04:05:06 America/Nwe_Oyrk", fuzzy_with_tokens=True)
+        self.assertEqual(parseresult[0],
+                         datetime(2003, 4, 12, 4, 5, 6))
+        self.assertEqual(parseresult[1],
+                         (' ', ' America/Nwe_Oyrk'))
+
+        # Invalid timezone, expect an error
+        with self.assertRaises(ValueError):
+            parse("2003-04-12 04:05:06 America/Nwe_Oyrk")
+
+        # Ignoring timezone, when it is a valid one
+        self.assertEqual(parse("2003-04-12 04:05:06 America/New_York", ignoretz=True),
+                         datetime(2003, 4, 12, 4, 5, 6))
+
+        # If timezone is invalid and set to be ignored, it should still throw an error
+        with self.assertRaises(ValueError):
+            parse("2003-04-12 04:05:06 America/Nwe_Oyrk", ignoretz=True)
+
     # Test that if a year is omitted, we use the most recent matching value
     def testSmartDefaultsNoYearMonthEarlier(self):
         self.assertEqual(parse("August 3", default=datetime(2014, 5, 1),
