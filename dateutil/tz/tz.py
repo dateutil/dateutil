@@ -897,18 +897,20 @@ else:
     TZFILES = []
     TZPATHS = []
 
-def parserinfo():
-    if not hasattr(parserinfo, 'info'):
+def tz_parserinfo():
+    if not hasattr(tz_parserinfo, 'info'):
         tmplst = set()
         for path in TZPATHS:
-            if not os.path.isdir(path): continue
+            if not os.path.isdir(path):
+                continue
+
             map(tmplst.add, ifilter(partial(re.match, '^[-\w][-+\w]*$'), os.listdir(path)))
-        from .zoneinfo import initclasszone
+        from ..zoneinfo import initclasszone
         info = initclasszone().parserinfo()
         map(tmplst.add, info[0])
-        parserinfo.info = (tmplst, max(3, info[1]))
+        tz_parserinfo.info = (tmplst, max(3, info[1]))
 
-    return parserinfo.info
+    return tz_parserinfo.info
 
 
 def gettz(name=None):

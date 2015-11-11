@@ -55,7 +55,6 @@ from six import text_type, binary_type, integer_types
 
 from . import relativedelta
 from . import tz
-from .zoneinfo import initclasszone
 
 __all__ = ["parse", "parserinfo"]
 
@@ -295,7 +294,7 @@ class parserinfo(object):
         self._ampm = self._convert(self.AMPM)
         self._utczone = self._convert(self.UTCZONE)
         self._pertain = self._convert(self.PERTAIN)
-        self.tzparseinfo = initclasszone().parserinfo()
+        self.tzparseinfo = tz.tz_parserinfo()
 
         self.dayfirst = dayfirst
         self.yearfirst = yearfirst
@@ -1000,7 +999,7 @@ class parser(object):
                     possible_tzname = ''
                     possible_length = 0
                     for k in xrange(i, len_l):
-                        if l[k] == '/':
+                        if l[k] in ('/', '_'):
                             possible_tzname += l[k]
                             continue
                         else:
