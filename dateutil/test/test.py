@@ -4,8 +4,10 @@ from __future__ import unicode_literals
 import calendar
 import base64
 import sys
+import os
+import time as _time
 
-from six import StringIO, BytesIO, PY3
+from six import assertRaisesRegex, StringIO, BytesIO, PY3
 
 try:
     # python2.6 unittest has no skipUnless. So we use unittest2.
@@ -223,6 +225,17 @@ class RelativeDeltaTest(unittest.TestCase):
     def testBoolean(self):
         self.assertFalse(relativedelta(days=0))
         self.assertTrue(relativedelta(days=1))
+
+    def testComparison(self):
+        d1 = relativedelta(years=1, months=1, days=1, leapdays=0, hours=1, 
+                           minutes=1, seconds=1, microseconds=1)
+        d2 = relativedelta(years=1, months=1, days=1, leapdays=0, hours=1, 
+                           minutes=1, seconds=1, microseconds=1)
+        d3 = relativedelta(years=1, months=1, days=1, leapdays=0, hours=1, 
+                           minutes=1, seconds=1, microseconds=2)
+
+        self.assertEqual(d1, d2)
+        self.assertNotEqual(d1, d3)
 
     def testWeeks(self):
         # Test that the weeks property is working properly.
@@ -4873,6 +4886,10 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(parse("20030925"),
                          datetime(2003, 9, 25))
 
+    def testPythonLoggerFormat(self):
+        self.assertEqual(parse("2003-09-25 10:49:41,502"),
+                         datetime(2003, 9, 25, 10, 49, 41, 502000))
+
     def testNoSeparator1(self):
         self.assertEqual(parse("199709020908"),
                          datetime(1997, 9, 2, 9, 8))
@@ -5364,9 +5381,176 @@ class ParserTest(unittest.TestCase):
         # Timezone with 1 level depth in name
         # Timezone with 3 level depth in name
 
+    # Test that if a year is omitted, we use the most recent matching value
+    def testSmartDefaultsNoYearMonthEarlier(self):
+        self.assertEqual(parse("August 3", default=datetime(2014, 5, 1),
+                               smart_defaults=True), 
+                         datetime(2013, 8, 3))
+
+    def testSmartDefaultsNoYearDayEarlier(self):        
+        self.assertEqual(parse("August 3", default=datetime(2014, 8, 1),
+                               smart_defaults=True), 
+                         datetime(2013, 8, 3))
+
+    def testSmartDefaultsNoYearSameDay(self):
+        self.assertEqual(parse("August 3", default=datetime(2014, 8, 3),
+                               smart_defaults=True), 
+                         datetime(2014, 8, 3))
+
+    def testSmartDefaultsNoYearDayLater(self):
+        self.assertEqual(parse("August 3", default=datetime(2014, 8, 4),
+                               smart_defaults=True), 
+                         datetime(2014, 8, 3))
+    
+    def testSmartDefaultsNoYearMonthLater(self):
+        self.assertEqual(parse("August 3", default=datetime(2014, 12, 19),
+                               smart_defaults=True), 
+                         datetime(2014, 8, 3))
+
+    def testSmartDefaultsNoYearFeb29(self):
+        self.assertEqual(parse("February 29", default=datetime(2014, 12, 19),
+                               date_in_future=False, smart_defaults=True),
+                         datetime(2012, 2, 29))
+
+    def testSmartDefaultsNoYearFeb29Y2100(self):
+        # Year 2000 was not a leap year.
+        self.assertEqual(parse("February 29", default=datetime(2100, 12, 19),
+                               smart_defaults=True),
+                         datetime(2096, 2, 29))
+
+    # Test that if a year is omitted, we use the most next matching value
+    def testSmartDefaultsNoYearFutureDayEarlier(self):
+        self.assertEqual(parse("August 3", default=datetime(2014, 5, 1),
+                               date_in_future=True, smart_defaults=True),
+                         datetime(2014, 8, 3))
+
+    def testSmartDefaultsNoYearFutureMonthEarlier(self):
+        self.assertEqual(parse("August 3", default=datetime(2014, 8, 1),
+                               date_in_future=True, smart_defaults=True),
+                         datetime(2014, 8, 3))
+
+    def testSmartDefaultsNoYearFutureSameDay(self):
+        self.assertEqual(parse("August 3", default=datetime(2014, 8, 3),
+                               date_in_future=True, smart_defaults=True),
+                         datetime(2014, 8, 3))
+
+    def testSmartDefaultsNoYearFutureDayLater(self):
+        self.assertEqual(parse("August 3", default=datetime(2014, 8, 4),
+                               date_in_future=True, smart_defaults=True),
+                         datetime(2015, 8, 3))
+    
+    def testSmartDefaultsNoYearFutureMonthLater(self):
+        self.assertEqual(parse("August 3", default=datetime(2014, 12, 19),
+                               date_in_future=True, smart_defaults=True),
+                         datetime(2015, 8, 3))
+
+    def testSmartDefaultsNoYearFutureFeb29Y2100(self):
+        self.assertEqual(parse("February 29", default=datetime(2098, 12, 19),
+                               date_in_future=True, smart_defaults=True),
+                         datetime(2104, 2, 29))
+
+    # Test that if only a month is provided, we select the beginning of the most recent
+    # occurrence of the specified month
+    def testSmartDefaultsMonthOnlyMonthEarlier(self):
+        self.assertEqual(parse("September", default=datetime(2014, 5, 1),
+                               smart_defaults=True),
+                         datetime(2013, 9, 1))
+
+    def testSmartDefaultsMonthOnlySameMonthFirstDay(self):
+        self.assertEqual(parse("September", default=datetime(2014, 9, 1),
+                               smart_defaults=True),
+                         datetime(2014, 9, 1))
+
+    def testSmartDefaultsMonthOnlySameMonthLastDay(self):
+        self.assertEqual(parse("September", default=datetime(2014, 9, 30),
+                               smart_defaults=True),
+                         datetime(2014, 9, 1))
+
+    def testSmartDefaultMonthOnlyMonthLater(self):
+        self.assertEqual(parse("September", default=datetime(2014, 11, 1),
+                               smart_defaults=True),
+                         datetime(2014, 9, 1))
+
+    # Test that if only a month is provided, we select the beginning of the most recent
+    # occurrence of the specified month
+    def testSmartDefaultsMonthOnlyFutureMonthEarlier(self):
+        self.assertEqual(parse("September", default=datetime(2014, 5, 1),
+                               date_in_future=True, smart_defaults=True),
+                         datetime(2014, 9, 1))
+
+    def testSmartDefaultsMonthOnlyFutureSameMonthFirstDay(self):
+        self.assertEqual(parse("September", default=datetime(2014, 9, 1),
+                               date_in_future=True, smart_defaults=True),
+                         datetime(2014, 9, 1))
+
+    def testSmartDefaultsMonthOnlyFutureSameMonthLastDay(self):
+        self.assertEqual(parse("September", default=datetime(2014, 9, 30),
+                               date_in_future=True, smart_defaults=True),
+                         datetime(2014, 9, 1))
+    
+    def testSmartDefaultsMonthOnlyFutureMonthLater(self):
+        self.assertEqual(parse("September", default=datetime(2014, 11, 1),
+                               date_in_future=True, smart_defaults=True),
+                         datetime(2015, 9, 1))
+
+    # Test to ensure that if a year is specified, January 1st of that year is
+    # returned.
+    def testSmartDefaultsYearOnly(self):
+        self.assertEqual(parse("2009", smart_defaults=True),
+                         datetime(2009, 1, 1))
+
+    def testSmartDefaultsYearOnlyFuture(self):
+        self.assertEqual(parse("2009", smart_defaults=True,
+                               date_in_future=True),
+                         datetime(2009, 1, 1))
+
+    # Tests that invalid days fall back to the end of the month if that's
+    # the desired behavior.
+    def testInvalidDayNoFallback(self):
+        self.assertRaises(ValueError, parse, "Feb 30, 2007",
+                          **{'fallback_on_invalid_day':False})
+
+    def testInvalidDayFallbackFebNoLeapYear(self):
+        self.assertEqual(parse("Feb 31, 2007", fallback_on_invalid_day=True),
+                         datetime(2007, 2, 28))
+
+    def testInvalidDayFallbackFebLeapYear(self):
+        self.assertEqual(parse("Feb 31, 2008", fallback_on_invalid_day=True),
+                         datetime(2008, 2, 29))
+
+    def testUnspecifiedDayNoFallback(self):
+        self.assertRaises(ValueError, parse, "April 2009",
+                          **{'fallback_on_invalid_day':False,
+                             'default':datetime(2010, 1, 31)})
+
+    def testUnspecifiedDayUnspecifiedFallback(self):
+        self.assertEqual(parse("April 2009", default=datetime(2010, 1, 31)),
+                         datetime(2009, 4, 30))
+
+    def testUnspecifiedDayUnspecifiedFallback(self):
+        self.assertEqual(parse("April 2009", fallback_on_invalid_day=True,
+                               default=datetime(2010, 1, 31)),
+                         datetime(2009, 4, 30))
+
+    def testUnspecifiedDayUnspecifiedFallbackFebNoLeapYear(self):        
+        self.assertEqual(parse("Feb 2007", default=datetime(2010, 1, 31)),
+                         datetime(2007, 2, 28))
+
+    def testUnspecifiedDayUnspecifiedFallbackFebLeapYear(self):        
+        self.assertEqual(parse("Feb 2008", default=datetime(2010, 1, 31)),
+                         datetime(2008, 2, 29))
+
     def testErrorType01(self):
         self.assertRaises(ValueError,
-                          parse,'shouldfail')
+                          parse, 'shouldfail')
+
+    def testCorrectErrorOnFuzzyWithTokens(self):
+        assertRaisesRegex(self, ValueError, 'Unknown string format',
+                          parse, '04/04/32/423', fuzzy_with_tokens=True)
+        assertRaisesRegex(self, ValueError, 'Unknown string format',
+                          parse, '04/04/04 +32423', fuzzy_with_tokens=True)
+        assertRaisesRegex(self, ValueError, 'Unknown string format',
+                          parse, '04/04/0d4', fuzzy_with_tokens=True)
 
     def testIncreasingCTime(self):
         # This test will check 200 different years, every month, every day,
@@ -5427,6 +5611,26 @@ class ParserTest(unittest.TestCase):
 
         self.assertEqual(parser().parse(self.str_str),
                          parser().parse(self.uni_str))
+
+    def testParseUnicodeWords(self):
+
+        class rus_parserinfo(parserinfo):
+            MONTHS = [("янв", "Январь"),
+                      ("фев", "Февраль"),
+                      ("мар", "Март"),
+                      ("апр", "Апрель"),
+                      ("май", "Май"),
+                      ("июн", "Июнь"),
+                      ("июл", "Июль"),
+                      ("авг", "Август"),
+                      ("сен", "Сентябрь"),
+                      ("окт", "Октябрь"),
+                      ("ноя", "Ноябрь"),
+                      ("дек", "Декабрь")]
+
+        self.assertEqual(parse('10 Сентябрь 2015 10:20',
+                               parserinfo=rus_parserinfo()),
+                         datetime(2015, 9, 10, 10, 20))
 
 
 class EasterTest(unittest.TestCase):
@@ -5713,12 +5917,12 @@ END:VTIMEZONE
                          tzrange("EST", -18000, "EDT"))
 
     def testFileStart1(self):
-        tz = tzfile(BytesIO(base64.decodestring(self.TZFILE_EST5EDT)))
+        tz = tzfile(BytesIO(base64.b64decode(self.TZFILE_EST5EDT)))
         self.assertEqual(datetime(2003, 4, 6, 1, 59, tzinfo=tz).tzname(), "EST")
         self.assertEqual(datetime(2003, 4, 6, 2, 00, tzinfo=tz).tzname(), "EDT")
 
     def testFileEnd1(self):
-        tz = tzfile(BytesIO(base64.decodestring(self.TZFILE_EST5EDT)))
+        tz = tzfile(BytesIO(base64.b64decode(self.TZFILE_EST5EDT)))
         self.assertEqual(datetime(2003, 10, 26, 0, 59, tzinfo=tz).tzname(),
                          "EDT")
         self.assertEqual(datetime(2003, 10, 26, 1, 00, tzinfo=tz).tzname(),
@@ -5766,14 +5970,14 @@ END:VTIMEZONE
 
     def testRoundNonFullMinutes(self):
         # This timezone has an offset of 5992 seconds in 1900-01-01.
-        tz = tzfile(BytesIO(base64.decodestring(self.EUROPE_HELSINKI)))
+        tz = tzfile(BytesIO(base64.b64decode(self.EUROPE_HELSINKI)))
         self.assertEqual(str(datetime(1900, 1, 1, 0, 0, tzinfo=tz)),
                              "1900-01-01 00:00:00+01:40")
 
     def testLeapCountDecodesProperly(self):
         # This timezone has leapcnt, and failed to decode until
         # Eugene Oden notified about the issue.
-        tz = tzfile(BytesIO(base64.decodestring(self.NEW_YORK)))
+        tz = tzfile(BytesIO(base64.b64decode(self.NEW_YORK)))
         self.assertEqual(datetime(2007, 3, 31, 20, 12).tzname(), None)
 
     def testGettz(self):
@@ -5807,5 +6011,15 @@ END:VTIMEZONE
         tz = tzwin.tzwin("UTC")
         dt = parse("2013-03-06 19:08:15")
         self.assertFalse(tz._isdst(dt))
+
+    @unittest.skipIf(sys.platform.startswith("win"), "requires Unix")
+    def testTZSetDoesntCorrupt(self):
+        # if we start in non-UTC then tzset UTC make sure parse doesn't get
+        # confused
+        os.environ['TZ'] = 'UTC'
+        _time.tzset()
+        # this should parse to UTC timezone not the original timezone
+        dt = parse('2014-07-20T12:34:56+00:00')
+        self.assertEqual(str(dt), '2014-07-20 12:34:56+00:00')
 
 # vim:ts=4:sw=4
