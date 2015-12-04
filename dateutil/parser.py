@@ -649,7 +649,7 @@ class parser(object):
 
                 >>> from dateutil.parser import parse
                 >>> parse("Today is January 1, 2047 at 8:21:00AM", fuzzy_with_tokens=True)
-                (datetime.datetime(2011, 1, 1, 8, 21), (u'Today is ', u' ', u'at '))
+                (datetime.datetime(2047, 1, 1, 8, 21), (u'Today is ', u' ', u'at '))
 
         """
         if fuzzy_with_tokens:
