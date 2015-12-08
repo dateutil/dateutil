@@ -468,7 +468,7 @@ class parser(object):
             :class:`tzinfo` is not in a valid format, or if an invalid date
             would be created.
 
-        :raises OverFlowError:
+        :raises OverflowError:
             Raised if the parsed date exceeds the largest valid C integer on
             your system.
         """
@@ -1208,7 +1208,7 @@ def parse(timestr, parserinfo=None, **kwargs):
         :class:`tzinfo` is not in a valid format, or if an invalid date
         would be created.
 
-    :raises OverFlowError:
+    :raises OverflowError:
         Raised if the parsed date exceeds the largest valid C integer on
         your system.
     """
