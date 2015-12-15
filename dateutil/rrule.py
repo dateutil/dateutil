@@ -405,6 +405,9 @@ class rrule(rrulebase):
             until = datetime.datetime.fromordinal(until.toordinal())
         self._until = until
 
+        if count and until:
+            raise ValueError("either until or count may be provided")
+
         if wkst is None:
             self._wkst = calendar.firstweekday()
         elif isinstance(wkst, integer_types):
@@ -647,6 +650,9 @@ class rrule(rrulebase):
 
         if self._count:
             parts.append('COUNT=' + str(self._count))
+
+        if self._until:
+            parts.append(self._until.strftime('UNTIL=%Y%m%dT%H%M%S'))
 
         if self._original_rule.get('byweekday') is not None:
             # The str() method on weekday objects doesn't generate
