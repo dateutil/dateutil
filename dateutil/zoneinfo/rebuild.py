@@ -30,7 +30,7 @@ def rebuild(filename, tag=None, format="gz", zonegroups=[], metadata=None):
                         "Could not find zic. Perhaps you need to install "
                         "libc-bin or some other package that provides it, "
                         "or it's not in your PATH?")
-                    raise
+                raise
         # write metadata file
         with open(os.path.join(zonedir, METADATA_FN), 'w') as f:
             json.dump(metadata, f, indent=4, sort_keys=True)
