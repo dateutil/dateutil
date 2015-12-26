@@ -4400,6 +4400,25 @@ class RRuleTest(WarningTestMixin, unittest.TestCase):
                                   byweekno=long(2),
                                   dtstart=datetime(1997, 9, 2, 9, 0)))
 
+    def testReplaceIfSet(self):
+        rr = rrule(YEARLY,
+                   count=1,
+                   bymonthday=5,
+                   dtstart=datetime(1997, 1, 1))
+        newrr = rr.replace(bymonthday=6)
+        self.assertEqual(list(rr), [datetime(1997, 1, 5)])
+        self.assertEqual(list(newrr),
+                             [datetime(1997, 1, 6)])
+
+    def testReplaceIfNotSet(self):
+        rr = rrule(YEARLY,
+           count=1,
+           dtstart=datetime(1997, 1, 1))
+        newrr = rr.replace(bymonthday=6)
+        self.assertEqual(list(rr), [datetime(1997, 1, 1)])
+        self.assertEqual(list(newrr),
+                             [datetime(1997, 1, 6)])
+
 
 class RRuleSetTest(unittest.TestCase):
     def testSet(self):
