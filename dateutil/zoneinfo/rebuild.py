@@ -25,12 +25,8 @@ def rebuild(filename, tag=None, format="gz", zonegroups=[], metadata=None):
             try:
                 check_call(["zic", "-d", zonedir] + filepaths)
             except OSError as e:
-                if e.errno == 2:
-                    logging.error(
-                        "Could not find zic. Perhaps you need to install "
-                        "libc-bin or some other package that provides it, "
-                        "or it's not in your PATH?")
-                    raise
+                _print_on_nosuchfile(e)
+                raise
         # write metadata file
         with open(os.path.join(zonedir, METADATA_FN), 'w') as f:
             json.dump(metadata, f, indent=4, sort_keys=True)
@@ -41,3 +37,15 @@ def rebuild(filename, tag=None, format="gz", zonegroups=[], metadata=None):
                 tf.add(entrypath, entry)
     finally:
         shutil.rmtree(tmpdir)
+
+def _print_on_nosuchfile(e):
+    """Print helpful troubleshooting message
+
+    e is an exception raised by subprocess.check_call()
+
+    """
+    if e.errno == 2:
+        logging.error(
+            "Could not find zic. Perhaps you need to install "
+            "libc-bin or some other package that provides it, "
+            "or it's not in your PATH?")
