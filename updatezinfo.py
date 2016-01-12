@@ -8,6 +8,11 @@ from six.moves.urllib import request
 
 from dateutil.zoneinfo import rebuild
 
+from time import sleep
+
+MAX_RETRIES = 1 #iana FTP server is sometimes overloaded
+WAIT_SEC = 6
+
 METADATA_FILE = "zonefile_metadata.json"
 
 
@@ -17,9 +22,22 @@ def main():
 
     if not os.path.isfile(metadata['tzdata_file']):
         print("Downloading tz file from iana")
-        request.urlretrieve(os.path.join(metadata['releases_url'],
-                                         metadata['tzdata_file']),
-                            metadata['tzdata_file'])
+        attempts = 0
+
+        while attempts <= MAX_RETRIES:
+            try:
+                request.urlretrieve(os.path.join(metadata['releases_url'],
+                                                 metadata['tzdata_file']),
+                                    metadata['tzdata_file'])
+                break #success!
+            except IOError as e:
+                attempts += 1
+                if attempts > MAX_RETRIES:
+                    raise
+                #otherwise, loop & retry
+                msg = 'Retrying download, in (%s) sec... (error: "%s")'
+                print( msg % (WAIT_SEC, e))
+                sleep(WAIT_SEC)
     with open(metadata['tzdata_file'], 'rb') as tzfile:
         sha_hasher = hashlib.sha512()
         sha_hasher.update(tzfile.read())
