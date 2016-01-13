@@ -11,7 +11,7 @@ python:
 install:
   - pip install six
   - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then pip install unittest2; fi
-  - python updatezinfo.py
+  - ./ci_tools/retry.sh python updatezinfo.py
 script:
   - python setup.py test
 sudo: false
