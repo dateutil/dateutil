@@ -112,7 +112,6 @@ class tzres(object):
 
 class tzwinbase(datetime.tzinfo):
     """tzinfo class based on win32's timezones available in the registry."""
-
     def utcoffset(self, dt):
         if self._isdst(dt):
             return datetime.timedelta(minutes=self._dstoffset)
@@ -227,35 +226,42 @@ class tzwinlocal(tzwinbase):
         self._stdoffset = -keydict["Bias"]-keydict["StandardBias"]
         self._dstoffset = self._stdoffset-keydict["DaylightBias"]
 
-        # See http://ww_winreg.jsiinc.com/SUBA/tip0300/rh0398.htm
+        # For reasons unclear, in this particular key, the day of week has been
+        # moved to the END of the SYSTEMTIME structure.
         tup = struct.unpack("=8h", keydict["StandardStart"])
 
         (self._stdmonth,
-         self._stddayofweek,   # Sunday = 0
          self._stdweeknumber,  # Last = 5
          self._stdhour,
-         self._stdminute) = tup[1:6]
+         self._stdminute) = tup[1:5]
+        
+        self._stddayofweek = tup[7]
 
         tup = struct.unpack("=8h", keydict["DaylightStart"])
 
         (self._dstmonth,
-         self._dstdayofweek,   # Sunday = 0
          self._dstweeknumber,  # Last = 5
          self._dsthour,
-         self._dstminute) = tup[1:6]
+         self._dstminute) = tup[1:5]
 
+        self._dstdayofweek = tup[7]
+        
     def __reduce__(self):
         return (self.__class__, ())
 
 
 def picknthweekday(year, month, dayofweek, hour, minute, whichweek):
-    """dayofweek == 0 means Sunday, whichweek 5 means last instance"""
+    """ dayofweek == 0 means Sunday, whichweek 5 means last instance """
     first = datetime.datetime(year, month, 1, hour, minute)
-    weekdayone = first.replace(day=((dayofweek-first.isoweekday()) % 7+1))
-    for n in range(whichweek):
-        dt = weekdayone+(whichweek-n)*ONEWEEK
-        if dt.month == month:
-            return dt
+
+    # This will work if dayofweek is ISO weekday (1-7) or Microsoft-style (0-6),
+    # Because 7 % 7 = 0
+    weekdayone = first.replace(day=((dayofweek - first.isoweekday()) % 7) + 1)
+    wd = weekdayone + ((whichweek - 1) * ONEWEEK)
+    if (wd.month != month):
+        wd -= ONEWEEK
+
+    return wd
 
 
 def valuestodict(key):
