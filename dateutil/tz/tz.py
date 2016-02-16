@@ -143,11 +143,9 @@ class tzlocal(datetime.tzinfo):
         return time.localtime(timestamp+time.timezone).tm_isdst
 
     def __eq__(self, other):
-        if not isinstance(other, tzlocal):
-            return False
-        return (self._std_offset == other._std_offset and
-                self._dst_offset == other._dst_offset)
-        return True
+        return (isinstance(other, tzlocal) and
+                (self._std_offset == other._std_offset and
+                 self._dst_offset == other._dst_offset))
 
     def __ne__(self, other):
         return not self.__eq__(other)

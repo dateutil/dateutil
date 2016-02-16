@@ -353,6 +353,9 @@ class TZTest(unittest.TestCase):
         # bug 892569
         str(tz.gettz('UTC'))
 
+    def testGetTzEquality(self):
+        self.assertEqual(tz.gettz('UTC'), tz.gettz('UTC'))
+
     def testBrokenIsDstHandling(self):
         # tzrange._isdst() was using a date() rather than a datetime().
         # Issue reported by Lennart Regebro.
@@ -468,6 +471,39 @@ class TzWinTest(unittest.TestCase):
         for t_date, expected in transition_dates:
             self.assertEqual(t_date.replace(tzinfo=tw).tzname(), expected)
 
+    def testTzWinEquality(self):
+        # https://github.com/dateutil/dateutil/issues/151
+        tzwin_names = ('Eastern Standard Time',
+                       'West Pacific Standard Time',
+                       'Yakutsk Standard Time',
+                       'Iran Standard Time',
+                       'UTC')
+
+        for tzwin_name in tzwin_names:
+            # Get two different instances to compare
+            tw1 = tz.tzwin(tzwin_name)
+            tw2 = tz.tzwin(tzwin_name)
+
+            self.assertEqual(tw1, tw2)
+
+    def testTzWinInequality(self):
+        # https://github.com/dateutil/dateutil/issues/151
+        # Note these last two currently differ only in their name.
+        tzwin_names = (('Eastern Standard Time', 'Yakutsk Standard Time'),
+                       ('Greenwich Standard Time', 'GMT Standard Time'),
+                       ('GMT Standard Time', 'UTC'),
+                       ('E. South America Standard Time',
+                        'Argentina Standard Time'))
+
+        for tzwn1, tzwn2 in tzwin_names:
+            # Get two different instances to compare
+            try:
+                tw1 = tz.tzwin(tzwn1)
+                tw2 = tz.tzwin(tzwn2)
+            except Exception as e:
+                raise Exception(str((tzwn1, tzwn2))) from e
+
+            self.assertNotEqual(tw1, tw2)
 
     @unittest.skipUnless(TZWinContext.tz_change_allowed(),
         'Skipping unless tz changes are allowed.')
@@ -490,7 +526,6 @@ class TzWinTest(unittest.TestCase):
             for t_date, expected in transition_dates:
                 self.assertEqual(t_date.replace(tzinfo=tw).tzname(), expected)
 
-
     @unittest.skipUnless(TZWinContext.tz_change_allowed(),
         'Skipping unless tz changes are allowed.')
     def testTzwinLocalRepr(self):
@@ -505,5 +540,27 @@ class TzWinTest(unittest.TestCase):
 
             self.assertEqual(repr(tw), 'tzwinlocal(Pacific Standard Time)')
 
+    @unittest.skipUnless(TZWinContext.tz_change_allowed(),
+        'Skipping unless tz changes are allowed.')
+    def testTzwinLocalEquality(self):
+        tw_est = tz.tzwin('Eastern Standard Time')
+        tw_pst = tz.tzwin('Pacific Standard Time')
 
+        with TZWinContext('Eastern Standard Time'):
+            twl1 = tz.tzwinlocal()
+            twl2 = tz.tzwinlocal()
+
+            self.assertEqual(twl1, twl2)
+            self.assertEqual(twl1, tw_est)
+            self.assertNotEqual(twl1, tw_pst)
+
+        with TZWinContext('Pacific Standard Time'):
+            twl1 = tz.tzwinlocal()
+            twl2 = tz.tzwinlocal()
+            tw = tz.tzwin('Pacific Standard Time')
+
+            self.assertEqual(twl1, twl2)
+            self.assertEqual(twl1, tw)
+            self.assertEqual(twl1, tw_pst)
+            self.assertNotEqual(twl1, tw_est)
 

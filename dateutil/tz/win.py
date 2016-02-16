@@ -112,6 +112,25 @@ class tzres(object):
 
 class tzwinbase(datetime.tzinfo):
     """tzinfo class based on win32's timezones available in the registry."""
+    def __eq__(self, other):
+        # Compare on all relevant dimensions, including name.
+        return (isinstance(other, tzwinbase) and
+                (self._stdoffset == other._stdoffset and
+                 self._dstoffset == other._dstoffset and
+                 self._stddayofweek == other._stddayofweek and
+                 self._dstdayofweek == other._dstdayofweek and
+                 self._stdweeknumber == other._stdweeknumber and
+                 self._dstweeknumber == other._dstweeknumber and
+                 self._stdhour == other._stdhour and
+                 self._dsthour == other._dsthour and
+                 self._stdminute == other._stdminute and
+                 self._dstminute == other._dstminute)
+                 self._stdname == other._stdname and
+                 self._dstname == other._dstname))
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     def utcoffset(self, dt):
         if self._isdst(dt):
             return datetime.timedelta(minutes=self._dstoffset)
