@@ -124,7 +124,7 @@ class tzwinbase(datetime.tzinfo):
                  self._stdhour == other._stdhour and
                  self._dsthour == other._dsthour and
                  self._stdminute == other._stdminute and
-                 self._dstminute == other._dstminute)
+                 self._dstminute == other._dstminute and
                  self._stdname == other._stdname and
                  self._dstname == other._dstname))
 
