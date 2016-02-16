@@ -4,9 +4,16 @@ import struct
 
 from six.moves import winreg
 
+try:
+    import ctypes
+    from ctypes import wintypes
+except ValueError:
+    # ValueError is raised on non-Windows systems for some horrible reason.
+    raise ImportError("Running tzwin on non-Windows system")
+
 from .__init__ import tzname_in_python2
 
-__all__ = ["tzwin", "tzwinlocal"]
+__all__ = ["tzwin", "tzwinlocal", "tzres"]
 
 ONEWEEK = datetime.timedelta(7)
 
@@ -27,6 +34,81 @@ def _settzkeyname():
 
 TZKEYNAME = _settzkeyname()
 
+
+class tzres(object):
+    """
+    Class for accessing `tzres.dll`, which contains timezone name related
+    resources.
+
+    ..versionadded:: 2.5.0
+    """
+    p_wchar = ctypes.POINTER(wintypes.WCHAR)        # Pointer to a wide char
+
+    def __init__(self, tzres_loc='tzres.dll'):
+        # Load the user32 DLL so we can load strings from tzres
+        user32 = ctypes.WinDLL('user32')
+        
+        # Specify the LoadStringW function
+        user32.LoadStringW.argtypes = (wintypes.HINSTANCE,
+                                       wintypes.UINT,
+                                       wintypes.LPWSTR,
+                                       ctypes.c_int)
+
+        self.LoadStringW = user32.LoadStringW
+        self._tzres = ctypes.WinDLL(tzres_loc)
+        self.tzres_loc = tzres_loc
+
+    def load_name(self, offset):
+        """
+        Load a timezone name from a DLL offset (integer).
+        
+        >>> from dateutil.tzwin import tzres
+        >>> tzr = tzres()
+        >>> print(tzr.load_name(112))
+        'Eastern Standard Time'
+
+        :param offset:
+            A positive integer value referring to a string from the tzres dll.
+
+        ..note:
+            Offsets found in the registry are generally of the form
+            `@tzres.dll,-114`. The offset in this case if 114, not -114.
+
+        """
+        resource = self.p_wchar()
+        lpBuffer = ctypes.cast(ctypes.byref(resource), wintypes.LPWSTR)
+        nchar = self.LoadStringW(self._tzres._handle, offset, lpBuffer, 0)
+        return resource[:nchar]
+
+    def name_from_string(self, tzname_str):
+        """
+        Parse strings as returned from the Windows registry into the time zone
+        name as defined in the registry.
+
+        >>> from dateutil.tzwin import tzres
+        >>> tzr = tzres()
+        >>> print(tzr.name_from_string('@tzres.dll,-251'))
+        'Dateline Daylight Time'
+        >>> print(tzr.name_from_string('Eastern Standard Time'))
+        'Eastern Standard Time'
+
+        :param tzname_str:
+            A timezone name string as returned from a Windows registry key.
+
+        :return:
+            Returns the localized timezone string from tzres.dll if the string
+            is of the form `@tzres.dll,-offset`, else returns the input string.
+        """
+        if not tzname_str.startswith('@'):
+            return tzname_str
+
+        name_splt = tzname_str.split(',-')
+        try:
+            offset = int(name_splt[1])
+        except:
+            raise ValueError("Malformed timezone string.")
+
+        return self.load_name(offset)
 
 class tzwinbase(datetime.tzinfo):
     """tzinfo class based on win32's timezones available in the registry."""
@@ -51,6 +133,7 @@ class tzwinbase(datetime.tzinfo):
         else:
             return self._stdname
 
+    @staticmethod
     def list():
         """Return a list of all time zones known to the system."""
         handle = winreg.ConnectRegistry(None, winreg.HKEY_LOCAL_MACHINE)
@@ -60,7 +143,6 @@ class tzwinbase(datetime.tzinfo):
         tzkey.Close()
         handle.Close()
         return result
-    list = staticmethod(list)
 
     def display(self):
         return self._display
@@ -126,7 +208,6 @@ class tzwin(tzwinbase):
 class tzwinlocal(tzwinbase):
 
     def __init__(self):
-
         with winreg.ConnectRegistry(None, winreg.HKEY_LOCAL_MACHINE) as handle:
 
             with winreg.OpenKey(handle, TZLOCALKEYNAME) as tzlocalkey:
@@ -179,9 +260,25 @@ def picknthweekday(year, month, dayofweek, hour, minute, whichweek):
 
 def valuestodict(key):
     """Convert a registry key's values to a dictionary."""
-    dict = {}
+    dout = {}
     size = winreg.QueryInfoKey(key)[1]
+    tz_res = None
+
     for i in range(size):
-        data = winreg.EnumValue(key, i)
-        dict[data[0]] = data[1]
-    return dict
+        key_name, value, dtype = winreg.EnumValue(key, i)
+        if dtype == winreg.REG_DWORD or dtype == winreg.REG_DWORD_LITTLE_ENDIAN:
+            # If it's a DWORD (32-bit integer), it's stored as unsigned - convert
+            # that to a proper signed integer
+            if value & (1 << 31):
+                value = value - (1 << 32)
+        elif dtype == winreg.REG_SZ:
+            # If it's a reference to the tzres DLL, load the actual string
+            if value.startswith('@tzres'):
+                tz_res = tz_res or tzres()
+                value = tz_res.name_from_string(value)
+
+            value = value.rstrip('\x00')    # Remove trailing nulls
+
+        dout[key_name] = value
+
+    return dout
