@@ -93,6 +93,9 @@ class tzlocal(datetime.tzinfo):
             self._dst_offset = self._std_offset
 
     def utcoffset(self, dt):
+        if dt is None:
+            return dt
+
         if self._isdst(dt):
             return self._dst_offset
         else:
@@ -439,6 +442,9 @@ class tzfile(datetime.tzinfo):
             return self._trans_idx[idx-1]
 
     def utcoffset(self, dt):
+        if dt is None:
+            return None
+
         if not self._ttinfo_std:
             return ZERO
         return self._find_ttinfo(dt).delta
@@ -518,6 +524,9 @@ class tzrange(datetime.tzinfo):
             self._end_delta = end
 
     def utcoffset(self, dt):
+        if dt is None:
+            return None
+
         if self._isdst(dt):
             return self._dst_offset
         else:
@@ -699,6 +708,9 @@ class _tzicalvtz(datetime.tzinfo):
         return lastcomp
 
     def utcoffset(self, dt):
+        if dt is None:
+            return None
+
         return self._find_comp(dt).tzoffsetto
 
     def dst(self, dt):
