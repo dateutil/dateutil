@@ -468,6 +468,7 @@ class TzWinTest(unittest.TestCase):
         for t_date, expected in transition_dates:
             self.assertEqual(t_date.replace(tzinfo=tw).tzname(), expected)
 
+
     @unittest.skipUnless(TZWinContext.tz_change_allowed(),
         'Skipping unless tz changes are allowed.')
     def testTzwinLocalName(self):
@@ -488,4 +489,3 @@ class TzWinTest(unittest.TestCase):
 
             for t_date, expected in transition_dates:
                 self.assertEqual(t_date.replace(tzinfo=tw).tzname(), expected)
-
