@@ -496,12 +496,9 @@ class TzWinTest(unittest.TestCase):
                         'Argentina Standard Time'))
 
         for tzwn1, tzwn2 in tzwin_names:
-            # Get two different instances to compare
-            try:
-                tw1 = tz.tzwin(tzwn1)
-                tw2 = tz.tzwin(tzwn2)
-            except Exception as e:
-                raise Exception(str((tzwn1, tzwn2))) from e
+            # Get two different instances to compare            
+            tw1 = tz.tzwin(tzwn1)
+            tw2 = tz.tzwin(tzwn2)
 
             self.assertNotEqual(tw1, tw2)
 
