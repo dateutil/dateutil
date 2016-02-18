@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 
 from datetime import datetime, timedelta
+from datetime import time as dt_time
 from six import BytesIO, StringIO
 
 import os
@@ -280,7 +281,6 @@ class TZTest(unittest.TestCase):
         self.assertIs(datetime(2003, 10, 26, 0, 0, tzinfo=gmt5).tzname(),
                       None)
 
-
     def testICalStart1(self):
         tz = tzical(StringIO(TZICAL_EST5EDT)).get()
         self.assertEqual(datetime(2003, 4, 6, 1, 59, tzinfo=tz).tzname(), "EST")
@@ -329,6 +329,34 @@ class TZTest(unittest.TestCase):
         self.assertEqual(dt.astimezone(tz=gettz("UTC-2")),
                           datetime(2007, 8, 6, 2, 10, tzinfo=tzstr("UTC-2")))
 
+    def testTimeOnlyUTC(self):
+        # https://github.com/dateutil/dateutil/issues/132
+        # tzutc doesn't care
+        tz_utc = tzutc()
+        self.assertEqual(dt_time(13, 20, tzinfo=tz_utc).utcoffset(),
+                         timedelta(0))
+
+    def testTimeOnlyOffset(self):
+        # tzoffset doesn't care
+        tz_offset = tzoffset('+3', 3600)
+        self.assertEqual(dt_time(13, 20, tzinfo=tz_offset).utcoffset(),
+                         timedelta(seconds=3600))
+
+    def testTimeOnlyLocal(self):
+        # tzlocal returns None
+        tz_local = tzlocal()
+        self.assertIs(dt_time(13, 20, tzinfo=tz_local).utcoffset(), None)
+
+    def testTimeOnlyRange(self):
+        # tzrange returns None
+        tz_range = tzrange('dflt')
+        self.assertIs(dt_time(13, 20, tzinfo=tz_range).utcoffset(), None)
+
+    def testTimeOnlyGettz(self):
+        # gettz returns None
+        tz_get = gettz('Europe/Minsk')
+        self.assertIs(dt_time(13, 20, tzinfo=tz_get).utcoffset(), None)
+
     @unittest.skipIf(IS_WIN, "requires Unix")
     def testTZSetDoesntCorrupt(self):
         # if we start in non-UTC then tzset UTC make sure parse doesn't get
@@ -374,5 +402,4 @@ class TzWinTest(unittest.TestCase):
         datetime.now(tzwin.tzwinlocal())
 
         datetime(2014, 3, 11, tzinfo=tzwin.tzwinlocal()).utcoffset()
-
 
