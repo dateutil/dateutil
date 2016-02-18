@@ -17,6 +17,7 @@ except ImportError:
 
 from six import advance_iterator, integer_types
 from six.moves import _thread
+import heapq
 
 __all__ = ["rrule", "rruleset", "rrulestr",
            "YEARLY", "MONTHLY", "WEEKLY", "DAILY",
@@ -1236,7 +1237,11 @@ class rruleset(rrulebase):
             try:
                 self.dt = advance_iterator(self.gen)
             except StopIteration:
-                self.genlist.remove(self)
+                if self.genlist[0] is self:
+                    heapq.heappop(self.genlist)
+                else:
+                    self.genlist.remove(self)
+                    heapq.heapify(self.genlist)
 
         next = __next__
 
@@ -1288,27 +1293,30 @@ class rruleset(rrulebase):
         self._genitem(rlist, iter(self._rdate))
         for gen in [iter(x) for x in self._rrule]:
             self._genitem(rlist, gen)
-        rlist.sort()
         exlist = []
         self._exdate.sort()
         self._genitem(exlist, iter(self._exdate))
         for gen in [iter(x) for x in self._exrule]:
             self._genitem(exlist, gen)
-        exlist.sort()
         lastdt = None
         total = 0
+        heapq.heapify(rlist)
+        heapq.heapify(exlist)
         while rlist:
             ritem = rlist[0]
             if not lastdt or lastdt != ritem.dt:
                 while exlist and exlist[0] < ritem:
-                    advance_iterator(exlist[0])
-                    exlist.sort()
+                    exitem = exlist[0]
+                    advance_iterator(exitem)
+                    if exlist and exlist[0] is exitem:
+                        heapq.heapreplace(exlist, exitem)
                 if not exlist or ritem != exlist[0]:
                     total += 1
                     yield ritem.dt
                 lastdt = ritem.dt
             advance_iterator(ritem)
-            rlist.sort()
+            if rlist and rlist[0] is ritem:
+                heapq.heapreplace(rlist, ritem)
         self._len = total
 
 
