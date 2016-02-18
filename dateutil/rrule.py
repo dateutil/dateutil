@@ -1293,13 +1293,11 @@ class rruleset(rrulebase):
         self._genitem(rlist, iter(self._rdate))
         for gen in [iter(x) for x in self._rrule]:
             self._genitem(rlist, gen)
-        rlist.sort()
         exlist = []
         self._exdate.sort()
         self._genitem(exlist, iter(self._exdate))
         for gen in [iter(x) for x in self._exrule]:
             self._genitem(exlist, gen)
-        exlist.sort()
         lastdt = None
         total = 0
         heapq.heapify(rlist)
