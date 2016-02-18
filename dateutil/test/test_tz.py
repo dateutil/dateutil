@@ -378,29 +378,29 @@ class TZTest(unittest.TestCase):
     def testTimeOnlyUTC(self):
         # https://github.com/dateutil/dateutil/issues/132
         # tzutc doesn't care
-        tz_utc = tzutc()
+        tz_utc = tz.tzutc()
         self.assertEqual(dt_time(13, 20, tzinfo=tz_utc).utcoffset(),
                          timedelta(0))
 
     def testTimeOnlyOffset(self):
         # tzoffset doesn't care
-        tz_offset = tzoffset('+3', 3600)
+        tz_offset = tz.tzoffset('+3', 3600)
         self.assertEqual(dt_time(13, 20, tzinfo=tz_offset).utcoffset(),
                          timedelta(seconds=3600))
 
     def testTimeOnlyLocal(self):
         # tzlocal returns None
-        tz_local = tzlocal()
+        tz_local = tz.tzlocal()
         self.assertIs(dt_time(13, 20, tzinfo=tz_local).utcoffset(), None)
 
     def testTimeOnlyRange(self):
         # tzrange returns None
-        tz_range = tzrange('dflt')
+        tz_range = tz.tzrange('dflt')
         self.assertIs(dt_time(13, 20, tzinfo=tz_range).utcoffset(), None)
 
     def testTimeOnlyGettz(self):
         # gettz returns None
-        tz_get = gettz('Europe/Minsk')
+        tz_get = tz.gettz('Europe/Minsk')
         self.assertIs(dt_time(13, 20, tzinfo=tz_get).utcoffset(), None)
 
     @unittest.skipIf(IS_WIN, "requires Unix")
