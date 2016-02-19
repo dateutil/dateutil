@@ -9,6 +9,10 @@ dateutil - powerful extensions to datetime
     :target: https://ci.appveyor.com/project/dateutil/dateutil
     :alt: appveyor build status
 
+.. image:: https://codecov.io/github/dateutil/dateutil/coverage.svg?branch=master
+    :target: https://codecov.io/github/dateutil/dateutil?branch=master
+    :alt: Code coverage
+
 .. image:: https://img.shields.io/pypi/dd/python-dateutil.svg?style=flat-square
     :target: https://pypi.python.org/pypi/python-dateutil/
     :alt: pypi downloads per day
@@ -16,7 +20,6 @@ dateutil - powerful extensions to datetime
 .. image:: https://img.shields.io/pypi/v/python-dateutil.svg?style=flat-square
     :target: https://pypi.python.org/pypi/python-dateutil/
     :alt: pypi version
-
 
 
 The `dateutil` module provides powerful extensions to
