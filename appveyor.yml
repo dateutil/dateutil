@@ -24,6 +24,8 @@ install:
   # This frequently fails with network errors, so we'll retry it up to 5 times
   # with a 1 minute rate limit.
   - "ci_tools/retry.bat %PYTHON%/python.exe updatezinfo.py"
+  # This environment variable tells the test suite it's OK to mess with the time zone.
+  - set DATEUTIL_MAY_CHANGE_TZ=1
 test_script:
   - "coverage run --omit=setup.py,dateutil/test/* setup.py test"
 after_test:
