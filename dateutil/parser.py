@@ -231,6 +231,10 @@ class _resultbase(object):
                 l.append("%s=%s" % (attr, repr(value)))
         return "%s(%s)" % (classname, ", ".join(l))
 
+    def __len__(self):
+        return (sum(getattr(self, attr) is not None
+                    for attr in self.__slots__))
+
     def __repr__(self):
         return self._repr(self.__class__.__name__)
 
@@ -595,6 +599,9 @@ class parser(object):
 
         if res is None:
             raise ValueError("Unknown string format")
+
+        if len(res) == 0:
+            raise ValueError("String does not contain a date.")
 
         repl = {}
         for attr in ("year", "month", "day", "hour",
