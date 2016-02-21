@@ -19,6 +19,9 @@ from six import advance_iterator, integer_types
 from six.moves import _thread
 import heapq
 
+# For warning about deprecation of until and count
+from warnings import warn
+
 __all__ = ["rrule", "rruleset", "rrulestr",
            "YEARLY", "MONTHLY", "WEEKLY", "DAILY",
            "HOURLY", "MINUTELY", "SECONDLY",
@@ -407,7 +410,9 @@ class rrule(rrulebase):
         self._until = until
 
         if count and until:
-            raise DeprecationWarning("either until or count may be provided")
+            warn("Using both 'count' and 'until' is inconsistent with RFC 2445"
+                 " and has been deprecated in dateutil. Future versions will "
+                 "raise an error.", DeprecationWarning)
 
         if wkst is None:
             self._wkst = calendar.firstweekday()
