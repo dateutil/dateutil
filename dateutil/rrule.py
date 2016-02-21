@@ -406,7 +406,7 @@ class rrule(rrulebase):
         self._until = until
 
         if count and until:
-            raise ValueError("either until or count may be provided")
+            raise DeprecationWarning("either until or count may be provided")
 
         if wkst is None:
             self._wkst = calendar.firstweekday()

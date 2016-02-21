@@ -2586,7 +2586,7 @@ class RRuleTest(unittest.TestCase):
         def make_bad_until_count_rrule():
             list(rrule(DAILY, dtstart=datetime(1997, 9, 2, 9, 0),
                        count=3, until=datetime(1997, 9, 4, 9, 0)))
-        self.assertRaises(ValueError, make_bad_until_count_rrule)
+        self.assertRaises(DeprecationWarning, make_bad_until_count_rrule)
 
     def testUntilNotMatching(self):
         self.assertEqual(list(rrule(DAILY,
