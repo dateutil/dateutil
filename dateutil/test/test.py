@@ -4792,6 +4792,10 @@ class ParserTest(unittest.TestCase):
             self.uni_str = str(base_str)
             self.str_str = bytes(base_str.encode())
 
+    def testEmptyString(self):
+        with self.assertRaises(ValueError):
+            parse('')
+
     def testDateCommandFormat(self):
         self.assertEqual(parse("Thu Sep 25 10:36:28 BRST 2003",
                                tzinfos=self.tzinfos),
