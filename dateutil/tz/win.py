@@ -266,8 +266,11 @@ class tzwinlocal(tzwinbase):
         self._dstdayofweek = tup[7]
 
     def __repr__(self):
-        # Repr will return the standard name, not the daylight name.
-        return "tzwinlocal({twl_name})".format(twl_name=self._stdname)
+        return "tzwinlocal()"
+
+    def __str__(self):
+        # str will return the standard name, not the daylight name.
+        return "tzwinlocal(%s)" % repr(self._stdname)
 
     def __reduce__(self):
         return (self.__class__, ())

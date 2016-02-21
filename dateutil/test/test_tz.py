@@ -471,6 +471,11 @@ class TzWinTest(unittest.TestCase):
         for t_date, expected in transition_dates:
             self.assertEqual(t_date.replace(tzinfo=tw).tzname(), expected)
 
+    def testTzwinRepr(self):
+        tw = tz.tzwin('Yakutsk Standard Time')
+        self.assertEqual(repr(tw), 'tzwin(' +
+                                   repr('Yakutsk Standard Time') + ')')
+
     def testTzWinEquality(self):
         # https://github.com/dateutil/dateutil/issues/151
         tzwin_names = ('Eastern Standard Time',
@@ -523,6 +528,10 @@ class TzWinTest(unittest.TestCase):
             for t_date, expected in transition_dates:
                 self.assertEqual(t_date.replace(tzinfo=tw).tzname(), expected)
 
+    def testTzWinLocalRepr(self):
+        tw = tz.tzwinlocal()
+        self.assertEqual(repr(tw), 'tzwinlocal()')
+
     @unittest.skipUnless(TZWinContext.tz_change_allowed(),
         'Skipping unless tz changes are allowed.')
     def testTzwinLocalRepr(self):
@@ -530,12 +539,14 @@ class TzWinTest(unittest.TestCase):
         with TZWinContext('Eastern Standard Time'):
             tw = tz.tzwinlocal()
 
-            self.assertEqual(repr(tw), 'tzwinlocal(Eastern Standard Time)')
+            self.assertEqual(str(tw), 'tzwinlocal(' +
+                                      repr('Eastern Standard Time') + ')')
 
         with TZWinContext('Pacific Standard Time'):
             tw = tz.tzwinlocal()
 
-            self.assertEqual(repr(tw), 'tzwinlocal(Pacific Standard Time)')
+            self.assertEqual(str(tw), 'tzwinlocal(' + 
+                                      repr('Pacific Standard Time') + ')')
 
     @unittest.skipUnless(TZWinContext.tz_change_allowed(),
         'Skipping unless tz changes are allowed.')
