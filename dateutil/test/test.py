@@ -2565,9 +2565,17 @@ class RRuleTest(unittest.TestCase):
         self.assertRaises(ValueError, make_bad_minute_rrule)
         self.assertRaises(ValueError, make_bad_hour_rrule)
 
+    def testBadUntilCountRRule(self):
+        """
+        See rfc-2445 4.3.10
+        """
+        def make_bad_until_count_rrule():
+            list(rrule(DAILY, dtstart=datetime(1997, 9, 2, 9, 0),
+                       count=3, until=datetime(1997, 9, 4, 9, 0)))
+        self.assertRaises(DeprecationWarning, make_bad_until_count_rrule)
+
     def testUntilNotMatching(self):
         self.assertEqual(list(rrule(DAILY,
-                              count=3,
                               dtstart=datetime(1997, 9, 2, 9, 0),
                               until=datetime(1997, 9, 5, 8, 0))),
                          [datetime(1997, 9, 2, 9, 0),
@@ -2576,7 +2584,6 @@ class RRuleTest(unittest.TestCase):
 
     def testUntilMatching(self):
         self.assertEqual(list(rrule(DAILY,
-                              count=3,
                               dtstart=datetime(1997, 9, 2, 9, 0),
                               until=datetime(1997, 9, 4, 9, 0))),
                          [datetime(1997, 9, 2, 9, 0),
@@ -2585,21 +2592,18 @@ class RRuleTest(unittest.TestCase):
 
     def testUntilSingle(self):
         self.assertEqual(list(rrule(DAILY,
-                              count=3,
                               dtstart=datetime(1997, 9, 2, 9, 0),
                               until=datetime(1997, 9, 2, 9, 0))),
                          [datetime(1997, 9, 2, 9, 0)])
 
     def testUntilEmpty(self):
         self.assertEqual(list(rrule(DAILY,
-                              count=3,
                               dtstart=datetime(1997, 9, 2, 9, 0),
                               until=datetime(1997, 9, 1, 9, 0))),
                          [])
 
     def testUntilWithDate(self):
         self.assertEqual(list(rrule(DAILY,
-                              count=3,
                               dtstart=datetime(1997, 9, 2, 9, 0),
                               until=date(1997, 9, 5))),
                          [datetime(1997, 9, 2, 9, 0),
