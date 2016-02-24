@@ -71,7 +71,7 @@ class WarningTestMixin(object):
                 callable(*args, **kwargs)
 
 
-class RelativeDeltaTest(unittest.TestCase):
+class RelativeDeltaTest(WarningTestMixin, unittest.TestCase):
     now = datetime(2003, 9, 17, 20, 54, 47, 282310)
     today = date(2003, 9, 17)
 
@@ -281,6 +281,205 @@ class RelativeDeltaTest(unittest.TestCase):
         
         rd.weeks = 3
         self.assertEqual((rd.weeks, rd.days), (3, 3 * 7 + 6))
+
+    def testRelativeDeltaFractionalYear(self):
+        with self.assertRaises(ValueError):
+            relativedelta(years=1.5)
+
+    def testRelativeDeltaFractionalMonth(self):
+        with self.assertRaises(ValueError):
+            relativedelta(months=1.5)
+
+    def testRelativeDeltaFractionalAbsolutes(self):
+        # Fractional absolute values will soon be unsupported,
+        # check for the deprecation warning.
+        with self.assertWarns(DeprecationWarning):
+            relativedelta(year=2.86)
+        
+        with self.assertWarns(DeprecationWarning):
+            relativedelta(month=1.29)
+
+        with self.assertWarns(DeprecationWarning):
+            relativedelta(day=0.44)
+
+        with self.assertWarns(DeprecationWarning):
+            relativedelta(hour=23.98)
+
+        with self.assertWarns(DeprecationWarning):
+            relativedelta(minute=45.21)
+
+        with self.assertWarns(DeprecationWarning):
+            relativedelta(second=13.2)
+
+        with self.assertWarns(DeprecationWarning):
+            relativedelta(microsecond=157221.93)
+
+    def testRelativeDeltaFractionalRepr(self):
+        rd = relativedelta(years=3, months=-2, days=1.25)
+
+        self.assertEqual(repr(rd),
+                         'relativedelta(years=+3, months=-2, days=+1.25)')
+
+        rd = relativedelta(hours=0.5, seconds=9.22)
+        self.assertEqual(repr(rd),
+                         'relativedelta(hours=+0.5, seconds=+9.22)')
+
+    def testRelativeDeltaFractionalWeeks(self):
+        # Equivalent to days=8, hours=18
+        rd = relativedelta(weeks=1.25)
+        d1 = datetime(2009, 9, 3, 0, 0)
+        self.assertEqual(d1 + rd,
+                         datetime(2009, 9, 11, 18))
+
+    def testRelativeDeltaFractionalDays(self):
+        rd1 = relativedelta(days=1.48)
+
+        d1 = datetime(2009, 9, 3, 0, 0)
+        self.assertEqual(d1 + rd1,
+                         datetime(2009, 9, 4, 11, 31, 12))
+
+        rd2 = relativedelta(days=1.5)
+        self.assertEqual(d1 + rd2,
+                         datetime(2009, 9, 4, 12, 0, 0))
+
+    def testRelativeDeltaFractionalHours(self):
+        rd = relativedelta(days=1, hours=12.5)
+        d1 = datetime(2009, 9, 3, 0, 0)
+        self.assertEqual(d1 + rd,
+                         datetime(2009, 9, 4, 12, 30, 0))
+
+    def testRelativeDeltaFractionalMinutes(self):
+        rd = relativedelta(hours=1, minutes=30.5)
+        d1 = datetime(2009, 9, 3, 0, 0)
+        self.assertEqual(d1 + rd,
+                         datetime(2009, 9, 3, 1, 30, 30))
+
+    def testRelativeDeltaFractionalSeconds(self):
+        rd = relativedelta(hours=5, minutes=30, seconds=30.5)
+        d1 = datetime(2009, 9, 3, 0, 0)
+        self.assertEqual(d1 + rd,
+                         datetime(2009, 9, 3, 5, 30, 30, 500000))
+
+    def testRelativeDeltaFractionalPositiveOverflow(self):
+        # Equivalent to (days=1, hours=14)
+        rd1 = relativedelta(days=1.5, hours=2)
+        d1 = datetime(2009, 9, 3, 0, 0)
+        self.assertEqual(d1 + rd1,
+                         datetime(2009, 9, 4, 14, 0, 0))
+
+        # Equivalent to (days=1, hours=14, minutes=45)
+        rd2 = relativedelta(days=1.5, hours=2.5, minutes=15)
+        d1 = datetime(2009, 9, 3, 0, 0)
+        self.assertEqual(d1 + rd2,
+                         datetime(2009, 9, 4, 14, 45))
+
+        # Carry back up - equivalent to (days=2, hours=2, minutes=0, seconds=1)
+        rd3 = relativedelta(days=1.5, hours=13, minutes=59.5, seconds=31)
+        self.assertEqual(d1 + rd3,
+                         datetime(2009, 9, 5, 2, 0, 1))
+
+    def testRelativeDeltaFractionalNegativeDays(self):
+        # Equivalent to (days=-1, hours=-1)
+        rd1 = relativedelta(days=-1.5, hours=11)
+        d1 = datetime(2009, 9, 3, 12, 0)
+        self.assertEqual(d1 + rd1,
+                         datetime(2009, 9, 2, 11, 0, 0))
+
+        # Equivalent to (days=-1, hours=-9)
+        rd2 = relativedelta(days=-1.25, hours=-3)
+        self.assertEqual(d1 + rd2,
+            datetime(2009, 9, 2, 3))
+
+    def testRelativeDeltaNormalizeFractionalDays(self):
+        # Equivalent to (days=2, hours=18)
+        rd1 = relativedelta(days=2.75)
+
+        self.assertEqual(rd1.normalized(), relativedelta(days=2, hours=18))
+
+        # Equvalent to (days=1, hours=11, minutes=31, seconds=12)
+        rd2 = relativedelta(days=1.48)
+
+        self.assertEqual(rd2.normalized(),
+            relativedelta(days=1, hours=11, minutes=31, seconds=12))
+
+    def testRelativeDeltaNormalizeFractionalDays(self):
+        # Equivalent to (hours=1, minutes=30)
+        rd1 = relativedelta(hours=1.5)
+
+        self.assertEqual(rd1.normalized(), relativedelta(hours=1, minutes=30))
+
+        # Equivalent to (hours=3, minutes=17, seconds=5, microseconds=100)
+        rd2 = relativedelta(hours=3.28472225)
+
+        self.assertEqual(rd2.normalized(),
+            relativedelta(hours=3, minutes=17, seconds=5, microseconds=100))
+
+    def testRelativeDeltaNormalizeFractionalMinutes(self):
+        # Equivalent to (minutes=15, seconds=36)
+        rd1 = relativedelta(minutes=15.6)
+
+        self.assertEqual(rd1.normalized(),
+            relativedelta(minutes=15, seconds=36))
+
+        # Equivalent to (minutes=25, seconds=20, microseconds=25000)
+        rd2 = relativedelta(minutes=25.33375)
+
+        self.assertEqual(rd2.normalized(),
+            relativedelta(minutes=25, seconds=20, microseconds=25000))
+
+    def testRelativeDeltaNormalizeFractionalSeconds(self):
+        # Equivalent to (seconds=45, microseconds=25000)
+        rd1 = relativedelta(seconds=45.025)
+        self.assertEqual(rd1.normalized(),
+            relativedelta(seconds=45, microseconds=25000))
+
+    def testRelativeDeltaFractionalPositiveOverflow(self):
+        # Equivalent to (days=1, hours=14)
+        rd1 = relativedelta(days=1.5, hours=2)
+        self.assertEqual(rd1.normalized(),
+            relativedelta(days=1, hours=14))
+
+        # Equivalent to (days=1, hours=14, minutes=45)
+        rd2 = relativedelta(days=1.5, hours=2.5, minutes=15)
+        self.assertEqual(rd2.normalized(),
+            relativedelta(days=1, hours=14, minutes=45))
+
+        # Carry back up - equivalent to:
+        # (days=2, hours=2, minutes=0, seconds=2, microseconds=3)
+        rd3 = relativedelta(days=1.5, hours=13, minutes=59.50045,
+                            seconds=31.473, microseconds=500003)
+        self.assertEqual(rd3.normalized(),
+            relativedelta(days=2, hours=2, minutes=0,
+                          seconds=2, microseconds=3))
+
+    def testRelativeDeltaFractionalNegativeOverflow(self):
+        # Equivalent to (days=-1)
+        rd1 = relativedelta(days=-0.5, hours=-12)
+        self.assertEqual(rd1.normalized(),
+            relativedelta(days=-1))
+
+        # Equivalent to (days=-1)
+        rd2 = relativedelta(days=-1.5, hours=12)
+        self.assertEqual(rd2.normalized(),
+            relativedelta(days=-1))
+
+        # Equivalent to (days=-1, hours=-14, minutes=-45)
+        rd3 = relativedelta(days=-1.5, hours=-2.5, minutes=-15)
+        self.assertEqual(rd3.normalized(),
+            relativedelta(days=-1, hours=-14, minutes=-45))
+
+        # Equivalent to (days=-1, hours=-14, minutes=+15)
+        rd4 = relativedelta(days=-1.5, hours=-2.5, minutes=45)
+        self.assertEqual(rd4.normalized(),
+            relativedelta(days=-1, hours=-14, minutes=+15))
+
+        # Carry back up - equivalent to:
+        # (days=-2, hours=-2, minutes=0, seconds=-2, microseconds=-3)
+        rd3 = relativedelta(days=-1.5, hours=-13, minutes=-59.50045,
+                            seconds=-31.473, microseconds=-500003)
+        self.assertEqual(rd3.normalized(),
+            relativedelta(days=-2, hours=-2, minutes=0,
+                          seconds=-2, microseconds=-3))
 
 
 class RRuleTest(WarningTestMixin, unittest.TestCase):
