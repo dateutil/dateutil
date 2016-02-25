@@ -13,22 +13,8 @@ of a date/time stamp is omitted, the following rules are applied:
 
 If any other elements are missing, they are taken from the
 :class:`datetime.datetime` object passed to the parameter ``default``. If this
-results in a day number exceeding the valid number of days per month, one can
-fall back to the last day of the month by setting ``fallback_on_invalid_day``
-parameter to ``True``.
-
-Also provided is the ``smart_defaults`` option, which attempts to fill in the
-missing elements from context. If specified, the logic is:
-- If the omitted element is smaller than the largest specified element, select
-  the *earliest* time matching the specified conditions; so ``"June 2010"`` is
-  interpreted as ``June 1, 2010 0:00:00``) and the (somewhat strange)
-  ``"Feb 1997 3:15 PM"`` is interpreted as ``February 1, 1997 15:15:00``.
-- If the element is larger than the largest specified element, select the
-  *most recent* time matching the specified conditions (e.g parsing ``"May"``
-  in June 2015 returns the date May 1st, 2015, whereas parsing it in April 2015
-  returns May 1st 2014). If using the ``date_in_future`` flag, this logic is
-  inverted, and instead the *next* time matching the specified conditions is
-  returned.
+results in a day number exceeding the valid number of days per month, the
+value falls back to the end of the month.
 
 Additional resources about date/time string formats can be found below:
 
@@ -290,7 +276,7 @@ class parserinfo(object):
     PERTAIN = ["of"]
     TZOFFSET = {}
 
-    def __init__(self, dayfirst=False, yearfirst=False, smart_defaults=False):
+    def __init__(self, dayfirst=False, yearfirst=False):
         self._jump = self._convert(self.JUMP)
         self._weekdays = self._convert(self.WEEKDAYS)
         self._months = self._convert(self.MONTHS)
@@ -301,7 +287,6 @@ class parserinfo(object):
 
         self.dayfirst = dayfirst
         self.yearfirst = yearfirst
-        self.smart_defaults = smart_defaults
 
         self._year = time.localtime().tm_year
         self._century = self._year // 100 * 100
@@ -494,9 +479,7 @@ class parser(object):
     def __init__(self, info=None):
         self.info = info or parserinfo()
 
-    def parse(self, timestr, default=None, ignoretz=False, tzinfos=None,
-              smart_defaults=None, date_in_future=False, 
-              fallback_on_invalid_day=None, **kwargs):
+    def parse(self, timestr, default=None, ignoretz=False, tzinfos=None, **kwargs):
         """
         Parse the date/time string into a :class:`datetime.datetime` object.
 
@@ -506,36 +489,7 @@ class parser(object):
         :param default:
             The default datetime object, if this is a datetime object and not
             ``None``, elements specified in ``timestr`` replace elements in the
-            default object, unless ``smart_defaults`` is set to ``True``, in
-            which case to the extent necessary, timestamps are calculated
-            relative to this date.
-
-        :param smart_defaults:
-            If using smart defaults, the ``default`` parameter is treated as
-            the effective parsing date/time, and the context of the datetime
-            string is determined relative to ``default``. If ``None``, this
-            parameter is inherited from the :class:`parserinfo` object.
-
-        :param date_in_future:
-            If ``smart_defaults`` is ``True``, the parser assumes by default
-            that the timestamp refers to a date in the past, and will return
-            the beginning of the most recent timespan which matches the time
-            string (e.g. if ``default`` is March 3rd, 2013,  "Feb" parses to
-            "Feb 1, 2013" and "May 3" parses to May 3rd, 2012). Setting this
-            parameter to ``True`` inverts this assumption, and returns the
-            beginning of the *next* matching timespan.
-
-        :param fallback_on_invalid_day:
-            If specified ``True``, an otherwise invalid date such as "Feb 30"
-            or "June 32" falls back to the last day of the month. If specified
-            as "False", the parser is strict about parsing otherwise valid
-            dates that would turn up as invalid because of the fallback rules
-            (e.g. "Feb 2010" run with a default of January 30, 2010 and
-            ``smartparser`` set to ``False`` would would throw an error, rather
-            than falling back to the end of February). If ``None`` or
-            unspecified, the date falls back to the most recent valid date only
-            if the invalid date is created as a result of an unspecified day in
-            the time string.
+            default object.
 
         :param ignoretz:
             If set ``True``, time zones in parsed strings are ignored and a
@@ -585,9 +539,6 @@ class parser(object):
             your system.
         """
 
-        if smart_defaults is None:
-            smart_defaults = self.info.smart_defaults
-
         if default is None:
             effective_dt = datetime.datetime.now()
             default = datetime.datetime.now().replace(hour=0, minute=0,
@@ -610,72 +561,7 @@ class parser(object):
             if value is not None:
                 repl[attr] = value
 
-        # Choose the correct fallback position if requested by the
-        # ``smart_defaults`` parameter.
-        if smart_defaults:
-            # Determine if it refers to this year, last year or next year
-            if res.year is None:
-                if res.month is not None:
-                    # Explicitly deal with leap year problems
-                    if res.month == 2 and (res.day is not None and
-                                           res.day == 29):
-
-                        ly_offset = 4 if date_in_future else -4
-                        next_year = 4 * (default.year // 4)
-
-                        if date_in_future:
-                            next_year += ly_offset
-
-                        if not isleap(next_year):
-                            next_year += ly_offset
-
-                        if not isleap(default.year):
-                            default = default.replace(year=next_year)
-                    elif date_in_future:
-                        next_year = default.year + 1
-                    else:
-                        next_year = default.year - 1
-
-                    if ((res.month == default.month and res.day is not None and
-                         ((res.day < default.day and date_in_future) or
-                          (res.day > default.day and not date_in_future))) or
-                        ((res.month < default.month and date_in_future) or
-                         (res.month > default.month and not date_in_future))):
-
-                        default = default.replace(year=next_year)
-
-            # Select a proper month
-            if res.month is None:
-                if res.year is not None:
-                    default = default.replace(month=1)
-
-                # I'm not sure if this is even possible.
-                if res.day is not None:
-                    if res.day < default.day and date_in_future:
-                        default += datetime.timedelta(months=1)
-                    elif res.day > default.day and not date_in_future:
-                        default -= datetime.timedelta(months=1)
-
-            if res.day is None:
-                # Determine if it's today, tomorrow or yesterday.
-                if res.year is None and res.month is None:
-                    t_repl = {}
-                    for key, val in repl.iteritems():
-                        if key in ('hour', 'minute', 'second', 'microsecond'):
-                            t_repl[key] = val
-
-                    stime = effective_dt.replace(**t_repl)
-
-                    if stime < effective_dt and date_in_future:
-                        default += datetime.timedelta(days=1)
-                    elif stime > effective_dt and not date_in_future:
-                        default -= datetime.timedelta(days=1)
-                else:
-                    # Otherwise it's the beginning of the month
-                    default = default.replace(day=1)
-
-        if fallback_on_invalid_day or (fallback_on_invalid_day is None and
-                                       'day' not in repl):
+        if 'day' not in repl:
             # If the default day exceeds the last day of the month, fall back to
             # the end of the month.
             cyear = default.year if res.year is None else res.year
