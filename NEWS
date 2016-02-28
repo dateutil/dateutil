@@ -1,3 +1,93 @@
+Version 2.5.0
+-------------
+- Updated zoneinfo to 2016a
+- zoneinfo_metadata file version increased to 2.0 - the updated updatezinfo.py
+  script will work with older zoneinfo_metadata.json files, but new metadata
+  files will not work with older updatezinfo.py versions. Additionally, we have
+  started hosting our own mirror of the Olson databases on a github pages
+  site (https://dateutil.github.io/tzdata/) (gh pr #183)
+- dateutil zoneinfo tarballs now contain the full zoneinfo_metadata file used
+  to generate them. (gh issue #27, gh pr #85)
+- relativedelta can now be safely subclassed without derived objects reverting
+  to base relativedelta objects as a result of arithmetic operations.
+  (lp:1010199, gh issue #44, pr #49)
+- relativedelta 'weeks' parameter can now be set and retrieved as a property of
+  relativedelta instances. (lp: 727525, gh issue #45, pr #49)
+- relativedelta now explicitly supports fractional relative weeks, days, hours,
+  minutes and seconds. Fractional values in absolute parameters (year, day, etc)
+  are now deprecated. (gh issue #40, pr #190)
+- relativedelta objects previously did not use microseconds to determine of two
+  relativedelta objects were equal. This oversight has been corrected.
+  Contributed by @elprans (gh pr #113)
+- rrule now has an xafter() method for retrieving multiple recurrences after a
+  specified date. (gh pr #38)
+- str(rrule) now returns an RFC2445-compliant rrule string, contributed by
+  @schinckel and @armicron (lp:1406305, gh issue #47, prs #50, #62 and #160)
+- rrule performance under certain conditions has been significantly improved
+  thanks to a patch contributed by @dekoza, based on an article by Brian Beck
+  (@exogen) (gh pr #136)
+- The use of both the 'until' and 'count' parameters is now deprecated as
+  inconsistent with RFC2445 (gh pr #62, #185)
+- Parsing an empty string will now raise a ValueError, rather than returning the
+  datetime passed to the 'default' parameter. (gh issue #78, pr #187)
+- tzwinlocal objects now have a meaningful repr() and str() implementation
+  (gh issue #148, prs #184 and #186)
+- Added equality logic for tzwin and tzwinlocal objects. (gh issue #151,
+  pr #180, #184)
+- Added some flexibility in subclassing timelex, and switched the default
+  behavior over to using string methods rather than comparing against a fixed
+  list. (gh pr #122, #139)
+- An issue causing tzstr() to crash on Python 2.x was fixed. (lp: 1331576,
+  gh issue #51, pr #55)
+- An issue with string encoding causing exceptions under certain circumstances
+  when tzname() is called was fixed. (gh issue #60, #74, pr #75)
+- Parser issue where calling parse() on dates with no day specified when the
+  day of the month in the default datetime (which is "today" if unspecified) is
+  greater than the number of days in the parsed month was fixed (this issue
+  tended to crop up between the 29th and 31st of the month, for obvious reasons)
+  (canonical gh issue #25, pr #30, #191)
+- Fixed parser issue causing fuzzy_with_tokens to raise an unexpected exception
+  in certain circumstances. Contributed by @MichaelAquilina (gh pr #91)
+- Fixed parser issue where years > 100 AD were incorrectly parsed. Contributed
+  by @Bachmann1234 (gh pr #130)
+- Fixed parser issue where commas were not a valid separator between seconds
+  and microseconds, preventing parsing of ISO 8601 dates. Contributed by
+  @ryanss (gh issue #28, pr #106)
+- Fixed issue with tzwin encoding in locales with non-Latin alphabets
+  (gh issue #92, pr #98)
+- Fixed an issue where tzwin was not being properly imported on Windows.
+  Contributed by @labrys. (gh pr #134)
+- Fixed a problem causing issues importing zoneinfo in certain circumstances.
+  Issue and solution contributed by @alexxv (gh issue #97, pr #99)
+- Fixed an issue where dateutil timezones were not compatible with basic time
+  objects. One of many, many timezone related issues contributed and tested by
+  @labrys. (gh issue #132, pr #181)
+- Fixed issue where tzwinlocal had an invalid utcoffset. (gh issue #135,
+  pr #141, #142)
+- Fixed issue with tzwin and tzwinlocal where DST transitions were incorrectly
+  parsed from the registry. (gh issue #143, pr #178)
+- updatezinfo.py no longer suppresses certain OSErrors. Contributed by @bjamesv
+  (gh pr #164)
+- An issue that arose when timezone locale changes during runtime has been
+  fixed by @carlosxl and @mjschultz (gh issue #100, prs #107, #109)
+- Python 3.5 was added to the supported platforms in the metadata (@tacaswell
+  gh pr #159) and the test suites (@moreati gh pr #117).
+- An issue with tox failing without unittest2 installed in Python 2.6 was fixed
+  by @moreati (gh pr #115)
+- Several deprecated functions were replaced in the tests by @moreati
+  (gh pr #116)
+- Improved the logic in Travis and Appveyor to alleviate issues where builds
+  were failing due to connection issues when downloading the IANA timezone
+  files. In addition to adding our own mirror for the files (gh pr #183), the
+  download is now retried a number of times (with a delay) (gh pr #177)
+- Many failing doctests were fixed by @moreati. (gh pr #120)  
+- Many fixes to the documentation (gh pr #103, gh pr #87 from @radarhere,
+  gh pr #154 from @gpoesia, gh pr #156 from @awsum, gh pr #168 from @ja8zyjits)
+- Added a code coverage tool to the CI to help improve the library. (gh pr #182)
+- We now have a mailing list - dateutil@python.org, graciously hosted by
+  Python.org.
+
+
 Version 2.4.2
 -------------
 - Updated zoneinfo to 2015b.
