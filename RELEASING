@@ -1,0 +1,92 @@
+Release Checklist
+-----------------------------------------
+[ ] Update __version__ string
+[ ] Update classifiers in setup.py to include the latest supported Python
+    versions.
+[ ] Update the metadata in zonefile_metadata.json to include the latest tzdata
+    release from https://www.iana.org/time-zones.
+[ ] If necessary, update the tzdata mirror at https://github.com/dateutil/tzdata
+[ ] Update NEWS with list of changes, giving credit to contributors.
+[ ] Build the source distribution as, at a minimum, .tar.gz and .zip
+[ ] Verify that the source distribution contains all necessary components.
+[ ] Build the binary distribution as a wheel
+[ ] Verify that the binary distribution can be installed and works.
+[ ] Generate MD5 hashes for the source and binary distributions
+[ ] Sign the source and binary distributions with a GPG key (if not the one
+    that made the release, then one signed by the one that made the last
+    release)
+[ ] Commit the changes in git and make a pull request.
+[ ] Accept the pull request and tag the repository with the release number.
+[ ] Add the contents of the NEWS file to the github release notes for the
+    release.
+[ ] Upload the source and binary distributions along with hashes and signatures
+    to pypi.
+
+Optional:
+----------
+[ ] Check that README.rst is up-to-date.
+[ ] Check that the documentation builds correctly (cd docs, make html)
+
+
+Instructions
+-----------------------------------------
+See the instructions at https://packaging.python.org/en/latest/distributing/
+for more details.
+
+
+Versioning
+----------
+Try and keep to a semantic versioning scheme (http://semver.org/).
+
+
+Source releases
+----------
+Release the sources with, at a minimum, .tar.gz and .zip. Make sure you have a
+relatively recent version of setuptools when making the source distribution, as
+earlier version will not include the tests. Other formats are
+optional. They can be generated using:
+
+    python setup.py sdist --formats=zip,gztar
+
+To verify that a source release is correct, inspect it using whatever archive
+utility you have and make sure it contains all the modules and the tests. Also
+make sure that the zoneinfo file is included in the You
+may also want to generate a new clean virtualenv and run the tests from the
+source distribution (python setup.py test).
+
+
+Binary releases
+----------
+It should always be possible to generate a universal wheel binary distribution
+for each release. Generally we do not generate .egg files. In order to generate
+a wheel, you need the wheel package (https://wheel.readthedocs.org/en/latest/)
+installed, which can be installed with:
+
+    pip install wheel
+
+Once this is done, generate the wheel with:
+
+    python setup.py bdist_wheel
+
+
+Signing and generate checksums
+----------
+Since all the outputs are generated in the dist/ directory, can generate all the
+md5 checksums at once from the base directory by executing:
+
+    md5sum dist/*
+
+Save these for when uploading the files. Following this, go into the dist
+directory and sign each of the results with the relevant key:
+
+    gpg --armor --output <fname>.asc --detach-sig <fname>
+
+To automate this for all files, you can use the following command:
+
+    for f  in dist/*; do gpg --armor --output $f.asc --detach-sig $f; done
+
+Save these .asc files for when uploading to pypi. Before uploading them, verify
+that they are valid signatures:
+
+    gpg --verify <fname>.asc <fname>
+
