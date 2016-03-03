@@ -61,6 +61,21 @@ orthodox_easter_dates = [
     date(2048, 4,  5), date(2049, 4, 25), date(2050, 4, 17)
 ]
 
+# A random smattering of Julian dates.
+# Pulled values from http://www.kevinlaughery.com/east4099.html
+julian_easter_dates = [
+    date( 326, 4,  3), date( 375, 4,  5), date( 492, 4,  5), date( 552, 3, 31),
+    date( 562, 4,  9), date( 569, 4, 21), date( 597, 4, 14), date( 621, 4, 19),
+    date( 636, 3, 31), date( 655, 3, 29), date( 700, 4, 11), date( 725, 4,  8),
+    date( 750, 3, 29), date( 782, 4,  7), date( 835, 4, 18), date( 849, 4, 14),
+    date( 867, 3, 30), date( 890, 4, 12), date( 922, 4, 21), date( 934, 4,  6),
+    date(1049, 3, 26), date(1058, 4, 19), date(1113, 4,  6), date(1119, 3, 30),
+    date(1242, 4, 20), date(1255, 3, 28), date(1257, 4,  8), date(1258, 3, 24),
+    date(1261, 4, 24), date(1278, 4, 17), date(1333, 4,  4), date(1351, 4, 17),
+    date(1371, 4,  6), date(1391, 3, 26), date(1402, 3, 26), date(1412, 4,  3),
+    date(1439, 4,  5), date(1445, 3, 28), date(1531, 4,  9), date(1555, 4, 14)
+]
+
 
 class EasterTest(unittest.TestCase):
     def testEasterWestern(self):
@@ -72,6 +87,11 @@ class EasterTest(unittest.TestCase):
         for easter_date in orthodox_easter_dates:
             self.assertEqual(easter_date,
                              easter(easter_date.year, EASTER_ORTHODOX))
+
+    def testEasterJulian(self):
+        for easter_date in julian_easter_dates:
+            self.assertEqual(easter_date,
+                             easter(easter_date.year, EASTER_JULIAN))
 
     def testEasterBadMethod(self):
         # Invalid methods raise ValueError
