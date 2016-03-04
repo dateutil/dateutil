@@ -769,7 +769,10 @@ class ParserTest(unittest.TestCase):
                          datetime(2015, 9, 10, 10, 20))
 
     def testParseWithNulls(self):
-        pstring = u'\x00\x00August 29, 1924'
+        # This relies on the from __future__ import unicode_literals, because
+        # explicitly specifying a unicode literal is a syntax error in Py 3.2
+        # May want to switch to u'...' if we ever drop Python 3.2 support.
+        pstring = '\x00\x00August 29, 1924'
 
         self.assertEqual(parse(pstring),
                          datetime(1924, 8, 29))
