@@ -11,7 +11,7 @@ except ValueError:
     # ValueError is raised on non-Windows systems for some horrible reason.
     raise ImportError("Running tzwin on non-Windows system")
 
-from .__init__ import tzname_in_python2
+from ._common import tzname_in_python2
 
 __all__ = ["tzwin", "tzwinlocal", "tzres"]
 
