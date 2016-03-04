@@ -1,2 +1,4 @@
 include LICENSE NEWS zonefile_metadata.json updatezinfo.py
-include dateutil/test/*.py
+recursive-include dateutils/test/ *
+global-exclude __pycache__
+global-exclude *.py[co]
