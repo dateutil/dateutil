@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
+from ._common import unittest, TZWinContext
 
 from datetime import datetime, timedelta
 from datetime import time as dt_time
@@ -11,12 +12,6 @@ import sys
 import time as _time
 import base64
 IS_WIN = sys.platform.startswith('win')
-
-try:
-    # Needed in Python 2.6 for conditional test skipping
-    import unittest2 as unittest
-except ImportError:
-    import unittest
 
 # dateutil imports
 from dateutil.relativedelta import relativedelta
@@ -126,50 +121,6 @@ TZNAME:EDT
 END:DAYLIGHT
 END:VTIMEZONE
 """
-
-class TZWinContext(object):
-    """ Context manager for changing local time zone on Windows """
-    @classmethod
-    def tz_change_allowed(cls):
-        # Allowing dateutil to change the local TZ is set as a local environment
-        # flag.
-        return bool(os.environ.get('DATEUTIL_MAY_CHANGE_TZ', False))
-
-    def __init__(self, tzname):
-        self.tzname = tzname
-        self._old_tz = None
-
-    def __enter__(self):
-        if not self.tz_change_allowed():
-            raise ValueError('Environment variable DATEUTIL_MAY_CHANGE_TZ ' + 
-                             'must be true.')
-
-        self._old_tz = self.get_current_tz()
-        self.set_current_tz(self.tzname)
-
-    def __exit__(self, type, value, traceback):
-        if self._old_tz is not None:
-            self.set_current_tz(self._old_tz)
-
-    def get_current_tz(self):
-        p = subprocess.Popen(['tzutil', '/g'], stdout=subprocess.PIPE)
-
-        ctzname, err = p.communicate()
-        ctzname = ctzname.decode()     # Popen returns 
-
-        if p.returncode:
-            raise OSError('Failed to get current time zone: ' + err)
-
-        return ctzname
-
-    def set_current_tz(self, tzname):
-        p = subprocess.Popen('tzutil /s "' + tzname + '"')
-
-        out, err = p.communicate()
-
-        if p.returncode:
-            raise OSError('Failed to set current time zone: ' +
-                          (err or 'Unknown error.'))
 
 
 class TZTest(unittest.TestCase):
