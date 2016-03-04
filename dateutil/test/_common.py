@@ -5,7 +5,9 @@ except ImportError:
     import unittest
 
 import os
+import subprocess
 import warnings
+
 
 class WarningTestMixin(object):
     # Based on https://stackoverflow.com/a/12935176/467366
@@ -53,6 +55,7 @@ class WarningTestMixin(object):
         else:
             with context:
                 callable(*args, **kwargs)
+
 
 class TZWinContext(object):
     """ Context manager for changing local time zone on Windows """
