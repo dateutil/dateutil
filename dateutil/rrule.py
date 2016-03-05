@@ -65,6 +65,7 @@ class weekday(object):
     def __init__(self, weekday, n=None):
         if n == 0:
             raise ValueError("Can't create weekday with n == 0")
+
         self.weekday = weekday
         self.n = n
 
