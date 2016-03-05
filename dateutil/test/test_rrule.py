@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 from ._common import WarningTestMixin, unittest
 
+import calendar
 from datetime import datetime, date
 from six import PY3
 
@@ -2634,136 +2635,6 @@ class RRuleTest(WarningTestMixin, unittest.TestCase):
         for x in rr: pass
         self.assertEqual(datetime(1997, 9, 3, 9, 0) in rr, True)
 
-    def testSet(self):
-        set = rruleset()
-        set.rrule(rrule(YEARLY, count=2, byweekday=TU,
-                        dtstart=datetime(1997, 9, 2, 9, 0)))
-        set.rrule(rrule(YEARLY, count=1, byweekday=TH,
-                        dtstart=datetime(1997, 9, 2, 9, 0)))
-        self.assertEqual(list(set),
-                         [datetime(1997, 9, 2, 9, 0),
-                          datetime(1997, 9, 4, 9, 0),
-                          datetime(1997, 9, 9, 9, 0)])
-
-    def testSetDate(self):
-        set = rruleset()
-        set.rrule(rrule(YEARLY, count=1, byweekday=TU,
-                        dtstart=datetime(1997, 9, 2, 9, 0)))
-        set.rdate(datetime(1997, 9, 4, 9))
-        set.rdate(datetime(1997, 9, 9, 9))
-        self.assertEqual(list(set),
-                         [datetime(1997, 9, 2, 9, 0),
-                          datetime(1997, 9, 4, 9, 0),
-                          datetime(1997, 9, 9, 9, 0)])
-
-    def testSetExRule(self):
-        set = rruleset()
-        set.rrule(rrule(YEARLY, count=6, byweekday=(TU, TH),
-                        dtstart=datetime(1997, 9, 2, 9, 0)))
-        set.exrule(rrule(YEARLY, count=3, byweekday=TH,
-                        dtstart=datetime(1997, 9, 2, 9, 0)))
-        self.assertEqual(list(set),
-                         [datetime(1997, 9, 2, 9, 0),
-                          datetime(1997, 9, 9, 9, 0),
-                          datetime(1997, 9, 16, 9, 0)])
-
-    def testSetExDate(self):
-        set = rruleset()
-        set.rrule(rrule(YEARLY, count=6, byweekday=(TU, TH),
-                        dtstart=datetime(1997, 9, 2, 9, 0)))
-        set.exdate(datetime(1997, 9, 4, 9))
-        set.exdate(datetime(1997, 9, 11, 9))
-        set.exdate(datetime(1997, 9, 18, 9))
-        self.assertEqual(list(set),
-                         [datetime(1997, 9, 2, 9, 0),
-                          datetime(1997, 9, 9, 9, 0),
-                          datetime(1997, 9, 16, 9, 0)])
-
-    def testSetExDateRevOrder(self):
-        set = rruleset()
-        set.rrule(rrule(MONTHLY, count=5, bymonthday=10,
-                        dtstart=datetime(2004, 1, 1, 9, 0)))
-        set.exdate(datetime(2004, 4, 10, 9, 0))
-        set.exdate(datetime(2004, 2, 10, 9, 0))
-        self.assertEqual(list(set),
-                         [datetime(2004, 1, 10, 9, 0),
-                          datetime(2004, 3, 10, 9, 0),
-                          datetime(2004, 5, 10, 9, 0)])
-
-    def testSetDateAndExDate(self):
-        set = rruleset()
-        set.rdate(datetime(1997, 9, 2, 9))
-        set.rdate(datetime(1997, 9, 4, 9))
-        set.rdate(datetime(1997, 9, 9, 9))
-        set.rdate(datetime(1997, 9, 11, 9))
-        set.rdate(datetime(1997, 9, 16, 9))
-        set.rdate(datetime(1997, 9, 18, 9))
-        set.exdate(datetime(1997, 9, 4, 9))
-        set.exdate(datetime(1997, 9, 11, 9))
-        set.exdate(datetime(1997, 9, 18, 9))
-        self.assertEqual(list(set),
-                         [datetime(1997, 9, 2, 9, 0),
-                          datetime(1997, 9, 9, 9, 0),
-                          datetime(1997, 9, 16, 9, 0)])
-
-    def testSetDateAndExRule(self):
-        set = rruleset()
-        set.rdate(datetime(1997, 9, 2, 9))
-        set.rdate(datetime(1997, 9, 4, 9))
-        set.rdate(datetime(1997, 9, 9, 9))
-        set.rdate(datetime(1997, 9, 11, 9))
-        set.rdate(datetime(1997, 9, 16, 9))
-        set.rdate(datetime(1997, 9, 18, 9))
-        set.exrule(rrule(YEARLY, count=3, byweekday=TH,
-                        dtstart=datetime(1997, 9, 2, 9, 0)))
-        self.assertEqual(list(set),
-                         [datetime(1997, 9, 2, 9, 0),
-                          datetime(1997, 9, 9, 9, 0),
-                          datetime(1997, 9, 16, 9, 0)])
-
-    def testSetCount(self):
-        set = rruleset()
-        set.rrule(rrule(YEARLY, count=6, byweekday=(TU, TH),
-                        dtstart=datetime(1997, 9, 2, 9, 0)))
-        set.exrule(rrule(YEARLY, count=3, byweekday=TH,
-                        dtstart=datetime(1997, 9, 2, 9, 0)))
-        self.assertEqual(set.count(), 3)
-
-    def testSetCachePre(self):
-        set = rruleset()
-        set.rrule(rrule(YEARLY, count=2, byweekday=TU,
-                        dtstart=datetime(1997, 9, 2, 9, 0)))
-        set.rrule(rrule(YEARLY, count=1, byweekday=TH,
-                        dtstart=datetime(1997, 9, 2, 9, 0)))
-        self.assertEqual(list(set),
-                         [datetime(1997, 9, 2, 9, 0),
-                          datetime(1997, 9, 4, 9, 0),
-                          datetime(1997, 9, 9, 9, 0)])
-
-    def testSetCachePost(self):
-        set = rruleset(cache=True)
-        set.rrule(rrule(YEARLY, count=2, byweekday=TU,
-                        dtstart=datetime(1997, 9, 2, 9, 0)))
-        set.rrule(rrule(YEARLY, count=1, byweekday=TH,
-                        dtstart=datetime(1997, 9, 2, 9, 0)))
-        for x in set: pass
-        self.assertEqual(list(set),
-                         [datetime(1997, 9, 2, 9, 0),
-                          datetime(1997, 9, 4, 9, 0),
-                          datetime(1997, 9, 9, 9, 0)])
-
-    def testSetCachePostInternal(self):
-        set = rruleset(cache=True)
-        set.rrule(rrule(YEARLY, count=2, byweekday=TU,
-                        dtstart=datetime(1997, 9, 2, 9, 0)))
-        set.rrule(rrule(YEARLY, count=1, byweekday=TH,
-                        dtstart=datetime(1997, 9, 2, 9, 0)))
-        for x in set: pass
-        self.assertEqual(list(set._cache),
-                         [datetime(1997, 9, 2, 9, 0),
-                          datetime(1997, 9, 4, 9, 0),
-                          datetime(1997, 9, 9, 9, 0)])
-
     def testStr(self):
         self.assertEqual(list(rrulestr(
                               "DTSTART:19970902T090000\n"
@@ -2938,6 +2809,23 @@ class RRuleTest(WarningTestMixin, unittest.TestCase):
                          [datetime(1997, 12, 25, 9, 0),
                           datetime(1998, 1, 6, 9, 0),
                           datetime(1998, 12, 31, 9, 0)])
+
+    def testStrUntil(self):
+        self.assertEqual(list(rrulestr(
+                              "DTSTART:19970902T090000\n" 
+                              "RRULE:FREQ=YEARLY;"
+                              "UNTIL=19990101T000000;BYDAY=1TU,-1TH\n"
+                              )),
+                         [datetime(1997, 12, 25, 9, 0),
+                          datetime(1998, 1, 6, 9, 0),
+                          datetime(1998, 12, 31, 9, 0)])
+
+    def testStrInvalidUntil(self):
+        with self.assertRaises(ValueError):
+            list(rrulestr("DTSTART:19970902T090000\n"
+                          "RRULE:FREQ=YEARLY;"
+                          "UNTIL=TheCowsComeHome;BYDAY=1TU,-1TH\n"))
+
 
     def testBadBySetPos(self):
         self.assertRaises(ValueError,
@@ -4498,4 +4386,278 @@ class RRuleTest(WarningTestMixin, unittest.TestCase):
                                   bymonthday=long(5),
                                   byweekno=long(2),
                                   dtstart=datetime(1997, 9, 2, 9, 0)))
+
+
+class RRuleSetTest(unittest.TestCase):
+    def testSet(self):
+        rrset = rruleset()
+        rrset.rrule(rrule(YEARLY, count=2, byweekday=TU,
+                          dtstart=datetime(1997, 9, 2, 9, 0)))
+        rrset.rrule(rrule(YEARLY, count=1, byweekday=TH,
+                          dtstart=datetime(1997, 9, 2, 9, 0)))
+        self.assertEqual(list(rrset),
+                         [datetime(1997, 9, 2, 9, 0),
+                          datetime(1997, 9, 4, 9, 0),
+                          datetime(1997, 9, 9, 9, 0)])
+
+    def testSetDate(self):
+        rrset = rruleset()
+        rrset.rrule(rrule(YEARLY, count=1, byweekday=TU,
+                          dtstart=datetime(1997, 9, 2, 9, 0)))
+        rrset.rdate(datetime(1997, 9, 4, 9))
+        rrset.rdate(datetime(1997, 9, 9, 9))
+        self.assertEqual(list(rrset),
+                         [datetime(1997, 9, 2, 9, 0),
+                          datetime(1997, 9, 4, 9, 0),
+                          datetime(1997, 9, 9, 9, 0)])
+
+    def testSetExRule(self):
+        rrset = rruleset()
+        rrset.rrule(rrule(YEARLY, count=6, byweekday=(TU, TH),
+                          dtstart=datetime(1997, 9, 2, 9, 0)))
+        rrset.exrule(rrule(YEARLY, count=3, byweekday=TH,
+                          dtstart=datetime(1997, 9, 2, 9, 0)))
+        self.assertEqual(list(rrset),
+                         [datetime(1997, 9, 2, 9, 0),
+                          datetime(1997, 9, 9, 9, 0),
+                          datetime(1997, 9, 16, 9, 0)])
+
+    def testSetExDate(self):
+        rrset = rruleset()
+        rrset.rrule(rrule(YEARLY, count=6, byweekday=(TU, TH),
+                          dtstart=datetime(1997, 9, 2, 9, 0)))
+        rrset.exdate(datetime(1997, 9, 4, 9))
+        rrset.exdate(datetime(1997, 9, 11, 9))
+        rrset.exdate(datetime(1997, 9, 18, 9))
+        self.assertEqual(list(rrset),
+                         [datetime(1997, 9, 2, 9, 0),
+                          datetime(1997, 9, 9, 9, 0),
+                          datetime(1997, 9, 16, 9, 0)])
+
+    def testSetExDateRevOrder(self):
+        rrset = rruleset()
+        rrset.rrule(rrule(MONTHLY, count=5, bymonthday=10,
+                          dtstart=datetime(2004, 1, 1, 9, 0)))
+        rrset.exdate(datetime(2004, 4, 10, 9, 0))
+        rrset.exdate(datetime(2004, 2, 10, 9, 0))
+        self.assertEqual(list(rrset),
+                         [datetime(2004, 1, 10, 9, 0),
+                          datetime(2004, 3, 10, 9, 0),
+                          datetime(2004, 5, 10, 9, 0)])
+
+    def testSetDateAndExDate(self):
+        rrset = rruleset()
+        rrset.rdate(datetime(1997, 9, 2, 9))
+        rrset.rdate(datetime(1997, 9, 4, 9))
+        rrset.rdate(datetime(1997, 9, 9, 9))
+        rrset.rdate(datetime(1997, 9, 11, 9))
+        rrset.rdate(datetime(1997, 9, 16, 9))
+        rrset.rdate(datetime(1997, 9, 18, 9))
+        rrset.exdate(datetime(1997, 9, 4, 9))
+        rrset.exdate(datetime(1997, 9, 11, 9))
+        rrset.exdate(datetime(1997, 9, 18, 9))
+        self.assertEqual(list(rrset),
+                         [datetime(1997, 9, 2, 9, 0),
+                          datetime(1997, 9, 9, 9, 0),
+                          datetime(1997, 9, 16, 9, 0)])
+
+    def testSetDateAndExRule(self):
+        rrset = rruleset()
+        rrset.rdate(datetime(1997, 9, 2, 9))
+        rrset.rdate(datetime(1997, 9, 4, 9))
+        rrset.rdate(datetime(1997, 9, 9, 9))
+        rrset.rdate(datetime(1997, 9, 11, 9))
+        rrset.rdate(datetime(1997, 9, 16, 9))
+        rrset.rdate(datetime(1997, 9, 18, 9))
+        rrset.exrule(rrule(YEARLY, count=3, byweekday=TH,
+                           dtstart=datetime(1997, 9, 2, 9, 0)))
+        self.assertEqual(list(rrset),
+                         [datetime(1997, 9, 2, 9, 0),
+                          datetime(1997, 9, 9, 9, 0),
+                          datetime(1997, 9, 16, 9, 0)])
+
+    def testSetCount(self):
+        rrset = rruleset()
+        rrset.rrule(rrule(YEARLY, count=6, byweekday=(TU, TH),
+                          dtstart=datetime(1997, 9, 2, 9, 0)))
+        rrset.exrule(rrule(YEARLY, count=3, byweekday=TH,
+                           dtstart=datetime(1997, 9, 2, 9, 0)))
+        self.assertEqual(rrset.count(), 3)
+
+    def testSetCachePre(self):
+        rrset = rruleset()
+        rrset.rrule(rrule(YEARLY, count=2, byweekday=TU,
+                          dtstart=datetime(1997, 9, 2, 9, 0)))
+        rrset.rrule(rrule(YEARLY, count=1, byweekday=TH,
+                          dtstart=datetime(1997, 9, 2, 9, 0)))
+        self.assertEqual(list(rrset),
+                         [datetime(1997, 9, 2, 9, 0),
+                          datetime(1997, 9, 4, 9, 0),
+                          datetime(1997, 9, 9, 9, 0)])
+
+    def testSetCachePost(self):
+        rrset = rruleset(cache=True)
+        rrset.rrule(rrule(YEARLY, count=2, byweekday=TU,
+                          dtstart=datetime(1997, 9, 2, 9, 0)))
+        rrset.rrule(rrule(YEARLY, count=1, byweekday=TH,
+                          dtstart=datetime(1997, 9, 2, 9, 0)))
+        for x in rrset: pass
+        self.assertEqual(list(rrset),
+                         [datetime(1997, 9, 2, 9, 0),
+                          datetime(1997, 9, 4, 9, 0),
+                          datetime(1997, 9, 9, 9, 0)])
+
+    def testSetCachePostInternal(self):
+        rrset = rruleset(cache=True)
+        rrset.rrule(rrule(YEARLY, count=2, byweekday=TU,
+                          dtstart=datetime(1997, 9, 2, 9, 0)))
+        rrset.rrule(rrule(YEARLY, count=1, byweekday=TH,
+                          dtstart=datetime(1997, 9, 2, 9, 0)))
+        for x in rrset: pass
+        self.assertEqual(list(rrset._cache),
+                         [datetime(1997, 9, 2, 9, 0),
+                          datetime(1997, 9, 4, 9, 0),
+                          datetime(1997, 9, 9, 9, 0)])
+
+    def testSetRRuleCount(self):
+        # Test that the count is updated when an rrule is added
+        rrset = rruleset(cache=False)
+        for cache in (True, False):
+            rrset = rruleset(cache=cache)
+            rrset.rrule(rrule(YEARLY, count=2, byweekday=TH,
+                              dtstart=datetime(1983, 4, 1)))
+            rrset.rrule(rrule(WEEKLY, count=4, byweekday=FR,
+                              dtstart=datetime(1991, 6, 3)))
+
+            # Check the length twice - first one sets a cache, second reads it
+            self.assertEqual(rrset.count(), 6)
+            self.assertEqual(rrset.count(), 6)
+
+            # This should invalidate the cache and force an update
+            rrset.rrule(rrule(MONTHLY, count=3, dtstart=datetime(1994, 1, 3)))
+
+            self.assertEqual(rrset.count(), 9)
+            self.assertEqual(rrset.count(), 9)
+
+    def testSetRDateCount(self):
+        # Test that the count is updated when an rdate is added
+        rrset = rruleset(cache=False)
+        for cache in (True, False):
+            rrset = rruleset(cache=cache)
+            rrset.rrule(rrule(YEARLY, count=2, byweekday=TH,
+                              dtstart=datetime(1983, 4, 1)))
+            rrset.rrule(rrule(WEEKLY, count=4, byweekday=FR,
+                              dtstart=datetime(1991, 6, 3)))
+
+            # Check the length twice - first one sets a cache, second reads it
+            self.assertEqual(rrset.count(), 6)
+            self.assertEqual(rrset.count(), 6)
+
+            # This should invalidate the cache and force an update
+            rrset.rdate(datetime(1993, 2, 14))
+
+            self.assertEqual(rrset.count(), 7)
+            self.assertEqual(rrset.count(), 7)
+
+    def testSetExRuleCount(self):
+        # Test that the count is updated when an exrule is added
+        rrset = rruleset(cache=False)
+        for cache in (True, False):
+            rrset = rruleset(cache=cache)
+            rrset.rrule(rrule(YEARLY, count=2, byweekday=TH,
+                              dtstart=datetime(1983, 4, 1)))
+            rrset.rrule(rrule(WEEKLY, count=4, byweekday=FR,
+                              dtstart=datetime(1991, 6, 3)))
+
+            # Check the length twice - first one sets a cache, second reads it
+            self.assertEqual(rrset.count(), 6)
+            self.assertEqual(rrset.count(), 6)
+
+            # This should invalidate the cache and force an update
+            rrset.exrule(rrule(WEEKLY, count=2, interval=2,
+                               dtstart=datetime(1991, 6, 14)))
+
+            self.assertEqual(rrset.count(), 4)
+            self.assertEqual(rrset.count(), 4)
+
+    def testSetExDateCount(self):
+        # Test that the count is updated when an rdate is added
+        for cache in (True, False):
+            rrset = rruleset(cache=cache)
+            rrset.rrule(rrule(YEARLY, count=2, byweekday=TH,
+                              dtstart=datetime(1983, 4, 1)))
+            rrset.rrule(rrule(WEEKLY, count=4, byweekday=FR,
+                              dtstart=datetime(1991, 6, 3)))
+
+            # Check the length twice - first one sets a cache, second reads it
+            self.assertEqual(rrset.count(), 6)
+            self.assertEqual(rrset.count(), 6)
+
+            # This should invalidate the cache and force an update
+            rrset.exdate(datetime(1991, 6, 28))
+
+            self.assertEqual(rrset.count(), 5)
+            self.assertEqual(rrset.count(), 5)
+
+
+class WeekdayTest(unittest.TestCase):
+    def testInvalidNthWeekday(self):
+        with self.assertRaises(ValueError):
+            zeroth_friday = FR(0)
+
+    def testWeekdayCallable(self):
+        # Calling a weekday instance generates a new weekday instance with the
+        # value of n changed.
+        from dateutil.rrule import weekday
+        self.assertEqual(MO(1), weekday(0, 1))
+
+        # Calling a weekday instance with the identical n returns the original
+        # object
+        FR_3 = weekday(4, 3)
+        self.assertIs(FR_3(3), FR_3)
+
+    def testWeekdayEquality(self):
+        # Two weekday objects are not equal if they have different values for n
+        self.assertNotEqual(TH, TH(-1))
+        self.assertNotEqual(SA(3), SA(2))
+
+    def testWeekdayEqualitySubclass(self):
+        # Two weekday objects equal if their "weekday" and "n" attributes are
+        # available and the same
+        class BasicWeekday(object):
+            def __init__(self, weekday):
+                self.weekday = weekday
+
+        class BasicNWeekday(BasicWeekday):
+            def __init__(self, weekday, n=None):
+                super(BasicNWeekday, self).__init__(weekday)
+                self.n = n
+
+        MO_Basic = BasicWeekday(0)
+        
+        self.assertNotEqual(MO, MO_Basic)
+        self.assertNotEqual(MO(1), MO_Basic)
+
+        TU_BasicN = BasicNWeekday(1)
+
+        self.assertEqual(TU, TU_BasicN)
+        self.assertNotEqual(TU(3), TU_BasicN)
+
+        WE_Basic3 = BasicNWeekday(2, 3)
+        self.assertEqual(WE(3), WE_Basic3)
+        self.assertNotEqual(WE(2), WE_Basic3)
+
+    def testWeekdayReprNoN(self):
+        no_n_reprs = ('MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU')
+        no_n_wdays = (MO, TU, WE, TH, FR, SA, SU)
+
+        for repstr, wday in zip(no_n_reprs, no_n_wdays):
+            self.assertEqual(repr(wday), repstr)
+
+    def testWeekdayReprWithN(self):
+        with_n_reprs = ('WE(+1)', 'TH(-2)', 'SU(+3)')
+        with_n_wdays = (WE(1), TH(-2), SU(+3))
+
+        for repstr, wday in zip(with_n_reprs, with_n_wdays):
+            self.assertEqual(repr(wday), repstr)
 
