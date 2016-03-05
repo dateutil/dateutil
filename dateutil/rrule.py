@@ -92,17 +92,29 @@ class weekday(object):
 MO, TU, WE, TH, FR, SA, SU = weekdays = tuple([weekday(x) for x in range(7)])
 
 
+def _invalidates_cache(f):
+    """
+    Decorator for rruleset methods which may invalidate the
+    cached length.
+    """
+    def inner_func(self, *args, **kwargs):
+        rv = f(self, *args, **kwargs)
+        self._invalidate_cache()
+        return rv
+
+    return inner_func
+
+
 class rrulebase(object):
     def __init__(self, cache=False):
         if cache:
             self._cache = []
             self._cache_lock = _thread.allocate_lock()
-            self._cache_gen = self._iter()
-            self._cache_complete = False
+            self._invalidate_cache()
         else:
             self._cache = None
             self._cache_complete = False
-        self._len = None
+            self._len = None
 
     def __iter__(self):
         if self._cache_complete:
@@ -111,6 +123,17 @@ class rrulebase(object):
             return self._iter()
         else:
             return self._iter_cached()
+
+    def _invalidate_cache(self):
+        if self._cache is not None:
+            self._cache = []
+            self._cache_complete = False
+            self._cache_gen = self._iter()
+
+            if self._cache_lock.locked():
+                self._cache_lock.release()
+
+        self._len = None
 
     def _iter_cached(self):
         i = 0
@@ -1275,16 +1298,19 @@ class rruleset(rrulebase):
         self._exrule = []
         self._exdate = []
 
+    @_invalidates_cache
     def rrule(self, rrule):
         """ Include the given :py:class:`rrule` instance in the recurrence set
             generation. """
         self._rrule.append(rrule)
 
+    @_invalidates_cache
     def rdate(self, rdate):
         """ Include the given :py:class:`datetime` instance in the recurrence
             set generation. """
         self._rdate.append(rdate)
 
+    @_invalidates_cache
     def exrule(self, exrule):
         """ Include the given rrule instance in the recurrence set exclusion
             list. Dates which are part of the given recurrence rules will not
@@ -1292,6 +1318,7 @@ class rruleset(rrulebase):
         """
         self._exrule.append(exrule)
 
+    @_invalidates_cache
     def exdate(self, exdate):
         """ Include the given datetime instance in the recurrence set
             exclusion list. Dates included that way will not be generated,
