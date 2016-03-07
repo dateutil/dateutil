@@ -3,6 +3,7 @@ import datetime
 import struct
 
 from six.moves import winreg
+from six import text_type
 
 try:
     import ctypes
@@ -110,6 +111,7 @@ class tzres(object):
 
         return self.load_name(offset)
 
+
 class tzwinbase(datetime.tzinfo):
     """tzinfo class based on win32's timezones available in the registry."""
     def __eq__(self, other):
@@ -188,8 +190,8 @@ class tzwin(tzwinbase):
 
         # multiple contexts only possible in 2.7 and 3.1, we still support 2.6
         with winreg.ConnectRegistry(None, winreg.HKEY_LOCAL_MACHINE) as handle:
-            with winreg.OpenKey(handle,
-                                "%s\%s" % (TZKEYNAME, name)) as tzkey:
+            tzkeyname = text_type("{kn}\{name}").format(kn=TZKEYNAME, name=name)
+            with winreg.OpenKey(handle, tzkeyname) as tzkey:
                 keydict = valuestodict(tzkey)
 
         self._stdname = keydict["Std"]
@@ -235,8 +237,9 @@ class tzwinlocal(tzwinbase):
             self._dstname = keydict["DaylightName"]
 
             try:
-                with winreg.OpenKey(
-                        handle, "%s\%s" % (TZKEYNAME, self._stdname)) as tzkey:
+                tzkeyname = text_type('{kn}\{sn}').format(kn=TZKEYNAME,
+                                                          sn=self._stdname)
+                with winreg.OpenKey(handle, tzkeyname) as tzkey:
                     _keydict = valuestodict(tzkey)
                     self._display = _keydict["Display"]
             except OSError:
