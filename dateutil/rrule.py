@@ -1418,7 +1418,7 @@ class _rrulestr(object):
                 splt = wday.split('(')
                 w = splt[0]
                 n = int(splt[1][:-1])
-            else:
+            elif len(wday):
                 # If it's of the form +1MO
                 for i in range(len(wday)):
                     if wday[i] not in '+-0123456789':
@@ -1427,6 +1427,9 @@ class _rrulestr(object):
                 w = wday[i:]
                 if n:
                     n = int(n)
+            else:
+                raise ValueError("Invalid (empty) BYDAY specification.")
+
             l.append(weekdays[self._weekday_map[w]](n))
         rrkwargs["byweekday"] = l
 
