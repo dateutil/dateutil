@@ -2826,6 +2826,19 @@ class RRuleTest(WarningTestMixin, unittest.TestCase):
                           "RRULE:FREQ=YEARLY;"
                           "UNTIL=TheCowsComeHome;BYDAY=1TU,-1TH\n"))
 
+    def testStrEmptyByDay(self):
+        with self.assertRaises(ValueError):
+            list(rrulestr("DTSTART:19970902T090000\n"
+                          "FREQ=WEEKLY;"
+                          "BYDAY=;"         # This part is invalid
+                          "WKST=SU"))
+
+    def testStrInvalidByDay(self):
+        with self.assertRaises(ValueError):
+            list(rrulestr("DTSTART:19970902T090000\n"
+                          "FREQ=WEEKLY;"
+                          "BYDAY=-1OK;"         # This part is invalid
+                          "WKST=SU"))
 
     def testBadBySetPos(self):
         self.assertRaises(ValueError,
