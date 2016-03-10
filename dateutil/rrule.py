@@ -328,6 +328,29 @@ class rrule(rrulebase):
     Where freq must be one of YEARLY, MONTHLY, WEEKLY, DAILY, HOURLY, MINUTELY,
     or SECONDLY.
 
+    .. note::
+        Per RFC section 3.3.10, recurrence instances falling on invalid dates
+        and times are ignored rather than coerced:
+
+            Recurrence rules may generate recurrence instances with an invalid
+            date (e.g., February 30) or nonexistent local time (e.g., 1:30 AM
+            on a day where the local time is moved forward by an hour at 1:00
+            AM).  Such recurrence instances MUST be ignored and MUST NOT be
+            counted as part of the recurrence set.
+
+        This can lead to possibly surprising behavior when, for example, the
+        start date occurs at the end of the month:
+
+        >>> from dateutil.rrule import rrule, MONTHLY
+        >>> from datetime import datetime
+        >>> start_date = datetime(2014, 12, 31)
+        >>> list(rrule(freq=MONTHLY, count=4, dtstart=start_date))
+        ... # doctest: +NORMALIZE_WHITESPACE
+        [datetime.datetime(2014, 12, 31, 0, 0),
+         datetime.datetime(2015, 1, 31, 0, 0),
+         datetime.datetime(2015, 3, 31, 0, 0),
+         datetime.datetime(2015, 5, 31, 0, 0)]
+
     Additionally, it supports the following keyword arguments:
 
     :param cache:
@@ -351,11 +374,19 @@ class rrule(rrulebase):
         calendar.setfirstweekday().
     :param count:
         How many occurrences will be generated.
+
+        .. note::
+            As of version 2.5.0, the use of the ``until`` keyword together
+            with the ``count`` keyword is deprecated per RFC-2445 Sec. 4.3.10.
     :param until:
         If given, this must be a datetime instance, that will specify the
-        limit of the recurrence. If a recurrence instance happens to be the
-        same as the datetime instance given in the until keyword, this will
-        be the last occurrence.
+        limit of the recurrence. The last recurrence in the rule is the greatest
+        datetime that is less than or equal to the value specified in the
+        ``until`` parameter.
+        
+        .. note::
+            As of version 2.5.0, the use of the ``until`` keyword together
+            with the ``count`` keyword is deprecated per RFC-2445 Sec. 4.3.10.
     :param bysetpos:
         If given, it must be either an integer, or a sequence of integers,
         positive or negative. Each given integer will specify an occurrence

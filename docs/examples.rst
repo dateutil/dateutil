@@ -1118,10 +1118,10 @@ Hours with letters work:
     datetime.datetime(2003, 9, 25, 2, 3, 1)
 
     >>> parse("01h02m03", default=DEFAULT)
-    datetime.datetime(2003, 9, 3, 1, 2)
+    datetime.datetime(2003, 9, 25, 1, 2, 3)
 
     >>> parse("01h02", default=DEFAULT)
-    datetime.datetime(2003, 9, 2, 1, 0)
+    datetime.datetime(2003, 9, 25, 1, 2)
 
     >>> parse("01h02s", default=DEFAULT)
     datetime.datetime(2003, 9, 25, 1, 0, 2)
