@@ -176,16 +176,10 @@ class relativedelta(object):
                 compare = operator.lt
                 increment = -1
 
-            ii = 0
             while compare(dt1, dtm):
                 months += increment
                 self._set_months(months)
                 dtm = self.__radd__(dt2)
-                ii += 1
-                if ii > 1:
-                    print('ii == {}'.format(ii))
-                    print(dt1)
-                    print(dt2)
 
             # Get the timedelta between the "months-adjusted" date and dt1
             delta = dt1 - dtm
