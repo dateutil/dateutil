@@ -2,6 +2,9 @@
 import datetime
 import calendar
 
+import operator
+from math import copysign
+
 from six import integer_types
 from warnings import warn
 
@@ -157,19 +160,28 @@ class relativedelta(object):
             self.microsecond = None
             self._has_time = 0
 
-            months = (dt1.year * 12 + dt1.month) - (dt2.year * 12 + dt2.month)
+            # Get year / month delta between the two
+            months = (dt1.year - dt2.year) * 12 + (dt1.month - dt2.month)
             self._set_months(months)
+
+            # Remove the year/month delta so the timedelta is just well-defined
+            # time units (seconds, days and microseconds)
             dtm = self.__radd__(dt2)
+
+            # If we've overshot our target, make an adjustment
             if dt1 < dt2:
-                while dt1 > dtm:
-                    months += 1
-                    self._set_months(months)
-                    dtm = self.__radd__(dt2)
+                compare = operator.gt
+                increment = 1
             else:
-                while dt1 < dtm:
-                    months -= 1
-                    self._set_months(months)
-                    dtm = self.__radd__(dt2)
+                compare = operator.lt
+                increment = -1
+
+            while compare(dt1, dtm):
+                months += increment
+                self._set_months(months)
+                dtm = self.__radd__(dt2)
+
+            # Get the timedelta between the "months-adjusted" date and dt1
             delta = dt1 - dtm
             self.seconds = delta.seconds + delta.days * 86400
             self.microseconds = delta.microseconds
@@ -193,7 +205,6 @@ class relativedelta(object):
             self.second = second
             self.microsecond = microsecond
 
-                        # Absolute information
             if any(x is not None and int(x) != x
                    for x in (year, month, day, hour,
                              minute, second, microsecond)):
@@ -233,27 +244,27 @@ class relativedelta(object):
 
     def _fix(self):
         if abs(self.microseconds) > 999999:
-            s = self.microseconds // abs(self.microseconds)
+            s = _sign(self.microseconds)
             div, mod = divmod(self.microseconds * s, 1000000)
             self.microseconds = mod * s
             self.seconds += div * s
         if abs(self.seconds) > 59:
-            s = self.seconds // abs(self.seconds)
+            s = _sign(self.seconds)
             div, mod = divmod(self.seconds * s, 60)
             self.seconds = mod * s
             self.minutes += div * s
         if abs(self.minutes) > 59:
-            s = self.minutes//abs(self.minutes)
+            s = _sign(self.minutes)
             div, mod = divmod(self.minutes * s, 60)
             self.minutes = mod * s
             self.hours += div * s
         if abs(self.hours) > 23:
-            s = self.hours//abs(self.hours)
+            s = _sign(self.hours)
             div, mod = divmod(self.hours * s, 24)
             self.hours = mod * s
             self.days += div * s
         if abs(self.months) > 11:
-            s = self.months // abs(self.months)
+            s = _sign(self.months)
             div, mod = divmod(self.months * s, 12)
             self.months = mod * s
             self.years += div * s
@@ -274,10 +285,10 @@ class relativedelta(object):
     def _set_months(self, months):
         self.months = months
         if abs(self.months) > 11:
-            s = self.months//abs(self.months)
-            div, mod = divmod(self.months*s, 12)
-            self.months = mod*s
-            self.years = div*s
+            s = _sign(self.months)
+            div, mod = divmod(self.months * s, 12)
+            self.months = mod * s
+            self.years = div * s
         else:
             self.years = 0
 
@@ -512,5 +523,8 @@ class relativedelta(object):
                 l.append("{attr}={value}".format(attr=attr, value=repr(value)))
         return "{classname}({attrs})".format(classname=self.__class__.__name__,
                                              attrs=", ".join(l))
+
+def _sign(x):
+    return int(copysign(1, x))
 
 # vim:ts=4:sw=4:et
