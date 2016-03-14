@@ -1,0 +1,17 @@
+# Set the default behavior, in case people don't have core.autocrlf set.
+* text=auto
+
+# Specify what's text and should be normalized
+*.py text
+*.in text
+*.rst text
+*.cfg text
+*.ini text
+*.yml text
+*.json text
+*.bat text
+*.sh text
+RELEASING text
+
+# NEWS should be crlf
+NEWS eol=crlf
