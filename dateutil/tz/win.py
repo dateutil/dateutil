@@ -134,13 +134,21 @@ class tzwinbase(datetime.tzinfo):
         return not self.__eq__(other)
 
     def utcoffset(self, dt):
-        if self._isdst(dt):
+        isdst = self._isdst(dt)
+
+        if isdst is None:
+            return None
+        elif isdst:
             return datetime.timedelta(minutes=self._dstoffset)
         else:
             return datetime.timedelta(minutes=self._stdoffset)
 
     def dst(self, dt):
-        if self._isdst(dt):
+        isdst = self._isdst(dt)
+
+        if isdst is None:
+            return None
+        elif isdst:
             minutes = self._dstoffset - self._stdoffset
             return datetime.timedelta(minutes=minutes)
         else:
@@ -171,6 +179,9 @@ class tzwinbase(datetime.tzinfo):
         if not self._dstmonth:
             # dstmonth == 0 signals the zone has no daylight saving time
             return False
+        elif dt is None:
+            return None
+
         dston = picknthweekday(dt.year, self._dstmonth, self._dstdayofweek,
                                self._dsthour, self._dstminute,
                                self._dstweeknumber)

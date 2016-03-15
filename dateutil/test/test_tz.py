@@ -367,6 +367,7 @@ class TZTest(unittest.TestCase):
         dt = parse('2014-07-20T12:34:56+00:00')
         self.assertEqual(str(dt), '2014-07-20 12:34:56+00:00')
 
+
 @unittest.skipUnless(IS_WIN, "Requires Windows")
 class TzWinTest(unittest.TestCase):
     def testTzResLoadName(self):
@@ -458,6 +459,37 @@ class TzWinTest(unittest.TestCase):
 
             self.assertNotEqual(tw1, tw2)
 
+    def testTzwinTimeOnlyDST(self):
+        # For zones with DST, .dst() should return None
+        tw_est = tz.tzwin('Eastern Standard Time')
+        self.assertIs(dt_time(14, 10, tzinfo=tw_est).dst(), None)
+
+        # This zone has no DST, so .dst() can return 0
+        tw_sast = tz.tzwin('South Africa Standard Time')
+        self.assertEqual(dt_time(14, 10, tzinfo=tw_sast).dst(),
+                         timedelta(0))
+
+    def testTzwinTimeOnlyUTCOffset(self):
+        # For zones with DST, .utcoffset() should return None
+        tw_est = tz.tzwin('Eastern Standard Time')
+        self.assertIs(dt_time(14, 10, tzinfo=tw_est).utcoffset(), None)
+
+        # This zone has no DST, so .utcoffset() returns standard offset
+        tw_sast = tz.tzwin('South Africa Standard Time')
+        self.assertEqual(dt_time(14, 10, tzinfo=tw_sast).utcoffset(),
+                         timedelta(hours=2))
+
+    def testTzwinLocalTimeOnlyTZName(self):
+        # For zones with DST, the name defaults to standard time
+        tw_est = tz.tzwin('Eastern Standard Time')
+        self.assertEqual(dt_time(14, 10, tzinfo=tw_est).tzname(),
+                         'Eastern Standard Time')
+
+        # For zones with no DST, this should work normally.
+        tw_sast = tz.tzwin('South Africa Standard Time')
+        self.assertEqual(dt_time(14, 10, tzinfo=tw_sast),
+                         'South Africa Standard Time')
+
     @unittest.skipUnless(TZWinContext.tz_change_allowed(),
         'Skipping unless tz changes are allowed.')
     def testTzwinLocalName(self):
@@ -522,4 +554,46 @@ class TzWinTest(unittest.TestCase):
             self.assertEqual(twl1, tw)
             self.assertEqual(twl1, tw_pst)
             self.assertNotEqual(twl1, tw_est)
+
+    @unittest.skipUnless(TZWinContext.tz_change_allowed(),
+        'Skipping unless tz changes are allowed.')
+    def testTzwinLocalTimeOnlyDST(self):
+        # For zones with DST, .dst() should return None
+        with TZWinContext('Eastern Standard Time'):
+            twl = tz.tzwinlocal()
+            self.assertIs(dt_time(14, 10, tzinfo=twl).dst(), None)
+
+        # This zone has no DST, so .dst() can return 0
+        with TZWinContext('South Africa Standard Time'):
+            twl = tz.tzwinlocal()
+            self.assertEqual(dt_time(14, 10, tzinfo=twl).dst(), timedelta(0))
+
+    @unittest.skipUnless(TZWinContext.tz_change_allowed(),
+        'Skipping unless tz changes are allowed.')
+    def testTzwinLocalTimeOnlyUTCOffset(self):
+        # For zones with DST, .utcoffset() should return None
+        with TZWinContext('Eastern Standard Time'):
+            twl = tz.tzwinlocal()
+            self.assertIs(dt_time(14, 10, tzinfo=twl).utcoffset(), None)
+
+        # This zone has no DST, so .utcoffset() returns standard offset
+        with TZWinContext('South Africa Standard Time'):
+            twl = tz.tzwinlocal()
+            self.assertEqual(dt_time(14, 10, tzinfo=twl).utcoffset(),
+                             timedelta(hours=2))
+
+    @unittest.skipUnless(TZWinContext.tz_change_allowed(),
+        'Skipping unless tz changes are allowed.')
+    def testTzwinLocalTimeOnlyTZName(self):
+        # For zones with DST, the name defaults to standard time
+        with TZWinContext('Eastern Standard Time'):
+            twl = tz.tzwinlocal()
+            self.assertEqual(dt_time(14, 10, tzinfo=twl).tzname(),
+                             'Eastern Standard Time')
+
+        # For zones with no DST, this should work normally.
+        with TZWinContext('South Africa Standard Time'):
+            twl = tz.tzwinlocal()
+            self.assertEqual(dt_time(14, 10, tzinfo=twl).tzname(),
+                             'South Africa Standard Time')
 
