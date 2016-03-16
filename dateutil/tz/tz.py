@@ -307,10 +307,10 @@ class tzfile(datetime.tzinfo):
             # The pairs of values are sorted in ascending order
             # by time.
 
-            # Not used, for now
-            # if leapcnt:
-            #    leap = struct.unpack(">%dl" % (leapcnt*2),
-            #                         fileobj.read(leapcnt*8))
+            # Not used, for now (but read anyway for correct file position)
+            if leapcnt:
+                leap = struct.unpack(">%dl" % (leapcnt*2),
+                                     fileobj.read(leapcnt*8))
 
             # Then there are tzh_ttisstdcnt standard/wall
             # indicators, each stored as a one-byte value;
