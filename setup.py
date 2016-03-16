@@ -20,15 +20,15 @@ VERSION = re.search('__version__ = "([^"]+)"',
 setup(name="python-dateutil",
       version=VERSION,
       description="Extensions to the standard Python datetime module",
-      author="Yaron de Leeuw",
-      author_email="me@jarondl.net",
+      author="Paul Ganssle, Yaron de Leeuw",
+      author_email="dateutil@python.org",
       url="https://dateutil.readthedocs.org",
       license="Simplified BSD",
       long_description="""
 The dateutil module provides powerful extensions to the
 datetime module available in the Python standard library.
 """,
-      packages=["dateutil", "dateutil.zoneinfo"],
+      packages=["dateutil", "dateutil.zoneinfo", "dateutil.tz"],
       package_data={"dateutil.zoneinfo": ["dateutil-zoneinfo.tar.gz"]},
       zip_safe=True,
       requires=["six"],
@@ -45,6 +45,7 @@ datetime module available in the Python standard library.
           'Programming Language :: Python :: 3.2',
           'Programming Language :: Python :: 3.3',
           'Programming Language :: Python :: 3.4',
+          'Programming Language :: Python :: 3.5',
           'Topic :: Software Development :: Libraries',
       ],
       test_suite="dateutil.test"

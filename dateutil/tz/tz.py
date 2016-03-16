@@ -14,7 +14,7 @@ import sys
 import os
 
 from six import string_types, PY3
-from .__init__ import tzname_in_python2
+from ._common import tzname_in_python2
 
 try:
     from .win import tzwin, tzwinlocal
@@ -93,6 +93,9 @@ class tzlocal(datetime.tzinfo):
             self._dst_offset = self._std_offset
 
     def utcoffset(self, dt):
+        if dt is None:
+            return dt
+
         if self._isdst(dt):
             return self._dst_offset
         else:
@@ -140,11 +143,9 @@ class tzlocal(datetime.tzinfo):
         return time.localtime(timestamp+time.timezone).tm_isdst
 
     def __eq__(self, other):
-        if not isinstance(other, tzlocal):
-            return False
-        return (self._std_offset == other._std_offset and
-                self._dst_offset == other._dst_offset)
-        return True
+        return (isinstance(other, tzlocal) and
+                (self._std_offset == other._std_offset and
+                 self._dst_offset == other._dst_offset))
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -439,6 +440,9 @@ class tzfile(datetime.tzinfo):
             return self._trans_idx[idx-1]
 
     def utcoffset(self, dt):
+        if dt is None:
+            return None
+
         if not self._ttinfo_std:
             return ZERO
         return self._find_ttinfo(dt).delta
@@ -518,6 +522,9 @@ class tzrange(datetime.tzinfo):
             self._end_delta = end
 
     def utcoffset(self, dt):
+        if dt is None:
+            return None
+
         if self._isdst(dt):
             return self._dst_offset
         else:
@@ -699,6 +706,9 @@ class _tzicalvtz(datetime.tzinfo):
         return lastcomp
 
     def utcoffset(self, dt):
+        if dt is None:
+            return None
+
         return self._find_comp(dt).tzoffsetto
 
     def dst(self, dt):

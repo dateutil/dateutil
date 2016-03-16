@@ -9,6 +9,10 @@ dateutil - powerful extensions to datetime
     :target: https://ci.appveyor.com/project/dateutil/dateutil
     :alt: appveyor build status
 
+.. image:: https://codecov.io/github/dateutil/dateutil/coverage.svg?branch=master
+    :target: https://codecov.io/github/dateutil/dateutil?branch=master
+    :alt: Code coverage
+
 .. image:: https://img.shields.io/pypi/dd/python-dateutil.svg?style=flat-square
     :target: https://pypi.python.org/pypi/python-dateutil/
     :alt: pypi downloads per day
@@ -16,7 +20,6 @@ dateutil - powerful extensions to datetime
 .. image:: https://img.shields.io/pypi/v/python-dateutil.svg?style=flat-square
     :target: https://pypi.python.org/pypi/python-dateutil/
     :alt: pypi version
-
 
 
 The `dateutil` module provides powerful extensions to
@@ -56,7 +59,7 @@ Features
   Olson's database.
 * Computing of Easter Sunday dates for any given year,
   using Western, Orthodox or Julian algorithms;
-* More than 400 test cases.
+* A comprehensive test suite.
 
 Quick example
 =============
@@ -94,23 +97,35 @@ Being exactly 6 months ahead was **really** a coincidence :)
 Author
 ======
 The dateutil module was written by Gustavo Niemeyer <gustavo@niemeyer.net>
-in 2003
+in 2003.
 
 It is maintained by:
 
 * Gustavo Niemeyer <gustavo@niemeyer.net> 2003-2011
 * Tomi Pieviläinen <tomi.pievilainen@iki.fi> 2012-2014
 * Yaron de Leeuw <me@jarondl.net> 2014-
+* Paul Ganssle <paul@ganssle.io> 2015-
+
+Our mailing list is available at `dateutil@python.org <https://mail.python.org/mailman/listinfo/dateutil>`_. As it is hosted by the PSF, it is subject to the `PSF code of 
+conduct <https://www.python.org/psf/codeofconduct/>`_.
 
 Building and releasing
 ======================
 When you get the source, it does not contain the internal zoneinfo
 database. To get (and update) the database, run the updatezinfo.py script. Make sure
 that the zic command is in your path, and that you have network connectivity
-to get the latest timezone information from IANA. If you have downloaded
-the timezone data earlier, you can give the tarball as a parameter to
-updatezinfo.py.
+to get the latest timezone information from IANA, or from `our mirror of the
+IANA database <https://dateutil.github.io/tzdata/>`_.
 
+Starting with version 2.4.1, all source and binary distributions will be signed
+by a PGP key that has, at the very least, been signed by the key which made the
+previous release. A table of release signing keys can be found below:
+
+===========  ============================
+Releases     Signing key fingerprint
+===========  ============================
+2.4.1-       `0xCD54FCE3D964BEFB`_
+===========  ============================
 
 Testing
 =======
@@ -121,4 +136,8 @@ zoneinfo database, some tests will fail. Apart from that, all tests should pass.
 To easily test dateutil against all supported Python versions, you can use
 `tox <https://tox.readthedocs.org/en/latest/>`_.
 
-All github pull requests are automatically tested using travis.
+All github pull requests are automatically tested using travis and appveyor.
+
+
+.. _0xCD54FCE3D964BEFB:
+   https://pgp.mit.edu/pks/lookup?op=vindex&search=0xCD54FCE3D964BEFB

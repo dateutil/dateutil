@@ -1,252 +1,15 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
+from ._common import WarningTestMixin, unittest
 
 import calendar
-import base64
-import sys
-import os
-import time as _time
+from datetime import datetime, date
+from six import PY3
 
-from six import assertRaisesRegex, StringIO, BytesIO, PY3
-
-try:
-    # python2.6 unittest has no skipUnless. So we use unittest2.
-    # if you have python >= 2.7, you don't need unittest2, but it won't harm
-    import unittest2 as unittest
-except ImportError:
-    import unittest
-
-MISSING_TARBALL = ("This test fails if you don't have the dateutil "
-                   "timezone file installed. Please read the README")
-
-from datetime import *
-
-from dateutil.relativedelta import *
-from dateutil.parser import *
-from dateutil.easter import *
 from dateutil.rrule import *
-from dateutil.tz import *
-from dateutil import zoneinfo
-
-try:
-    from dateutil import tzwin
-except ImportError:
-    pass
 
 
-class RelativeDeltaTest(unittest.TestCase):
-    now = datetime(2003, 9, 17, 20, 54, 47, 282310)
-    today = date(2003, 9, 17)
-
-    def testInheritance(self):
-        # Ensure that relativedelta is inheritance-friendly.
-        class rdChildClass(relativedelta):
-            pass
-
-        ccRD = rdChildClass(years=1, months=1, days=1, leapdays=1, weeks=1,
-                            hours=1, minutes=1, seconds=1, microseconds=1)
-
-        rd = relativedelta(years=1, months=1, days=1, leapdays=1, weeks=1,
-                           hours=1, minutes=1, seconds=1, microseconds=1)
-
-        self.assertEqual(type(ccRD + rd), type(ccRD),
-                         msg='Addition does not inherit type.')
-
-        self.assertEqual(type(ccRD - rd), type(ccRD),
-                         msg='Subtraction does not inherit type.')
-
-        self.assertEqual(type(-ccRD), type(ccRD),
-                         msg='Negation does not inherit type.')
-
-        self.assertEqual(type(ccRD * 5.0), type(ccRD),
-                         msg='Multiplication does not inherit type.')
-        
-        self.assertEqual(type(ccRD / 5.0), type(ccRD),
-                         msg='Division does not inherit type.')
-
-
-    def testNextMonth(self):
-        self.assertEqual(self.now+relativedelta(months=+1),
-                         datetime(2003, 10, 17, 20, 54, 47, 282310))
-
-    def testNextMonthPlusOneWeek(self):
-        self.assertEqual(self.now+relativedelta(months=+1, weeks=+1),
-                         datetime(2003, 10, 24, 20, 54, 47, 282310))
-
-    def testNextMonthPlusOneWeek10am(self):
-        self.assertEqual(self.today +
-                         relativedelta(months=+1, weeks=+1, hour=10),
-                         datetime(2003, 10, 24, 10, 0))
-
-    def testNextMonthPlusOneWeek10amDiff(self):
-        self.assertEqual(relativedelta(datetime(2003, 10, 24, 10, 0),
-                                       self.today),
-                         relativedelta(months=+1, days=+7, hours=+10))
-
-    def testOneMonthBeforeOneYear(self):
-        self.assertEqual(self.now+relativedelta(years=+1, months=-1),
-                         datetime(2004, 8, 17, 20, 54, 47, 282310))
-
-    def testMonthsOfDiffNumOfDays(self):
-        self.assertEqual(date(2003, 1, 27)+relativedelta(months=+1),
-                         date(2003, 2, 27))
-        self.assertEqual(date(2003, 1, 31)+relativedelta(months=+1),
-                         date(2003, 2, 28))
-        self.assertEqual(date(2003, 1, 31)+relativedelta(months=+2),
-                         date(2003, 3, 31))
-
-    def testMonthsOfDiffNumOfDaysWithYears(self):
-        self.assertEqual(date(2000, 2, 28)+relativedelta(years=+1),
-                         date(2001, 2, 28))
-        self.assertEqual(date(2000, 2, 29)+relativedelta(years=+1),
-                         date(2001, 2, 28))
-
-        self.assertEqual(date(1999, 2, 28)+relativedelta(years=+1),
-                         date(2000, 2, 28))
-        self.assertEqual(date(1999, 3, 1)+relativedelta(years=+1),
-                         date(2000, 3, 1))
-        self.assertEqual(date(1999, 3, 1)+relativedelta(years=+1),
-                         date(2000, 3, 1))
-
-        self.assertEqual(date(2001, 2, 28)+relativedelta(years=-1),
-                         date(2000, 2, 28))
-        self.assertEqual(date(2001, 3, 1)+relativedelta(years=-1),
-                         date(2000, 3, 1))
-
-    def testNextFriday(self):
-        self.assertEqual(self.today+relativedelta(weekday=FR),
-                         date(2003, 9, 19))
-
-    def testNextFridayInt(self):
-        self.assertEqual(self.today+relativedelta(weekday=calendar.FRIDAY),
-                         date(2003, 9, 19))
-
-    def testLastFridayInThisMonth(self):
-        self.assertEqual(self.today+relativedelta(day=31, weekday=FR(-1)),
-                         date(2003, 9, 26))
-
-    def testNextWednesdayIsToday(self):
-        self.assertEqual(self.today+relativedelta(weekday=WE),
-                         date(2003, 9, 17))
-
-    def testNextWenesdayNotToday(self):
-        self.assertEqual(self.today+relativedelta(days=+1, weekday=WE),
-                         date(2003, 9, 24))
-
-    def test15thISOYearWeek(self):
-        self.assertEqual(date(2003, 1, 1) +
-                         relativedelta(day=4, weeks=+14, weekday=MO(-1)),
-                         date(2003, 4, 7))
-
-    def testMillenniumAge(self):
-        self.assertEqual(relativedelta(self.now, date(2001, 1, 1)),
-                         relativedelta(years=+2, months=+8, days=+16,
-                                       hours=+20, minutes=+54, seconds=+47,
-                                       microseconds=+282310))
-
-    def testJohnAge(self):
-        self.assertEqual(relativedelta(self.now,
-                                       datetime(1978, 4, 5, 12, 0)),
-                         relativedelta(years=+25, months=+5, days=+12,
-                                       hours=+8, minutes=+54, seconds=+47,
-                                       microseconds=+282310))
-
-    def testJohnAgeWithDate(self):
-        self.assertEqual(relativedelta(self.today,
-                                       datetime(1978, 4, 5, 12, 0)),
-                         relativedelta(years=+25, months=+5, days=+11,
-                                       hours=+12))
-
-    def testYearDay(self):
-        self.assertEqual(date(2003, 1, 1)+relativedelta(yearday=260),
-                         date(2003, 9, 17))
-        self.assertEqual(date(2002, 1, 1)+relativedelta(yearday=260),
-                         date(2002, 9, 17))
-        self.assertEqual(date(2000, 1, 1)+relativedelta(yearday=260),
-                         date(2000, 9, 16))
-        self.assertEqual(self.today+relativedelta(yearday=261),
-                         date(2003, 9, 18))
-
-    def testYearDayBug(self):
-        # Tests a problem reported by Adam Ryan.
-        self.assertEqual(date(2010, 1, 1)+relativedelta(yearday=15),
-                         date(2010, 1, 15))
-
-    def testNonLeapYearDay(self):
-        self.assertEqual(date(2003, 1, 1)+relativedelta(nlyearday=260),
-                         date(2003, 9, 17))
-        self.assertEqual(date(2002, 1, 1)+relativedelta(nlyearday=260),
-                         date(2002, 9, 17))
-        self.assertEqual(date(2000, 1, 1)+relativedelta(nlyearday=260),
-                         date(2000, 9, 17))
-        self.assertEqual(self.today+relativedelta(yearday=261),
-                         date(2003, 9, 18))
-
-    def testAddition(self):
-        self.assertEqual(relativedelta(days=10) +
-                         relativedelta(years=1, months=2, days=3, hours=4,
-                                       minutes=5, microseconds=6),
-                         relativedelta(years=1, months=2, days=13, hours=4,
-                                       minutes=5, microseconds=6))
-
-    def testAdditionToDatetime(self):
-        self.assertEqual(datetime(2000, 1, 1) + relativedelta(days=1),
-                         datetime(2000, 1, 2))
-
-    def testRightAdditionToDatetime(self):
-        self.assertEqual(relativedelta(days=1) + datetime(2000, 1, 1),
-                         datetime(2000, 1, 2))
-
-    def testSubtraction(self):
-        self.assertEqual(relativedelta(days=10) -
-                         relativedelta(years=1, months=2, days=3, hours=4,
-                                       minutes=5, microseconds=6),
-                         relativedelta(years=-1, months=-2, days=7, hours=-4,
-                                       minutes=-5, microseconds=-6))
-
-    def testRightSubtractionFromDatetime(self):
-        self.assertEqual(datetime(2000, 1, 2) - relativedelta(days=1),
-                         datetime(2000, 1, 1))
-
-    def testSubractionWithDatetime(self):
-        self.assertRaises(TypeError, lambda x, y: x - y,
-                          (relativedelta(days=1), datetime(2000, 1, 1)))
-
-    def testMultiplication(self):
-        self.assertEqual(datetime(2000, 1, 1) + relativedelta(days=1) * 28,
-                         datetime(2000, 1, 29))
-        self.assertEqual(datetime(2000, 1, 1) + 28 * relativedelta(days=1),
-                         datetime(2000, 1, 29))
-
-    def testDivision(self):
-        self.assertEqual(datetime(2000, 1, 1) + relativedelta(days=28) / 28,
-                         datetime(2000, 1, 2))
-
-    def testBoolean(self):
-        self.assertFalse(relativedelta(days=0))
-        self.assertTrue(relativedelta(days=1))
-
-    def testComparison(self):
-        d1 = relativedelta(years=1, months=1, days=1, leapdays=0, hours=1, 
-                           minutes=1, seconds=1, microseconds=1)
-        d2 = relativedelta(years=1, months=1, days=1, leapdays=0, hours=1, 
-                           minutes=1, seconds=1, microseconds=1)
-        d3 = relativedelta(years=1, months=1, days=1, leapdays=0, hours=1, 
-                           minutes=1, seconds=1, microseconds=2)
-
-        self.assertEqual(d1, d2)
-        self.assertNotEqual(d1, d3)
-
-    def testWeeks(self):
-        # Test that the weeks property is working properly.
-        rd = relativedelta(years=4, months=2, weeks=8, days=6)
-        self.assertEqual((rd.weeks, rd.days), (8, 8 * 7 + 6))
-        
-        rd.weeks = 3
-        self.assertEqual((rd.weeks, rd.days), (3, 3 * 7 + 6))
-
-
-class RRuleTest(unittest.TestCase):
+class RRuleTest(WarningTestMixin, unittest.TestCase):
     def _rrulestr_reverse_test(self, rule):
         """
         Call with an `rrule` and it will test that `str(rrule)` generates a
@@ -2579,9 +2342,17 @@ class RRuleTest(unittest.TestCase):
         self.assertRaises(ValueError, make_bad_minute_rrule)
         self.assertRaises(ValueError, make_bad_hour_rrule)
 
+    def testBadUntilCountRRule(self):
+        """
+        See rfc-2445 4.3.10 - This checks for the deprecation warning, and will
+        eventually check for an error.
+        """
+        with self.assertWarns(DeprecationWarning):
+            rrule(DAILY, dtstart=datetime(1997, 9, 2, 9, 0),
+                         count=3, until=datetime(1997, 9, 4, 9, 0))
+
     def testUntilNotMatching(self):
         self.assertEqual(list(rrule(DAILY,
-                              count=3,
                               dtstart=datetime(1997, 9, 2, 9, 0),
                               until=datetime(1997, 9, 5, 8, 0))),
                          [datetime(1997, 9, 2, 9, 0),
@@ -2590,7 +2361,6 @@ class RRuleTest(unittest.TestCase):
 
     def testUntilMatching(self):
         self.assertEqual(list(rrule(DAILY,
-                              count=3,
                               dtstart=datetime(1997, 9, 2, 9, 0),
                               until=datetime(1997, 9, 4, 9, 0))),
                          [datetime(1997, 9, 2, 9, 0),
@@ -2599,21 +2369,18 @@ class RRuleTest(unittest.TestCase):
 
     def testUntilSingle(self):
         self.assertEqual(list(rrule(DAILY,
-                              count=3,
                               dtstart=datetime(1997, 9, 2, 9, 0),
                               until=datetime(1997, 9, 2, 9, 0))),
                          [datetime(1997, 9, 2, 9, 0)])
 
     def testUntilEmpty(self):
         self.assertEqual(list(rrule(DAILY,
-                              count=3,
                               dtstart=datetime(1997, 9, 2, 9, 0),
                               until=datetime(1997, 9, 1, 9, 0))),
                          [])
 
     def testUntilWithDate(self):
         self.assertEqual(list(rrule(DAILY,
-                              count=3,
                               dtstart=datetime(1997, 9, 2, 9, 0),
                               until=date(1997, 9, 5))),
                          [datetime(1997, 9, 2, 9, 0),
@@ -2868,136 +2635,6 @@ class RRuleTest(unittest.TestCase):
         for x in rr: pass
         self.assertEqual(datetime(1997, 9, 3, 9, 0) in rr, True)
 
-    def testSet(self):
-        set = rruleset()
-        set.rrule(rrule(YEARLY, count=2, byweekday=TU,
-                        dtstart=datetime(1997, 9, 2, 9, 0)))
-        set.rrule(rrule(YEARLY, count=1, byweekday=TH,
-                        dtstart=datetime(1997, 9, 2, 9, 0)))
-        self.assertEqual(list(set),
-                         [datetime(1997, 9, 2, 9, 0),
-                          datetime(1997, 9, 4, 9, 0),
-                          datetime(1997, 9, 9, 9, 0)])
-
-    def testSetDate(self):
-        set = rruleset()
-        set.rrule(rrule(YEARLY, count=1, byweekday=TU,
-                        dtstart=datetime(1997, 9, 2, 9, 0)))
-        set.rdate(datetime(1997, 9, 4, 9))
-        set.rdate(datetime(1997, 9, 9, 9))
-        self.assertEqual(list(set),
-                         [datetime(1997, 9, 2, 9, 0),
-                          datetime(1997, 9, 4, 9, 0),
-                          datetime(1997, 9, 9, 9, 0)])
-
-    def testSetExRule(self):
-        set = rruleset()
-        set.rrule(rrule(YEARLY, count=6, byweekday=(TU, TH),
-                        dtstart=datetime(1997, 9, 2, 9, 0)))
-        set.exrule(rrule(YEARLY, count=3, byweekday=TH,
-                        dtstart=datetime(1997, 9, 2, 9, 0)))
-        self.assertEqual(list(set),
-                         [datetime(1997, 9, 2, 9, 0),
-                          datetime(1997, 9, 9, 9, 0),
-                          datetime(1997, 9, 16, 9, 0)])
-
-    def testSetExDate(self):
-        set = rruleset()
-        set.rrule(rrule(YEARLY, count=6, byweekday=(TU, TH),
-                        dtstart=datetime(1997, 9, 2, 9, 0)))
-        set.exdate(datetime(1997, 9, 4, 9))
-        set.exdate(datetime(1997, 9, 11, 9))
-        set.exdate(datetime(1997, 9, 18, 9))
-        self.assertEqual(list(set),
-                         [datetime(1997, 9, 2, 9, 0),
-                          datetime(1997, 9, 9, 9, 0),
-                          datetime(1997, 9, 16, 9, 0)])
-
-    def testSetExDateRevOrder(self):
-        set = rruleset()
-        set.rrule(rrule(MONTHLY, count=5, bymonthday=10,
-                        dtstart=datetime(2004, 1, 1, 9, 0)))
-        set.exdate(datetime(2004, 4, 10, 9, 0))
-        set.exdate(datetime(2004, 2, 10, 9, 0))
-        self.assertEqual(list(set),
-                         [datetime(2004, 1, 10, 9, 0),
-                          datetime(2004, 3, 10, 9, 0),
-                          datetime(2004, 5, 10, 9, 0)])
-
-    def testSetDateAndExDate(self):
-        set = rruleset()
-        set.rdate(datetime(1997, 9, 2, 9))
-        set.rdate(datetime(1997, 9, 4, 9))
-        set.rdate(datetime(1997, 9, 9, 9))
-        set.rdate(datetime(1997, 9, 11, 9))
-        set.rdate(datetime(1997, 9, 16, 9))
-        set.rdate(datetime(1997, 9, 18, 9))
-        set.exdate(datetime(1997, 9, 4, 9))
-        set.exdate(datetime(1997, 9, 11, 9))
-        set.exdate(datetime(1997, 9, 18, 9))
-        self.assertEqual(list(set),
-                         [datetime(1997, 9, 2, 9, 0),
-                          datetime(1997, 9, 9, 9, 0),
-                          datetime(1997, 9, 16, 9, 0)])
-
-    def testSetDateAndExRule(self):
-        set = rruleset()
-        set.rdate(datetime(1997, 9, 2, 9))
-        set.rdate(datetime(1997, 9, 4, 9))
-        set.rdate(datetime(1997, 9, 9, 9))
-        set.rdate(datetime(1997, 9, 11, 9))
-        set.rdate(datetime(1997, 9, 16, 9))
-        set.rdate(datetime(1997, 9, 18, 9))
-        set.exrule(rrule(YEARLY, count=3, byweekday=TH,
-                        dtstart=datetime(1997, 9, 2, 9, 0)))
-        self.assertEqual(list(set),
-                         [datetime(1997, 9, 2, 9, 0),
-                          datetime(1997, 9, 9, 9, 0),
-                          datetime(1997, 9, 16, 9, 0)])
-
-    def testSetCount(self):
-        set = rruleset()
-        set.rrule(rrule(YEARLY, count=6, byweekday=(TU, TH),
-                        dtstart=datetime(1997, 9, 2, 9, 0)))
-        set.exrule(rrule(YEARLY, count=3, byweekday=TH,
-                        dtstart=datetime(1997, 9, 2, 9, 0)))
-        self.assertEqual(set.count(), 3)
-
-    def testSetCachePre(self):
-        set = rruleset()
-        set.rrule(rrule(YEARLY, count=2, byweekday=TU,
-                        dtstart=datetime(1997, 9, 2, 9, 0)))
-        set.rrule(rrule(YEARLY, count=1, byweekday=TH,
-                        dtstart=datetime(1997, 9, 2, 9, 0)))
-        self.assertEqual(list(set),
-                         [datetime(1997, 9, 2, 9, 0),
-                          datetime(1997, 9, 4, 9, 0),
-                          datetime(1997, 9, 9, 9, 0)])
-
-    def testSetCachePost(self):
-        set = rruleset(cache=True)
-        set.rrule(rrule(YEARLY, count=2, byweekday=TU,
-                        dtstart=datetime(1997, 9, 2, 9, 0)))
-        set.rrule(rrule(YEARLY, count=1, byweekday=TH,
-                        dtstart=datetime(1997, 9, 2, 9, 0)))
-        for x in set: pass
-        self.assertEqual(list(set),
-                         [datetime(1997, 9, 2, 9, 0),
-                          datetime(1997, 9, 4, 9, 0),
-                          datetime(1997, 9, 9, 9, 0)])
-
-    def testSetCachePostInternal(self):
-        set = rruleset(cache=True)
-        set.rrule(rrule(YEARLY, count=2, byweekday=TU,
-                        dtstart=datetime(1997, 9, 2, 9, 0)))
-        set.rrule(rrule(YEARLY, count=1, byweekday=TH,
-                        dtstart=datetime(1997, 9, 2, 9, 0)))
-        for x in set: pass
-        self.assertEqual(list(set._cache),
-                         [datetime(1997, 9, 2, 9, 0),
-                          datetime(1997, 9, 4, 9, 0),
-                          datetime(1997, 9, 9, 9, 0)])
-
     def testStr(self):
         self.assertEqual(list(rrulestr(
                               "DTSTART:19970902T090000\n"
@@ -3172,6 +2809,36 @@ class RRuleTest(unittest.TestCase):
                          [datetime(1997, 12, 25, 9, 0),
                           datetime(1998, 1, 6, 9, 0),
                           datetime(1998, 12, 31, 9, 0)])
+
+    def testStrUntil(self):
+        self.assertEqual(list(rrulestr(
+                              "DTSTART:19970902T090000\n" 
+                              "RRULE:FREQ=YEARLY;"
+                              "UNTIL=19990101T000000;BYDAY=1TU,-1TH\n"
+                              )),
+                         [datetime(1997, 12, 25, 9, 0),
+                          datetime(1998, 1, 6, 9, 0),
+                          datetime(1998, 12, 31, 9, 0)])
+
+    def testStrInvalidUntil(self):
+        with self.assertRaises(ValueError):
+            list(rrulestr("DTSTART:19970902T090000\n"
+                          "RRULE:FREQ=YEARLY;"
+                          "UNTIL=TheCowsComeHome;BYDAY=1TU,-1TH\n"))
+
+    def testStrEmptyByDay(self):
+        with self.assertRaises(ValueError):
+            list(rrulestr("DTSTART:19970902T090000\n"
+                          "FREQ=WEEKLY;"
+                          "BYDAY=;"         # This part is invalid
+                          "WKST=SU"))
+
+    def testStrInvalidByDay(self):
+        with self.assertRaises(ValueError):
+            list(rrulestr("DTSTART:19970902T090000\n"
+                          "FREQ=WEEKLY;"
+                          "BYDAY=-1OK;"         # This part is invalid
+                          "WKST=SU"))
 
     def testBadBySetPos(self):
         self.assertRaises(ValueError,
@@ -4734,1308 +4401,276 @@ class RRuleTest(unittest.TestCase):
                                   dtstart=datetime(1997, 9, 2, 9, 0)))
 
 
-class ParserTest(unittest.TestCase):
-
-    def setUp(self):
-        self.tzinfos = {"BRST": -10800}
-        self.brsttz = tzoffset("BRST", -10800)
-        self.default = datetime(2003, 9, 25)
-
-        # Parser should be able to handle bytestring and unicode
-        base_str = '2014-05-01 08:00:00'
-        try:
-            # Python 2.x
-            self.uni_str = unicode(base_str)
-            self.str_str = str(base_str)
-        except NameError:
-            self.uni_str = str(base_str)
-            self.str_str = bytes(base_str.encode())
-
-    def testDateCommandFormat(self):
-        self.assertEqual(parse("Thu Sep 25 10:36:28 BRST 2003",
-                               tzinfos=self.tzinfos),
-                         datetime(2003, 9, 25, 10, 36, 28,
-                                  tzinfo=self.brsttz))
-
-    def testDateCommandFormatUnicode(self):
-        self.assertEqual(parse("Thu Sep 25 10:36:28 BRST 2003",
-                               tzinfos=self.tzinfos),
-                         datetime(2003, 9, 25, 10, 36, 28,
-                                  tzinfo=self.brsttz))
-
-
-    def testDateCommandFormatReversed(self):
-        self.assertEqual(parse("2003 10:36:28 BRST 25 Sep Thu",
-                               tzinfos=self.tzinfos),
-                         datetime(2003, 9, 25, 10, 36, 28,
-                                  tzinfo=self.brsttz))
-
-    def testDateCommandFormatWithLong(self):
-        if not PY3:
-            self.assertEqual(parse("Thu Sep 25 10:36:28 BRST 2003",
-                                   tzinfos={"BRST": long(-10800)}),
-                             datetime(2003, 9, 25, 10, 36, 28,
-                                      tzinfo=self.brsttz))
-    def testDateCommandFormatIgnoreTz(self):
-        self.assertEqual(parse("Thu Sep 25 10:36:28 BRST 2003",
-                               ignoretz=True),
-                         datetime(2003, 9, 25, 10, 36, 28))
-
-    def testDateCommandFormatStrip1(self):
-        self.assertEqual(parse("Thu Sep 25 10:36:28 2003"),
-                         datetime(2003, 9, 25, 10, 36, 28))
-
-    def testDateCommandFormatStrip2(self):
-        self.assertEqual(parse("Thu Sep 25 10:36:28", default=self.default),
-                         datetime(2003, 9, 25, 10, 36, 28))
-
-    def testDateCommandFormatStrip3(self):
-        self.assertEqual(parse("Thu Sep 10:36:28", default=self.default),
-                         datetime(2003, 9, 25, 10, 36, 28))
-
-    def testDateCommandFormatStrip4(self):
-        self.assertEqual(parse("Thu 10:36:28", default=self.default),
-                         datetime(2003, 9, 25, 10, 36, 28))
-
-    def testDateCommandFormatStrip5(self):
-        self.assertEqual(parse("Sep 10:36:28", default=self.default),
-                         datetime(2003, 9, 25, 10, 36, 28))
-
-    def testDateCommandFormatStrip6(self):
-        self.assertEqual(parse("10:36:28", default=self.default),
-                         datetime(2003, 9, 25, 10, 36, 28))
-
-    def testDateCommandFormatStrip7(self):
-        self.assertEqual(parse("10:36", default=self.default),
-                         datetime(2003, 9, 25, 10, 36))
-
-    def testDateCommandFormatStrip8(self):
-        self.assertEqual(parse("Thu Sep 25 2003"),
-                         datetime(2003, 9, 25))
-
-    def testDateCommandFormatStrip9(self):
-        self.assertEqual(parse("Sep 25 2003"),
-                         datetime(2003, 9, 25))
-
-    def testDateCommandFormatStrip10(self):
-        self.assertEqual(parse("Sep 2003", default=self.default),
-                         datetime(2003, 9, 25))
-
-    def testDateCommandFormatStrip11(self):
-        self.assertEqual(parse("Sep", default=self.default),
-                         datetime(2003, 9, 25))
-
-    def testDateCommandFormatStrip12(self):
-        self.assertEqual(parse("2003", default=self.default),
-                         datetime(2003, 9, 25))
-
-    def testDateRCommandFormat(self):
-        self.assertEqual(parse("Thu, 25 Sep 2003 10:49:41 -0300"),
-                         datetime(2003, 9, 25, 10, 49, 41,
-                                  tzinfo=self.brsttz))
-
-    def testISOFormat(self):
-        self.assertEqual(parse("2003-09-25T10:49:41.5-03:00"),
-                         datetime(2003, 9, 25, 10, 49, 41, 500000,
-                                  tzinfo=self.brsttz))
-
-    def testISOFormatStrip1(self):
-        self.assertEqual(parse("2003-09-25T10:49:41-03:00"),
-                         datetime(2003, 9, 25, 10, 49, 41,
-                                  tzinfo=self.brsttz))
-
-    def testISOFormatStrip2(self):
-        self.assertEqual(parse("2003-09-25T10:49:41"),
-                         datetime(2003, 9, 25, 10, 49, 41))
-
-    def testISOFormatStrip3(self):
-        self.assertEqual(parse("2003-09-25T10:49"),
-                         datetime(2003, 9, 25, 10, 49))
-
-    def testISOFormatStrip4(self):
-        self.assertEqual(parse("2003-09-25T10"),
-                         datetime(2003, 9, 25, 10))
-
-    def testISOFormatStrip5(self):
-        self.assertEqual(parse("2003-09-25"),
-                         datetime(2003, 9, 25))
-
-    def testISOStrippedFormat(self):
-        self.assertEqual(parse("20030925T104941.5-0300"),
-                         datetime(2003, 9, 25, 10, 49, 41, 500000,
-                                  tzinfo=self.brsttz))
-
-    def testISOStrippedFormatStrip1(self):
-        self.assertEqual(parse("20030925T104941-0300"),
-                         datetime(2003, 9, 25, 10, 49, 41,
-                                  tzinfo=self.brsttz))
-
-    def testISOStrippedFormatStrip2(self):
-        self.assertEqual(parse("20030925T104941"),
-                         datetime(2003, 9, 25, 10, 49, 41))
-
-    def testISOStrippedFormatStrip3(self):
-        self.assertEqual(parse("20030925T1049"),
-                         datetime(2003, 9, 25, 10, 49, 0))
-
-    def testISOStrippedFormatStrip4(self):
-        self.assertEqual(parse("20030925T10"),
-                         datetime(2003, 9, 25, 10))
-
-    def testISOStrippedFormatStrip5(self):
-        self.assertEqual(parse("20030925"),
-                         datetime(2003, 9, 25))
-
-    def testPythonLoggerFormat(self):
-        self.assertEqual(parse("2003-09-25 10:49:41,502"),
-                         datetime(2003, 9, 25, 10, 49, 41, 502000))
-
-    def testNoSeparator1(self):
-        self.assertEqual(parse("199709020908"),
-                         datetime(1997, 9, 2, 9, 8))
-
-    def testNoSeparator2(self):
-        self.assertEqual(parse("19970902090807"),
-                         datetime(1997, 9, 2, 9, 8, 7))
-
-    def testDateWithDash1(self):
-        self.assertEqual(parse("2003-09-25"),
-                         datetime(2003, 9, 25))
-
-    def testDateWithDash2(self):
-        self.assertEqual(parse("2003-Sep-25"),
-                         datetime(2003, 9, 25))
-
-    def testDateWithDash3(self):
-        self.assertEqual(parse("25-Sep-2003"),
-                         datetime(2003, 9, 25))
-
-    def testDateWithDash4(self):
-        self.assertEqual(parse("25-Sep-2003"),
-                         datetime(2003, 9, 25))
-
-    def testDateWithDash5(self):
-        self.assertEqual(parse("Sep-25-2003"),
-                         datetime(2003, 9, 25))
-
-    def testDateWithDash6(self):
-        self.assertEqual(parse("09-25-2003"),
-                         datetime(2003, 9, 25))
-
-    def testDateWithDash7(self):
-        self.assertEqual(parse("25-09-2003"),
-                         datetime(2003, 9, 25))
-
-    def testDateWithDash8(self):
-        self.assertEqual(parse("10-09-2003", dayfirst=True),
-                         datetime(2003, 9, 10))
-
-    def testDateWithDash9(self):
-        self.assertEqual(parse("10-09-2003"),
-                         datetime(2003, 10, 9))
-
-    def testDateWithDash10(self):
-        self.assertEqual(parse("10-09-03"),
-                         datetime(2003, 10, 9))
-
-    def testDateWithDash11(self):
-        self.assertEqual(parse("10-09-03", yearfirst=True),
-                         datetime(2010, 9, 3))
-
-    def testDateWithDot1(self):
-        self.assertEqual(parse("2003.09.25"),
-                         datetime(2003, 9, 25))
-
-    def testDateWithDot2(self):
-        self.assertEqual(parse("2003.Sep.25"),
-                         datetime(2003, 9, 25))
-
-    def testDateWithDot3(self):
-        self.assertEqual(parse("25.Sep.2003"),
-                         datetime(2003, 9, 25))
-
-    def testDateWithDot4(self):
-        self.assertEqual(parse("25.Sep.2003"),
-                         datetime(2003, 9, 25))
-
-    def testDateWithDot5(self):
-        self.assertEqual(parse("Sep.25.2003"),
-                         datetime(2003, 9, 25))
-
-    def testDateWithDot6(self):
-        self.assertEqual(parse("09.25.2003"),
-                         datetime(2003, 9, 25))
-
-    def testDateWithDot7(self):
-        self.assertEqual(parse("25.09.2003"),
-                         datetime(2003, 9, 25))
-
-    def testDateWithDot8(self):
-        self.assertEqual(parse("10.09.2003", dayfirst=True),
-                         datetime(2003, 9, 10))
-
-    def testDateWithDot9(self):
-        self.assertEqual(parse("10.09.2003"),
-                         datetime(2003, 10, 9))
-
-    def testDateWithDot10(self):
-        self.assertEqual(parse("10.09.03"),
-                         datetime(2003, 10, 9))
-
-    def testDateWithDot11(self):
-        self.assertEqual(parse("10.09.03", yearfirst=True),
-                         datetime(2010, 9, 3))
-
-    def testDateWithSlash1(self):
-        self.assertEqual(parse("2003/09/25"),
-                         datetime(2003, 9, 25))
-
-    def testDateWithSlash2(self):
-        self.assertEqual(parse("2003/Sep/25"),
-                         datetime(2003, 9, 25))
-
-    def testDateWithSlash3(self):
-        self.assertEqual(parse("25/Sep/2003"),
-                         datetime(2003, 9, 25))
-
-    def testDateWithSlash4(self):
-        self.assertEqual(parse("25/Sep/2003"),
-                         datetime(2003, 9, 25))
-
-    def testDateWithSlash5(self):
-        self.assertEqual(parse("Sep/25/2003"),
-                         datetime(2003, 9, 25))
-
-    def testDateWithSlash6(self):
-        self.assertEqual(parse("09/25/2003"),
-                         datetime(2003, 9, 25))
-
-    def testDateWithSlash7(self):
-        self.assertEqual(parse("25/09/2003"),
-                         datetime(2003, 9, 25))
-
-    def testDateWithSlash8(self):
-        self.assertEqual(parse("10/09/2003", dayfirst=True),
-                         datetime(2003, 9, 10))
-
-    def testDateWithSlash9(self):
-        self.assertEqual(parse("10/09/2003"),
-                         datetime(2003, 10, 9))
-
-    def testDateWithSlash10(self):
-        self.assertEqual(parse("10/09/03"),
-                         datetime(2003, 10, 9))
-
-    def testDateWithSlash11(self):
-        self.assertEqual(parse("10/09/03", yearfirst=True),
-                         datetime(2010, 9, 3))
-
-    def testDateWithSpace1(self):
-        self.assertEqual(parse("2003 09 25"),
-                         datetime(2003, 9, 25))
-
-    def testDateWithSpace2(self):
-        self.assertEqual(parse("2003 Sep 25"),
-                         datetime(2003, 9, 25))
-
-    def testDateWithSpace3(self):
-        self.assertEqual(parse("25 Sep 2003"),
-                         datetime(2003, 9, 25))
-
-    def testDateWithSpace4(self):
-        self.assertEqual(parse("25 Sep 2003"),
-                         datetime(2003, 9, 25))
-
-    def testDateWithSpace5(self):
-        self.assertEqual(parse("Sep 25 2003"),
-                         datetime(2003, 9, 25))
-
-    def testDateWithSpace6(self):
-        self.assertEqual(parse("09 25 2003"),
-                         datetime(2003, 9, 25))
-
-    def testDateWithSpace7(self):
-        self.assertEqual(parse("25 09 2003"),
-                         datetime(2003, 9, 25))
-
-    def testDateWithSpace8(self):
-        self.assertEqual(parse("10 09 2003", dayfirst=True),
-                         datetime(2003, 9, 10))
-
-    def testDateWithSpace9(self):
-        self.assertEqual(parse("10 09 2003"),
-                         datetime(2003, 10, 9))
-
-    def testDateWithSpace10(self):
-        self.assertEqual(parse("10 09 03"),
-                         datetime(2003, 10, 9))
-
-    def testDateWithSpace11(self):
-        self.assertEqual(parse("10 09 03", yearfirst=True),
-                         datetime(2010, 9, 3))
-
-    def testDateWithSpace12(self):
-        self.assertEqual(parse("25 09 03"),
-                         datetime(2003, 9, 25))
-
-    def testStrangelyOrderedDate1(self):
-        self.assertEqual(parse("03 25 Sep"),
-                         datetime(2003, 9, 25))
-
-    def testStrangelyOrderedDate2(self):
-        self.assertEqual(parse("2003 25 Sep"),
-                         datetime(2003, 9, 25))
-
-    def testStrangelyOrderedDate3(self):
-        self.assertEqual(parse("25 03 Sep"),
-                         datetime(2025, 9, 3))
-
-    def testHourWithLetters(self):
-        self.assertEqual(parse("10h36m28.5s", default=self.default),
-                         datetime(2003, 9, 25, 10, 36, 28, 500000))
-
-    def testHourWithLettersStrip1(self):
-        self.assertEqual(parse("10h36m28s", default=self.default),
-                         datetime(2003, 9, 25, 10, 36, 28))
-
-    def testHourWithLettersStrip2(self):
-        self.assertEqual(parse("10h36m", default=self.default),
-                         datetime(2003, 9, 25, 10, 36))
-
-    def testHourWithLettersStrip3(self):
-        self.assertEqual(parse("10h", default=self.default),
-                         datetime(2003, 9, 25, 10))
-
-    def testHourWithLettersStrip4(self):
-        self.assertEqual(parse("10 h 36", default=self.default),
-                         datetime(2003, 9, 25, 10, 36))
-
-    def testHourAmPm1(self):
-        self.assertEqual(parse("10h am", default=self.default),
-                         datetime(2003, 9, 25, 10))
-
-    def testHourAmPm2(self):
-        self.assertEqual(parse("10h pm", default=self.default),
-                         datetime(2003, 9, 25, 22))
-
-    def testHourAmPm3(self):
-        self.assertEqual(parse("10am", default=self.default),
-                         datetime(2003, 9, 25, 10))
-
-    def testHourAmPm4(self):
-        self.assertEqual(parse("10pm", default=self.default),
-                         datetime(2003, 9, 25, 22))
-
-    def testHourAmPm5(self):
-        self.assertEqual(parse("10:00 am", default=self.default),
-                         datetime(2003, 9, 25, 10))
-
-    def testHourAmPm6(self):
-        self.assertEqual(parse("10:00 pm", default=self.default),
-                         datetime(2003, 9, 25, 22))
-
-    def testHourAmPm7(self):
-        self.assertEqual(parse("10:00am", default=self.default),
-                         datetime(2003, 9, 25, 10))
-
-    def testHourAmPm8(self):
-        self.assertEqual(parse("10:00pm", default=self.default),
-                         datetime(2003, 9, 25, 22))
-
-    def testHourAmPm9(self):
-        self.assertEqual(parse("10:00a.m", default=self.default),
-                         datetime(2003, 9, 25, 10))
-
-    def testHourAmPm10(self):
-        self.assertEqual(parse("10:00p.m", default=self.default),
-                         datetime(2003, 9, 25, 22))
-
-    def testHourAmPm11(self):
-        self.assertEqual(parse("10:00a.m.", default=self.default),
-                         datetime(2003, 9, 25, 10))
-
-    def testHourAmPm12(self):
-        self.assertEqual(parse("10:00p.m.", default=self.default),
-                         datetime(2003, 9, 25, 22))
-
-    def testPertain(self):
-        self.assertEqual(parse("Sep 03", default=self.default),
-                         datetime(2003, 9, 3))
-        self.assertEqual(parse("Sep of 03", default=self.default),
-                         datetime(2003, 9, 25))
-
-    def testWeekdayAlone(self):
-        self.assertEqual(parse("Wed", default=self.default),
-                         datetime(2003, 10, 1))
-
-    def testLongWeekday(self):
-        self.assertEqual(parse("Wednesday", default=self.default),
-                         datetime(2003, 10, 1))
-
-    def testLongMonth(self):
-        self.assertEqual(parse("October", default=self.default),
-                         datetime(2003, 10, 25))
-
-    def testZeroYear(self):
-        self.assertEqual(parse("31-Dec-00", default=self.default),
-                         datetime(2000, 12, 31))
-
-    def testFuzzy(self):
-        s = "Today is 25 of September of 2003, exactly " \
-            "at 10:49:41 with timezone -03:00."
-        self.assertEqual(parse(s, fuzzy=True),
-                         datetime(2003, 9, 25, 10, 49, 41,
-                                  tzinfo=self.brsttz))
-
-    def testFuzzyWithTokens(self):
-        s = "Today is 25 of September of 2003, exactly " \
-            "at 10:49:41 with timezone -03:00."
-        self.assertEqual(parse(s, fuzzy_with_tokens=True),
-                         (datetime(2003, 9, 25, 10, 49, 41,
-                                   tzinfo=self.brsttz),
-                         ('Today is ', 'of ', ', exactly at ',
-                          ' with timezone ', '.')))
-
-    def testFuzzyAMPMProblem(self):
-        # Sometimes fuzzy parsing results in AM/PM flag being set without
-        # hours - if it's fuzzy it should ignore that.
-        s1 = "I have a meeting on March 1, 1974."
-        s2 = "On June 8th, 2020, I am going to be the first man on Mars"
-
-        # Also don't want any erroneous AM or PMs changing the parsed time
-        s3 = "Meet me at the AM/PM on Sunset at 3:00 AM on December 3rd, 2003"
-        s4 = "Meet me at 3:00AM on December 3rd, 2003 at the AM/PM on Sunset"
-
-        self.assertEqual(parse(s1, fuzzy=True), datetime(1974, 3, 1))
-        self.assertEqual(parse(s2, fuzzy=True), datetime(2020, 6, 8))
-        self.assertEqual(parse(s3, fuzzy=True), datetime(2003, 12, 3, 3))
-        self.assertEqual(parse(s4, fuzzy=True), datetime(2003, 12, 3, 3))
-
-    def testExtraSpace(self):
-        self.assertEqual(parse("  July   4 ,  1976   12:01:02   am  "),
-                         datetime(1976, 7, 4, 0, 1, 2))
-
-    def testRandomFormat1(self):
-        self.assertEqual(parse("Wed, July 10, '96"),
-                         datetime(1996, 7, 10, 0, 0))
-
-    def testRandomFormat2(self):
-        self.assertEqual(parse("1996.07.10 AD at 15:08:56 PDT",
-                               ignoretz=True),
-                         datetime(1996, 7, 10, 15, 8, 56))
-
-    def testRandomFormat3(self):
-        self.assertEqual(parse("1996.July.10 AD 12:08 PM"),
-                         datetime(1996, 7, 10, 12, 8))
-
-    def testRandomFormat4(self):
-        self.assertEqual(parse("Tuesday, April 12, 1952 AD 3:30:42pm PST",
-                               ignoretz=True),
-                         datetime(1952, 4, 12, 15, 30, 42))
-
-    def testRandomFormat5(self):
-        self.assertEqual(parse("November 5, 1994, 8:15:30 am EST",
-                               ignoretz=True),
-                         datetime(1994, 11, 5, 8, 15, 30))
-
-    def testRandomFormat6(self):
-        self.assertEqual(parse("1994-11-05T08:15:30-05:00",
-                               ignoretz=True),
-                         datetime(1994, 11, 5, 8, 15, 30))
-
-    def testRandomFormat7(self):
-        self.assertEqual(parse("1994-11-05T08:15:30Z",
-                               ignoretz=True),
-                         datetime(1994, 11, 5, 8, 15, 30))
-
-    def testRandomFormat8(self):
-        self.assertEqual(parse("July 4, 1976"), datetime(1976, 7, 4))
-
-    def testRandomFormat9(self):
-        self.assertEqual(parse("7 4 1976"), datetime(1976, 7, 4))
-
-    def testRandomFormat10(self):
-        self.assertEqual(parse("4 jul 1976"), datetime(1976, 7, 4))
-
-    def testRandomFormat11(self):
-        self.assertEqual(parse("7-4-76"), datetime(1976, 7, 4))
-
-    def testRandomFormat12(self):
-        self.assertEqual(parse("19760704"), datetime(1976, 7, 4))
-
-    def testRandomFormat13(self):
-        self.assertEqual(parse("0:01:02", default=self.default),
-                         datetime(2003, 9, 25, 0, 1, 2))
-
-    def testRandomFormat14(self):
-        self.assertEqual(parse("12h 01m02s am", default=self.default),
-                         datetime(2003, 9, 25, 0, 1, 2))
-
-    def testRandomFormat15(self):
-        self.assertEqual(parse("0:01:02 on July 4, 1976"),
-                         datetime(1976, 7, 4, 0, 1, 2))
-
-    def testRandomFormat16(self):
-        self.assertEqual(parse("0:01:02 on July 4, 1976"),
-                         datetime(1976, 7, 4, 0, 1, 2))
-
-    def testRandomFormat17(self):
-        self.assertEqual(parse("1976-07-04T00:01:02Z", ignoretz=True),
-                         datetime(1976, 7, 4, 0, 1, 2))
-
-    def testRandomFormat18(self):
-        self.assertEqual(parse("July 4, 1976 12:01:02 am"),
-                         datetime(1976, 7, 4, 0, 1, 2))
-
-    def testRandomFormat19(self):
-        self.assertEqual(parse("Mon Jan  2 04:24:27 1995"),
-                         datetime(1995, 1, 2, 4, 24, 27))
-
-    def testRandomFormat20(self):
-        self.assertEqual(parse("Tue Apr 4 00:22:12 PDT 1995", ignoretz=True),
-                         datetime(1995, 4, 4, 0, 22, 12))
-
-    def testRandomFormat21(self):
-        self.assertEqual(parse("04.04.95 00:22"),
-                         datetime(1995, 4, 4, 0, 22))
-
-    def testRandomFormat22(self):
-        self.assertEqual(parse("Jan 1 1999 11:23:34.578"),
-                         datetime(1999, 1, 1, 11, 23, 34, 578000))
-
-    def testRandomFormat23(self):
-        self.assertEqual(parse("950404 122212"),
-                         datetime(1995, 4, 4, 12, 22, 12))
-
-    def testRandomFormat24(self):
-        self.assertEqual(parse("0:00 PM, PST", default=self.default,
-                               ignoretz=True),
-                         datetime(2003, 9, 25, 12, 0))
-
-    def testRandomFormat25(self):
-        self.assertEqual(parse("12:08 PM", default=self.default),
-                         datetime(2003, 9, 25, 12, 8))
-
-    def testRandomFormat26(self):
-        self.assertEqual(parse("5:50 A.M. on June 13, 1990"),
-                         datetime(1990, 6, 13, 5, 50))
-
-    def testRandomFormat27(self):
-        self.assertEqual(parse("3rd of May 2001"), datetime(2001, 5, 3))
-
-    def testRandomFormat28(self):
-        self.assertEqual(parse("5th of March 2001"), datetime(2001, 3, 5))
-
-    def testRandomFormat29(self):
-        self.assertEqual(parse("1st of May 2003"), datetime(2003, 5, 1))
-
-    def testRandomFormat30(self):
-        self.assertEqual(parse("01h02m03", default=self.default),
-                         datetime(2003, 9, 25, 1, 2, 3))
-
-    def testRandomFormat31(self):
-        self.assertEqual(parse("01h02", default=self.default),
-                         datetime(2003, 9, 25, 1, 2))
-
-    def testRandomFormat32(self):
-        self.assertEqual(parse("01h02s", default=self.default),
-                         datetime(2003, 9, 25, 1, 0, 2))
-
-    def testRandomFormat33(self):
-        self.assertEqual(parse("01m02", default=self.default),
-                         datetime(2003, 9, 25, 0, 1, 2))
-
-    def testRandomFormat34(self):
-        self.assertEqual(parse("01m02h", default=self.default),
-                         datetime(2003, 9, 25, 2, 1))
-
-    def testRandomFormat35(self):
-        self.assertEqual(parse("2004 10 Apr 11h30m", default=self.default),
-                         datetime(2004, 4, 10, 11, 30))
-
-    # Test that if a year is omitted, we use the most recent matching value
-    def testSmartDefaultsNoYearMonthEarlier(self):
-        self.assertEqual(parse("August 3", default=datetime(2014, 5, 1),
-                               smart_defaults=True), 
-                         datetime(2013, 8, 3))
-
-    def testSmartDefaultsNoYearDayEarlier(self):        
-        self.assertEqual(parse("August 3", default=datetime(2014, 8, 1),
-                               smart_defaults=True), 
-                         datetime(2013, 8, 3))
-
-    def testSmartDefaultsNoYearSameDay(self):
-        self.assertEqual(parse("August 3", default=datetime(2014, 8, 3),
-                               smart_defaults=True), 
-                         datetime(2014, 8, 3))
-
-    def testSmartDefaultsNoYearDayLater(self):
-        self.assertEqual(parse("August 3", default=datetime(2014, 8, 4),
-                               smart_defaults=True), 
-                         datetime(2014, 8, 3))
-    
-    def testSmartDefaultsNoYearMonthLater(self):
-        self.assertEqual(parse("August 3", default=datetime(2014, 12, 19),
-                               smart_defaults=True), 
-                         datetime(2014, 8, 3))
-
-    def testSmartDefaultsNoYearFeb29(self):
-        self.assertEqual(parse("February 29", default=datetime(2014, 12, 19),
-                               date_in_future=False, smart_defaults=True),
-                         datetime(2012, 2, 29))
-
-    def testSmartDefaultsNoYearFeb29Y2100(self):
-        # Year 2000 was not a leap year.
-        self.assertEqual(parse("February 29", default=datetime(2100, 12, 19),
-                               smart_defaults=True),
-                         datetime(2096, 2, 29))
-
-    # Test that if a year is omitted, we use the most next matching value
-    def testSmartDefaultsNoYearFutureDayEarlier(self):
-        self.assertEqual(parse("August 3", default=datetime(2014, 5, 1),
-                               date_in_future=True, smart_defaults=True),
-                         datetime(2014, 8, 3))
-
-    def testSmartDefaultsNoYearFutureMonthEarlier(self):
-        self.assertEqual(parse("August 3", default=datetime(2014, 8, 1),
-                               date_in_future=True, smart_defaults=True),
-                         datetime(2014, 8, 3))
-
-    def testSmartDefaultsNoYearFutureSameDay(self):
-        self.assertEqual(parse("August 3", default=datetime(2014, 8, 3),
-                               date_in_future=True, smart_defaults=True),
-                         datetime(2014, 8, 3))
-
-    def testSmartDefaultsNoYearFutureDayLater(self):
-        self.assertEqual(parse("August 3", default=datetime(2014, 8, 4),
-                               date_in_future=True, smart_defaults=True),
-                         datetime(2015, 8, 3))
-    
-    def testSmartDefaultsNoYearFutureMonthLater(self):
-        self.assertEqual(parse("August 3", default=datetime(2014, 12, 19),
-                               date_in_future=True, smart_defaults=True),
-                         datetime(2015, 8, 3))
-
-    def testSmartDefaultsNoYearFutureFeb29Y2100(self):
-        self.assertEqual(parse("February 29", default=datetime(2098, 12, 19),
-                               date_in_future=True, smart_defaults=True),
-                         datetime(2104, 2, 29))
-
-    # Test that if only a month is provided, we select the beginning of the most recent
-    # occurrence of the specified month
-    def testSmartDefaultsMonthOnlyMonthEarlier(self):
-        self.assertEqual(parse("September", default=datetime(2014, 5, 1),
-                               smart_defaults=True),
-                         datetime(2013, 9, 1))
-
-    def testSmartDefaultsMonthOnlySameMonthFirstDay(self):
-        self.assertEqual(parse("September", default=datetime(2014, 9, 1),
-                               smart_defaults=True),
-                         datetime(2014, 9, 1))
-
-    def testSmartDefaultsMonthOnlySameMonthLastDay(self):
-        self.assertEqual(parse("September", default=datetime(2014, 9, 30),
-                               smart_defaults=True),
-                         datetime(2014, 9, 1))
-
-    def testSmartDefaultMonthOnlyMonthLater(self):
-        self.assertEqual(parse("September", default=datetime(2014, 11, 1),
-                               smart_defaults=True),
-                         datetime(2014, 9, 1))
-
-    # Test that if only a month is provided, we select the beginning of the most recent
-    # occurrence of the specified month
-    def testSmartDefaultsMonthOnlyFutureMonthEarlier(self):
-        self.assertEqual(parse("September", default=datetime(2014, 5, 1),
-                               date_in_future=True, smart_defaults=True),
-                         datetime(2014, 9, 1))
-
-    def testSmartDefaultsMonthOnlyFutureSameMonthFirstDay(self):
-        self.assertEqual(parse("September", default=datetime(2014, 9, 1),
-                               date_in_future=True, smart_defaults=True),
-                         datetime(2014, 9, 1))
-
-    def testSmartDefaultsMonthOnlyFutureSameMonthLastDay(self):
-        self.assertEqual(parse("September", default=datetime(2014, 9, 30),
-                               date_in_future=True, smart_defaults=True),
-                         datetime(2014, 9, 1))
-    
-    def testSmartDefaultsMonthOnlyFutureMonthLater(self):
-        self.assertEqual(parse("September", default=datetime(2014, 11, 1),
-                               date_in_future=True, smart_defaults=True),
-                         datetime(2015, 9, 1))
-
-    # Test to ensure that if a year is specified, January 1st of that year is
-    # returned.
-    def testSmartDefaultsYearOnly(self):
-        self.assertEqual(parse("2009", smart_defaults=True),
-                         datetime(2009, 1, 1))
-
-    def testSmartDefaultsYearOnlyFuture(self):
-        self.assertEqual(parse("2009", smart_defaults=True,
-                               date_in_future=True),
-                         datetime(2009, 1, 1))
-
-    # Tests that invalid days fall back to the end of the month if that's
-    # the desired behavior.
-    def testInvalidDayNoFallback(self):
-        self.assertRaises(ValueError, parse, "Feb 30, 2007",
-                          **{'fallback_on_invalid_day':False})
-
-    def testInvalidDayFallbackFebNoLeapYear(self):
-        self.assertEqual(parse("Feb 31, 2007", fallback_on_invalid_day=True),
-                         datetime(2007, 2, 28))
-
-    def testInvalidDayFallbackFebLeapYear(self):
-        self.assertEqual(parse("Feb 31, 2008", fallback_on_invalid_day=True),
-                         datetime(2008, 2, 29))
-
-    def testUnspecifiedDayNoFallback(self):
-        self.assertRaises(ValueError, parse, "April 2009",
-                          **{'fallback_on_invalid_day':False,
-                             'default':datetime(2010, 1, 31)})
-
-    def testUnspecifiedDayUnspecifiedFallback(self):
-        self.assertEqual(parse("April 2009", default=datetime(2010, 1, 31)),
-                         datetime(2009, 4, 30))
-
-    def testUnspecifiedDayUnspecifiedFallback(self):
-        self.assertEqual(parse("April 2009", fallback_on_invalid_day=True,
-                               default=datetime(2010, 1, 31)),
-                         datetime(2009, 4, 30))
-
-    def testUnspecifiedDayUnspecifiedFallbackFebNoLeapYear(self):        
-        self.assertEqual(parse("Feb 2007", default=datetime(2010, 1, 31)),
-                         datetime(2007, 2, 28))
-
-    def testUnspecifiedDayUnspecifiedFallbackFebLeapYear(self):        
-        self.assertEqual(parse("Feb 2008", default=datetime(2010, 1, 31)),
-                         datetime(2008, 2, 29))
-
-    def testErrorType01(self):
-        self.assertRaises(ValueError,
-                          parse, 'shouldfail')
-
-    def testCorrectErrorOnFuzzyWithTokens(self):
-        assertRaisesRegex(self, ValueError, 'Unknown string format',
-                          parse, '04/04/32/423', fuzzy_with_tokens=True)
-        assertRaisesRegex(self, ValueError, 'Unknown string format',
-                          parse, '04/04/04 +32423', fuzzy_with_tokens=True)
-        assertRaisesRegex(self, ValueError, 'Unknown string format',
-                          parse, '04/04/0d4', fuzzy_with_tokens=True)
-
-    def testIncreasingCTime(self):
-        # This test will check 200 different years, every month, every day,
-        # every hour, every minute, every second, and every weekday, using
-        # a delta of more or less 1 year, 1 month, 1 day, 1 minute and
-        # 1 second.
-        delta = timedelta(days=365+31+1, seconds=1+60+60*60)
-        dt = datetime(1900, 1, 1, 0, 0, 0, 0)
-        for i in range(200):
-            self.assertEqual(parse(dt.ctime()), dt)
-            dt += delta
-
-    def testIncreasingISOFormat(self):
-        delta = timedelta(days=365+31+1, seconds=1+60+60*60)
-        dt = datetime(1900, 1, 1, 0, 0, 0, 0)
-        for i in range(200):
-            self.assertEqual(parse(dt.isoformat()), dt)
-            dt += delta
-
-    def testMicrosecondsPrecisionError(self):
-        # Skip found out that sad precision problem. :-(
-        dt1 = parse("00:11:25.01")
-        dt2 = parse("00:12:10.01")
-        self.assertEqual(dt1.microsecond, 10000)
-        self.assertEqual(dt2.microsecond, 10000)
-
-    def testMicrosecondPrecisionErrorReturns(self):
-        # One more precision issue, discovered by Eric Brown.  This should
-        # be the last one, as we're no longer using floating points.
-        for ms in [100001, 100000, 99999, 99998,
-                    10001,  10000,  9999,  9998,
-                     1001,   1000,   999,   998,
-                      101,    100,    99,    98]:
-            dt = datetime(2008, 2, 27, 21, 26, 1, ms)
-            self.assertEqual(parse(dt.isoformat()), dt)
-
-    def testHighPrecisionSeconds(self):
-        self.assertEqual(parse("20080227T21:26:01.123456789"),
-                          datetime(2008, 2, 27, 21, 26, 1, 123456))
-
-    def testCustomParserInfo(self):
-        # Custom parser info wasn't working, as Michael Elsdörfer discovered.
-        from dateutil.parser import parserinfo, parser
-
-        class myparserinfo(parserinfo):
-            MONTHS = parserinfo.MONTHS[:]
-            MONTHS[0] = ("Foo", "Foo")
-        myparser = parser(myparserinfo())
-        dt = myparser.parse("01/Foo/2007")
-        self.assertEqual(dt, datetime(2007, 1, 1))
-
-    def testParseStr(self):
-        self.assertEqual(parse(self.str_str),
-                         parse(self.uni_str))
-
-    def testParserParseStr(self):
-        from dateutil.parser import parser
-
-        self.assertEqual(parser().parse(self.str_str),
-                         parser().parse(self.uni_str))
-
-    def testParseUnicodeWords(self):
-
-        class rus_parserinfo(parserinfo):
-            MONTHS = [("янв", "Январь"),
-                      ("фев", "Февраль"),
-                      ("мар", "Март"),
-                      ("апр", "Апрель"),
-                      ("май", "Май"),
-                      ("июн", "Июнь"),
-                      ("июл", "Июль"),
-                      ("авг", "Август"),
-                      ("сен", "Сентябрь"),
-                      ("окт", "Октябрь"),
-                      ("ноя", "Ноябрь"),
-                      ("дек", "Декабрь")]
-
-        self.assertEqual(parse('10 Сентябрь 2015 10:20',
-                               parserinfo=rus_parserinfo()),
-                         datetime(2015, 9, 10, 10, 20))
-
-
-class EasterTest(unittest.TestCase):
-    easterlist = [
-                  # WESTERN            ORTHODOX
-                  (date(1990, 4, 15), date(1990, 4, 15)),
-                  (date(1991, 3, 31), date(1991, 4,  7)),
-                  (date(1992, 4, 19), date(1992, 4, 26)),
-                  (date(1993, 4, 11), date(1993, 4, 18)),
-                  (date(1994, 4,  3), date(1994, 5,  1)),
-                  (date(1995, 4, 16), date(1995, 4, 23)),
-                  (date(1996, 4,  7), date(1996, 4, 14)),
-                  (date(1997, 3, 30), date(1997, 4, 27)),
-                  (date(1998, 4, 12), date(1998, 4, 19)),
-                  (date(1999, 4,  4), date(1999, 4, 11)),
-
-                  (date(2000, 4, 23), date(2000, 4, 30)),
-                  (date(2001, 4, 15), date(2001, 4, 15)),
-                  (date(2002, 3, 31), date(2002, 5,  5)),
-                  (date(2003, 4, 20), date(2003, 4, 27)),
-                  (date(2004, 4, 11), date(2004, 4, 11)),
-                  (date(2005, 3, 27), date(2005, 5,  1)),
-                  (date(2006, 4, 16), date(2006, 4, 23)),
-                  (date(2007, 4,  8), date(2007, 4,  8)),
-                  (date(2008, 3, 23), date(2008, 4, 27)),
-                  (date(2009, 4, 12), date(2009, 4, 19)),
-
-                  (date(2010, 4,  4), date(2010, 4,  4)),
-                  (date(2011, 4, 24), date(2011, 4, 24)),
-                  (date(2012, 4,  8), date(2012, 4, 15)),
-                  (date(2013, 3, 31), date(2013, 5,  5)),
-                  (date(2014, 4, 20), date(2014, 4, 20)),
-                  (date(2015, 4,  5), date(2015, 4, 12)),
-                  (date(2016, 3, 27), date(2016, 5,  1)),
-                  (date(2017, 4, 16), date(2017, 4, 16)),
-                  (date(2018, 4,  1), date(2018, 4,  8)),
-                  (date(2019, 4, 21), date(2019, 4, 28)),
-
-                  (date(2020, 4, 12), date(2020, 4, 19)),
-                  (date(2021, 4,  4), date(2021, 5,  2)),
-                  (date(2022, 4, 17), date(2022, 4, 24)),
-                  (date(2023, 4,  9), date(2023, 4, 16)),
-                  (date(2024, 3, 31), date(2024, 5,  5)),
-                  (date(2025, 4, 20), date(2025, 4, 20)),
-                  (date(2026, 4,  5), date(2026, 4, 12)),
-                  (date(2027, 3, 28), date(2027, 5,  2)),
-                  (date(2028, 4, 16), date(2028, 4, 16)),
-                  (date(2029, 4,  1), date(2029, 4,  8)),
-
-                  (date(2030, 4, 21), date(2030, 4, 28)),
-                  (date(2031, 4, 13), date(2031, 4, 13)),
-                  (date(2032, 3, 28), date(2032, 5,  2)),
-                  (date(2033, 4, 17), date(2033, 4, 24)),
-                  (date(2034, 4,  9), date(2034, 4,  9)),
-                  (date(2035, 3, 25), date(2035, 4, 29)),
-                  (date(2036, 4, 13), date(2036, 4, 20)),
-                  (date(2037, 4,  5), date(2037, 4,  5)),
-                  (date(2038, 4, 25), date(2038, 4, 25)),
-                  (date(2039, 4, 10), date(2039, 4, 17)),
-
-                  (date(2040, 4,  1), date(2040, 5,  6)),
-                  (date(2041, 4, 21), date(2041, 4, 21)),
-                  (date(2042, 4,  6), date(2042, 4, 13)),
-                  (date(2043, 3, 29), date(2043, 5,  3)),
-                  (date(2044, 4, 17), date(2044, 4, 24)),
-                  (date(2045, 4,  9), date(2045, 4,  9)),
-                  (date(2046, 3, 25), date(2046, 4, 29)),
-                  (date(2047, 4, 14), date(2047, 4, 21)),
-                  (date(2048, 4,  5), date(2048, 4,  5)),
-                  (date(2049, 4, 18), date(2049, 4, 25)),
-
-                  (date(2050, 4, 10), date(2050, 4, 17)),
-                ]
-
-    def testEaster(self):
-        for western, orthodox in self.easterlist:
-            self.assertEqual(western,  easter(western.year,  EASTER_WESTERN))
-            self.assertEqual(orthodox, easter(orthodox.year, EASTER_ORTHODOX))
-
-class TZTest(unittest.TestCase):
-
-    TZFILE_EST5EDT = b"""
-VFppZgAAAAAAAAAAAAAAAAAAAAAAAAAEAAAABAAAAAAAAADrAAAABAAAABCeph5wn7rrYKCGAHCh
-ms1gomXicKOD6eCkaq5wpTWnYKZTyvCnFYlgqDOs8Kj+peCqE47wqt6H4KvzcPCsvmngrdNS8K6e
-S+CvszTwsH4t4LGcUXCyZ0pgs3wzcLRHLGC1XBVwticOYLc793C4BvBguRvZcLnm0mC7BPXwu8a0
-YLzk1/C9r9DgvsS58L+PsuDApJvwwW+U4MKEffDDT3bgxGRf8MUvWODGTXxwxw864MgtXnDI+Fdg
-yg1AcMrYOWDLiPBw0iP0cNJg++DTdeTw1EDd4NVVxvDWIL/g1zWo8NgAoeDZFYrw2eCD4Nr+p3Db
-wGXg3N6JcN2pgmDevmtw34lkYOCeTXDhaUZg4n4vcONJKGDkXhFw5Vcu4OZHLfDnNxDg6CcP8OkW
-8uDqBvHw6vbU4Ovm0/Ds1rbg7ca18O6/02Dvr9Jw8J+1YPGPtHDyf5dg82+WcPRfeWD1T3hw9j9b
-YPcvWnD4KHfg+Q88cPoIWeD6+Fjw++g74PzYOvD9yB3g/rgc8P+n/+AAl/7wAYfh4AJ34PADcP5g
-BGD9cAVQ4GAGQN9wBzDCYAeNGXAJEKRgCa2U8ArwhmAL4IVwDNmi4A3AZ3AOuYTgD6mD8BCZZuAR
-iWXwEnlI4BNpR/AUWSrgFUkp8BY5DOAXKQvwGCIpYBkI7fAaAgtgGvIKcBvh7WAc0exwHcHPYB6x
-znAfobFgIHYA8CGBk2AiVeLwI2qv4CQ1xPAlSpHgJhWm8Ccqc+An/sNwKQpV4CnepXAq6jfgK76H
-cCzTVGAtnmlwLrM2YC9+S3AwkxhgMWdn8DJy+mAzR0nwNFLcYDUnK/A2Mr5gNwcN8Dgb2uA45u/w
-Ofu84DrG0fA7257gPK/ucD27gOA+j9BwP5ti4EBvsnBBhH9gQk+UcENkYWBEL3ZwRURDYEYPWHBH
-JCVgR/h08EkEB2BJ2FbwSuPpYEu4OPBMzQXgTZga8E6s5+BPd/zwUIzJ4FFhGXBSbKvgU0D7cFRM
-jeBVIN1wVixv4FcAv3BYFYxgWOChcFn1bmBawINwW9VQYFypn/BdtTJgXomB8F+VFGBgaWPwYX4w
-4GJJRfBjXhLgZCkn8GU99OBmEkRwZx3W4GfyJnBo/bjgadIIcGrdmuBrsepwbMa3YG2RzHBupplg
-b3GucHCGe2BxWsrwcmZdYHM6rPB0Rj9gdRqO8HYvW+B2+nDweA894HjaUvB57x/gero08HvPAeB8
-o1Fwfa7j4H6DM3B/jsXgAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQAB
-AAEAAQABAgMBAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQAB
-AAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEA
-AQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQAB
-AAEAAQABAAEAAQABAAEAAQABAAEAAf//x8ABAP//ubAABP//x8ABCP//x8ABDEVEVABFU1QARVdU
-AEVQVAAAAAABAAAAAQ==
-    """
-
-    EUROPE_HELSINKI = b"""
-VFppZgAAAAAAAAAAAAAAAAAAAAAAAAAFAAAABQAAAAAAAAB1AAAABQAAAA2kc28Yy85RYMy/hdAV
-I+uQFhPckBcDzZAX876QGOOvkBnToJAaw5GQG7y9EBysrhAdnJ8QHoyQEB98gRAgbHIQIVxjECJM
-VBAjPEUQJCw2ECUcJxAmDBgQJwVDkCf1NJAo5SWQKdUWkCrFB5ArtPiQLKTpkC2U2pAuhMuQL3S8
-kDBkrZAxXdkQMnK0EDM9uxA0UpYQNR2dEDYyeBA2/X8QOBuUkDjdYRA5+3aQOr1DEDvbWJA8pl+Q
-Pbs6kD6GQZA/mxyQQGYjkEGEORBCRgWQQ2QbEEQl55BFQ/0QRgXJkEcj3xBH7uYQSQPBEEnOyBBK
-46MQS66qEEzMv5BNjowQTqyhkE9ubhBQjIOQUVeKkFJsZZBTN2yQVExHkFUXTpBWLCmQVvcwkFgV
-RhBY1xKQWfUoEFq29JBb1QoQXKAREF207BBef/MQX5TOEGBf1RBhfeqQYj+3EGNdzJBkH5kQZT2u
-kGYItZBnHZCQZ+iXkGj9cpBpyHmQat1UkGuoW5BsxnEQbYg9kG6mUxBvaB+QcIY1EHFRPBByZhcQ
-czEeEHRF+RB1EQAQdi8VkHbw4hB4DveQeNDEEHnu2ZB6sKYQe867kHyZwpB9rp2QfnmkkH+Of5AC
-AQIDBAMEAwQDBAMEAwQDBAMEAwQDBAMEAwQDBAMEAwQDBAMEAwQDBAMEAwQDBAMEAwQDBAMEAwQD
-BAMEAwQDBAMEAwQDBAMEAwQDBAMEAwQDBAMEAwQDBAMEAwQDBAMEAwQDBAMEAwQDBAMEAwQDBAME
-AwQAABdoAAAAACowAQQAABwgAAkAACowAQQAABwgAAlITVQARUVTVABFRVQAAAAAAQEAAAABAQ==
-    """
-
-    NEW_YORK = b"""
-VFppZgAAAAAAAAAAAAAAAAAAAAAAAAAEAAAABAAAABcAAADrAAAABAAAABCeph5wn7rrYKCGAHCh
-ms1gomXicKOD6eCkaq5wpTWnYKZTyvCnFYlgqDOs8Kj+peCqE47wqt6H4KvzcPCsvmngrdNS8K6e
-S+CvszTwsH4t4LGcUXCyZ0pgs3wzcLRHLGC1XBVwticOYLc793C4BvBguRvZcLnm0mC7BPXwu8a0
-YLzk1/C9r9DgvsS58L+PsuDApJvwwW+U4MKEffDDT3bgxGRf8MUvWODGTXxwxw864MgtXnDI+Fdg
-yg1AcMrYOWDLiPBw0iP0cNJg++DTdeTw1EDd4NVVxvDWIL/g1zWo8NgAoeDZFYrw2eCD4Nr+p3Db
-wGXg3N6JcN2pgmDevmtw34lkYOCeTXDhaUZg4n4vcONJKGDkXhFw5Vcu4OZHLfDnNxDg6CcP8OkW
-8uDqBvHw6vbU4Ovm0/Ds1rbg7ca18O6/02Dvr9Jw8J+1YPGPtHDyf5dg82+WcPRfeWD1T3hw9j9b
-YPcvWnD4KHfg+Q88cPoIWeD6+Fjw++g74PzYOvD9yB3g/rgc8P+n/+AAl/7wAYfh4AJ34PADcP5g
-BGD9cAVQ4GEGQN9yBzDCYgeNGXMJEKRjCa2U9ArwhmQL4IV1DNmi5Q3AZ3YOuYTmD6mD9xCZZucR
-iWX4EnlI6BNpR/kUWSrpFUkp+RY5DOoXKQv6GCIpaxkI7fsaAgtsGvIKfBvh7Wwc0ex8HcHPbR6x
-zn0fobFtIHYA/SGBk20iVeL+I2qv7iQ1xP4lSpHuJhWm/ycqc+8n/sOAKQpV8CnepYAq6jfxK76H
-gSzTVHItnmmCLrM2cy9+S4MwkxhzMWdoBDJy+nQzR0oENFLcdTUnLAU2Mr51NwcOBjgb2vY45vAG
-Ofu89jrG0gY72572PK/uhj27gPY+j9CGP5ti9kBvsoZBhH92Qk+UhkNkYXZEL3aHRURDd0XzqQdH
-LV/3R9OLB0kNQfdJs20HSu0j90uciYdM1kB3TXxrh062IndPXE2HUJYEd1E8L4dSdeZ3UxwRh1RV
-yHdU+/OHVjWqd1blEAdYHsb3WMTyB1n+qPdapNQHW96K91yEtgddvmz3XmSYB1+eTvdgTbSHYYdr
-d2ItlodjZ013ZA14h2VHL3dl7VqHZycRd2fNPIdpBvN3aa0eh2rm1XdrljsHbM/x9212HQdur9P3
-b1X/B3CPtfdxNeEHcm+X93MVwwd0T3n3dP7fh3Y4lnd23sGHeBh4d3i+o4d5+Fp3ep6Fh3vYPHd8
-fmeHfbged35eSYd/mAB3AAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQAB
-AAEAAQABAgMBAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQAB
-AAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEA
-AQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQAB
-AAEAAQABAAEAAQABAAEAAQABAAEAAf//x8ABAP//ubAABP//x8ABCP//x8ABDEVEVABFU1QARVdU
-AEVQVAAEslgAAAAAAQWk7AEAAAACB4YfggAAAAMJZ1MDAAAABAtIhoQAAAAFDSsLhQAAAAYPDD8G
-AAAABxDtcocAAAAIEs6mCAAAAAkVn8qJAAAACheA/goAAAALGWIxiwAAAAwdJeoMAAAADSHa5Q0A
-AAAOJZ6djgAAAA8nf9EPAAAAECpQ9ZAAAAARLDIpEQAAABIuE1ySAAAAEzDnJBMAAAAUM7hIlAAA
-ABU2jBAVAAAAFkO3G5YAAAAXAAAAAQAAAAE=
-    """
-
-    TZICAL_EST5EDT = """
-BEGIN:VTIMEZONE
-TZID:US-Eastern
-LAST-MODIFIED:19870101T000000Z
-TZURL:http://zones.stds_r_us.net/tz/US-Eastern
-BEGIN:STANDARD
-DTSTART:19671029T020000
-RRULE:FREQ=YEARLY;BYDAY=-1SU;BYMONTH=10
-TZOFFSETFROM:-0400
-TZOFFSETTO:-0500
-TZNAME:EST
-END:STANDARD
-BEGIN:DAYLIGHT
-DTSTART:19870405T020000
-RRULE:FREQ=YEARLY;BYDAY=1SU;BYMONTH=4
-TZOFFSETFROM:-0500
-TZOFFSETTO:-0400
-TZNAME:EDT
-END:DAYLIGHT
-END:VTIMEZONE
-    """
-
-    def testStrStart1(self):
-        self.assertEqual(datetime(2003, 4, 6, 1, 59,
-                                  tzinfo=tzstr("EST5EDT")).tzname(), "EST")
-        self.assertEqual(datetime(2003, 4, 6, 2, 00,
-                                  tzinfo=tzstr("EST5EDT")).tzname(), "EDT")
-
-    def testStrEnd1(self):
-        self.assertEqual(datetime(2003, 10, 26, 0, 59,
-                                  tzinfo=tzstr("EST5EDT")).tzname(), "EDT")
-        self.assertEqual(datetime(2003, 10, 26, 1, 00,
-                                  tzinfo=tzstr("EST5EDT")).tzname(), "EST")
-
-    def testStrStart2(self):
-        s = "EST5EDT,4,0,6,7200,10,0,26,7200,3600"
-        self.assertEqual(datetime(2003, 4, 6, 1, 59,
-                                  tzinfo=tzstr(s)).tzname(), "EST")
-        self.assertEqual(datetime(2003, 4, 6, 2, 00,
-                                  tzinfo=tzstr(s)).tzname(), "EDT")
-
-    def testStrEnd2(self):
-        s = "EST5EDT,4,0,6,7200,10,0,26,7200,3600"
-        self.assertEqual(datetime(2003, 10, 26, 0, 59,
-                                  tzinfo=tzstr(s)).tzname(), "EDT")
-        self.assertEqual(datetime(2003, 10, 26, 1, 00,
-                                  tzinfo=tzstr(s)).tzname(), "EST")
-
-    def testStrStart3(self):
-        s = "EST5EDT,4,1,0,7200,10,-1,0,7200,3600"
-        self.assertEqual(datetime(2003, 4, 6, 1, 59,
-                                  tzinfo=tzstr(s)).tzname(), "EST")
-        self.assertEqual(datetime(2003, 4, 6, 2, 00,
-                                  tzinfo=tzstr(s)).tzname(), "EDT")
-
-    def testStrEnd3(self):
-        s = "EST5EDT,4,1,0,7200,10,-1,0,7200,3600"
-        self.assertEqual(datetime(2003, 10, 26, 0, 59,
-                                  tzinfo=tzstr(s)).tzname(), "EDT")
-        self.assertEqual(datetime(2003, 10, 26, 1, 00,
-                                  tzinfo=tzstr(s)).tzname(), "EST")
-
-    def testStrStart4(self):
-        s = "EST5EDT4,M4.1.0/02:00:00,M10-5-0/02:00"
-        self.assertEqual(datetime(2003, 4, 6, 1, 59,
-                                  tzinfo=tzstr(s)).tzname(), "EST")
-        self.assertEqual(datetime(2003, 4, 6, 2, 00,
-                                  tzinfo=tzstr(s)).tzname(), "EDT")
-
-    def testStrEnd4(self):
-        s = "EST5EDT4,M4.1.0/02:00:00,M10-5-0/02:00"
-        self.assertEqual(datetime(2003, 10, 26, 0, 59,
-                                  tzinfo=tzstr(s)).tzname(), "EDT")
-        self.assertEqual(datetime(2003, 10, 26, 1, 00,
-                                  tzinfo=tzstr(s)).tzname(), "EST")
-
-    def testStrStart5(self):
-        s = "EST5EDT4,95/02:00:00,298/02:00"
-        self.assertEqual(datetime(2003, 4, 6, 1, 59,
-                                  tzinfo=tzstr(s)).tzname(), "EST")
-        self.assertEqual(datetime(2003, 4, 6, 2, 00,
-                                  tzinfo=tzstr(s)).tzname(), "EDT")
-
-    def testStrEnd5(self):
-        s = "EST5EDT4,95/02:00:00,298/02"
-        self.assertEqual(datetime(2003, 10, 26, 0, 59,
-                                  tzinfo=tzstr(s)).tzname(), "EDT")
-        self.assertEqual(datetime(2003, 10, 26, 1, 00,
-                                  tzinfo=tzstr(s)).tzname(), "EST")
-
-    def testStrStart6(self):
-        s = "EST5EDT4,J96/02:00:00,J299/02:00"
-        self.assertEqual(datetime(2003, 4, 6, 1, 59,
-                                  tzinfo=tzstr(s)).tzname(), "EST")
-        self.assertEqual(datetime(2003, 4, 6, 2, 00,
-                                  tzinfo=tzstr(s)).tzname(), "EDT")
-
-    def testStrEnd6(self):
-        s = "EST5EDT4,J96/02:00:00,J299/02"
-        self.assertEqual(datetime(2003, 10, 26, 0, 59,
-                                  tzinfo=tzstr(s)).tzname(), "EDT")
-        self.assertEqual(datetime(2003, 10, 26, 1, 00,
-                                  tzinfo=tzstr(s)).tzname(), "EST")
-
-    def testStrStr(self):
-        # Test that tzstr() won't throw an error if given a str instead
-        # of a unicode literal.
-        self.assertEqual(datetime(2003, 4, 6, 1, 59,
-                                  tzinfo=tzstr(str("EST5EDT"))).tzname(), "EST")
-        self.assertEqual(datetime(2003, 4, 6, 2, 00,
-                                  tzinfo=tzstr(str("EST5EDT"))).tzname(), "EDT")
-
-    def testStrCmp1(self):
-        self.assertEqual(tzstr("EST5EDT"),
-                         tzstr("EST5EDT4,M4.1.0/02:00:00,M10-5-0/02:00"))
-
-    def testStrCmp2(self):
-        self.assertEqual(tzstr("EST5EDT"),
-                         tzstr("EST5EDT,4,1,0,7200,10,-1,0,7200,3600"))
-
-    def testRangeCmp1(self):
-        self.assertEqual(tzstr("EST5EDT"),
-                         tzrange("EST", -18000, "EDT", -14400,
-                                 relativedelta(hours=+2,
-                                               month=4, day=1,
-                                               weekday=SU(+1)),
-                                 relativedelta(hours=+1,
-                                               month=10, day=31,
-                                               weekday=SU(-1))))
-
-    def testRangeCmp2(self):
-        self.assertEqual(tzstr("EST5EDT"),
-                         tzrange("EST", -18000, "EDT"))
-
-    def testFileStart1(self):
-        tz = tzfile(BytesIO(base64.b64decode(self.TZFILE_EST5EDT)))
-        self.assertEqual(datetime(2003, 4, 6, 1, 59, tzinfo=tz).tzname(), "EST")
-        self.assertEqual(datetime(2003, 4, 6, 2, 00, tzinfo=tz).tzname(), "EDT")
-
-    def testFileEnd1(self):
-        tz = tzfile(BytesIO(base64.b64decode(self.TZFILE_EST5EDT)))
-        self.assertEqual(datetime(2003, 10, 26, 0, 59, tzinfo=tz).tzname(),
-                         "EDT")
-        self.assertEqual(datetime(2003, 10, 26, 1, 00, tzinfo=tz).tzname(),
-                         "EST")
-
-    def testZoneInfoFileStart1(self):
-        tz = zoneinfo.gettz("EST5EDT")
-        self.assertEqual(datetime(2003, 4, 6, 1, 59, tzinfo=tz).tzname(), "EST",
-                         MISSING_TARBALL)
-        self.assertEqual(datetime(2003, 4, 6, 2, 00, tzinfo=tz).tzname(), "EDT")
-
-    def testZoneInfoFileEnd1(self):
-        tz = zoneinfo.gettz("EST5EDT")
-        self.assertEqual(datetime(2003, 10, 26, 0, 59, tzinfo=tz).tzname(),
-                         "EDT", MISSING_TARBALL)
-        self.assertEqual(datetime(2003, 10, 26, 1, 00, tzinfo=tz).tzname(),
-                         "EST")
-
-    def testZoneInfoOffsetSignal(self):
-        utc = zoneinfo.gettz("UTC")
-        nyc = zoneinfo.gettz("America/New_York")
-        self.assertNotEqual(utc, None, MISSING_TARBALL)
-        self.assertNotEqual(nyc, None)
-        t0 = datetime(2007, 11, 4, 0, 30, tzinfo=nyc)
-        t1 = t0.astimezone(utc)
-        t2 = t1.astimezone(nyc)
-        self.assertEqual(t0, t2)
-        self.assertEqual(nyc.dst(t0), timedelta(hours=1))
-
-    def testTzNameNone(self):
-        gmt5 = tzoffset(None, -18000)       # -5:00
-        self.assertIs(datetime(2003, 10, 26, 0, 0, tzinfo=gmt5).tzname(),
-                      None)
-
-
-    def testICalStart1(self):
-        tz = tzical(StringIO(self.TZICAL_EST5EDT)).get()
-        self.assertEqual(datetime(2003, 4, 6, 1, 59, tzinfo=tz).tzname(), "EST")
-        self.assertEqual(datetime(2003, 4, 6, 2, 00, tzinfo=tz).tzname(), "EDT")
-
-    def testICalEnd1(self):
-        tz = tzical(StringIO(self.TZICAL_EST5EDT)).get()
-        self.assertEqual(datetime(2003, 10, 26, 0, 59, tzinfo=tz).tzname(), "EDT")
-        self.assertEqual(datetime(2003, 10, 26, 1, 00, tzinfo=tz).tzname(), "EST")
-
-    def testRoundNonFullMinutes(self):
-        # This timezone has an offset of 5992 seconds in 1900-01-01.
-        tz = tzfile(BytesIO(base64.b64decode(self.EUROPE_HELSINKI)))
-        self.assertEqual(str(datetime(1900, 1, 1, 0, 0, tzinfo=tz)),
-                             "1900-01-01 00:00:00+01:40")
-
-    def testLeapCountDecodesProperly(self):
-        # This timezone has leapcnt, and failed to decode until
-        # Eugene Oden notified about the issue.
+class RRuleSetTest(unittest.TestCase):
+    def testSet(self):
+        rrset = rruleset()
+        rrset.rrule(rrule(YEARLY, count=2, byweekday=TU,
+                          dtstart=datetime(1997, 9, 2, 9, 0)))
+        rrset.rrule(rrule(YEARLY, count=1, byweekday=TH,
+                          dtstart=datetime(1997, 9, 2, 9, 0)))
+        self.assertEqual(list(rrset),
+                         [datetime(1997, 9, 2, 9, 0),
+                          datetime(1997, 9, 4, 9, 0),
+                          datetime(1997, 9, 9, 9, 0)])
+
+    def testSetDate(self):
+        rrset = rruleset()
+        rrset.rrule(rrule(YEARLY, count=1, byweekday=TU,
+                          dtstart=datetime(1997, 9, 2, 9, 0)))
+        rrset.rdate(datetime(1997, 9, 4, 9))
+        rrset.rdate(datetime(1997, 9, 9, 9))
+        self.assertEqual(list(rrset),
+                         [datetime(1997, 9, 2, 9, 0),
+                          datetime(1997, 9, 4, 9, 0),
+                          datetime(1997, 9, 9, 9, 0)])
+
+    def testSetExRule(self):
+        rrset = rruleset()
+        rrset.rrule(rrule(YEARLY, count=6, byweekday=(TU, TH),
+                          dtstart=datetime(1997, 9, 2, 9, 0)))
+        rrset.exrule(rrule(YEARLY, count=3, byweekday=TH,
+                          dtstart=datetime(1997, 9, 2, 9, 0)))
+        self.assertEqual(list(rrset),
+                         [datetime(1997, 9, 2, 9, 0),
+                          datetime(1997, 9, 9, 9, 0),
+                          datetime(1997, 9, 16, 9, 0)])
+
+    def testSetExDate(self):
+        rrset = rruleset()
+        rrset.rrule(rrule(YEARLY, count=6, byweekday=(TU, TH),
+                          dtstart=datetime(1997, 9, 2, 9, 0)))
+        rrset.exdate(datetime(1997, 9, 4, 9))
+        rrset.exdate(datetime(1997, 9, 11, 9))
+        rrset.exdate(datetime(1997, 9, 18, 9))
+        self.assertEqual(list(rrset),
+                         [datetime(1997, 9, 2, 9, 0),
+                          datetime(1997, 9, 9, 9, 0),
+                          datetime(1997, 9, 16, 9, 0)])
+
+    def testSetExDateRevOrder(self):
+        rrset = rruleset()
+        rrset.rrule(rrule(MONTHLY, count=5, bymonthday=10,
+                          dtstart=datetime(2004, 1, 1, 9, 0)))
+        rrset.exdate(datetime(2004, 4, 10, 9, 0))
+        rrset.exdate(datetime(2004, 2, 10, 9, 0))
+        self.assertEqual(list(rrset),
+                         [datetime(2004, 1, 10, 9, 0),
+                          datetime(2004, 3, 10, 9, 0),
+                          datetime(2004, 5, 10, 9, 0)])
+
+    def testSetDateAndExDate(self):
+        rrset = rruleset()
+        rrset.rdate(datetime(1997, 9, 2, 9))
+        rrset.rdate(datetime(1997, 9, 4, 9))
+        rrset.rdate(datetime(1997, 9, 9, 9))
+        rrset.rdate(datetime(1997, 9, 11, 9))
+        rrset.rdate(datetime(1997, 9, 16, 9))
+        rrset.rdate(datetime(1997, 9, 18, 9))
+        rrset.exdate(datetime(1997, 9, 4, 9))
+        rrset.exdate(datetime(1997, 9, 11, 9))
+        rrset.exdate(datetime(1997, 9, 18, 9))
+        self.assertEqual(list(rrset),
+                         [datetime(1997, 9, 2, 9, 0),
+                          datetime(1997, 9, 9, 9, 0),
+                          datetime(1997, 9, 16, 9, 0)])
+
+    def testSetDateAndExRule(self):
+        rrset = rruleset()
+        rrset.rdate(datetime(1997, 9, 2, 9))
+        rrset.rdate(datetime(1997, 9, 4, 9))
+        rrset.rdate(datetime(1997, 9, 9, 9))
+        rrset.rdate(datetime(1997, 9, 11, 9))
+        rrset.rdate(datetime(1997, 9, 16, 9))
+        rrset.rdate(datetime(1997, 9, 18, 9))
+        rrset.exrule(rrule(YEARLY, count=3, byweekday=TH,
+                           dtstart=datetime(1997, 9, 2, 9, 0)))
+        self.assertEqual(list(rrset),
+                         [datetime(1997, 9, 2, 9, 0),
+                          datetime(1997, 9, 9, 9, 0),
+                          datetime(1997, 9, 16, 9, 0)])
+
+    def testSetCount(self):
+        rrset = rruleset()
+        rrset.rrule(rrule(YEARLY, count=6, byweekday=(TU, TH),
+                          dtstart=datetime(1997, 9, 2, 9, 0)))
+        rrset.exrule(rrule(YEARLY, count=3, byweekday=TH,
+                           dtstart=datetime(1997, 9, 2, 9, 0)))
+        self.assertEqual(rrset.count(), 3)
+
+    def testSetCachePre(self):
+        rrset = rruleset()
+        rrset.rrule(rrule(YEARLY, count=2, byweekday=TU,
+                          dtstart=datetime(1997, 9, 2, 9, 0)))
+        rrset.rrule(rrule(YEARLY, count=1, byweekday=TH,
+                          dtstart=datetime(1997, 9, 2, 9, 0)))
+        self.assertEqual(list(rrset),
+                         [datetime(1997, 9, 2, 9, 0),
+                          datetime(1997, 9, 4, 9, 0),
+                          datetime(1997, 9, 9, 9, 0)])
+
+    def testSetCachePost(self):
+        rrset = rruleset(cache=True)
+        rrset.rrule(rrule(YEARLY, count=2, byweekday=TU,
+                          dtstart=datetime(1997, 9, 2, 9, 0)))
+        rrset.rrule(rrule(YEARLY, count=1, byweekday=TH,
+                          dtstart=datetime(1997, 9, 2, 9, 0)))
+        for x in rrset: pass
+        self.assertEqual(list(rrset),
+                         [datetime(1997, 9, 2, 9, 0),
+                          datetime(1997, 9, 4, 9, 0),
+                          datetime(1997, 9, 9, 9, 0)])
+
+    def testSetCachePostInternal(self):
+        rrset = rruleset(cache=True)
+        rrset.rrule(rrule(YEARLY, count=2, byweekday=TU,
+                          dtstart=datetime(1997, 9, 2, 9, 0)))
+        rrset.rrule(rrule(YEARLY, count=1, byweekday=TH,
+                          dtstart=datetime(1997, 9, 2, 9, 0)))
+        for x in rrset: pass
+        self.assertEqual(list(rrset._cache),
+                         [datetime(1997, 9, 2, 9, 0),
+                          datetime(1997, 9, 4, 9, 0),
+                          datetime(1997, 9, 9, 9, 0)])
+
+    def testSetRRuleCount(self):
+        # Test that the count is updated when an rrule is added
+        rrset = rruleset(cache=False)
+        for cache in (True, False):
+            rrset = rruleset(cache=cache)
+            rrset.rrule(rrule(YEARLY, count=2, byweekday=TH,
+                              dtstart=datetime(1983, 4, 1)))
+            rrset.rrule(rrule(WEEKLY, count=4, byweekday=FR,
+                              dtstart=datetime(1991, 6, 3)))
+
+            # Check the length twice - first one sets a cache, second reads it
+            self.assertEqual(rrset.count(), 6)
+            self.assertEqual(rrset.count(), 6)
+
+            # This should invalidate the cache and force an update
+            rrset.rrule(rrule(MONTHLY, count=3, dtstart=datetime(1994, 1, 3)))
+
+            self.assertEqual(rrset.count(), 9)
+            self.assertEqual(rrset.count(), 9)
+
+    def testSetRDateCount(self):
+        # Test that the count is updated when an rdate is added
+        rrset = rruleset(cache=False)
+        for cache in (True, False):
+            rrset = rruleset(cache=cache)
+            rrset.rrule(rrule(YEARLY, count=2, byweekday=TH,
+                              dtstart=datetime(1983, 4, 1)))
+            rrset.rrule(rrule(WEEKLY, count=4, byweekday=FR,
+                              dtstart=datetime(1991, 6, 3)))
+
+            # Check the length twice - first one sets a cache, second reads it
+            self.assertEqual(rrset.count(), 6)
+            self.assertEqual(rrset.count(), 6)
+
+            # This should invalidate the cache and force an update
+            rrset.rdate(datetime(1993, 2, 14))
+
+            self.assertEqual(rrset.count(), 7)
+            self.assertEqual(rrset.count(), 7)
+
+    def testSetExRuleCount(self):
+        # Test that the count is updated when an exrule is added
+        rrset = rruleset(cache=False)
+        for cache in (True, False):
+            rrset = rruleset(cache=cache)
+            rrset.rrule(rrule(YEARLY, count=2, byweekday=TH,
+                              dtstart=datetime(1983, 4, 1)))
+            rrset.rrule(rrule(WEEKLY, count=4, byweekday=FR,
+                              dtstart=datetime(1991, 6, 3)))
+
+            # Check the length twice - first one sets a cache, second reads it
+            self.assertEqual(rrset.count(), 6)
+            self.assertEqual(rrset.count(), 6)
+
+            # This should invalidate the cache and force an update
+            rrset.exrule(rrule(WEEKLY, count=2, interval=2,
+                               dtstart=datetime(1991, 6, 14)))
+
+            self.assertEqual(rrset.count(), 4)
+            self.assertEqual(rrset.count(), 4)
+
+    def testSetExDateCount(self):
+        # Test that the count is updated when an rdate is added
+        for cache in (True, False):
+            rrset = rruleset(cache=cache)
+            rrset.rrule(rrule(YEARLY, count=2, byweekday=TH,
+                              dtstart=datetime(1983, 4, 1)))
+            rrset.rrule(rrule(WEEKLY, count=4, byweekday=FR,
+                              dtstart=datetime(1991, 6, 3)))
+
+            # Check the length twice - first one sets a cache, second reads it
+            self.assertEqual(rrset.count(), 6)
+            self.assertEqual(rrset.count(), 6)
+
+            # This should invalidate the cache and force an update
+            rrset.exdate(datetime(1991, 6, 28))
+
+            self.assertEqual(rrset.count(), 5)
+            self.assertEqual(rrset.count(), 5)
+
+
+class WeekdayTest(unittest.TestCase):
+    def testInvalidNthWeekday(self):
+        with self.assertRaises(ValueError):
+            zeroth_friday = FR(0)
+
+    def testWeekdayCallable(self):
+        # Calling a weekday instance generates a new weekday instance with the
+        # value of n changed.
+        from dateutil.rrule import weekday
+        self.assertEqual(MO(1), weekday(0, 1))
+
+        # Calling a weekday instance with the identical n returns the original
+        # object
+        FR_3 = weekday(4, 3)
+        self.assertIs(FR_3(3), FR_3)
+
+    def testWeekdayEquality(self):
+        # Two weekday objects are not equal if they have different values for n
+        self.assertNotEqual(TH, TH(-1))
+        self.assertNotEqual(SA(3), SA(2))
+
+    def testWeekdayEqualitySubclass(self):
+        # Two weekday objects equal if their "weekday" and "n" attributes are
+        # available and the same
+        class BasicWeekday(object):
+            def __init__(self, weekday):
+                self.weekday = weekday
+
+        class BasicNWeekday(BasicWeekday):
+            def __init__(self, weekday, n=None):
+                super(BasicNWeekday, self).__init__(weekday)
+                self.n = n
+
+        MO_Basic = BasicWeekday(0)
         
-        # As leap information is currently unused (and unstored) by tzfile() we
-        # can only indirectly test this: Take advantage of tzfile() not closing
-        # the input file if handed in as an opened file and assert that the
-        # full file content has been read by tzfile(). Note: For this test to
-        # work NEW_YORK must be in TZif version 1 format i.e. no more data
-        # after TZif v1 header + data has been read
-        fileobj = BytesIO(base64.b64decode(self.NEW_YORK))
-        tz = tzfile(fileobj)
-        # we expect no remaining file content now, i.e. zero-length; if there's
-        # still data we haven't read the file format correctly
-        remaining_tzfile_content = fileobj.read()
-        self.assertEqual(len(remaining_tzfile_content), 0)
-        self.assertEqual(datetime(2007, 3, 31, 20, 12).tzname(), None)
+        self.assertNotEqual(MO, MO_Basic)
+        self.assertNotEqual(MO(1), MO_Basic)
 
-    def testIsStd(self):
-        # NEW_YORK tzfile contains this isstd information:
-        isstd_expected = (0, 0, 0, 1)
-        tz = tzfile(BytesIO(base64.b64decode(self.NEW_YORK)))
-        # gather the actual information as parsed by the tzfile class
-        isstd = []
-        for ttinfo in tz._ttinfo_list:
-            # ttinfo objects contain boolean values
-            isstd.append(int(ttinfo.isstd))
-        # ttinfo list may contain more entries than isstd file content
-        isstd = tuple(isstd[:len(isstd_expected)])
-        self.assertEqual(
-            isstd_expected, isstd,
-            "isstd standard/wall indicators parsed: %s != tzfile contents: %s"
-            % (isstd, isstd_expected)) 
+        TU_BasicN = BasicNWeekday(1)
 
-    def testIsGmt(self):
-        # NEW_YORK tzfile contains this isgmt information:
-        isgmt_expected = (0, 0, 0, 1)
-        tz = tzfile(BytesIO(base64.b64decode(self.NEW_YORK)))
-        # gather the actual information as parsed by the tzfile class
-        isgmt = []
-        for ttinfo in tz._ttinfo_list:
-            # ttinfo objects contain boolean values
-            isgmt.append(int(ttinfo.isgmt))
-        # ttinfo list might contain more entries than isgmt file content
-        isgmt = tuple(isgmt[:len(isgmt_expected)])
-        self.assertEqual(
-            isgmt_expected, isgmt,
-            "isgmt UTC/local indicators parsed: %s != tzfile contents: %s"
-            % (isgmt, isgmt_expected)) 
+        self.assertEqual(TU, TU_BasicN)
+        self.assertNotEqual(TU(3), TU_BasicN)
 
-    def testGettz(self):
-        # bug 892569
-        str(gettz('UTC'))
+        WE_Basic3 = BasicNWeekday(2, 3)
+        self.assertEqual(WE(3), WE_Basic3)
+        self.assertNotEqual(WE(2), WE_Basic3)
 
-    def testBrokenIsDstHandling(self):
-        # tzrange._isdst() was using a date() rather than a datetime().
-        # Issue reported by Lennart Regebro.
-        dt = datetime(2007, 8, 6, 4, 10, tzinfo=tzutc())
-        self.assertEqual(dt.astimezone(tz=gettz("GMT+2")),
-                          datetime(2007, 8, 6, 6, 10, tzinfo=tzstr("GMT+2")))
+    def testWeekdayReprNoN(self):
+        no_n_reprs = ('MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU')
+        no_n_wdays = (MO, TU, WE, TH, FR, SA, SU)
 
-    def testGMTHasNoDaylight(self):
-        # tzstr("GMT+2") improperly considered daylight saving time.
-        # Issue reported by Lennart Regebro.
-        dt = datetime(2007, 8, 6, 4, 10)
-        self.assertEqual(gettz("GMT+2").dst(dt), timedelta(0))
+        for repstr, wday in zip(no_n_reprs, no_n_wdays):
+            self.assertEqual(repr(wday), repstr)
 
-    def testGMTOffset(self):
-        # GMT and UTC offsets have inverted signal when compared to the
-        # usual TZ variable handling.
-        dt = datetime(2007, 8, 6, 4, 10, tzinfo=tzutc())
-        self.assertEqual(dt.astimezone(tz=tzstr("GMT+2")),
-                          datetime(2007, 8, 6, 6, 10, tzinfo=tzstr("GMT+2")))
-        self.assertEqual(dt.astimezone(tz=gettz("UTC-2")),
-                          datetime(2007, 8, 6, 2, 10, tzinfo=tzstr("UTC-2")))
+    def testWeekdayReprWithN(self):
+        with_n_reprs = ('WE(+1)', 'TH(-2)', 'SU(+3)')
+        with_n_wdays = (WE(1), TH(-2), SU(+3))
 
-    @unittest.skipUnless(sys.platform.startswith("win"), "requires Windows")
-    def testIsdstZoneWithNoDaylightSaving(self):
-        tz = tzwin.tzwin("UTC")
-        dt = parse("2013-03-06 19:08:15")
-        self.assertFalse(tz._isdst(dt))
+        for repstr, wday in zip(with_n_reprs, with_n_wdays):
+            self.assertEqual(repr(wday), repstr)
 
-    @unittest.skipIf(sys.platform.startswith("win"), "requires Unix")
-    def testTZSetDoesntCorrupt(self):
-        # if we start in non-UTC then tzset UTC make sure parse doesn't get
-        # confused
-        os.environ['TZ'] = 'UTC'
-        _time.tzset()
-        # this should parse to UTC timezone not the original timezone
-        dt = parse('2014-07-20T12:34:56+00:00')
-        self.assertEqual(str(dt), '2014-07-20 12:34:56+00:00')
-
-# vim:ts=4:sw=4

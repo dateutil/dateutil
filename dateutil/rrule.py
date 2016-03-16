@@ -17,6 +17,10 @@ except ImportError:
 
 from six import advance_iterator, integer_types
 from six.moves import _thread
+import heapq
+
+# For warning about deprecation of until and count
+from warnings import warn
 
 __all__ = ["rrule", "rruleset", "rrulestr",
            "YEARLY", "MONTHLY", "WEEKLY", "DAILY",
@@ -61,6 +65,7 @@ class weekday(object):
     def __init__(self, weekday, n=None):
         if n == 0:
             raise ValueError("Can't create weekday with n == 0")
+
         self.weekday = weekday
         self.n = n
 
@@ -88,17 +93,29 @@ class weekday(object):
 MO, TU, WE, TH, FR, SA, SU = weekdays = tuple([weekday(x) for x in range(7)])
 
 
+def _invalidates_cache(f):
+    """
+    Decorator for rruleset methods which may invalidate the
+    cached length.
+    """
+    def inner_func(self, *args, **kwargs):
+        rv = f(self, *args, **kwargs)
+        self._invalidate_cache()
+        return rv
+
+    return inner_func
+
+
 class rrulebase(object):
     def __init__(self, cache=False):
         if cache:
             self._cache = []
             self._cache_lock = _thread.allocate_lock()
-            self._cache_gen = self._iter()
-            self._cache_complete = False
+            self._invalidate_cache()
         else:
             self._cache = None
             self._cache_complete = False
-        self._len = None
+            self._len = None
 
     def __iter__(self):
         if self._cache_complete:
@@ -107,6 +124,17 @@ class rrulebase(object):
             return self._iter()
         else:
             return self._iter_cached()
+
+    def _invalidate_cache(self):
+        if self._cache is not None:
+            self._cache = []
+            self._cache_complete = False
+            self._cache_gen = self._iter()
+
+            if self._cache_lock.locked():
+                self._cache_lock.release()
+
+        self._len = None
 
     def _iter_cached(self):
         i = 0
@@ -300,6 +328,29 @@ class rrule(rrulebase):
     Where freq must be one of YEARLY, MONTHLY, WEEKLY, DAILY, HOURLY, MINUTELY,
     or SECONDLY.
 
+    .. note::
+        Per RFC section 3.3.10, recurrence instances falling on invalid dates
+        and times are ignored rather than coerced:
+
+            Recurrence rules may generate recurrence instances with an invalid
+            date (e.g., February 30) or nonexistent local time (e.g., 1:30 AM
+            on a day where the local time is moved forward by an hour at 1:00
+            AM).  Such recurrence instances MUST be ignored and MUST NOT be
+            counted as part of the recurrence set.
+
+        This can lead to possibly surprising behavior when, for example, the
+        start date occurs at the end of the month:
+
+        >>> from dateutil.rrule import rrule, MONTHLY
+        >>> from datetime import datetime
+        >>> start_date = datetime(2014, 12, 31)
+        >>> list(rrule(freq=MONTHLY, count=4, dtstart=start_date))
+        ... # doctest: +NORMALIZE_WHITESPACE
+        [datetime.datetime(2014, 12, 31, 0, 0),
+         datetime.datetime(2015, 1, 31, 0, 0),
+         datetime.datetime(2015, 3, 31, 0, 0),
+         datetime.datetime(2015, 5, 31, 0, 0)]
+
     Additionally, it supports the following keyword arguments:
 
     :param cache:
@@ -323,11 +374,19 @@ class rrule(rrulebase):
         calendar.setfirstweekday().
     :param count:
         How many occurrences will be generated.
+
+        .. note::
+            As of version 2.5.0, the use of the ``until`` keyword together
+            with the ``count`` keyword is deprecated per RFC-2445 Sec. 4.3.10.
     :param until:
         If given, this must be a datetime instance, that will specify the
-        limit of the recurrence. If a recurrence instance happens to be the
-        same as the datetime instance given in the until keyword, this will
-        be the last occurrence.
+        limit of the recurrence. The last recurrence in the rule is the greatest
+        datetime that is less than or equal to the value specified in the
+        ``until`` parameter.
+        
+        .. note::
+            As of version 2.5.0, the use of the ``until`` keyword together
+            with the ``count`` keyword is deprecated per RFC-2445 Sec. 4.3.10.
     :param bysetpos:
         If given, it must be either an integer, or a sequence of integers,
         positive or negative. Each given integer will specify an occurrence
@@ -404,6 +463,11 @@ class rrule(rrulebase):
         if until and not isinstance(until, datetime.datetime):
             until = datetime.datetime.fromordinal(until.toordinal())
         self._until = until
+
+        if count and until:
+            warn("Using both 'count' and 'until' is inconsistent with RFC 2445"
+                 " and has been deprecated in dateutil. Future versions will "
+                 "raise an error.", DeprecationWarning)
 
         if wkst is None:
             self._wkst = calendar.firstweekday()
@@ -647,6 +711,9 @@ class rrule(rrulebase):
 
         if self._count:
             parts.append('COUNT=' + str(self._count))
+
+        if self._until:
+            parts.append(self._until.strftime('UNTIL=%Y%m%dT%H%M%S'))
 
         if self._original_rule.get('byweekday') is not None:
             # The str() method on weekday objects doesn't generate
@@ -1236,7 +1303,11 @@ class rruleset(rrulebase):
             try:
                 self.dt = advance_iterator(self.gen)
             except StopIteration:
-                self.genlist.remove(self)
+                if self.genlist[0] is self:
+                    heapq.heappop(self.genlist)
+                else:
+                    self.genlist.remove(self)
+                    heapq.heapify(self.genlist)
 
         next = __next__
 
@@ -1259,16 +1330,19 @@ class rruleset(rrulebase):
         self._exrule = []
         self._exdate = []
 
+    @_invalidates_cache
     def rrule(self, rrule):
         """ Include the given :py:class:`rrule` instance in the recurrence set
             generation. """
         self._rrule.append(rrule)
 
+    @_invalidates_cache
     def rdate(self, rdate):
         """ Include the given :py:class:`datetime` instance in the recurrence
             set generation. """
         self._rdate.append(rdate)
 
+    @_invalidates_cache
     def exrule(self, exrule):
         """ Include the given rrule instance in the recurrence set exclusion
             list. Dates which are part of the given recurrence rules will not
@@ -1276,6 +1350,7 @@ class rruleset(rrulebase):
         """
         self._exrule.append(exrule)
 
+    @_invalidates_cache
     def exdate(self, exdate):
         """ Include the given datetime instance in the recurrence set
             exclusion list. Dates included that way will not be generated,
@@ -1288,27 +1363,30 @@ class rruleset(rrulebase):
         self._genitem(rlist, iter(self._rdate))
         for gen in [iter(x) for x in self._rrule]:
             self._genitem(rlist, gen)
-        rlist.sort()
         exlist = []
         self._exdate.sort()
         self._genitem(exlist, iter(self._exdate))
         for gen in [iter(x) for x in self._exrule]:
             self._genitem(exlist, gen)
-        exlist.sort()
         lastdt = None
         total = 0
+        heapq.heapify(rlist)
+        heapq.heapify(exlist)
         while rlist:
             ritem = rlist[0]
             if not lastdt or lastdt != ritem.dt:
                 while exlist and exlist[0] < ritem:
-                    advance_iterator(exlist[0])
-                    exlist.sort()
+                    exitem = exlist[0]
+                    advance_iterator(exitem)
+                    if exlist and exlist[0] is exitem:
+                        heapq.heapreplace(exlist, exitem)
                 if not exlist or ritem != exlist[0]:
                     total += 1
                     yield ritem.dt
                 lastdt = ritem.dt
             advance_iterator(ritem)
-            rlist.sort()
+            if rlist and rlist[0] is ritem:
+                heapq.heapreplace(rlist, ritem)
         self._len = total
 
 
@@ -1371,7 +1449,7 @@ class _rrulestr(object):
                 splt = wday.split('(')
                 w = splt[0]
                 n = int(splt[1][:-1])
-            else:
+            elif len(wday):
                 # If it's of the form +1MO
                 for i in range(len(wday)):
                     if wday[i] not in '+-0123456789':
@@ -1380,6 +1458,9 @@ class _rrulestr(object):
                 w = wday[i:]
                 if n:
                     n = int(n)
+            else:
+                raise ValueError("Invalid (empty) BYDAY specification.")
+
             l.append(weekdays[self._weekday_map[w]](n))
         rrkwargs["byweekday"] = l
 
