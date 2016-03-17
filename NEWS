@@ -1,3 +1,28 @@
+Version 2.5.1
+-------------
+- Updated zoneinfo to 2016b
+- Changed MANIFEST.in to explicitly include test suite in source distributions,
+  with help from @koobs (gh issue #193, pr #194, #201, #221)
+- Explicitly set all line-endings to LF, except for the NEWS file, on a
+  per-repository basis (gh pr #218)
+- Fixed an issue with improper caching behavior in rruleset objects (gh issue
+  #104, pr #207)
+- Changed to an explicit error when rrulestr strings contain a missing BYDAY
+  (gh issue #162, pr #211)
+- tzfile now correctly handles files containing leapcnt (although the leapcnt
+  information is not actually used). Contributed by @hjoukl (gh issue #146, pr
+  #147)
+- Fixed recursive import issue with tz module (gh pr #204)
+- Added compatibility between tzwin objects and datetime.time objects (gh issue
+  #216, gh pr #219)
+- Refactored monolithic test suite by module (gh issue #61, pr #200 and #206)
+- Improved test coverage in the relativedelta module (gh pr #215)
+- Adjusted documentation to reflect possibly counter-intuitive properties of
+  RFC-5545-compliant rrules, and other documentation improvements in the rrule
+  module (gh issue #105, gh issue #149 - pointer to the solution by @phep,
+  pr #213).
+
+
 Version 2.5.0
 -------------
 - Updated zoneinfo to 2016a
