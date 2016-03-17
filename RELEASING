@@ -90,3 +90,6 @@ that they are valid signatures:
 
     gpg --verify <fname>.asc <fname>
 
+To do this in bulk, you can use the command:
+
+    for f in $(find ./dist -type f | grep -v '.asc$'); do gpg --verify $f.asc $f; done
