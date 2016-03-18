@@ -26,7 +26,8 @@ parser = None
 rrule = None
 
 ZERO = datetime.timedelta(0)
-EPOCHORDINAL = datetime.datetime.utcfromtimestamp(0).toordinal()
+EPOCH = datetime.datetime.utcfromtimestamp(0)
+EPOCHORDINAL = EPOCH.toordinal()
 
 class tzutc(datetime.tzinfo):
 
@@ -136,10 +137,7 @@ class tzlocal(datetime.tzinfo):
         #
         # Here is a more stable implementation:
         #
-        timestamp = ((dt.toordinal() - EPOCHORDINAL) * 86400
-                     + dt.hour * 3600
-                     + dt.minute * 60
-                     + dt.second)
+        timestamp = _datetime_to_timestamp(dt)
         return time.localtime(timestamp+time.timezone).tm_isdst
 
     def __eq__(self, other):
@@ -415,10 +413,7 @@ class tzfile(datetime.tzinfo):
         self._trans_list = tuple(self._trans_list)
 
     def _find_ttinfo(self, dt, laststd=0):
-        timestamp = ((dt.toordinal() - EPOCHORDINAL) * 86400
-                     + dt.hour * 3600
-                     + dt.minute * 60
-                     + dt.second)
+        timestamp = _datetime_to_timestamp(dt)
         idx = 0
         for trans in self._trans_list:
             if timestamp < trans:
@@ -975,5 +970,12 @@ def gettz(name=None):
                         elif name in time.tzname:
                             tz = tzlocal()
     return tz
+
+def _datetime_to_timestamp(dt):
+    """
+    Convert a :class:`datetime.datetime` object to an epoch timestamp in seconds
+    since January 1, 1970, ignoring the time zone.
+    """
+    return (dt.replace(tzinfo=None) - EPOCH).total_seconds()
 
 # vim:ts=4:sw=4:et
