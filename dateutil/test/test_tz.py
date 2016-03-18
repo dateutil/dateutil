@@ -249,6 +249,18 @@ class TZTest(unittest.TestCase):
         self.assertEqual(datetime(2003, 10, 26, 1, 00, tzinfo=tzc).tzname(),
                          "EST")
 
+    def testFileLastTransition(self):
+        # After the last transition, it goes to standard time in perpetuity
+        tzc = tz.tzfile(BytesIO(base64.b64decode(TZFILE_EST5EDT)))
+        self.assertEqual(datetime(2037, 10, 25, 0, 59, tzinfo=tzc).tzname(),
+                         "EDT")
+        
+        self.assertEqual(datetime(2037, 10, 25, 1, 00, tzinfo=tzc).tzname(),
+                         "EST")
+
+        self.assertEqual(datetime(2038, 5, 25, 12, 0, tzinfo=tzc).tzname(),
+                         "EST")
+
     def testZoneInfoFileStart1(self):
         tz = zoneinfo.gettz("EST5EDT")
         self.assertEqual(datetime(2003, 4, 6, 1, 59, tzinfo=tz).tzname(), "EST",

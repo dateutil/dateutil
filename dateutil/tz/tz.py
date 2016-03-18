@@ -12,6 +12,7 @@ import struct
 import time
 import sys
 import os
+import bisect
 
 from six import string_types, PY3
 from ._common import tzname_in_python2
@@ -414,21 +415,25 @@ class tzfile(datetime.tzinfo):
 
     def _find_ttinfo(self, dt, laststd=0):
         timestamp = _datetime_to_timestamp(dt)
-        idx = 0
-        for trans in self._trans_list:
-            if timestamp < trans:
-                break
-            idx += 1
-        else:
-            return self._ttinfo_std
-        if idx == 0:
+
+        # If there is a list and the time is before it, return _ttinfo_before
+        if self._trans_list and timestamp < self._trans_list[0]:
             return self._ttinfo_before
+
+        # If there's no list, or we're past the last transition, default to
+        # _ttinfo_std
+        if not self._trans_list or timestamp >= self._trans_list[-1]:
+            return self._ttinfo_std    
+
+        # Find where the timestamp fits in the transition list - if the
+        # timestamp is a transition time, it's part of the "after" period.
+        idx = bisect.bisect_right(self._trans_list, timestamp)
+
         if laststd:
-            while idx > 0:
-                tti = self._trans_idx[idx-1]
+            # Find the most recent standard time if requested
+            for tti in reversed(self._trans_idx[:idx]):
                 if not tti.isdst:
                     return tti
-                idx -= 1
             else:
                 return self._ttinfo_std
         else:
