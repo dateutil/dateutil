@@ -594,13 +594,13 @@ class parser(object):
                 else:
                     raise ValueError("Offset must be tzinfo subclass, "
                                      "tz string, or int offset.")
-                ret = ret.replace(tzinfo=tzinfo)
+                ret = _localize(ret, tzinfo)
             elif res.tzname and res.tzname in time.tzname:
-                ret = ret.replace(tzinfo=tz.tzlocal())
+                ret = _localize(ret, tz.tzlocal())
             elif res.tzoffset == 0:
-                ret = ret.replace(tzinfo=tz.tzutc())
+                ret = _localize(ret, tz.tzutc())
             elif res.tzoffset:
-                ret = ret.replace(tzinfo=tz.tzoffset(res.tzname, res.tzoffset))
+                ret = _localize(ret, tz.tzoffset(res.tzname, res.tzoffset))
 
         if kwargs.get('fuzzy_with_tokens', False):
             return ret, skipped_tokens
@@ -1348,6 +1348,13 @@ def _parsems(value):
     else:
         i, f = value.split(".")
         return int(i), int(f.ljust(6, "0")[:6])
+
+
+def _localize(dt, tzinfo):
+    """Use .localize() if available."""
+    if hasattr(tzinfo, 'localize') and callable(tzinfo.localize):
+        return tzinfo.localize(dt)
+    return dt.replace(tzinfo=tzinfo)
 
 
 # vim:ts=4:sw=4:et
