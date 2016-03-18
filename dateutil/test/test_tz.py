@@ -254,12 +254,17 @@ class TZTest(unittest.TestCase):
         tzc = tz.tzfile(BytesIO(base64.b64decode(TZFILE_EST5EDT)))
         self.assertEqual(datetime(2037, 10, 25, 0, 59, tzinfo=tzc).tzname(),
                          "EDT")
-        
+
         self.assertEqual(datetime(2037, 10, 25, 1, 00, tzinfo=tzc).tzname(),
                          "EST")
 
         self.assertEqual(datetime(2038, 5, 25, 12, 0, tzinfo=tzc).tzname(),
                          "EST")
+
+    def testInvalidFile(self):
+        # Should throw a ValueError if an invalid file is passed
+        with self.assertRaises(ValueError):
+            tz.tzfile(BytesIO(b'BadFile'))
 
     def testZoneInfoFileStart1(self):
         tz = zoneinfo.gettz("EST5EDT")
