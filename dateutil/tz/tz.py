@@ -15,7 +15,7 @@ import os
 import bisect
 
 from six import string_types, PY3
-from ._common import tzname_in_python2
+from ._common import tzname_in_python2, _tzinfo
 
 try:
     from .win import tzwin, tzwinlocal
@@ -197,13 +197,13 @@ class _ttinfo(object):
                 setattr(self, name, state[name])
 
 
-class tzfile(datetime.tzinfo):
+class tzfile(_tzinfo):
 
     # http://www.twinsun.com/tz/tz-link.htm
     # ftp://ftp.iana.org/tz/tz*.tar.gz
 
     def __init__(self, fileobj, filename=None):
-        #super(tzfile, self).__init__()
+        super(tzfile, self).__init__()
 
         file_opened_here = False
         if isinstance(fileobj, string_types):
@@ -463,7 +463,44 @@ class tzfile(datetime.tzinfo):
         return self._trans_idx[idx]
 
     def _find_ttinfo(self, dt):
-        return self._get_ttinfo(self._find_last_transition(dt))
+        idx = self._resolve_ambiguous_time(dt)
+
+        return self._get_ttinfo(idx)
+
+    def _resolve_ambiguous_time(self, dt, idx=None):
+        if idx is None:
+            idx = self._find_last_transition(dt)
+
+        # If we're fold-naive or we have no transitions, return the index.
+        if self._fold is None or idx is None:
+            return idx
+
+        timestamp = _datetime_to_timestamp(dt)
+        tti = self._get_ttinfo(idx)
+
+        if idx > 0:
+            # Calculate the difference in offsets from the current to previous
+            od = self._get_ttinfo(idx - 1).offset - tti.offset
+            tt = self._trans_list[idx]      # Transition time
+
+            if timestamp < tt + od:
+                if self._fold:
+                    return idx - 1
+                else:
+                    return idx
+
+        if idx < len(self._trans_list):
+            # Calculate the difference in offsets from the previous to current
+            od = self._get_ttinfo(idx + 1).offset - tti.offset
+            tt = self._trans_list[idx + 1]
+
+            if timestamp > tt - od:
+                if self._fold:
+                    return idx + 1
+                else:
+                    return idx
+
+        return idx
 
     def utcoffset(self, dt):
         if dt is None:
@@ -472,9 +509,7 @@ class tzfile(datetime.tzinfo):
         if not self._ttinfo_std:
             return ZERO
 
-        idx = self._find_last_transition(dt)
-
-        return self._get_ttinfo(idx).delta
+        return self._find_ttinfo(dt).delta
 
     def dst(self, dt):
         if not self._ttinfo_dst:
