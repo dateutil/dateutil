@@ -156,7 +156,8 @@ class tzlocal(datetime.tzinfo):
 
 
 class _ttinfo(object):
-    __slots__ = ["offset", "delta", "isdst", "abbr", "isstd", "isgmt"]
+    __slots__ = ["offset", "delta", "isdst", "abbr",
+                 "isstd", "isgmt", "dstoffset"]
 
     def __init__(self):
         for attr in self.__slots__:
@@ -178,7 +179,8 @@ class _ttinfo(object):
                 self.isdst == other.isdst and
                 self.abbr == other.abbr and
                 self.isstd == other.isstd and
-                self.isgmt == other.isgmt)
+                self.isgmt == other.isgmt and
+                self.dstoffset == other.dstoffset)
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -201,6 +203,8 @@ class tzfile(datetime.tzinfo):
     # ftp://ftp.iana.org/tz/tz*.tar.gz
 
     def __init__(self, fileobj, filename=None):
+        #super(tzfile, self).__init__()
+
         file_opened_here = False
         if isinstance(fileobj, string_types):
             self._filename = fileobj
@@ -261,8 +265,8 @@ class tzfile(datetime.tzinfo):
             # change.
 
             if timecnt:
-                self._trans_list = struct.unpack(">%dl" % timecnt,
-                                                 fileobj.read(timecnt*4))
+                self._trans_list = list(struct.unpack(">%dl" % timecnt,
+                                                      fileobj.read(timecnt*4)))
             else:
                 self._trans_list = []
 
@@ -347,9 +351,10 @@ class tzfile(datetime.tzinfo):
             # Round to full-minutes if that's not the case. Python's
             # datetime doesn't accept sub-minute timezones. Check
             # http://python.org/sf/1447945 for some information.
-            gmtoff = (gmtoff+30)//60*60
+            gmtoff = 60 * ((gmtoff + 30) // 60)
             tti = _ttinfo()
             tti.offset = gmtoff
+            tti.dstoffset = datetime.timedelta(0)
             tti.delta = datetime.timedelta(seconds=gmtoff)
             tti.isdst = isdst
             tti.abbr = abbr[abbrind:abbr.find('\x00', abbrind)]
@@ -358,10 +363,7 @@ class tzfile(datetime.tzinfo):
             self._ttinfo_list.append(tti)
 
         # Replace ttinfo indexes for ttinfo objects.
-        trans_idx = []
-        for idx in self._trans_idx:
-            trans_idx.append(self._ttinfo_list[idx])
-        self._trans_idx = tuple(trans_idx)
+        self._trans_idx = [self._ttinfo_list[idx] for idx in self._trans_idx]
 
         # Set standard, dst, and before ttinfos. before will be
         # used when a given time is before any transitions,
@@ -380,6 +382,7 @@ class tzfile(datetime.tzinfo):
                         self._ttinfo_std = tti
                     elif not self._ttinfo_dst and tti.isdst:
                         self._ttinfo_dst = tti
+
                     if self._ttinfo_std and self._ttinfo_dst:
                         break
                 else:
@@ -400,44 +403,67 @@ class tzfile(datetime.tzinfo):
         # isgmt are off, so it should be in wall time. OTOH, it's
         # always in gmt time. Let me know if you have comments
         # about this.
-        laststdoffset = 0
-        self._trans_list = list(self._trans_list)
-        for i in range(len(self._trans_list)):
-            tti = self._trans_idx[i]
+        laststdoffset = None
+        for i, tti in enumerate(self._trans_idx):
             if not tti.isdst:
-                # This is std time.
-                self._trans_list[i] += tti.offset
-                laststdoffset = tti.offset
+                offset = tti.offset
+                laststdoffset = offset
             else:
-                # This is dst time. Convert to std.
-                self._trans_list[i] += laststdoffset
+                if laststdoffset is not None:
+                    # Store the DST offset as well and update it in the list
+                    tti.dstoffset = tti.offset - laststdoffset
+                    self._trans_idx[i] = tti
+
+                offset = laststdoffset or 0
+
+            self._trans_list[i] += offset
+
+        # In case we missed any DST offsets on the way in for some reason, make
+        # a second pass over the list, looking for the /next/ DST offset.
+        laststdoffset = None
+        for i in reversed(range(len(self._trans_idx))):
+            tti = self._trans_idx[i]
+            if tti.isdst:
+                if not (tti.dstoffset or laststdoffset is None):
+                    tti.dstoffset = tti.offset - laststdoffset
+            else:
+                laststdoffset = tti.offset
+
+            if not isinstance(tti.dstoffset, datetime.timedelta):
+                tti.dstoffset = datetime.timedelta(seconds=tti.dstoffset)
+            
+            self._trans_idx[i] = tti
+
+        self._trans_idx = tuple(self._trans_idx)
         self._trans_list = tuple(self._trans_list)
 
-    def _find_ttinfo(self, dt, laststd=0):
+    def _find_last_transition(self, dt):
+        # If there's no list, there are no transitions to find
+        if not self._trans_list:
+            return None
+
         timestamp = _datetime_to_timestamp(dt)
-
-        # If there is a list and the time is before it, return _ttinfo_before
-        if self._trans_list and timestamp < self._trans_list[0]:
-            return self._ttinfo_before
-
-        # If there's no list, or we're past the last transition, default to
-        # _ttinfo_std
-        if not self._trans_list or timestamp >= self._trans_list[-1]:
-            return self._ttinfo_std    
 
         # Find where the timestamp fits in the transition list - if the
         # timestamp is a transition time, it's part of the "after" period.
         idx = bisect.bisect_right(self._trans_list, timestamp)
 
-        if laststd:
-            # Find the most recent standard time if requested
-            for tti in reversed(self._trans_idx[:idx]):
-                if not tti.isdst:
-                    return tti
-            else:
-                return self._ttinfo_std
-        else:
-            return self._trans_idx[idx-1]
+        # We want to know when the previous transition was, so subtract off 1
+        return idx - 1
+
+    def _get_ttinfo(self, idx):
+        # For no list or after the last transition, default to _ttinfo_std
+        if idx is None or (idx + 1) == len(self._trans_list):
+            return self._ttinfo_std
+
+        # If there is a list and the time is before it, return _ttinfo_before
+        if idx < 0:
+            return self._ttinfo_before
+
+        return self._trans_idx[idx]
+
+    def _find_ttinfo(self, dt):
+        return self._get_ttinfo(self._find_last_transition(dt))
 
     def utcoffset(self, dt):
         if dt is None:
@@ -445,18 +471,23 @@ class tzfile(datetime.tzinfo):
 
         if not self._ttinfo_std:
             return ZERO
-        return self._find_ttinfo(dt).delta
+
+        idx = self._find_last_transition(dt)
+
+        return self._get_ttinfo(idx).delta
 
     def dst(self, dt):
         if not self._ttinfo_dst:
             return ZERO
+        
         tti = self._find_ttinfo(dt)
+
         if not tti.isdst:
             return ZERO
 
         # The documentation says that utcoffset()-dst() must
         # be constant for every dt.
-        return tti.delta-self._find_ttinfo(dt, laststd=1).delta
+        return tti.dstoffset
 
         # An alternative for that would be:
         #
