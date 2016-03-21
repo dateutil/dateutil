@@ -411,6 +411,52 @@ class TZTest(unittest.TestCase):
         dt = parse('2014-07-20T12:34:56+00:00')
         self.assertEqual(str(dt), '2014-07-20 12:34:56+00:00')
 
+    def testTZInfoFold(self):
+        # Test that we can resolve ambiguous times
+
+        # Calling fromutc() alters the tzfile object
+        TOR0 = tz.gettz('America/Toronto')
+        TOR1 = tz.gettz('America/Toronto')
+
+        t0_u = datetime(2011, 11, 6, 5, 30, tzinfo=tz.tzutc())
+        t1_u = datetime(2011, 11, 6, 6, 30, tzinfo=tz.tzutc())
+
+        # Using fresh tzfiles
+        t0_tor0 = t0_u.astimezone(TOR0)
+        t1_tor1 = t1_u.astimezone(TOR1)
+
+        self.assertEqual(t0_tor0.replace(tzinfo=None),
+                         datetime(2011, 11, 6, 1, 30))
+
+        self.assertEqual(t1_tor1.replace(tzinfo=None),
+                         datetime(2011, 11, 6, 1, 30))
+
+        self.assertNotEqual(t0_tor0, t1_tor1)
+        self.assertEqual(t0_tor0.utcoffset(), timedelta(hours=-4.0))
+        self.assertEqual(t1_tor1.utcoffset(), timedelta(hours=-5.0))
+
+        # Re-using them across (make sure there's no cache problem)
+        t0_tor1 = t0_u.astimezone(TOR1)
+        t1_tor0 = t1_u.astimezone(TOR0)
+
+        self.assertEqual(t0_tor0, t0_tor1)
+        self.assertEqual(t1_tor1, t1_tor0)
+
+    def testPortugalDST(self):
+        # In 1996, Portugal changed from CET to WET
+        PORTUGAL = tz.gettz('Portugal')
+
+        t_cet = datetime(1996, 3, 31, 1, 59, tzinfo=PORTUGAL)
+        
+        self.assertEqual(t_cet.tzname(), 'CET')
+        self.assertEqual(t_cet.utcoffset(), timedelta(hours=1))
+        self.assertEqual(t_cet.dst(), timedelta(0))
+
+        t_west = datetime(1996, 3, 31, 2, 1, tzinfo=PORTUGAL)
+
+        self.assertEqual(t_west.tzname(), 'WEST')
+        self.assertEqual(t_west.utcoffset(), timedelta(hours=1))
+        self.assertEqual(t_west.dst(), timedelta(hours=1))
 
 @unittest.skipUnless(IS_WIN, "Requires Windows")
 class TzWinTest(unittest.TestCase):

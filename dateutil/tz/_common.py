@@ -83,10 +83,11 @@ class _tzinfo(datetime.tzinfo):
         :param dt:
             A timezone-aware :class:`datetime.dateime` object.
         """
-        dt_wall = super(_tzinfo, self).fromutc(dt)
-
-        # Create a fold-naive version of this tzinfo object if necessary
+        # Use a fold-naive version of this tzinfo for calculations
         tzi = self._as_fold_naive()
+        dt = dt.replace(tzinfo=tzi)
+
+        dt_wall = super(_tzinfo, tzi).fromutc(dt)
 
         # Calculate the fold status given the two datetimes.
         _fold = self._fold_status(dt.replace(tzinfo=tzi),
@@ -97,7 +98,9 @@ class _tzinfo(datetime.tzinfo):
             self._fold = _fold
         elif _fold != self._fold:
             tzi._fold = _fold
-            dt_wall = dt_wall.replace(tzinfo=tzi)
+            dt_wall = dt_wall
+        else:
+            dt_wall = dt_wall.replace(tzinfo=self)
 
         return dt_wall
     
