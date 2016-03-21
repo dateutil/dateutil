@@ -33,11 +33,8 @@ class _tzinfo(datetime.tzinfo):
         self._fold = None
 
     def _as_fold_naive(self):
-        if self._fold is not None:
-            tzi = copy.copy(self)
-            tzi._fold = None
-        else:
-            tzi = self
+        tzi = copy.copy(self)
+        tzi._fold = None
 
         return tzi
 
@@ -94,11 +91,8 @@ class _tzinfo(datetime.tzinfo):
                                   dt_wall.replace(tzinfo=tzi))
 
         # Set the default fold value for ambiguous dates
-        if self._fold is None:
-            self._fold = _fold
-        elif _fold != self._fold:
+        if _fold != self._fold:
             tzi._fold = _fold
-            dt_wall = dt_wall
         else:
             dt_wall = dt_wall.replace(tzinfo=self)
 

@@ -520,6 +520,33 @@ class TZTest(unittest.TestCase):
         self.assertEqual(t0.utcoffset(), timedelta(hours=-5.0))
         self.assertEqual(t1.utcoffset(), timedelta(hours=-4.0))
 
+    def testTZInfoFoldIndependence(self):
+        NYC = tz.gettz('America/New_York')
+        UTC = tz.tzutc()
+        hour = timedelta(hours=1)
+
+        # Firmly 2015-11-01 0:30 EDT-4
+        pre_dst = datetime(2015, 11, 1, 0, 30, tzinfo=NYC)
+
+        # Currently, there's no way around the fact that this resolves to an
+        # ambiguous date, which defaults to EST. I'm not hard-coding in the
+        # answer, though, because the preferred behavior would be that this
+        # results in a time on the EDT side.
+
+        # Ambiguous between 2015-11-01 1:30 EDT-4 and 2015-11-01 1:30 EST-5
+        in_dst = pre_dst + hour
+        in_dst_tzname_0 = in_dst.tzname()     # Stash the tzname - EST
+
+        # Doing the arithmetic in UTC creates a date that is unambiguously
+        # 2015-11-01 1:30 EDT-4
+        in_dst_via_utc = (pre_dst.astimezone(UTC) + hour).astimezone(NYC)
+
+        # Make sure we got the right folding behavior
+        self.assertEqual(in_dst_via_utc.tzname(), 'EDT')
+
+        # Now check to make sure in_dst's tzname hasn't changed
+        self.assertEqual(in_dst_tzname_0, in_dst.tzname())
+
     def testPortugalDST(self):
         # In 1996, Portugal changed from CET to WET
         PORTUGAL = tz.gettz('Portugal')
