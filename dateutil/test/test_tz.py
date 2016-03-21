@@ -411,7 +411,61 @@ class TZTest(unittest.TestCase):
         dt = parse('2014-07-20T12:34:56+00:00')
         self.assertEqual(str(dt), '2014-07-20 12:34:56+00:00')
 
-    def testTZInfoFold(self):
+    def testTZInfoFoldPositiveUTCOffset(self):
+        # Test that we can resolve ambiguous times
+
+        # Calling fromutc() alters the tzfile object
+        SYD0 = tz.gettz('Australia/Sydney')
+        SYD1 = tz.gettz('Australia/Sydney')
+
+        t0_u = datetime(2012, 3, 31, 15, 30, tzinfo=tz.tzutc())  # AEST
+        t1_u = datetime(2012, 3, 31, 16, 30, tzinfo=tz.tzutc())  # AEDT
+
+        # Using fresh tzfiles
+        t0_syd0 = t0_u.astimezone(SYD0)
+        t1_syd1 = t1_u.astimezone(SYD1)
+
+        self.assertEqual(t0_syd0.replace(tzinfo=None),
+                         datetime(2012, 4, 1, 2, 30))
+
+        self.assertEqual(t1_syd1.replace(tzinfo=None),
+                         datetime(2012, 4, 1, 2, 30))
+
+        self.assertNotEqual(t0_syd0, t1_syd1)
+        self.assertEqual(t0_syd0.utcoffset(), timedelta(hours=11))
+        self.assertEqual(t1_syd1.utcoffset(), timedelta(hours=10))
+
+        # Re-using them across (make sure there's no cache problem)
+        t0_syd1 = t0_u.astimezone(SYD1)
+        t1_syd0 = t1_u.astimezone(SYD0)
+
+        self.assertEqual(t0_syd0, t0_syd1)
+        self.assertEqual(t1_syd1, t1_syd0)
+
+    def testTZInfoGapPositiveUTCOffset(self):
+        # Test that we don't have a problem around gaps.
+
+        # Calling fromutc() alters the tzfile object
+        SYD0 = tz.gettz('Australia/Sydney')
+        SYD1 = tz.gettz('Australia/Sydney')
+
+        t0_u = datetime(2012, 10, 6, 15, 30, tzinfo=tz.tzutc())  # AEST
+        t1_u = datetime(2012, 10, 6, 16, 30, tzinfo=tz.tzutc())  # AEDT
+
+        # Using fresh tzfiles
+        t0 = t0_u.astimezone(SYD0)
+        t1 = t1_u.astimezone(SYD1)
+
+        self.assertEqual(t0.replace(tzinfo=None),
+                         datetime(2012, 10, 7, 1, 30))
+
+        self.assertEqual(t1.replace(tzinfo=None),
+                         datetime(2012, 10, 7, 3, 30))
+
+        self.assertEqual(t0.utcoffset(), timedelta(hours=10))
+        self.assertEqual(t1.utcoffset(), timedelta(hours=11))
+
+    def testTZInfoFoldNegativeUTCOffset(self):
         # Test that we can resolve ambiguous times
 
         # Calling fromutc() alters the tzfile object
@@ -441,6 +495,30 @@ class TZTest(unittest.TestCase):
 
         self.assertEqual(t0_tor0, t0_tor1)
         self.assertEqual(t1_tor1, t1_tor0)
+
+    def testTZInfoGapNegativeUTCOffset(self):
+        # Test that we don't have a problem around gaps.
+
+        # Calling fromutc() alters the tzfile object
+        TOR0 = tz.gettz('America/Toronto')
+        TOR1 = tz.gettz('America/Toronto')
+
+        t0_u = datetime(2011, 3, 13, 6, 30, tzinfo=tz.tzutc())
+        t1_u = datetime(2011, 3, 13, 7, 30, tzinfo=tz.tzutc())
+
+        # Using fresh tzfiles
+        t0 = t0_u.astimezone(TOR0)
+        t1 = t1_u.astimezone(TOR1)
+
+        self.assertEqual(t0.replace(tzinfo=None),
+                         datetime(2011, 3, 13, 1, 30))
+
+        self.assertEqual(t1.replace(tzinfo=None),
+                         datetime(2011, 3, 13, 3, 30))
+
+        self.assertNotEqual(t0, t1)
+        self.assertEqual(t0.utcoffset(), timedelta(hours=-5.0))
+        self.assertEqual(t1.utcoffset(), timedelta(hours=-4.0))
 
     def testPortugalDST(self):
         # In 1996, Portugal changed from CET to WET
