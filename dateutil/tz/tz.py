@@ -1042,11 +1042,18 @@ def gettz(name=None):
                             tz = tzlocal()
     return tz
 
+def _total_seconds(td):
+    # Python 2.6 doesn't have a total_seconds() method on timedelta objects
+    return ((td.seconds + td.days * 86400) * 1000000 +
+            td.microseconds) // 1000000
+
+_total_seconds = getattr(datetime.timedelta, 'total_seconds', _total_seconds)
+
 def _datetime_to_timestamp(dt):
     """
     Convert a :class:`datetime.datetime` object to an epoch timestamp in seconds
     since January 1, 1970, ignoring the time zone.
     """
-    return (dt.replace(tzinfo=None) - EPOCH).total_seconds()
+    return _total_seconds((dt.replace(tzinfo=None) - EPOCH))
 
 # vim:ts=4:sw=4:et
