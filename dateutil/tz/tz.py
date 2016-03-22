@@ -13,6 +13,7 @@ import time
 import sys
 import os
 import bisect
+import copy
 
 from contextlib import contextmanager
 
@@ -204,16 +205,12 @@ class _tzfile(object):
     Lightweight class for holding the relevant transition and time zone
     information read from binary tzfiles.
     """
-    def __init__(self, trans_list=None, trans_idx=None, ttinfo_list=None,
-        ttinfo_std=None, ttinfo_dst=None,
-        ttinfo_before=None, ttinfo_first=None):
-        self.trans_list = trans_list
-        self.trans_idx = trans_idx
-        self.ttinfo_list = ttinfo_list
-        self.ttinfo_std = ttinfo_std
-        self.ttinfo_dst = ttinfo_dst
-        self.ttinfo_before = ttinfo_before
-        self.ttinfo_first = ttinfo_first
+    attrs = ['trans_list', 'trans_idx', 'ttinfo_list',
+             'ttinfo_std', 'ttinfo_dst', 'ttinfo_before', 'ttinfo_first']
+
+    def __init__(self, **kwargs):
+        for attr in self.attrs:
+            setattr(self, attr, kwargs.get(attr, None))
 
 
 class tzfile(_tzinfo):
@@ -236,24 +233,20 @@ class tzfile(_tzinfo):
         else:
             self._filename = repr(fileobj)
 
-        if not file_opened_here:
-            fileobj = _ContextWrapper(fileobj)
-
         if fileobj is not None:
+            if not file_opened_here:
+                fileobj = _ContextWrapper(fileobj)
+
             with fileobj as file_stream:
                 tzobj = self._read_tzfile(file_stream)
 
             self._set_tzdata(tzobj)
 
     def _set_tzdata(self, tzobj):
-        """ Pass a _tzfile object """
-        attrs = ['trans_list', 'trans_idx', 'ttinfo_list',
-                 'ttinfo_std', 'ttinfo_dst', 'ttinfo_before', 'ttinfo_first']
-
+        """ Set the time zone data of this object from a _tzfile object """
         # Copy the relevant attributes over as private attributes
-        for attr in attrs:
+        for attr in _tzfile.attrs:
             setattr(self, '_' + attr, getattr(tzobj, attr))
-
 
     def _read_tzfile(self, fileobj):
         out = _tzfile()
@@ -584,6 +577,18 @@ class tzfile(_tzinfo):
         if not os.path.isfile(self._filename):
             raise ValueError("Unpicklable %s class" % self.__class__.__name__)
         return (self.__class__, (self._filename,))
+
+    def __copy__(self):
+        new_tzfile = self.__class__(None, filename=self._filename)
+        new_tzfile.__dict__.update(self.__dict__)
+
+        return new_tzfile
+
+    def __deepcopy__(self, memo):
+        new_tzfile = copy.copy(self)         # Make a shallow copy
+        new_tzfile.__dict__ = copy.deepcopy(new_tzfile.__dict__, memo)
+
+        return new_tzfile
 
 
 class tzrange(datetime.tzinfo):
