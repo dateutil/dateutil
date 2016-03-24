@@ -42,6 +42,8 @@ from six import text_type, binary_type, integer_types
 from . import relativedelta
 from . import tz
 
+zoneinfo = None
+
 __all__ = ["parse", "parserinfo"]
 
 
@@ -284,7 +286,7 @@ class parserinfo(object):
         self._ampm = self._convert(self.AMPM)
         self._utczone = self._convert(self.UTCZONE)
         self._pertain = self._convert(self.PERTAIN)
-        self.tzparseinfo = tz.tz_parserinfo()
+        self._tzparseinfo = _tz_parserinfo()
 
         self.dayfirst = dayfirst
         self.yearfirst = yearfirst
@@ -992,7 +994,7 @@ class parser(object):
                     continue
 
                 # Check for a long time zone name
-                if (res.hour is not None and l[i] in info.tzparseinfo[0]
+                if (res.hour is not None and l[i] in info._tzparseinfo[0]
                         and res.tzname is None and res.tzoffset is None and res.tzinfo is None):
                     possible_tzname = ''
                     possible_length = 0
@@ -1009,7 +1011,7 @@ class parser(object):
                             res.tzinfo = tzinfo
                             i = k + 1
                             break
-                        elif possible_length == info.tzparseinfo[1]:
+                        elif possible_length == info._tzparseinfo[1]:
                             break
                     if res.tzinfo:
                         continue
@@ -1082,8 +1084,6 @@ class parser(object):
             return res, tuple(skipped_tokens)
         else:
             return res, None
-
-DEFAULTPARSER = parser()
 
 
 def parse(timestr, parserinfo=None, **kwargs):
@@ -1360,8 +1360,28 @@ class _tzparser(object):
         return res
 
 
-DEFAULTTZPARSER = _tzparser()
+def _tz_parserinfo():
+    if not hasattr(_tz_parserinfo, 'info'):
+        import os
+        from dateutil.tz import TZPATHS
+        from dateutil.zoneinfo import initclasszone
+        tmplst = set()
+        tzn_re = re.compile('^[-\w][-+\w]*$')
+        for path in TZPATHS:
+            if not os.path.isdir(path):
+                continue
 
+            map(tmplst.add, filter(tzn_re.match, os.listdir(path)))
+
+        info = initclasszone().parserinfo()
+        tmplst = tmplst.union(info[0])
+        _tz_parserinfo.info = (tmplst, max(3, info[1]))
+
+    return _tz_parserinfo.info
+
+
+DEFAULTPARSER = parser()
+DEFAULTTZPARSER = _tzparser()
 
 def _parsetz(tzstr):
     return DEFAULTTZPARSER.parse(tzstr)
@@ -1374,6 +1394,11 @@ def _parsems(value):
     else:
         i, f = value.split(".")
         return int(i), int(f.ljust(6, "0")[:6])
+
+def _import_zoneinfo():
+    global zoneinfo
+    if zoneinfo is None:
+        from dateutil import zoneinfo
 
 
 # vim:ts=4:sw=4:et

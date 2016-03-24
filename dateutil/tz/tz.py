@@ -28,6 +28,7 @@ except ImportError:
 relativedelta = None
 parser = None
 rrule = None
+zoneinfo = None
 
 ZERO = datetime.timedelta(0)
 EPOCHORDINAL = datetime.datetime.utcfromtimestamp(0).toordinal()
@@ -909,23 +910,6 @@ else:
     TZPATHS = []
 
 
-def tz_parserinfo():
-    if not hasattr(tz_parserinfo, 'info'):
-        tmplst = set()
-        for path in TZPATHS:
-            if not os.path.isdir(path):
-                continue
-
-            map(tmplst.add, filter(partial(re.match, '^[-\w][-+\w]*$'),
-                                   os.listdir(path)))
-        from ..zoneinfo import initclasszone
-        info = initclasszone().parserinfo()
-        tmplst = tmplst.union(info[0])
-        tz_parserinfo.info = (tmplst, max(3, info[1]))
-
-    return tz_parserinfo.info
-
-
 def gettz(name=None):
     tz = None
     if not name:
@@ -979,8 +963,8 @@ def gettz(name=None):
                     except WindowsError:
                         tz = None
                 if not tz:
-                    from dateutil.zoneinfo import gettz
-                    tz = gettz(name)
+                    _import_zoneinfo()
+                    tz = zoneinfo.gettz(name)
                 if not tz:
                     for c in name:
                         # name must have at least one offset to be a tzstr
@@ -997,5 +981,11 @@ def gettz(name=None):
                         elif name in time.tzname:
                             tz = tzlocal()
     return tz
+
+
+def _import_zoneinfo():
+    global zoneinfo
+    if zoneinfo is None:
+        from dateutil import zoneinfo
 
 # vim:ts=4:sw=4:et
