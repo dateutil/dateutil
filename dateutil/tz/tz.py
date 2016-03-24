@@ -8,12 +8,16 @@ relative deltas), local machine timezone, fixed offset timezone, and UTC
 timezone.
 """
 import datetime
+from functools import partial
+
+import re
 import struct
 import time
 import sys
 import os
 
-from six import string_types, PY3
+from six import string_types
+from six.moves import filter          # itertools.ifilter in Python 2.x
 from ._common import tzname_in_python2
 
 try:
@@ -905,6 +909,23 @@ else:
     TZPATHS = []
 
 
+def tz_parserinfo():
+    if not hasattr(tz_parserinfo, 'info'):
+        tmplst = set()
+        for path in TZPATHS:
+            if not os.path.isdir(path):
+                continue
+
+            map(tmplst.add, filter(partial(re.match, '^[-\w][-+\w]*$'),
+                                   os.listdir(path)))
+        from ..zoneinfo import initclasszone
+        info = initclasszone().parserinfo()
+        tmplst = tmplst.union(info[0])
+        tz_parserinfo.info = (tmplst, max(3, info[1]))
+
+    return tz_parserinfo.info
+
+
 def gettz(name=None):
     tz = None
     if not name:
@@ -970,6 +991,7 @@ def gettz(name=None):
                                 pass
                             break
                     else:
+                        # TODO Move this up to speed everything up
                         if name in ("GMT", "UTC"):
                             tz = tzutc()
                         elif name in time.tzname:

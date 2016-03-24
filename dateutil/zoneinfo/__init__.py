@@ -42,6 +42,11 @@ def getzoneinfofile_stream():
 
 class ZoneInfoFile(object):
     def __init__(self, zonefile_stream=None):
+        self.zones = dict()
+        self.prefix = set()
+        self.maxdepth = 0
+        self.metadata = None
+
         if zonefile_stream is not None:
             with tar_open(fileobj=zonefile_stream, mode='r') as tf:
                 # dict comprehension does not work on python2.6
@@ -49,6 +54,16 @@ class ZoneInfoFile(object):
                 # self.zones = {zf.name: tzfile(tf.extractfile(zf),
                 #               filename = zf.name)
                 #              for zf in tf.getmembers() if zf.isfile()}
+                for zf in tf.getmembers():
+                    if (not zf.isfile() or zf.name == METADATA_FN):
+                        continue
+                    self.zones[zf.name] = tzfile(tf.extractfile(zf), filename=zf.name)
+                    parts = zf.name.split('/')
+                    parts_len = len(parts)
+                    self.prefix.add(parts[0])
+                    if parts_len > self.maxdepth:
+                        self.maxdepth = parts_len
+
                 self.zones = dict((zf.name, tzfile(tf.extractfile(zf),
                                                    filename=zf.name))
                                   for zf in tf.getmembers()
@@ -68,9 +83,10 @@ class ZoneInfoFile(object):
                 except KeyError:
                     # no metadata in tar file
                     self.metadata = None
-        else:
-            self.zones = dict()
-            self.metadata = None
+
+    def parserinfo(self):
+        """Provides information for parser"""
+        return (self.prefix, self.maxdepth)
 
 
 # The current API has gettz as a module function, although in fact it taps into
@@ -81,11 +97,13 @@ class ZoneInfoFile(object):
 # TODO: deprecate this.
 _CLASS_ZONE_INSTANCE = list()
 
-
-def gettz(name):
+def initclasszone():
     if len(_CLASS_ZONE_INSTANCE) == 0:
         _CLASS_ZONE_INSTANCE.append(ZoneInfoFile(getzoneinfofile_stream()))
-    return _CLASS_ZONE_INSTANCE[0].zones.get(name)
+    return _CLASS_ZONE_INSTANCE[0]
+
+def gettz(name):
+    return initclasszone().zones.get(name)
 
 
 def gettz_db_metadata():
@@ -98,5 +116,3 @@ def gettz_db_metadata():
     if len(_CLASS_ZONE_INSTANCE) == 0:
         _CLASS_ZONE_INSTANCE.append(ZoneInfoFile(getzoneinfofile_stream()))
     return _CLASS_ZONE_INSTANCE[0].metadata
-
-
