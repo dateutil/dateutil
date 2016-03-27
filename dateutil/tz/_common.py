@@ -58,6 +58,8 @@ class _tzinfo(datetime.tzinfo):
         _fold = getattr(dt_wall, 'fold', None)          # PEP 495
 
         if _fold is None:
+            # This is always true on the DST side, but _fold has no meaning
+            # outside of ambiguous times.
             _fold = (dt_wall - dt_utc) != (dt_utc.utcoffset() - dt_utc.dst())
 
         return _fold
@@ -87,8 +89,7 @@ class _tzinfo(datetime.tzinfo):
         dt_wall = super(_tzinfo, tzi).fromutc(dt)
 
         # Calculate the fold status given the two datetimes.
-        _fold = self._fold_status(dt.replace(tzinfo=tzi),
-                                  dt_wall.replace(tzinfo=tzi))
+        _fold = self._fold_status(dt, dt_wall)
 
         # Set the default fold value for ambiguous dates
         if _fold != self._fold:
