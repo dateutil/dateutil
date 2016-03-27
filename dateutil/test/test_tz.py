@@ -127,6 +127,46 @@ END:VTIMEZONE
 """
 
 
+class TzUTCTest(unittest.TestCase):
+    def testOffset(self):
+        ct = datetime(2009, 4, 1, 12, 11, 13, tzinfo=tz.tzutc())
+
+        self.assertEqual(ct.utcoffset(), timedelta(seconds=0))
+
+    def testDst(self):
+        ct = datetime(2009, 4, 1, 12, 11, 13, tzinfo=tz.tzutc())
+
+        self.assertEqual(ct.dst(), timedelta(seconds=0))
+
+    def testTzName(self):
+        ct = datetime(2009, 4, 1, 12, 11, 13, tzinfo=tz.tzutc())
+        self.assertEqual(ct.tzname(), 'UTC')
+
+    def testEquality(self):
+        UTC0 = tz.tzutc()
+        UTC1 = tz.tzutc()
+
+        self.assertIsNot(UTC0, UTC1)
+        self.assertEqual(UTC0, UTC1)
+
+    def testInequality(self):
+        UTC = tz.tzutc()
+        UTCp4 = tz.tzoffset('UTC+4', 14400)
+
+        self.assertNotEqual(UTC, UTCp4)
+
+    def testRepr(self):
+        UTC = tz.tzutc()
+        self.assertEqual(repr(UTC), 'tzutc()')
+
+    def testTimeOnlyUTC(self):
+        # https://github.com/dateutil/dateutil/issues/132
+        # tzutc doesn't care
+        tz_utc = tz.tzutc()
+        self.assertEqual(dt_time(13, 20, tzinfo=tz_utc).utcoffset(),
+                         timedelta(0))
+
+
 class TZTest(unittest.TestCase):
     def testStrStart1(self):
         self.assertEqual(datetime(2003, 4, 6, 1, 59,
@@ -391,13 +431,6 @@ class TZTest(unittest.TestCase):
                           datetime(2007, 8, 6, 6, 10, tzinfo=tz.tzstr("GMT+2")))
         self.assertEqual(dt.astimezone(tz=tz.gettz("UTC-2")),
                           datetime(2007, 8, 6, 2, 10, tzinfo=tz.tzstr("UTC-2")))
-
-    def testTimeOnlyUTC(self):
-        # https://github.com/dateutil/dateutil/issues/132
-        # tzutc doesn't care
-        tz_utc = tz.tzutc()
-        self.assertEqual(dt_time(13, 20, tzinfo=tz_utc).utcoffset(),
-                         timedelta(0))
 
     def testTimeOnlyOffset(self):
         # tzoffset doesn't care
