@@ -574,21 +574,10 @@ class tzfile(_tzinfo):
         return "%s(%s)" % (self.__class__.__name__, repr(self._filename))
 
     def __reduce__(self):
-        if not os.path.isfile(self._filename):
-            raise ValueError("Unpicklable %s class" % self.__class__.__name__)
-        return (self.__class__, (self._filename,))
+        return self.__reduce_ex__(None)
 
-    def __copy__(self):
-        new_tzfile = self.__class__(None, filename=self._filename)
-        new_tzfile.__dict__.update(self.__dict__)
-
-        return new_tzfile
-
-    def __deepcopy__(self, memo):
-        new_tzfile = copy.copy(self)         # Make a shallow copy
-        new_tzfile.__dict__ = copy.deepcopy(new_tzfile.__dict__, memo)
-
-        return new_tzfile
+    def __reduce_ex__(self, protocol):
+        return (self.__class__, (None, self._filename), self.__dict__)
 
 
 class tzrange(datetime.tzinfo):

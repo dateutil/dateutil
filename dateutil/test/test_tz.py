@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-from ._common import unittest, TZWinContext
+from ._common import unittest, TZWinContext, PicklableMixin
 
 from datetime import datetime, timedelta
 from datetime import time as dt_time
@@ -12,6 +12,8 @@ import sys
 import time as _time
 import base64
 import copy
+
+from functools import partial
 
 IS_WIN = sys.platform.startswith('win')
 
@@ -609,6 +611,58 @@ class TZTest(unittest.TestCase):
         self.assertEqual(t_west.tzname(), 'WEST')
         self.assertEqual(t_west.utcoffset(), timedelta(hours=1))
         self.assertEqual(t_west.dst(), timedelta(hours=1))
+
+
+class TzPickleTest(PicklableMixin, unittest.TestCase):
+    _asfile = False
+
+    def setUp(self):
+        self.assertPicklable = partial(self.assertPicklable,
+                                       asfile=self._asfile)
+
+    def testPickleTzUTC(self):
+        self.assertPicklable(tz.tzutc())
+
+    def testPickleTzOffsetZero(self):
+        self.assertPicklable(tz.tzoffset('UTC', 0))
+
+    def testPickleTzOffsetPos(self):
+        self.assertPicklable(tz.tzoffset('UTC+1', 3600))
+
+    def testPickleTzOffsetNeg(self):
+        self.assertPicklable(tz.tzoffset('UTC-1', -3600))
+
+    def testPickleTzLocal(self):
+        self.assertPicklable(tz.tzlocal())
+
+    def testPickleTzFileEST5EDT(self):
+        tzc = tz.tzfile(BytesIO(base64.b64decode(TZFILE_EST5EDT)))
+        self.assertPicklable(tzc)
+
+    def testPickleTzFileEurope_Helsinki(self):
+        tzc = tz.tzfile(BytesIO(base64.b64decode(EUROPE_HELSINKI)))
+        self.assertPicklable(tzc)
+
+    def testPickleTzFileNew_York(self):
+        tzc = tz.tzfile(BytesIO(base64.b64decode(NEW_YORK)))
+        self.assertPicklable(tzc)
+
+    @unittest.skip("Known failure")
+    def testPickleTzICal(self):
+        tzc = tz.tzical(StringIO(TZICAL_EST5EDT)).get()
+        self.assertPicklable(tzc)
+
+    def testPickleTzGettz(self):
+        self.assertPicklable(tz.gettz('America/New_York'))
+
+    def testPickleZoneFileGettz(self):
+        self.assertPicklable(zoneinfo.gettz('America/New_York'))
+
+
+class TzPickleFileTest(TzPickleTest):
+    """ Run all the TzPickleTest tests, using a temporary file """
+    _asfile = True
+
 
 @unittest.skipUnless(IS_WIN, "Requires Windows")
 class TzWinTest(unittest.TestCase):
