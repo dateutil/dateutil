@@ -777,3 +777,40 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(parse(pstring),
                          datetime(1924, 8, 29))
 
+    def testNoYearFirstNoDayFirst(self):
+        dtstr = '090107'
+
+        # Should be MMDDYY
+        self.assertEqual(parse(dtstr),
+                         datetime(2007, 9, 1))
+
+        self.assertEqual(parse(dtstr, yearfirst=False, dayfirst=False),
+                         datetime(2007, 9, 1))
+
+    def testYearFirst(self):
+        dtstr = '090107'
+
+        # Should be MMDDYY
+        self.assertEqual(parse(dtstr, yearfirst=True),
+                         datetime(2009, 1, 7))
+
+        self.assertEqual(parse(dtstr, yearfirst=True, dayfirst=False),
+                         datetime(2009, 1, 7))
+
+    def testDayFirst(self):
+        dtstr = '090107'
+
+        # Should be DDMMYY
+        self.assertEqual(parse(dtstr, dayfirst=True),
+                         datetime(2007, 1, 9))
+
+        self.assertEqual(parse(dtstr, yearfirst=False, dayfirst=True),
+                         datetime(2007, 1, 9))
+
+    def testDayFirstYearFirst(self):
+        dtstr = '090107'
+        # Should be YYDDMM
+        self.assertEqual(parse(dtstr, yearfirst=True, dayfirst=True),
+                         datetime(2009, 7, 1))
+
+
