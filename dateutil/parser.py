@@ -276,7 +276,7 @@ class parserinfo(object):
     PERTAIN = ["of"]
     TZOFFSET = {}
 
-    def __init__(self, dayfirst=False, yearfirst=False):
+    def __init__(self, dayfirst=False, yearfirst=False, preferyearoverday=False):
         self._jump = self._convert(self.JUMP)
         self._weekdays = self._convert(self.WEEKDAYS)
         self._months = self._convert(self.MONTHS)
@@ -287,6 +287,7 @@ class parserinfo(object):
 
         self.dayfirst = dayfirst
         self.yearfirst = yearfirst
+        self.preferyearoverday = preferyearoverday
 
         self._year = time.localtime().tm_year
         self._century = self._year // 100 * 100
@@ -403,7 +404,7 @@ class _ymd(list):
 
         super(self.__class__, self).append(int(val))
 
-    def resolve_ymd(self, mstridx, yearfirst, dayfirst):
+    def resolve_ymd(self, mstridx, yearfirst, dayfirst, preferyearoverday):
         len_ymd = len(self)
         year, month, day = (None, None, None)
 
@@ -416,25 +417,30 @@ class _ymd(list):
                 del self[mstridx]
 
             if len_ymd > 1 or mstridx == -1:
-                if self[0] > 31:
+                if preferyearoverday or self[0] > 31:
                     year = self[0]
                 else:
                     day = self[0]
 
         elif len_ymd == 2:
             # Two members with numbers
-            if self[0] > 31:
-                # 99-01
-                year, month = self
-            elif self[1] > 31:
-                # 01-99
-                month, year = self
-            elif dayfirst and self[1] <= 12:
-                # 13-01
-                day, month = self
+            if preferyearoverday or (self[0] > 31 or self[1] > 31):
+                if self[0] <= 12:
+                    # 01-99
+                    # self[1] might also be <= 12 in which case this is ambiguous, and we prefer to interpret that
+                    # 10/11 means October 2011 and not November 2010.
+                    month, year = self
+                else:
+                    # 99-01
+                    # if self[1] is also > 12 then we're in trouble.
+                    year, month = self
             else:
-                # 01-13
-                month, day = self
+                if dayfirst and self[1] <= 12:
+                    # 13-01
+                    day, month = self
+                else:
+                    # 01-13
+                    month, day = self
 
         elif len_ymd == 3:
             # Three members
@@ -615,7 +621,11 @@ class parser(object):
                      "hour", "minute", "second", "microsecond",
                      "tzname", "tzoffset", "ampm"]
 
-    def _parse(self, timestr, dayfirst=None, yearfirst=None, fuzzy=False,
+    def _parse(self, timestr,
+               dayfirst=None,
+               yearfirst=None,
+               preferyearoverday=None,
+               fuzzy=False,
                fuzzy_with_tokens=False):
         """
         Private method which performs the heavy lifting of parsing, called from
@@ -636,6 +646,13 @@ class parser(object):
             Whether to interpret the first value in an ambiguous 3-integer date
             (e.g. 01/05/09) as the year. If ``True``, the first number is taken
             to be the year, otherwise the last number is taken to be the year.
+            If this is set to ``None``, the value is retrieved from the current
+            :class:`parserinfo` object (which itself defaults to ``False``).
+
+        :param preferyearoverday:
+            Given a 2-part date, where one of the elements might be either year
+            or day-of-month, this specifies whether to interpret that element
+            as day (False, the default) or year (True).
             If this is set to ``None``, the value is retrieved from the current
             :class:`parserinfo` object (which itself defaults to ``False``).
 
@@ -666,6 +683,9 @@ class parser(object):
 
         if yearfirst is None:
             yearfirst = info.yearfirst
+
+        if preferyearoverday is None:
+            preferyearoverday = info.preferyearoverday
 
         res = self._result()
         l = _timelex.split(timestr)         # Splits the timestr into tokens
@@ -1038,7 +1058,7 @@ class parser(object):
                 i += 1
 
             # Process year/month/day
-            year, month, day = ymd.resolve_ymd(mstridx, yearfirst, dayfirst)
+            year, month, day = ymd.resolve_ymd(mstridx, yearfirst, dayfirst, preferyearoverday)
             if year is not None:
                 res.year = year
                 res.century_specified = ymd.century_specified

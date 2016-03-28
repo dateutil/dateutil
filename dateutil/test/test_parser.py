@@ -814,3 +814,14 @@ class ParserTest(unittest.TestCase):
                          datetime(2009, 7, 1))
 
 
+    def testPreferYearOverDay(self):
+        dtstr = '090107'
+
+        self.assertEqual(parse('10/11', preferyearoverday=True, default=datetime(1999, 1, 1)),
+                         datetime(2011, 10, 1))
+
+        self.assertEqual(parse('10/11', preferyearoverday=False, default=datetime(1999, 1, 1)),
+                         datetime(1999, 10, 11))
+
+        self.assertEqual(parse('15/10', preferyearoverday=True, default=datetime(1999, 1, 1)),
+                         datetime(2015, 10, 1))
