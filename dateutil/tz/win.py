@@ -12,7 +12,7 @@ except ValueError:
     # ValueError is raised on non-Windows systems for some horrible reason.
     raise ImportError("Running tzwin on non-Windows system")
 
-from ._common import tzname_in_python2
+from ._common import tzname_in_python2, _tzinfo
 
 __all__ = ["tzwin", "tzwinlocal", "tzres"]
 
@@ -112,7 +112,7 @@ class tzres(object):
         return self.load_name(offset)
 
 
-class tzwinbase(datetime.tzinfo):
+class tzwinbase(_tzinfo):
     """tzinfo class based on win32's timezones available in the registry."""
     def __eq__(self, other):
         # Compare on all relevant dimensions, including name.
@@ -149,8 +149,7 @@ class tzwinbase(datetime.tzinfo):
         if isdst is None:
             return None
         elif isdst:
-            minutes = self._dstoffset - self._stdoffset
-            return datetime.timedelta(minutes=minutes)
+            return self._dst_base_offset
         else:
             return datetime.timedelta(0)
 
@@ -164,16 +163,29 @@ class tzwinbase(datetime.tzinfo):
     @staticmethod
     def list():
         """Return a list of all time zones known to the system."""
-        handle = winreg.ConnectRegistry(None, winreg.HKEY_LOCAL_MACHINE)
-        tzkey = winreg.OpenKey(handle, TZKEYNAME)
-        result = [winreg.EnumKey(tzkey, i)
-                  for i in range(winreg.QueryInfoKey(tzkey)[0])]
-        tzkey.Close()
-        handle.Close()
+        with winreg.ConnectRegistry(None, winreg.HKEY_LOCAL_MACHINE) as handle:
+            with winreg.OpenKey(handle, TZKEYNAME) as tzkey:
+                result = [winreg.EnumKey(tzkey, i)
+                          for i in range(winreg.QueryInfoKey(tzkey)[0])]
         return result
 
     def display(self):
         return self._display
+
+    def transitions(self, year):
+        """ Gets the transition day and times for a given year """
+        dston = picknthweekday(year, self._dstmonth, self._dstdayofweek,
+                               self._dsthour, self._dstminute,
+                               self._dstweeknumber)
+
+        dstoff = picknthweekday(year, self._stdmonth, self._stddayofweek,
+                                self._stdhour, self._stdminute,
+                                self._stdweeknumber)
+
+        # Ambiguous dates default to the STD side
+        dstoff -= self._dst_base_offset
+
+        return dston, dstoff
 
     def _isdst(self, dt):
         if not self._dstmonth:
@@ -182,21 +194,32 @@ class tzwinbase(datetime.tzinfo):
         elif dt is None:
             return None
 
-        dston = picknthweekday(dt.year, self._dstmonth, self._dstdayofweek,
-                               self._dsthour, self._dstminute,
-                               self._dstweeknumber)
-        dstoff = picknthweekday(dt.year, self._stdmonth, self._stddayofweek,
-                                self._stdhour, self._stdminute,
-                                self._stdweeknumber)
+        dston, dstoff = self.transitions(dt.year)
+
+        naive_dt = dt.replace(tzinfo=None)
+
+        # Check to see if we're in an ambiguous time
+        if self._fold is not None:
+            dst_base_offset = self._dst_base_offset
+            if dstoff <= naive_dt < dstoff + dst_base_offset:
+                return self._fold
+
         if dston < dstoff:
-            return dston <= dt.replace(tzinfo=None) < dstoff
+            return dston <= naive_dt < dstoff
         else:
-            return not dstoff <= dt.replace(tzinfo=None) < dston
+            return not dstoff <= naive_dt < dston
+
+    @property
+    def _dst_base_offset(self):
+        # Get the offset between DST and STD
+        return datetime.timedelta(minutes=(self._dstoffset - self._stdoffset)) 
 
 
 class tzwin(tzwinbase):
 
     def __init__(self, name):
+        super(tzwin, self).__init__()
+
         self._name = name
 
         # multiple contexts only possible in 2.7 and 3.1, we still support 2.6
@@ -237,10 +260,9 @@ class tzwin(tzwinbase):
 
 
 class tzwinlocal(tzwinbase):
-
     def __init__(self):
+        super(tzwinlocal, self).__init__()
         with winreg.ConnectRegistry(None, winreg.HKEY_LOCAL_MACHINE) as handle:
-
             with winreg.OpenKey(handle, TZLOCALKEYNAME) as tzlocalkey:
                 keydict = valuestodict(tzlocalkey)
 

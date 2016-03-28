@@ -12,9 +12,13 @@ import struct
 import time
 import sys
 import os
+import bisect
+import copy
+
+from contextlib import contextmanager
 
 from six import string_types, PY3
-from ._common import tzname_in_python2
+from ._common import tzname_in_python2, _tzinfo
 
 try:
     from .win import tzwin, tzwinlocal
@@ -26,7 +30,8 @@ parser = None
 rrule = None
 
 ZERO = datetime.timedelta(0)
-EPOCHORDINAL = datetime.datetime.utcfromtimestamp(0).toordinal()
+EPOCH = datetime.datetime.utcfromtimestamp(0)
+EPOCHORDINAL = EPOCH.toordinal()
 
 class tzutc(datetime.tzinfo):
 
@@ -136,10 +141,7 @@ class tzlocal(datetime.tzinfo):
         #
         # Here is a more stable implementation:
         #
-        timestamp = ((dt.toordinal() - EPOCHORDINAL) * 86400
-                     + dt.hour * 3600
-                     + dt.minute * 60
-                     + dt.second)
+        timestamp = _datetime_to_timestamp(dt)
         return time.localtime(timestamp+time.timezone).tm_isdst
 
     def __eq__(self, other):
@@ -157,7 +159,8 @@ class tzlocal(datetime.tzinfo):
 
 
 class _ttinfo(object):
-    __slots__ = ["offset", "delta", "isdst", "abbr", "isstd", "isgmt"]
+    __slots__ = ["offset", "delta", "isdst", "abbr",
+                 "isstd", "isgmt", "dstoffset"]
 
     def __init__(self):
         for attr in self.__slots__:
@@ -179,7 +182,8 @@ class _ttinfo(object):
                 self.isdst == other.isdst and
                 self.abbr == other.abbr and
                 self.isstd == other.isstd and
-                self.isgmt == other.isgmt)
+                self.isgmt == other.isgmt and
+                self.dstoffset == other.dstoffset)
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -196,12 +200,27 @@ class _ttinfo(object):
                 setattr(self, name, state[name])
 
 
-class tzfile(datetime.tzinfo):
+class _tzfile(object):
+    """
+    Lightweight class for holding the relevant transition and time zone
+    information read from binary tzfiles.
+    """
+    attrs = ['trans_list', 'trans_idx', 'ttinfo_list',
+             'ttinfo_std', 'ttinfo_dst', 'ttinfo_before', 'ttinfo_first']
+
+    def __init__(self, **kwargs):
+        for attr in self.attrs:
+            setattr(self, attr, kwargs.get(attr, None))
+
+
+class tzfile(_tzinfo):
 
     # http://www.twinsun.com/tz/tz-link.htm
     # ftp://ftp.iana.org/tz/tz*.tar.gz
 
     def __init__(self, fileobj, filename=None):
+        super(tzfile, self).__init__()
+
         file_opened_here = False
         if isinstance(fileobj, string_types):
             self._filename = fileobj
@@ -214,6 +233,24 @@ class tzfile(datetime.tzinfo):
         else:
             self._filename = repr(fileobj)
 
+        if fileobj is not None:
+            if not file_opened_here:
+                fileobj = _ContextWrapper(fileobj)
+
+            with fileobj as file_stream:
+                tzobj = self._read_tzfile(file_stream)
+
+            self._set_tzdata(tzobj)
+
+    def _set_tzdata(self, tzobj):
+        """ Set the time zone data of this object from a _tzfile object """
+        # Copy the relevant attributes over as private attributes
+        for attr in _tzfile.attrs:
+            setattr(self, '_' + attr, getattr(tzobj, attr))
+
+    def _read_tzfile(self, fileobj):
+        out = _tzfile()
+
         # From tzfile(5):
         #
         # The time zone information files used by tzset(3)
@@ -223,176 +260,169 @@ class tzfile(datetime.tzinfo):
         # six four-byte values of type long, written in a
         # ``standard'' byte order (the high-order  byte
         # of the value is written first).
-        try:
-            if fileobj.read(4).decode() != "TZif":
-                raise ValueError("magic not found")
+        if fileobj.read(4).decode() != "TZif":
+            raise ValueError("magic not found")
 
-            fileobj.read(16)
+        fileobj.read(16)
 
-            (
-                # The number of UTC/local indicators stored in the file.
-                ttisgmtcnt,
+        (
+            # The number of UTC/local indicators stored in the file.
+            ttisgmtcnt,
 
-                # The number of standard/wall indicators stored in the file.
-                ttisstdcnt,
+            # The number of standard/wall indicators stored in the file.
+            ttisstdcnt,
 
-                # The number of leap seconds for which data is
-                # stored in the file.
-                leapcnt,
+            # The number of leap seconds for which data is
+            # stored in the file.
+            leapcnt,
 
-                # The number of "transition times" for which data
-                # is stored in the file.
-                timecnt,
+            # The number of "transition times" for which data
+            # is stored in the file.
+            timecnt,
 
-                # The number of "local time types" for which data
-                # is stored in the file (must not be zero).
-                typecnt,
+            # The number of "local time types" for which data
+            # is stored in the file (must not be zero).
+            typecnt,
 
-                # The  number  of  characters  of "time zone
-                # abbreviation strings" stored in the file.
-                charcnt,
+            # The  number  of  characters  of "time zone
+            # abbreviation strings" stored in the file.
+            charcnt,
 
-            ) = struct.unpack(">6l", fileobj.read(24))
+        ) = struct.unpack(">6l", fileobj.read(24))
 
-            # The above header is followed by tzh_timecnt four-byte
-            # values  of  type long,  sorted  in ascending order.
-            # These values are written in ``standard'' byte order.
-            # Each is used as a transition time (as  returned  by
-            # time(2)) at which the rules for computing local time
-            # change.
+        # The above header is followed by tzh_timecnt four-byte
+        # values  of  type long,  sorted  in ascending order.
+        # These values are written in ``standard'' byte order.
+        # Each is used as a transition time (as  returned  by
+        # time(2)) at which the rules for computing local time
+        # change.
 
-            if timecnt:
-                self._trans_list = struct.unpack(">%dl" % timecnt,
-                                                 fileobj.read(timecnt*4))
-            else:
-                self._trans_list = []
+        if timecnt:
+            out.trans_list = list(struct.unpack(">%dl" % timecnt,
+                                                  fileobj.read(timecnt*4)))
+        else:
+            out.trans_list = []
 
-            # Next come tzh_timecnt one-byte values of type unsigned
-            # char; each one tells which of the different types of
-            # ``local time'' types described in the file is associated
-            # with the same-indexed transition time. These values
-            # serve as indices into an array of ttinfo structures that
-            # appears next in the file.
+        # Next come tzh_timecnt one-byte values of type unsigned
+        # char; each one tells which of the different types of
+        # ``local time'' types described in the file is associated
+        # with the same-indexed transition time. These values
+        # serve as indices into an array of ttinfo structures that
+        # appears next in the file.
 
-            if timecnt:
-                self._trans_idx = struct.unpack(">%dB" % timecnt,
-                                                fileobj.read(timecnt))
-            else:
-                self._trans_idx = []
+        if timecnt:
+            out.trans_idx = struct.unpack(">%dB" % timecnt,
+                                            fileobj.read(timecnt))
+        else:
+            out.trans_idx = []
 
-            # Each ttinfo structure is written as a four-byte value
-            # for tt_gmtoff  of  type long,  in  a  standard  byte
-            # order, followed  by a one-byte value for tt_isdst
-            # and a one-byte  value  for  tt_abbrind.   In  each
-            # structure, tt_gmtoff  gives  the  number  of
-            # seconds to be added to UTC, tt_isdst tells whether
-            # tm_isdst should be set by  localtime(3),  and
-            # tt_abbrind serves  as an index into the array of
-            # time zone abbreviation characters that follow the
-            # ttinfo structure(s) in the file.
+        # Each ttinfo structure is written as a four-byte value
+        # for tt_gmtoff  of  type long,  in  a  standard  byte
+        # order, followed  by a one-byte value for tt_isdst
+        # and a one-byte  value  for  tt_abbrind.   In  each
+        # structure, tt_gmtoff  gives  the  number  of
+        # seconds to be added to UTC, tt_isdst tells whether
+        # tm_isdst should be set by  localtime(3),  and
+        # tt_abbrind serves  as an index into the array of
+        # time zone abbreviation characters that follow the
+        # ttinfo structure(s) in the file.
 
-            ttinfo = []
+        ttinfo = []
 
-            for i in range(typecnt):
-                ttinfo.append(struct.unpack(">lbb", fileobj.read(6)))
+        for i in range(typecnt):
+            ttinfo.append(struct.unpack(">lbb", fileobj.read(6)))
 
-            abbr = fileobj.read(charcnt).decode()
+        abbr = fileobj.read(charcnt).decode()
 
-            # Then there are tzh_leapcnt pairs of four-byte
-            # values, written in  standard byte  order;  the
-            # first  value  of  each pair gives the time (as
-            # returned by time(2)) at which a leap second
-            # occurs;  the  second  gives the  total  number of
-            # leap seconds to be applied after the given time.
-            # The pairs of values are sorted in ascending order
-            # by time.
+        # Then there are tzh_leapcnt pairs of four-byte
+        # values, written in  standard byte  order;  the
+        # first  value  of  each pair gives the time (as
+        # returned by time(2)) at which a leap second
+        # occurs;  the  second  gives the  total  number of
+        # leap seconds to be applied after the given time.
+        # The pairs of values are sorted in ascending order
+        # by time.
 
-            # Not used, for now (but read anyway for correct file position)
-            if leapcnt:
-                leap = struct.unpack(">%dl" % (leapcnt*2),
-                                     fileobj.read(leapcnt*8))
+        # Not used, for now (but read anyway for correct file position)
+        if leapcnt:
+            leap = struct.unpack(">%dl" % (leapcnt*2),
+                                 fileobj.read(leapcnt*8))
 
-            # Then there are tzh_ttisstdcnt standard/wall
-            # indicators, each stored as a one-byte value;
-            # they tell whether the transition times associated
-            # with local time types were specified as standard
-            # time or wall clock time, and are used when
-            # a time zone file is used in handling POSIX-style
-            # time zone environment variables.
+        # Then there are tzh_ttisstdcnt standard/wall
+        # indicators, each stored as a one-byte value;
+        # they tell whether the transition times associated
+        # with local time types were specified as standard
+        # time or wall clock time, and are used when
+        # a time zone file is used in handling POSIX-style
+        # time zone environment variables.
 
-            if ttisstdcnt:
-                isstd = struct.unpack(">%db" % ttisstdcnt,
-                                      fileobj.read(ttisstdcnt))
+        if ttisstdcnt:
+            isstd = struct.unpack(">%db" % ttisstdcnt,
+                                  fileobj.read(ttisstdcnt))
 
-            # Finally, there are tzh_ttisgmtcnt UTC/local
-            # indicators, each stored as a one-byte value;
-            # they tell whether the transition times associated
-            # with local time types were specified as UTC or
-            # local time, and are used when a time zone file
-            # is used in handling POSIX-style time zone envi-
-            # ronment variables.
+        # Finally, there are tzh_ttisgmtcnt UTC/local
+        # indicators, each stored as a one-byte value;
+        # they tell whether the transition times associated
+        # with local time types were specified as UTC or
+        # local time, and are used when a time zone file
+        # is used in handling POSIX-style time zone envi-
+        # ronment variables.
 
-            if ttisgmtcnt:
-                isgmt = struct.unpack(">%db" % ttisgmtcnt,
-                                      fileobj.read(ttisgmtcnt))
-
-            # ** Everything has been read **
-        finally:
-            if file_opened_here:
-                fileobj.close()
+        if ttisgmtcnt:
+            isgmt = struct.unpack(">%db" % ttisgmtcnt,
+                                  fileobj.read(ttisgmtcnt))
 
         # Build ttinfo list
-        self._ttinfo_list = []
+        out.ttinfo_list = []
         for i in range(typecnt):
             gmtoff, isdst, abbrind = ttinfo[i]
             # Round to full-minutes if that's not the case. Python's
             # datetime doesn't accept sub-minute timezones. Check
             # http://python.org/sf/1447945 for some information.
-            gmtoff = (gmtoff+30)//60*60
+            gmtoff = 60 * ((gmtoff + 30) // 60)
             tti = _ttinfo()
             tti.offset = gmtoff
+            tti.dstoffset = datetime.timedelta(0)
             tti.delta = datetime.timedelta(seconds=gmtoff)
             tti.isdst = isdst
             tti.abbr = abbr[abbrind:abbr.find('\x00', abbrind)]
             tti.isstd = (ttisstdcnt > i and isstd[i] != 0)
             tti.isgmt = (ttisgmtcnt > i and isgmt[i] != 0)
-            self._ttinfo_list.append(tti)
+            out.ttinfo_list.append(tti)
 
         # Replace ttinfo indexes for ttinfo objects.
-        trans_idx = []
-        for idx in self._trans_idx:
-            trans_idx.append(self._ttinfo_list[idx])
-        self._trans_idx = tuple(trans_idx)
+        out.trans_idx = [out.ttinfo_list[idx] for idx in out.trans_idx]
 
         # Set standard, dst, and before ttinfos. before will be
         # used when a given time is before any transitions,
         # and will be set to the first non-dst ttinfo, or to
         # the first dst, if all of them are dst.
-        self._ttinfo_std = None
-        self._ttinfo_dst = None
-        self._ttinfo_before = None
-        if self._ttinfo_list:
-            if not self._trans_list:
-                self._ttinfo_std = self._ttinfo_first = self._ttinfo_list[0]
+        out.ttinfo_std = None
+        out.ttinfo_dst = None
+        out.ttinfo_before = None
+        if out.ttinfo_list:
+            if not out.trans_list:
+                out.ttinfo_std = out.ttinfo_first = out.ttinfo_list[0]
             else:
                 for i in range(timecnt-1, -1, -1):
-                    tti = self._trans_idx[i]
-                    if not self._ttinfo_std and not tti.isdst:
-                        self._ttinfo_std = tti
-                    elif not self._ttinfo_dst and tti.isdst:
-                        self._ttinfo_dst = tti
-                    if self._ttinfo_std and self._ttinfo_dst:
-                        break
-                else:
-                    if self._ttinfo_dst and not self._ttinfo_std:
-                        self._ttinfo_std = self._ttinfo_dst
+                    tti = out.trans_idx[i]
+                    if not out.ttinfo_std and not tti.isdst:
+                        out.ttinfo_std = tti
+                    elif not out.ttinfo_dst and tti.isdst:
+                        out.ttinfo_dst = tti
 
-                for tti in self._ttinfo_list:
-                    if not tti.isdst:
-                        self._ttinfo_before = tti
+                    if out.ttinfo_std and out.ttinfo_dst:
                         break
                 else:
-                    self._ttinfo_before = self._ttinfo_list[0]
+                    if out.ttinfo_dst and not out.ttinfo_std:
+                        out.ttinfo_std = out.ttinfo_dst
+
+                for tti in out.ttinfo_list:
+                    if not tti.isdst:
+                        out.ttinfo_before = tti
+                        break
+                else:
+                    out.ttinfo_before = out.ttinfo_list[0]
 
         # Now fix transition times to become relative to wall time.
         #
@@ -401,43 +431,106 @@ class tzfile(datetime.tzinfo):
         # isgmt are off, so it should be in wall time. OTOH, it's
         # always in gmt time. Let me know if you have comments
         # about this.
-        laststdoffset = 0
-        self._trans_list = list(self._trans_list)
-        for i in range(len(self._trans_list)):
-            tti = self._trans_idx[i]
+        laststdoffset = None
+        for i, tti in enumerate(out.trans_idx):
             if not tti.isdst:
-                # This is std time.
-                self._trans_list[i] += tti.offset
-                laststdoffset = tti.offset
+                offset = tti.offset
+                laststdoffset = offset
             else:
-                # This is dst time. Convert to std.
-                self._trans_list[i] += laststdoffset
-        self._trans_list = tuple(self._trans_list)
+                if laststdoffset is not None:
+                    # Store the DST offset as well and update it in the list
+                    tti.dstoffset = tti.offset - laststdoffset
+                    out.trans_idx[i] = tti
 
-    def _find_ttinfo(self, dt, laststd=0):
-        timestamp = ((dt.toordinal() - EPOCHORDINAL) * 86400
-                     + dt.hour * 3600
-                     + dt.minute * 60
-                     + dt.second)
-        idx = 0
-        for trans in self._trans_list:
-            if timestamp < trans:
-                break
-            idx += 1
-        else:
-            return self._ttinfo_std
-        if idx == 0:
-            return self._ttinfo_before
-        if laststd:
-            while idx > 0:
-                tti = self._trans_idx[idx-1]
-                if not tti.isdst:
-                    return tti
-                idx -= 1
+                offset = laststdoffset or 0
+
+            out.trans_list[i] += offset
+
+        # In case we missed any DST offsets on the way in for some reason, make
+        # a second pass over the list, looking for the /next/ DST offset.
+        laststdoffset = None
+        for i in reversed(range(len(out.trans_idx))):
+            tti = out.trans_idx[i]
+            if tti.isdst:
+                if not (tti.dstoffset or laststdoffset is None):
+                    tti.dstoffset = tti.offset - laststdoffset
             else:
-                return self._ttinfo_std
-        else:
-            return self._trans_idx[idx-1]
+                laststdoffset = tti.offset
+
+            if not isinstance(tti.dstoffset, datetime.timedelta):
+                tti.dstoffset = datetime.timedelta(seconds=tti.dstoffset)
+            
+            out.trans_idx[i] = tti
+
+        out.trans_idx = tuple(out.trans_idx)
+        out.trans_list = tuple(out.trans_list)
+
+        return out
+
+    def _find_last_transition(self, dt):
+        # If there's no list, there are no transitions to find
+        if not self._trans_list:
+            return None
+
+        timestamp = _datetime_to_timestamp(dt)
+
+        # Find where the timestamp fits in the transition list - if the
+        # timestamp is a transition time, it's part of the "after" period.
+        idx = bisect.bisect_right(self._trans_list, timestamp)
+
+        # We want to know when the previous transition was, so subtract off 1
+        return idx - 1
+
+    def _get_ttinfo(self, idx):
+        # For no list or after the last transition, default to _ttinfo_std
+        if idx is None or (idx + 1) == len(self._trans_list):
+            return self._ttinfo_std
+
+        # If there is a list and the time is before it, return _ttinfo_before
+        if idx < 0:
+            return self._ttinfo_before
+
+        return self._trans_idx[idx]
+
+    def _find_ttinfo(self, dt):
+        idx = self._resolve_ambiguous_time(dt)
+
+        return self._get_ttinfo(idx)
+
+    def _resolve_ambiguous_time(self, dt, idx=None):
+        if idx is None:
+            idx = self._find_last_transition(dt)
+
+        # If we're fold-naive or we have no transitions, return the index.
+        if self._fold is None or idx is None:
+            return idx
+
+        timestamp = _datetime_to_timestamp(dt)
+        tti = self._get_ttinfo(idx)
+
+        if idx > 0:
+            # Calculate the difference in offsets from the current to previous
+            od = self._get_ttinfo(idx - 1).offset - tti.offset
+            tt = self._trans_list[idx]      # Transition time
+
+            if timestamp < tt + od:
+                if self._fold:
+                    return idx - 1
+                else:
+                    return idx
+
+        if idx < len(self._trans_list):
+            # Calculate the difference in offsets from the previous to current
+            od = self._get_ttinfo(idx + 1).offset - tti.offset
+            tt = self._trans_list[idx + 1]
+
+            if timestamp > tt - od:
+                if self._fold:
+                    return idx + 1
+                else:
+                    return idx
+
+        return idx
 
     def utcoffset(self, dt):
         if dt is None:
@@ -445,26 +538,21 @@ class tzfile(datetime.tzinfo):
 
         if not self._ttinfo_std:
             return ZERO
+
         return self._find_ttinfo(dt).delta
 
     def dst(self, dt):
         if not self._ttinfo_dst:
             return ZERO
+        
         tti = self._find_ttinfo(dt)
+
         if not tti.isdst:
             return ZERO
 
         # The documentation says that utcoffset()-dst() must
         # be constant for every dt.
-        return tti.delta-self._find_ttinfo(dt, laststd=1).delta
-
-        # An alternative for that would be:
-        #
-        # return self._ttinfo_dst.offset-self._ttinfo_std.offset
-        #
-        # However, this class stores historical changes in the
-        # dst offset, so I belive that this wouldn't be the right
-        # way to implement this.
+        return tti.dstoffset
 
     @tzname_in_python2
     def tzname(self, dt):
@@ -486,9 +574,10 @@ class tzfile(datetime.tzinfo):
         return "%s(%s)" % (self.__class__.__name__, repr(self._filename))
 
     def __reduce__(self):
-        if not os.path.isfile(self._filename):
-            raise ValueError("Unpickable %s class" % self.__class__.__name__)
-        return (self.__class__, (self._filename,))
+        return self.__reduce_ex__(None)
+
+    def __reduce_ex__(self, protocol):
+        return (self.__class__, (None, self._filename), self.__dict__)
 
 
 class tzrange(datetime.tzinfo):
@@ -975,5 +1064,33 @@ def gettz(name=None):
                         elif name in time.tzname:
                             tz = tzlocal()
     return tz
+
+def _total_seconds(td):
+    # Python 2.6 doesn't have a total_seconds() method on timedelta objects
+    return ((td.seconds + td.days * 86400) * 1000000 +
+            td.microseconds) // 1000000
+
+_total_seconds = getattr(datetime.timedelta, 'total_seconds', _total_seconds)
+
+def _datetime_to_timestamp(dt):
+    """
+    Convert a :class:`datetime.datetime` object to an epoch timestamp in seconds
+    since January 1, 1970, ignoring the time zone.
+    """
+    return _total_seconds((dt.replace(tzinfo=None) - EPOCH))
+
+class _ContextWrapper(object):
+    """
+    Class for wrapping contexts so that they are passed through in a 
+    with statement.
+    """
+    def __init__(self, context):
+        self.context = context
+
+    def __enter__(self):
+        return self.context
+
+    def __exit__(*args, **kwargs):
+        pass
 
 # vim:ts=4:sw=4:et

@@ -7,6 +7,8 @@ except ImportError:
 import os
 import subprocess
 import warnings
+import tempfile
+import pickle
 
 
 class WarningTestMixin(object):
@@ -55,6 +57,42 @@ class WarningTestMixin(object):
         else:
             with context:
                 callable(*args, **kwargs)
+
+
+class PicklableMixin(object):
+    def _get_nobj_bytes(self, obj, dump_kwargs, load_kwargs):
+        """
+        Pickle and unpickle an object using ``pickle.dumps`` / ``pickle.loads``
+        """
+        pkl = pickle.dumps(obj, **dump_kwargs)
+        return pickle.loads(pkl, **load_kwargs)
+
+    def _get_nobj_file(self, obj, dump_kwargs, load_kwargs):
+        """
+        Pickle and unpickle an object using ``pickle.dump`` / ``pickle.load`` on
+        a temporary file.
+        """
+        with tempfile.TemporaryFile('w+b') as pkl:
+            pickle.dump(obj, pkl, **dump_kwargs)
+            pkl.seek(0)         # Reset the file to the beginning to read it
+            nobj = pickle.load(pkl, **load_kwargs)
+
+        return nobj
+
+    def assertPicklable(self, obj, asfile=False,
+                        dump_kwargs=None, load_kwargs=None):
+        """
+        Assert that an object can be pickled and unpickled. This assertion
+        assumes that the desired behavior is that the unpickled object compares
+        equal to the original object, but is not the same object.
+        """
+        get_nobj = self._get_nobj_file if asfile else self._get_nobj_bytes
+        dump_kwargs = dump_kwargs or {}
+        load_kwargs = load_kwargs or {}
+
+        nobj = get_nobj(obj, dump_kwargs, load_kwargs)
+        self.assertIsNot(obj, nobj)
+        self.assertEqual(obj, nobj)
 
 
 class TZWinContext(object):
