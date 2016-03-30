@@ -813,4 +813,18 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(parse(dtstr, yearfirst=True, dayfirst=True),
                          datetime(2009, 7, 1))
 
+    def testUnambiguousYearFirst(self):
+        dtstr = '2015 09 25'
+        self.assertEqual(parse(dtstr, yearfirst=True),
+                         datetime(2015, 9, 25))
+
+    def testUnambiguousDayFirst(self):
+        dtstr = '2015 09 25'
+        self.assertEqual(parse(dtstr, dayfirst=True), 
+                         datetime(2015, 9, 25))
+
+    def testUnambiguousDayFirstYearFirst(self):
+        dtstr = '2015 09 25'
+        self.assertEqual(parse(dtstr, dayfirst=True, yearfirst=True),
+                         datetime(2015, 9, 25))
 

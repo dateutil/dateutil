@@ -464,7 +464,7 @@ class _ymd(list):
                     self.find_probable_year_index(_timelex.split(self.tzstr)) == 0 or \
                    (yearfirst and self[1] <= 12 and self[2] <= 31):
                     # 99-01-01
-                    if dayfirst:
+                    if dayfirst and self[2] <= 12:
                         year, day, month = self
                     else:
                         year, month, day = self
