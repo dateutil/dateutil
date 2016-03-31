@@ -13,5 +13,6 @@
 *.sh text
 RELEASING text
 
-# NEWS should be crlf
+# NEWS and Windows batch files should be crlf
 NEWS eol=crlf
+*.bat eol=crlf
