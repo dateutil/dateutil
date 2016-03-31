@@ -6,7 +6,6 @@ import tempfile
 import shutil
 import json
 
-from subprocess import check_call
 from tarfile import TarFile
 from pkgutil import get_data
 from io import BytesIO
