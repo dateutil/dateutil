@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-from ._common import unittest, WarningTestMixin
+from ._common import unittest, WarningTestMixin, NotAValue
 
 import calendar
 from datetime import datetime, date
 
 from dateutil.relativedelta import *
+
 
 class RelativeDeltaTest(WarningTestMixin, unittest.TestCase):
     now = datetime(2003, 9, 17, 20, 54, 47, 282310)
@@ -191,6 +192,10 @@ class RelativeDeltaTest(WarningTestMixin, unittest.TestCase):
         with self.assertRaises(TypeError):
             relativedelta(days=3) + 9
 
+    def testAdditionUnsupportedType(self):
+        # For unsupported types that define their own comparators, etc.
+        self.assertIs(relativedelta(days=1) + NotAValue, NotAValue)
+
     def testSubtraction(self):
         self.assertEqual(relativedelta(days=10) -
                          relativedelta(years=1, months=2, days=3, hours=4,
@@ -210,15 +215,24 @@ class RelativeDeltaTest(WarningTestMixin, unittest.TestCase):
         with self.assertRaises(TypeError):
             relativedelta(hours=12) - 14
 
+    def testSubtractionUnsupportedType(self):
+        self.assertIs(relativedelta(days=1) + NotAValue, NotAValue)
+
     def testMultiplication(self):
         self.assertEqual(datetime(2000, 1, 1) + relativedelta(days=1) * 28,
                          datetime(2000, 1, 29))
         self.assertEqual(datetime(2000, 1, 1) + 28 * relativedelta(days=1),
                          datetime(2000, 1, 29))
 
+    def testMultiplicationUnsupportedType(self):
+        self.assertIs(relativedelta(days=1) * NotAValue, NotAValue)
+
     def testDivision(self):
         self.assertEqual(datetime(2000, 1, 1) + relativedelta(days=28) / 28,
                          datetime(2000, 1, 2))
+
+    def testDivisionUnsupportedType(self):
+        self.assertIs(relativedelta(days=1) / NotAValue, NotAValue)
 
     def testBoolean(self):
         self.assertFalse(relativedelta(days=0))
@@ -238,6 +252,9 @@ class RelativeDeltaTest(WarningTestMixin, unittest.TestCase):
     def testInequalityTypeMismatch(self):
         # Different type
         self.assertFalse(relativedelta(year=1) == 19)
+
+    def testInequalityUnsupportedType(self):
+        self.assertIs(relativedelta(hours=3) == NotAValue, NotAValue)
 
     def testInequalityWeekdays(self):
         # Different weekdays
