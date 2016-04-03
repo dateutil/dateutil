@@ -14,7 +14,7 @@ before_install:
 install:
   - pip install six
   - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then pip install unittest2; fi
-  - ./ci_tools/retry.sh python updatezinfo.py
+  - ./ci_tools/retry.sh coverage run --omit=setup.py,dateutil/test/* updatezinfo.py
 script:
   - coverage run --omit=setup.py,dateutil/test/* setup.py test
 after_success:
