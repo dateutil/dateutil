@@ -25,10 +25,6 @@ try:
 except ImportError:
     tzwin = tzwinlocal = None
 
-relativedelta = None
-parser = None
-rrule = None
-
 ZERO = datetime.timedelta(0)
 EPOCH = datetime.datetime.utcfromtimestamp(0)
 EPOCHORDINAL = EPOCH.toordinal()
@@ -46,11 +42,14 @@ class tzutc(datetime.tzinfo):
         return "UTC"
 
     def __eq__(self, other):
+        if not isinstance(other, (tzutc, tzoffset)):
+            return NotImplemented
+
         return (isinstance(other, tzutc) or
                 (isinstance(other, tzoffset) and other._offset == ZERO))
 
     def __ne__(self, other):
-        return not self.__eq__(other)
+        return not (self == other)
 
     def __repr__(self):
         return "%s()" % self.__class__.__name__
@@ -75,11 +74,13 @@ class tzoffset(datetime.tzinfo):
         return self._name
 
     def __eq__(self, other):
-        return (isinstance(other, tzoffset) and
-                self._offset == other._offset)
+        if not isinstance(other, tzoffset):
+            return NotImplemented
+
+        return self._offset == other._offset
 
     def __ne__(self, other):
-        return not self.__eq__(other)
+        return not (self == other)
 
     def __repr__(self):
         return "%s(%s, %s)" % (self.__class__.__name__,
@@ -145,12 +146,14 @@ class tzlocal(datetime.tzinfo):
         return time.localtime(timestamp+time.timezone).tm_isdst
 
     def __eq__(self, other):
-        return (isinstance(other, tzlocal) and
-                (self._std_offset == other._std_offset and
-                 self._dst_offset == other._dst_offset))
+        if not isinstance(other, tzlocal):
+            return NotImplemented
+
+        return (self._std_offset == other._std_offset and
+                self._dst_offset == other._dst_offset)
 
     def __ne__(self, other):
-        return not self.__eq__(other)
+        return not (self == other)
 
     def __repr__(self):
         return "%s()" % self.__class__.__name__
@@ -176,7 +179,8 @@ class _ttinfo(object):
 
     def __eq__(self, other):
         if not isinstance(other, _ttinfo):
-            return False
+            return NotImplemented
+
         return (self.offset == other.offset and
                 self.delta == other.delta and
                 self.isdst == other.isdst and
@@ -186,7 +190,7 @@ class _ttinfo(object):
                 self.dstoffset == other.dstoffset)
 
     def __ne__(self, other):
-        return not self.__eq__(other)
+        return not (self == other)
 
     def __getstate__(self):
         state = {}
@@ -562,13 +566,13 @@ class tzfile(_tzinfo):
 
     def __eq__(self, other):
         if not isinstance(other, tzfile):
-            return False
+            return NotImplemented
         return (self._trans_list == other._trans_list and
                 self._trans_idx == other._trans_idx and
                 self._ttinfo_list == other._ttinfo_list)
 
     def __ne__(self, other):
-        return not self.__eq__(other)
+        return not (self == other)
 
     def __repr__(self):
         return "%s(%s)" % (self.__class__.__name__, repr(self._filename))
@@ -585,10 +589,11 @@ class tzrange(datetime.tzinfo):
                  dstabbr=None, dstoffset=None,
                  start=None, end=None):
         global relativedelta
-        if not relativedelta:
-            from dateutil import relativedelta
+        from dateutil import relativedelta
+
         self._std_abbr = stdabbr
         self._dst_abbr = dstabbr
+
         if stdoffset is not None:
             self._std_offset = datetime.timedelta(seconds=stdoffset)
         else:
@@ -646,7 +651,8 @@ class tzrange(datetime.tzinfo):
 
     def __eq__(self, other):
         if not isinstance(other, tzrange):
-            return False
+            return NotImplemented
+
         return (self._std_abbr == other._std_abbr and
                 self._dst_abbr == other._dst_abbr and
                 self._std_offset == other._std_offset and
@@ -664,11 +670,10 @@ class tzrange(datetime.tzinfo):
 
 
 class tzstr(tzrange):
-
     def __init__(self, s):
         global parser
-        if not parser:
-            from dateutil import parser
+        from dateutil import parser
+
         self._s = s
 
         res = parser._parsetz(s)
@@ -820,8 +825,7 @@ class _tzicalvtz(datetime.tzinfo):
 class tzical(object):
     def __init__(self, fileobj):
         global rrule
-        if not rrule:
-            from dateutil import rrule
+        from dateutil import rrule
 
         if isinstance(fileobj, string_types):
             self._s = fileobj

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 from ._common import unittest, TZWinContext, PicklableMixin
+from ._common import ComparesEqual
 
 from datetime import datetime, timedelta
 from datetime import time as dt_time
@@ -155,6 +156,13 @@ class TzUTCTest(unittest.TestCase):
 
         self.assertNotEqual(UTC, UTCp4)
 
+    def testInequalityInteger(self):
+        self.assertFalse(tz.tzutc() == 7)
+        self.assertNotEqual(tz.tzutc(), 7)
+
+    def testInequalityUnsupported(self):
+        self.assertEqual(tz.tzutc(), ComparesEqual)
+
     def testRepr(self):
         UTC = tz.tzutc()
         self.assertEqual(repr(UTC), 'tzutc()')
@@ -165,6 +173,49 @@ class TzUTCTest(unittest.TestCase):
         tz_utc = tz.tzutc()
         self.assertEqual(dt_time(13, 20, tzinfo=tz_utc).utcoffset(),
                          timedelta(0))
+
+
+class TzOffsetTest(unittest.TestCase):
+    def testTzNameNone(self):
+        gmt5 = tz.tzoffset(None, -18000)       # -5:00
+        self.assertIs(datetime(2003, 10, 26, 0, 0, tzinfo=gmt5).tzname(),
+                      None)
+
+    def testTimeOnlyOffset(self):
+        # tzoffset doesn't care
+        tz_offset = tz.tzoffset('+3', 3600)
+        self.assertEqual(dt_time(13, 20, tzinfo=tz_offset).utcoffset(),
+                         timedelta(seconds=3600))
+
+    def testTzOffsetRepr(self):
+        tname = 'EST'
+        tzo = tz.tzoffset(tname, -5 * 3600)
+        self.assertEqual(repr(tzo), "tzoffset(" + repr(tname) + ", -18000)")
+
+    def testEquality(self):
+        utc = tz.tzoffset('UTC', 0)
+        gmt = tz.tzoffset('GMT', 0)
+
+        self.assertEqual(utc, gmt)
+
+    def testUTCEquality(self):
+        utc = tz.tzutc()
+        o_utc = tz.tzoffset('UTC', 0)
+
+        self.assertEqual(utc, o_utc)
+        self.assertEqual(o_utc, utc)
+
+    def testInequalityInvalid(self):
+        tzo = tz.tzoffset('-3', -3 * 3600)
+        self.assertFalse(tzo == -3)
+        self.assertNotEqual(tzo, -3)
+
+    def testInequalityUnsupported(self):
+        tzo = tz.tzoffset('-5', -5 * 3600)
+
+        self.assertTrue(tzo == ComparesEqual)
+        self.assertFalse(tzo != ComparesEqual)
+        self.assertEqual(tzo, ComparesEqual)
 
 
 class TzFoldMixin(object):
@@ -495,11 +546,6 @@ class TZTest(unittest.TestCase, TzFoldMixin):
         self.assertIsNot(CHI, CHI_COPY)
         self.assertEqual(CHI, CHI_COPY)
 
-    def testTzNameNone(self):
-        gmt5 = tz.tzoffset(None, -18000)       # -5:00
-        self.assertIs(datetime(2003, 10, 26, 0, 0, tzinfo=gmt5).tzname(),
-                      None)
-
     def testICalStart1(self):
         tzc = tz.tzical(StringIO(TZICAL_EST5EDT)).get()
         self.assertEqual(datetime(2003, 4, 6, 1, 59, tzinfo=tzc).tzname(), "EST")
@@ -577,12 +623,6 @@ class TZTest(unittest.TestCase, TzFoldMixin):
                           datetime(2007, 8, 6, 6, 10, tzinfo=tz.tzstr("GMT+2")))
         self.assertEqual(dt.astimezone(tz=tz.gettz("UTC-2")),
                           datetime(2007, 8, 6, 2, 10, tzinfo=tz.tzstr("UTC-2")))
-
-    def testTimeOnlyOffset(self):
-        # tzoffset doesn't care
-        tz_offset = tz.tzoffset('+3', 3600)
-        self.assertEqual(dt_time(13, 20, tzinfo=tz_offset).utcoffset(),
-                         timedelta(seconds=3600))
 
     def testTimeOnlyLocal(self):
         # tzlocal returns None

@@ -166,3 +166,36 @@ class NotAValueClass(object):
 
 NotAValue = NotAValueClass()
 
+
+class ComparesEqualClass(object):
+    """
+    A class that is always equal to whatever you compare it to.
+    """
+
+    def __eq__(self, other):
+        return True
+
+    def __ne__(self, other):
+        return False
+
+    def __le__(self, other):
+        return True
+
+    def __ge__(self, other):
+        return True
+
+    def __lt__(self, other):
+        return False
+
+    def __gt__(self, other):
+        return False
+
+    __req__ = __eq__
+    __rne__ = __ne__
+    __rle__ = __le__
+    __rge__ = __ge__
+    __rlt__ = __lt__
+    __rgt__ = __gt__
+
+ComparesEqual = ComparesEqualClass()
+
