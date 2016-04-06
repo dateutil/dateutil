@@ -965,6 +965,26 @@ class TzWinTest(unittest.TestCase, TzWinFoldMixin):
 
             self.assertNotEqual(tw1, tw2)
 
+    def testTzWinEqualityInvalid(self):
+        # Compare to objects that do not implement comparison with this
+        # (should default to False)
+        UTC = tz.tzutc()
+        EST = tz.tzwin('Eastern Standard Time')
+        
+        self.assertFalse(EST == UTC)
+        self.assertFalse(EST == 1)
+        self.assertFalse(UTC == EST)
+
+        self.assertTrue(EST != UTC)
+        self.assertTrue(EST != 1)
+
+    def testTzWinInequalityUnsupported(self):
+        # Compare it to an object that is promiscuous about equality, but for
+        # which tzwin does not implement an equality operator. 
+        EST = tz.tzwin('Eastern Standard Time')
+        self.assertTrue(EST == ComparesEqual)
+        self.assertFalse(EST != ComparesEqual)
+
     def testTzwinTimeOnlyDST(self):
         # For zones with DST, .dst() should return None
         tw_est = tz.tzwin('Eastern Standard Time')
