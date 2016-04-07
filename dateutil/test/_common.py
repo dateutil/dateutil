@@ -138,3 +138,64 @@ class TZWinContext(object):
         if p.returncode:
             raise OSError('Failed to set current time zone: ' +
                           (err or 'Unknown error.'))
+
+###
+# Utility classes
+class NotAValueClass(object):
+    """
+    A class analogous to NaN that has operations defined for any type.
+    """
+    def _op(self, other):
+        return self             # Operation with NotAValue returns NotAValue
+
+    def _cmp(self, other):
+        return False
+
+    __add__ = __radd__ = _op
+    __sub__ = __rsub__ = _op
+    __mul__ = __rmul__ = _op
+    __div__ = __rdiv__ = _op
+    __truediv__ = __rtruediv__ = _op
+    __floordiv__ = __rfloordiv__ = _op
+
+    __lt__ = __rlt__ = _op
+    __gt__ = __rgt__ = _op
+    __eq__ = __req__ = _op
+    __le__ = __rle__ = _op
+    __ge__ = __rge__ = _op
+
+NotAValue = NotAValueClass()
+
+
+class ComparesEqualClass(object):
+    """
+    A class that is always equal to whatever you compare it to.
+    """
+
+    def __eq__(self, other):
+        return True
+
+    def __ne__(self, other):
+        return False
+
+    def __le__(self, other):
+        return True
+
+    def __ge__(self, other):
+        return True
+
+    def __lt__(self, other):
+        return False
+
+    def __gt__(self, other):
+        return False
+
+    __req__ = __eq__
+    __rne__ = __ne__
+    __rle__ = __le__
+    __rge__ = __ge__
+    __rlt__ = __lt__
+    __rgt__ = __gt__
+
+ComparesEqual = ComparesEqualClass()
+

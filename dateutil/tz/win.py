@@ -116,8 +116,10 @@ class tzwinbase(_tzinfo):
     """tzinfo class based on win32's timezones available in the registry."""
     def __eq__(self, other):
         # Compare on all relevant dimensions, including name.
-        return (isinstance(other, tzwinbase) and
-                (self._stdoffset == other._stdoffset and
+        if not isinstance(other, tzwinbase):
+            return NotImplemented
+
+        return  (self._stdoffset == other._stdoffset and
                  self._dstoffset == other._dstoffset and
                  self._stddayofweek == other._stddayofweek and
                  self._dstdayofweek == other._dstdayofweek and
@@ -128,10 +130,10 @@ class tzwinbase(_tzinfo):
                  self._stdminute == other._stdminute and
                  self._dstminute == other._dstminute and
                  self._stdname == other._stdname and
-                 self._dstname == other._dstname))
+                 self._dstname == other._dstname)
 
     def __ne__(self, other):
-        return not self.__eq__(other)
+        return not (self == other)
 
     def utcoffset(self, dt):
         isdst = self._isdst(dt)

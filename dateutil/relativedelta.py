@@ -348,7 +348,7 @@ class relativedelta(object):
                                  microsecond=(other.microsecond or
                                               self.microsecond))
         if not isinstance(other, datetime.date):
-            raise TypeError("unsupported type for add operation")
+            return NotImplemented
         elif self._has_time and not isinstance(other, datetime.datetime):
             other = datetime.datetime.fromordinal(other.toordinal())
         year = (self.year or other.year)+self.years
@@ -397,7 +397,7 @@ class relativedelta(object):
 
     def __sub__(self, other):
         if not isinstance(other, relativedelta):
-            raise TypeError("unsupported type for sub operation")
+            return NotImplemented   # In case the other object defines __rsub__
         return self.__class__(years=self.years - other.years,
                              months=self.months - other.months,
                              days=self.days - other.days,
@@ -454,7 +454,11 @@ class relativedelta(object):
     __nonzero__ = __bool__
 
     def __mul__(self, other):
-        f = float(other)
+        try:
+            f = float(other)
+        except TypeError:
+            return NotImplemented
+
         return self.__class__(years=int(self.years * f),
                              months=int(self.months * f),
                              days=int(self.days * f),
@@ -476,7 +480,7 @@ class relativedelta(object):
 
     def __eq__(self, other):
         if not isinstance(other, relativedelta):
-            return False
+            return NotImplemented
         if self.weekday or other.weekday:
             if not self.weekday or not other.weekday:
                 return False
@@ -505,7 +509,12 @@ class relativedelta(object):
         return not self.__eq__(other)
 
     def __div__(self, other):
-        return self.__mul__(1/float(other))
+        try:
+            reciprocal = 1 / float(other)
+        except TypeError:
+            return NotImplemented
+
+        return self.__mul__(reciprocal)
 
     __truediv__ = __div__
 
