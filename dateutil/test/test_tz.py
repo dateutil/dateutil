@@ -13,6 +13,7 @@ import sys
 import time as _time
 import base64
 import copy
+import itertools
 
 from functools import partial
 
@@ -216,6 +217,51 @@ class TzOffsetTest(unittest.TestCase):
         self.assertTrue(tzo == ComparesEqual)
         self.assertFalse(tzo != ComparesEqual)
         self.assertEqual(tzo, ComparesEqual)
+
+
+class TzLocalTest(unittest.TestCase):
+    def testTimeOnlyLocal(self):
+        # tzlocal returns None
+        tz_local = tz.tzlocal()
+        self.assertIs(dt_time(13, 20, tzinfo=tz_local).utcoffset(), None)
+
+    def testEquality(self):
+        tz1 = tz.tzlocal()
+        tz2 = tz.tzlocal()
+
+        # Explicitly calling == and != here to ensure the operators work
+        self.assertTrue(tz1 == tz2)
+        self.assertFalse(tz1 != tz2)
+
+    def testInequalityFixedOffset(self):
+        tzl = tz.tzlocal()
+        tzos = tz.tzoffset('LST', tzl._std_offset.total_seconds())
+        tzod = tz.tzoffset('LDT', tzl._std_offset.total_seconds())
+
+        self.assertFalse(tzl == tzos)
+        self.assertFalse(tzl == tzod)
+        self.assertTrue(tzl != tzos)
+        self.assertTrue(tzl != tzod)
+
+    def testInequalityInvalid(self):
+        tzl = tz.tzlocal()
+        UTC = tz.tzutc()
+
+        self.assertTrue(tzl != 1)
+        self.assertTrue(tzl != tz.tzutc())
+        self.assertFalse(tzl == 1)
+        self.assertFalse(tzl == UTC)
+
+    def testInequalityUnsupported(self):
+        tzl = tz.tzlocal()
+
+        self.assertTrue(tzl == ComparesEqual)
+        self.assertFalse(tzl != ComparesEqual)
+
+    def testRepr(self):
+        tzl = tz.tzlocal()
+
+        self.assertEqual(repr(tzl), 'tzlocal()')
 
 
 class TzFoldMixin(object):
@@ -623,11 +669,6 @@ class TZTest(unittest.TestCase, TzFoldMixin):
                           datetime(2007, 8, 6, 6, 10, tzinfo=tz.tzstr("GMT+2")))
         self.assertEqual(dt.astimezone(tz=tz.gettz("UTC-2")),
                           datetime(2007, 8, 6, 2, 10, tzinfo=tz.tzstr("UTC-2")))
-
-    def testTimeOnlyLocal(self):
-        # tzlocal returns None
-        tz_local = tz.tzlocal()
-        self.assertIs(dt_time(13, 20, tzinfo=tz_local).utcoffset(), None)
 
     def testTimeOnlyRange(self):
         # tzrange returns None
