@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-from ._common import unittest, TZWinContext, PicklableMixin
+from ._common import unittest, PicklableMixin
+from ._common import TZEnvContext, TZWinContext
 from ._common import ComparesEqual
 
 from datetime import datetime, timedelta
@@ -10,7 +11,6 @@ from six import BytesIO, StringIO
 import os
 import subprocess
 import sys
-import time as _time
 import base64
 import copy
 import itertools
@@ -681,14 +681,15 @@ class TZTest(unittest.TestCase, TzFoldMixin):
         self.assertIs(dt_time(13, 20, tzinfo=tz_get).utcoffset(), None)
 
     @unittest.skipIf(IS_WIN, "requires Unix")
+    @unittest.skipUnless(TZEnvContext.tz_change_allowed(),
+                         TZEnvContext.tz_change_disallowed_message())
     def testTZSetDoesntCorrupt(self):
         # if we start in non-UTC then tzset UTC make sure parse doesn't get
         # confused
-        os.environ['TZ'] = 'UTC'
-        _time.tzset()
-        # this should parse to UTC timezone not the original timezone
-        dt = parse('2014-07-20T12:34:56+00:00')
-        self.assertEqual(str(dt), '2014-07-20 12:34:56+00:00')
+        with TZEnvContext('UTC'):
+            # this should parse to UTC timezone not the original timezone
+            dt = parse('2014-07-20T12:34:56+00:00')
+            self.assertEqual(str(dt), '2014-07-20 12:34:56+00:00')
 
     def testFoldPositiveUTCOffsetTzFile(self):
         self._testFoldPositiveUTCOffset(tz.gettz)
@@ -1060,7 +1061,7 @@ class TzWinTest(unittest.TestCase, TzWinFoldMixin):
 
 @unittest.skipUnless(IS_WIN, "Requires Windows")
 @unittest.skipUnless(TZWinContext.tz_change_allowed(),
-                     'Skipping unless tz changes are allowed.')
+                     TZWinContext.tz_change_disallowed_message())
 class TzWinLocalTest(unittest.TestCase, TzWinFoldMixin):
 
     def setUp(self):
