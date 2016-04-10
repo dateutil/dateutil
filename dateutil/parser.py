@@ -56,6 +56,10 @@ class _timelex(object):
         if isinstance(instream, text_type):
             instream = StringIO(instream)
 
+        if getattr(instream, 'read', None) is None:
+            raise TypeError('Parser must be a string or character stream, not '
+                            '{itype}'.format(itype=instream.__class__.__name__))
+
         self.instream = instream
         self.charstack = []
         self.tokenstack = []
