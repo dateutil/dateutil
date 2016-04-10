@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 from ._common import unittest, PicklableMixin
+from ._common import total_seconds
 from ._common import TZEnvContext, TZWinContext
 from ._common import ComparesEqual
 
@@ -602,8 +603,8 @@ class TzLocalTest(unittest.TestCase):
 
     def testInequalityFixedOffset(self):
         tzl = tz.tzlocal()
-        tzos = tz.tzoffset('LST', tzl._std_offset.total_seconds())
-        tzod = tz.tzoffset('LDT', tzl._std_offset.total_seconds())
+        tzos = tz.tzoffset('LST', total_seconds(tzl._std_offset))
+        tzod = tz.tzoffset('LDT', total_seconds(tzl._std_offset))
 
         self.assertFalse(tzl == tzos)
         self.assertFalse(tzl == tzod)
