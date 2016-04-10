@@ -90,16 +90,21 @@ class tzoffset(datetime.tzinfo):
     __reduce__ = object.__reduce__
 
 
-class tzlocal(datetime.tzinfo):
+class tzlocal(_tzinfo):
     def __init__(self):
+        super(tzlocal, self).__init__()
+
         self._std_offset = datetime.timedelta(seconds=-time.timezone)
         if time.daylight:
             self._dst_offset = datetime.timedelta(seconds=-time.altzone)
         else:
             self._dst_offset = self._std_offset
 
+        self._dst_saved = self._dst_offset - self._std_offset
+        self._hasdst = bool(self._dst_saved)
+
     def utcoffset(self, dt):
-        if dt is None and self._hasdst():
+        if dt is None and self._hasdst:
             return None
 
         if self._isdst(dt):
@@ -108,7 +113,7 @@ class tzlocal(datetime.tzinfo):
             return self._std_offset
 
     def dst(self, dt):
-        if dt is None and self._hasdst():
+        if dt is None and self._hasdst:
             return None
 
         if self._isdst(dt):
@@ -145,14 +150,23 @@ class tzlocal(datetime.tzinfo):
         #
         # Here is a more stable implementation:
         #
-        if not self._hasdst():
+        if not self._hasdst:
             return False
 
+        dstval = self._naive_is_dst(dt)
+
+        # Check for ambiguous times:
+        if not dstval and self._fold is not None:
+            dst_fold_offset = self._naive_is_dst(dt - self._dst_saved)
+
+            if dst_fold_offset:
+                return self._fold
+
+        return dstval
+
+    def _naive_is_dst(self, dt):
         timestamp = _datetime_to_timestamp(dt)
         return time.localtime(timestamp + time.timezone).tm_isdst
-
-    def _hasdst(self):
-        return self._dst_offset != self._std_offset
 
     def __eq__(self, other):
         if not isinstance(other, tzlocal):

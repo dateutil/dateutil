@@ -634,7 +634,7 @@ class TzLocalTest(unittest.TestCase):
 @unittest.skipIf(IS_WIN, "requires Unix")
 @unittest.skipUnless(TZEnvContext.tz_change_allowed(),
                          TZEnvContext.tz_change_disallowed_message())
-class TzLocalNixTest(unittest.TestCase):
+class TzLocalNixTest(unittest.TestCase, TzFoldMixin):
     # This is a set of tests for `tzlocal()` on *nix systems
 
     # POSIX string indicating change to summer time on the 2nd Sunday in March
@@ -642,10 +642,21 @@ class TzLocalNixTest(unittest.TestCase):
     TZ_EST = 'EST+5EDT,M3.2.0/2,M11.1.0/2'
 
     # POSIX string for AEST/AEDT (valid >= 2008)
-    TZ_AEST = 'AEST-10AEDT-11,M4.1.0/2,M10.1.0/2'
+    TZ_AEST = 'AEST-10AEDT,M10.1.0/2,M4.1.0/3'
 
     # POSIX string for UTC
     UTC = 'UTC'
+
+    def gettz(self, tzname):
+        # Actual time zone changes are handled by the _gettz_context function
+        return tz.tzlocal()
+
+    def _gettz_context(self, tzname):
+        tzname_map = {'Australia/Sydney': self.TZ_AEST,
+                      'America/Toronto': self.TZ_EST,
+                      'America/New_York': self.TZ_EST}
+
+        return TZEnvContext(tzname_map.get(tzname, tzname))
 
     def _testTzFunc(self, tzval, func, std_val, dst_val):
         """
