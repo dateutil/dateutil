@@ -220,11 +220,6 @@ class TzOffsetTest(unittest.TestCase):
 
 
 class TzLocalTest(unittest.TestCase):
-    def testTimeOnlyLocal(self):
-        # tzlocal returns None
-        tz_local = tz.tzlocal()
-        self.assertIs(dt_time(13, 20, tzinfo=tz_local).utcoffset(), None)
-
     def testEquality(self):
         tz1 = tz.tzlocal()
         tz2 = tz.tzlocal()
@@ -262,6 +257,92 @@ class TzLocalTest(unittest.TestCase):
         tzl = tz.tzlocal()
 
         self.assertEqual(repr(tzl), 'tzlocal()')
+
+
+@unittest.skipIf(IS_WIN, "requires Unix")
+@unittest.skipUnless(TZEnvContext.tz_change_allowed(),
+                         TZEnvContext.tz_change_disallowed_message())
+class TzLocalNixTest(unittest.TestCase):
+    # This is a set of tests for `tzlocal()` on *nix systems
+
+    # POSIX string indicating change to summer time on the 2nd Sunday in March
+    # at 2AM, and ending the 1st Sunday in November at 2AM.
+    TZ_EST = 'EST+5EDT,M3.2.0/2,M11.1.0/2'
+    UTC = 'UTC'
+
+    def _testTzFunc(self, tzval, func, std_val, dst_val):
+        """
+        This generates tests about how the behavior of a function ``func``
+        changes between STD and DST (e.g. utcoffset, tzname, dst).
+
+        It assume that DST starts the 2nd Sunday in March and ends the 1st
+        Sunday in November
+        """
+        with TZEnvContext(tzval):
+            dt1 = datetime(2015, 2, 1, 12, 0, tzinfo=tz.tzlocal())  # STD
+            dt2 = datetime(2015, 5, 1, 12, 0, tzinfo=tz.tzlocal())  # DST
+
+            self.assertEqual(func(dt1), std_val)
+            self.assertEqual(func(dt2), dst_val)
+
+    def _testTzName(self, tzval, std_name, dst_name):
+        func = datetime.tzname
+
+        self._testTzFunc(tzval, func, std_name, dst_name)
+
+    def testTzNameDST(self):
+        # Test tzname in a zone with DST
+        self._testTzName(self.TZ_EST, 'EST', 'EDT')
+
+    def testTzNameUTC(self):
+        # Test tzname in a zone without DST
+        self._testTzName(self.UTC, 'UTC', 'UTC')
+
+    def _testOffset(self, tzval, std_off, dst_off):
+        func = datetime.utcoffset
+
+        self._testTzFunc(tzval, func, std_off, dst_off)
+
+    def testOffsetDST(self):
+        self._testOffset(self.TZ_EST, timedelta(hours=-5), timedelta(hours=-4))
+
+    def testOffsetUTC(self):
+        self._testOffset(self.UTC, timedelta(0), timedelta(0))
+
+    def _testDST(self, tzval, dst_dst):
+        func = datetime.dst
+        std_dst = timedelta(0)
+
+        self._testTzFunc(tzval, func, std_dst, dst_dst)
+
+    def testDSTDST(self):
+        self._testDST(self.TZ_EST, timedelta(hours=1))
+
+    def testDSTUTC(self):
+        self._testDST(self.UTC, timedelta(0))
+
+    @unittest.skip('Known failure')
+    def testTimeOnlyOffsetLocalUTC(self):
+        with TZEnvContext(self.UTC):
+            self.assertEqual(dt_time(13, 20, tzinfo=tz.tzlocal()).utcoffset(),
+                             timedelta(0))
+
+    def testTimeOnlyOffsetLocalDST(self):
+        with TZEnvContext(self.TZ_EST):
+            self.assertIs(dt_time(13, 20, tzinfo=tz.tzlocal()).utcoffset(),
+                          None)
+
+    @unittest.skip('Known failure')
+    def testTimeOnlyDSTLocalUTC(self):
+        with TZEnvContext(self.UTC):
+            self.assertEqual(dt_time(13, 20, tzinfo=tz.tzlocal()).dst(),
+                             timedelta(0))
+
+    @unittest.skip('Known failure')
+    def testTimeOnlyDSTLocalDST(self):
+        with TZEnvContext(self.TZ_EST):
+            self.assertIs(dt_time(13, 20, tzinfo=tz.tzlocal()).dst(),
+                          None)
 
 
 class TzFoldMixin(object):
