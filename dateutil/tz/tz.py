@@ -99,8 +99,8 @@ class tzlocal(datetime.tzinfo):
             self._dst_offset = self._std_offset
 
     def utcoffset(self, dt):
-        if dt is None:
-            return dt
+        if dt is None and self._hasdst():
+            return None
 
         if self._isdst(dt):
             return self._dst_offset
@@ -108,8 +108,11 @@ class tzlocal(datetime.tzinfo):
             return self._std_offset
 
     def dst(self, dt):
+        if dt is None and self._hasdst():
+            return None
+
         if self._isdst(dt):
-            return self._dst_offset-self._std_offset
+            return self._dst_offset - self._std_offset
         else:
             return ZERO
 
@@ -142,8 +145,14 @@ class tzlocal(datetime.tzinfo):
         #
         # Here is a more stable implementation:
         #
+        if not self._hasdst():
+            return False
+
         timestamp = _datetime_to_timestamp(dt)
-        return time.localtime(timestamp+time.timezone).tm_isdst
+        return time.localtime(timestamp + time.timezone).tm_isdst
+
+    def _hasdst(self):
+        return self._dst_offset != self._std_offset
 
     def __eq__(self, other):
         if not isinstance(other, tzlocal):

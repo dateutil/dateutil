@@ -321,7 +321,6 @@ class TzLocalNixTest(unittest.TestCase):
     def testDSTUTC(self):
         self._testDST(self.UTC, timedelta(0))
 
-    @unittest.skip('Known failure')
     def testTimeOnlyOffsetLocalUTC(self):
         with TZEnvContext(self.UTC):
             self.assertEqual(dt_time(13, 20, tzinfo=tz.tzlocal()).utcoffset(),
@@ -332,13 +331,11 @@ class TzLocalNixTest(unittest.TestCase):
             self.assertIs(dt_time(13, 20, tzinfo=tz.tzlocal()).utcoffset(),
                           None)
 
-    @unittest.skip('Known failure')
     def testTimeOnlyDSTLocalUTC(self):
         with TZEnvContext(self.UTC):
             self.assertEqual(dt_time(13, 20, tzinfo=tz.tzlocal()).dst(),
                              timedelta(0))
 
-    @unittest.skip('Known failure')
     def testTimeOnlyDSTLocalDST(self):
         with TZEnvContext(self.TZ_EST):
             self.assertIs(dt_time(13, 20, tzinfo=tz.tzlocal()).dst(),
