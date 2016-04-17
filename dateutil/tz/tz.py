@@ -608,6 +608,79 @@ class tzfile(_tzinfo):
 
 
 class tzrange(datetime.tzinfo):
+    """
+    The ``tzrange`` object is a time zone specified by a set of offsets and
+    abbreviations, equivalent to the way the ``TZ`` variable can be specified
+    in POSIX-like systems, but using Python delta objects to specify DST
+    start, end and offsets.
+
+    :param stdabbr:
+        The abbreviation for standard time (e.g. ``'EST'``).
+
+    :param stdoffset:
+        An integer or :class:`datetime.timedelta` object or equivalent
+        specifying the base offset from UTC.
+
+        If unspecified, +00:00 is used.
+
+    :param dstabbr:
+        The abbreviation for DST / "Summer" time (e.g. ``'EDT'``).
+
+        If specified, with no other DST information, DST is assumed to occur
+        and the default behavior or ``dstoffset``, ``start`` and ``end`` is
+        used. If unspecified and no other DST information is specified, it
+        is assumed that this zone has no DST.
+
+        If this is unspecified and other DST information is *is* specified,
+        DST occurs in the zone but the time zone abbreviation is left
+        unchanged.
+
+    :param dstoffset:
+        A an integer or :class:`datetime.timedelta` object or equivalent
+        specifying the UTC offset during DST. If unspecified and any other DST
+        information is specified, it is assumed to be the STD offset +1 hour.
+
+    :param start:
+        A :class:`relativedelta.relativedelta` object or equivalent specifying
+        the time and time of year that daylight savings time starts. To specify,
+        for example, that DST starts at 2AM on the 2nd Sunday in March, pass:
+
+            ``relativedelta(hours=2, month=3, day=1, weekday=SU(+2))``
+
+        If unspecified and any other DST information is specified, the default
+        value is 2 AM on the first Sunday in April.
+
+    :param end:
+        A :class:`relativedelta.relativedelta` object or equivalent representing
+        the time and time of year that daylight savings time ends, with the
+        same specification method as in ``start``. One note is that this should
+        point to the first time in the *standard* zone, so if a transition
+        occurs at 2AM in the DST zone and the clocks are set back 1 hour to 1AM,
+        set the `hours` parameter to +1.
+
+
+    **Examples:**
+
+    .. testsetup:: tzrange
+
+        from dateutil.tz import tzrange, tzstr
+
+    .. doctest:: tzrange
+
+        >>> tzstr('EST5EDT') == tzrange("EST", -18000, "EDT")
+        True
+
+        >>> from dateutil.relativedelta import *
+        >>> range1 = tzrange("EST", -18000, "EDT")
+        >>> range2 = tzrange("EST", -18000, "EDT", -14400,
+        ...                  relativedelta(hours=+2, month=4, day=1,
+        ...                                weekday=SU(+1)),
+        ...                  relativedelta(hours=+1, month=10, day=31,
+        ...                                weekday=SU(-1)))
+        >>> tzstr('EST5EDT') == range1 == range2
+        True
+
+    """
     def __init__(self, stdabbr, stdoffset=None,
                  dstabbr=None, dstoffset=None,
                  start=None, end=None):
@@ -617,21 +690,34 @@ class tzrange(datetime.tzinfo):
         self._std_abbr = stdabbr
         self._dst_abbr = dstabbr
 
+        try:
+            stdoffset = _total_seconds(stdoffset)
+        except (TypeError, AttributeError):
+            pass
+
+        try:
+            dstoffset = _total_seconds(dstoffset)
+        except (TypeError, AttributeError):
+            pass
+
         if stdoffset is not None:
             self._std_offset = datetime.timedelta(seconds=stdoffset)
         else:
             self._std_offset = ZERO
+
         if dstoffset is not None:
             self._dst_offset = datetime.timedelta(seconds=dstoffset)
         elif dstabbr and stdoffset is not None:
             self._dst_offset = self._std_offset+datetime.timedelta(hours=+1)
         else:
             self._dst_offset = ZERO
+
         if dstabbr and start is None:
             self._start_delta = relativedelta.relativedelta(
                 hours=+2, month=4, day=1, weekday=relativedelta.SU(+1))
         else:
             self._start_delta = start
+
         if dstabbr and end is None:
             self._end_delta = relativedelta.relativedelta(
                 hours=+1, month=10, day=31, weekday=relativedelta.SU(-1))
@@ -693,7 +779,33 @@ class tzrange(datetime.tzinfo):
 
 
 class tzstr(tzrange):
-    def __init__(self, s):
+    """
+    ``tzstr`` objects are time zone objects specified by a time-zone string as
+    it would be passed to a ``TZ`` variable on POSIX-style systems (see
+    https://www.gnu.org/software/libc/manual/html_node/TZ-Variable.html for
+    more information).
+
+    There is one notable exception, which is that POSIX-style time zones use an
+    inverted offset format, so normally ``GMT+3`` would be parsed as an offset
+    3 hours *behind* GMT. The ``tzstr`` time zone object will parse this as an
+    offset 3 hours *ahead* of GMT. If you would like to maintain the POSIX
+    behavior, pass a ``True`` value to ``posix_offset``.
+
+    The :class:`tzrange` object provides the same functionality, but is
+    specified using :class:`relativedelta.relativedelta` objects. rather than
+    strings.
+
+    :param s:
+        A time zone string in ``TZ`` variable format. This can be a
+        :class:`bytes` (2.x: :class:`str`), :class:`str` (2.x: :class:`unicode`)
+        or a stream emitting unicode characters (e.g. :class:`StringIO`).
+
+    :param posix_offset:
+        Optional. If set to ``True``, interpret strings such as ``GMT+3`` or
+        ``UTC+3`` as being 3 hours *behind* UTC rather than ahead, per the
+        POSIX standard.
+    """
+    def __init__(self, s, posix_offset=False):
         global parser
         from dateutil import parser
 
@@ -705,7 +817,7 @@ class tzstr(tzrange):
 
         # Here we break the compatibility with the TZ variable handling.
         # GMT-3 actually *means* the timezone -3.
-        if res.stdabbr in ("GMT", "UTC"):
+        if res.stdabbr in ("GMT", "UTC") and not posix_offset:
             res.stdoffset *= -1
 
         # We must initialize it first, since _delta() needs
@@ -759,8 +871,8 @@ class tzstr(tzrange):
             # Convert to standard time, to follow the documented way
             # of working with the extra hour. See the documentation
             # of the tzinfo class.
-            delta = self._dst_offset-self._std_offset
-            kwargs["seconds"] -= delta.seconds+delta.days*86400
+            delta = self._dst_offset - self._std_offset
+            kwargs["seconds"] -= delta.seconds + delta.days * 86400
         return relativedelta.relativedelta(**kwargs)
 
     def __repr__(self):

@@ -805,6 +805,46 @@ class ZoneInfoGettzTest(GettzTest):
         self.assertIsNot(CHI, CHI_COPY)
         self.assertEqual(CHI, CHI_COPY)
 
+
+class TZRangeTest(unittest.TestCase):
+    def testRangeCmp1(self):
+        from dateutil.relativedelta import SU
+        self.assertEqual(tz.tzstr("EST5EDT"),
+                         tz.tzrange("EST", -18000, "EDT", -14400,
+                                 relativedelta(hours=+2,
+                                               month=4, day=1,
+                                               weekday=SU(+1)),
+                                 relativedelta(hours=+1,
+                                               month=10, day=31,
+                                               weekday=SU(-1))))
+
+    def testRangeCmp2(self):
+        self.assertEqual(tz.tzstr("EST5EDT"),
+                         tz.tzrange("EST", -18000, "EDT"))
+
+    def testTimeOnlyRange(self):
+        # tzrange returns None
+        tz_range = tz.tzrange('dflt')
+        self.assertIs(dt_time(13, 20, tzinfo=tz_range).utcoffset(), None)
+
+    def testBrokenIsDstHandling(self):
+        # tzrange._isdst() was using a date() rather than a datetime().
+        # Issue reported by Lennart Regebro.
+        dt = datetime(2007, 8, 6, 4, 10, tzinfo=tz.tzutc())
+        self.assertEqual(dt.astimezone(tz=tz.gettz("GMT+2")),
+                          datetime(2007, 8, 6, 6, 10, tzinfo=tz.tzstr("GMT+2")))
+
+    def testRangeTimeDelta(self):
+        # Test that tzrange can be specified with a timedelta instead of an int.
+        EST5EDT_td = tz.tzrange('EST', timedelta(hours=-5),
+                                'EDT', timedelta(hours=-4))
+
+        EST5EDT_sec = tz.tzrange('EST', -18000,
+                                 'EDT', -14400)
+
+        self.assertEqual(EST5EDT_td, EST5EDT_sec)
+
+
 class TZTest(unittest.TestCase):
     def testStrStart1(self):
         self.assertEqual(datetime(2003, 4, 6, 1, 59,
@@ -904,21 +944,6 @@ class TZTest(unittest.TestCase):
         self.assertEqual(tz.tzstr("EST5EDT"),
                          tz.tzstr("EST5EDT,4,1,0,7200,10,-1,0,7200,3600"))
 
-    def testRangeCmp1(self):
-        from dateutil.relativedelta import SU
-        self.assertEqual(tz.tzstr("EST5EDT"),
-                         tz.tzrange("EST", -18000, "EDT", -14400,
-                                 relativedelta(hours=+2,
-                                               month=4, day=1,
-                                               weekday=SU(+1)),
-                                 relativedelta(hours=+1,
-                                               month=10, day=31,
-                                               weekday=SU(-1))))
-
-    def testRangeCmp2(self):
-        self.assertEqual(tz.tzstr("EST5EDT"),
-                         tz.tzrange("EST", -18000, "EDT"))
-
     def testFileStart1(self):
         tzc = tz.tzfile(BytesIO(base64.b64decode(TZFILE_EST5EDT)))
         self.assertEqual(datetime(2003, 4, 6, 1, 59, tzinfo=tzc).tzname(), "EST")
@@ -997,13 +1022,6 @@ class TZTest(unittest.TestCase):
             "isstd UTC/local indicators parsed: %s != tzfile contents: %s"
             % (isstd, isstd_expected))
 
-    def testBrokenIsDstHandling(self):
-        # tzrange._isdst() was using a date() rather than a datetime().
-        # Issue reported by Lennart Regebro.
-        dt = datetime(2007, 8, 6, 4, 10, tzinfo=tz.tzutc())
-        self.assertEqual(dt.astimezone(tz=tz.gettz("GMT+2")),
-                          datetime(2007, 8, 6, 6, 10, tzinfo=tz.tzstr("GMT+2")))
-
     def testGMTHasNoDaylight(self):
         # tz.tzstr("GMT+2") improperly considered daylight saving time.
         # Issue reported by Lennart Regebro.
@@ -1018,11 +1036,6 @@ class TZTest(unittest.TestCase):
                           datetime(2007, 8, 6, 6, 10, tzinfo=tz.tzstr("GMT+2")))
         self.assertEqual(dt.astimezone(tz=tz.gettz("UTC-2")),
                           datetime(2007, 8, 6, 2, 10, tzinfo=tz.tzstr("UTC-2")))
-
-    def testTimeOnlyRange(self):
-        # tzrange returns None
-        tz_range = tz.tzrange('dflt')
-        self.assertIs(dt_time(13, 20, tzinfo=tz_range).utcoffset(), None)
 
     @unittest.skipIf(IS_WIN, "requires Unix")
     @unittest.skipUnless(TZEnvContext.tz_change_allowed(),
