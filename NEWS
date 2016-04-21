@@ -1,3 +1,13 @@
+Version 2.5.3
+-------------
+- Updated zoneinfo to 2016d
+- Fixed parser bug where unambiguous datetimes fail to parse when dayfirst is
+  set to true. (gh issue #233, pr #234)
+- Bug in zoneinfo file on platforms such as Google App Engine which do not
+  do not allow importing of subprocess.check_call was reported and fixed by
+  @savraj (gh issue #239, gh pr #240)
+- Fixed incorrect version in documentation (gh issue #235, pr #243)
+
 Version 2.5.2
 -------------
 - Updated zoneinfo to 2016c
