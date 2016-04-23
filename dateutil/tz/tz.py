@@ -770,7 +770,7 @@ class tzrange(datetime.tzinfo):
                 self._end_delta == other._end_delta)
 
     def __ne__(self, other):
-        return not self.__eq__(other)
+        return not (self == other)
 
     def __repr__(self):
         return "%s(...)" % self.__class__.__name__

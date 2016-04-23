@@ -21,7 +21,7 @@ from functools import partial
 IS_WIN = sys.platform.startswith('win')
 
 # dateutil imports
-from dateutil.relativedelta import relativedelta
+from dateutil.relativedelta import relativedelta, SU
 from dateutil.parser import parse
 from dateutil import tz as tz
 from dateutil import zoneinfo
@@ -808,7 +808,6 @@ class ZoneInfoGettzTest(GettzTest):
 
 class TZRangeTest(unittest.TestCase):
     def testRangeCmp1(self):
-        from dateutil.relativedelta import SU
         self.assertEqual(tz.tzstr("EST5EDT"),
                          tz.tzrange("EST", -18000, "EDT", -14400,
                                  relativedelta(hours=+2,
@@ -821,6 +820,34 @@ class TZRangeTest(unittest.TestCase):
     def testRangeCmp2(self):
         self.assertEqual(tz.tzstr("EST5EDT"),
                          tz.tzrange("EST", -18000, "EDT"))
+
+    def testRangeOffsets(self):
+        TZR = tz.tzrange('EST', -18000, 'EDT', -14400,
+                         start=relativedelta(hours=2, month=4, day=1,
+                                             weekday=SU(+2)),
+                         end=relativedelta(hours=1, month=10, day=31,
+                                           weekday=SU(-1)))
+
+        dt_std = datetime(2014, 4, 11, 12, 0, tzinfo=TZR)  # STD
+        dt_dst = datetime(2016, 4, 11, 12, 0, tzinfo=TZR)  # DST
+
+        dst_zero = timedelta(0)
+        dst_hour = timedelta(hours=1)
+
+        std_offset = timedelta(hours=-5)
+        dst_offset = timedelta(hours=-4)
+
+        # Check dst()
+        self.assertEqual(dt_std.dst(), dst_zero)
+        self.assertEqual(dt_dst.dst(), dst_hour)
+
+        # Check utcoffset()
+        self.assertEqual(dt_std.utcoffset(), std_offset)
+        self.assertEqual(dt_dst.utcoffset(), dst_offset)
+
+        # Check tzname
+        self.assertEqual(dt_std.tzname(), 'EST')
+        self.assertEqual(dt_dst.tzname(), 'EDT')
 
     def testTimeOnlyRange(self):
         # tzrange returns None
@@ -843,6 +870,50 @@ class TZRangeTest(unittest.TestCase):
                                  'EDT', -14400)
 
         self.assertEqual(EST5EDT_td, EST5EDT_sec)
+
+    def testRangeEquality(self):
+        TZR1 = tz.tzrange('EST', -18000, 'EDT', -14400)
+
+        # Standard abbreviation different
+        TZR2 = tz.tzrange('ET', -18000, 'EDT', -14400)
+
+        self.assertNotEqual(TZR1, TZR2)
+
+        # DST abbreviation different
+        TZR3 = tz.tzrange('EST', -18000, 'EMT', -14400)
+
+        self.assertNotEqual(TZR1, TZR3)
+
+        # STD offset different
+        TZR4 = tz.tzrange('EST', -14000, 'EDT', -14400)
+
+        self.assertNotEqual(TZR1, TZR4)
+
+        # DST offset different
+        TZR5 = tz.tzrange('EST', -18000, 'EDT', -18000)
+
+        self.assertNotEqual(TZR1, TZR5)
+
+        # Start delta different
+        TZR6 = tz.tzrange('EST', -18000, 'EDT', -14400,
+                          start=relativedelta(hours=+1, month=3,
+                                              day=1, weekday=SU(+2)))
+
+        self.assertNotEqual(TZR1, TZR6)
+                                 
+        # End delta different
+        TZR7 = tz.tzrange('EST', -18000, 'EDT', -14400,
+            end=relativedelta(hours=+1, month=11,
+                              day=1, weekday=SU(+2)))
+
+        self.assertNotEqual(TZR1, TZR7)
+
+    def testRangeInequalityUnsupported(self):
+        TZR = tz.tzrange('EST', -18000, 'EDT', -14400)
+
+        self.assertFalse(TZR == 4)
+        self.assertTrue(TZR == ComparesEqual)
+        self.assertFalse(TZR != ComparesEqual)
 
 
 class TZTest(unittest.TestCase):
