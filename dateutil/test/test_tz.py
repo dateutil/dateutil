@@ -876,36 +876,30 @@ class TZRangeTest(unittest.TestCase):
 
         # Standard abbreviation different
         TZR2 = tz.tzrange('ET', -18000, 'EDT', -14400)
-
         self.assertNotEqual(TZR1, TZR2)
 
         # DST abbreviation different
         TZR3 = tz.tzrange('EST', -18000, 'EMT', -14400)
-
         self.assertNotEqual(TZR1, TZR3)
 
         # STD offset different
         TZR4 = tz.tzrange('EST', -14000, 'EDT', -14400)
-
         self.assertNotEqual(TZR1, TZR4)
 
         # DST offset different
         TZR5 = tz.tzrange('EST', -18000, 'EDT', -18000)
-
         self.assertNotEqual(TZR1, TZR5)
 
         # Start delta different
         TZR6 = tz.tzrange('EST', -18000, 'EDT', -14400,
                           start=relativedelta(hours=+1, month=3,
                                               day=1, weekday=SU(+2)))
-
         self.assertNotEqual(TZR1, TZR6)
                                  
         # End delta different
         TZR7 = tz.tzrange('EST', -18000, 'EDT', -14400,
             end=relativedelta(hours=+1, month=11,
                               day=1, weekday=SU(+2)))
-
         self.assertNotEqual(TZR1, TZR7)
 
     def testRangeInequalityUnsupported(self):
@@ -916,7 +910,7 @@ class TZRangeTest(unittest.TestCase):
         self.assertFalse(TZR != ComparesEqual)
 
 
-class TZTest(unittest.TestCase):
+class TZStrTest(unittest.TestCase):
     def testStrStart1(self):
         self.assertEqual(datetime(2003, 4, 6, 1, 59,
                                   tzinfo=tz.tzstr("EST5EDT")).tzname(), "EST")
@@ -1012,9 +1006,69 @@ class TZTest(unittest.TestCase):
                          tz.tzstr("EST5EDT4,M4.1.0/02:00:00,M10-5-0/02:00"))
 
     def testStrCmp2(self):
+        # TODO: This is parsing the default arguments.
         self.assertEqual(tz.tzstr("EST5EDT"),
                          tz.tzstr("EST5EDT,4,1,0,7200,10,-1,0,7200,3600"))
 
+    def testStrInequality(self):
+        TZS1 = tz.tzstr('EST5EDT4')
+
+        # Standard abbreviation different
+        TZS2 = tz.tzstr('ET5EDT4')
+        self.assertNotEqual(TZS1, TZS2)
+
+        # DST abbreviation different
+        TZS3 = tz.tzstr('EST5EMT')
+        self.assertNotEqual(TZS1, TZS3)
+
+        # STD offset different
+        TZS4 = tz.tzstr('EST4EDT4')
+        self.assertNotEqual(TZS1, TZS4)
+
+        # DST offset different
+        TZS5 = tz.tzstr('EST5EDT3')
+        self.assertNotEqual(TZS1, TZS5)
+
+    def testStrInequalityStartEnd(self):
+        TZS1 = tz.tzstr('EST5EDT4')
+
+        # Start delta different
+        TZS2 = tz.tzstr('EST5EDT4,M4.2.0/02:00:00,M10-5-0/02:00')
+        self.assertNotEqual(TZS1, TZS2)
+                                 
+        # End delta different
+        TZS3 = tz.tzstr('EST5EDT4,M4.2.0/02:00:00,M11-5-0/02:00')
+        self.assertNotEqual(TZS1, TZS3)
+
+    def testPosixOffset(self):
+        TZ1 = tz.tzstr('UTC-3')
+        self.assertEqual(datetime(2015, 1, 1, tzinfo=TZ1).utcoffset(),
+                         timedelta(hours=-3))
+
+        TZ2 = tz.tzstr('UTC-3', posix_offset=True)
+        self.assertEqual(datetime(2015, 1, 1, tzinfo=TZ2).utcoffset(),
+                         timedelta(hours=+3))
+
+    def testStrInequalityUnsupported(self):
+        TZS = tz.tzstr('EST5EDT')
+
+        self.assertFalse(TZS == 4)
+        self.assertTrue(TZS == ComparesEqual)
+        self.assertFalse(TZS != ComparesEqual)
+
+    def testTzStrRepr(self):
+        TZS1 = tz.tzstr('EST5EDT4')
+        TZS2 = tz.tzstr('EST')
+
+        self.assertEqual(repr(TZS1), "tzstr('EST5EDT4')")
+        self.assertEqual(repr(TZS2), "tzstr('EST')")
+
+    def testTzStrFailure(self):
+        with self.assertRaises(ValueError):
+            tz.tzstr('InvalidString;439999')
+
+
+class TZTest(unittest.TestCase):
     def testFileStart1(self):
         tzc = tz.tzfile(BytesIO(base64.b64decode(TZFILE_EST5EDT)))
         self.assertEqual(datetime(2003, 4, 6, 1, 59, tzinfo=tzc).tzname(), "EST")
