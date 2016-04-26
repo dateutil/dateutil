@@ -933,7 +933,22 @@ class TZRangeTest(unittest.TestCase, TzFoldMixin):
         self.assertFalse(TZR != ComparesEqual)
 
 
-class TZStrTest(unittest.TestCase):
+class TZStrTest(unittest.TestCase, TzFoldMixin):
+    # POSIX string indicating change to summer time on the 2nd Sunday in March
+    # at 2AM, and ending the 1st Sunday in November at 2AM. (valid >= 2007)
+    TZ_EST = 'EST+5EDT,M3.2.0/2,M11.1.0/2'
+
+    # POSIX string for AEST/AEDT (valid >= 2008)
+    TZ_AEST = 'AEST-10AEDT,M10.1.0/2,M4.1.0/3'
+
+    def gettz(self, tzname):
+        # Actual time zone changes are handled by the _gettz_context function
+        tzname_map = {'Australia/Sydney': self.TZ_AEST,
+                      'America/Toronto': self.TZ_EST,
+                      'America/New_York': self.TZ_EST}
+
+        return tz.tzstr(tzname_map[tzname])
+
     def testStrStart1(self):
         self.assertEqual(datetime(2003, 4, 6, 1, 59,
                                   tzinfo=tz.tzstr("EST5EDT")).tzname(), "EST")
