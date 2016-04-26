@@ -607,7 +607,7 @@ class tzfile(_tzinfo):
         return (self.__class__, (None, self._filename), self.__dict__)
 
 
-class tzrange(datetime.tzinfo):
+class tzrange(_tzinfo):
     """
     The ``tzrange`` object is a time zone specified by a set of offsets and
     abbreviations, equivalent to the way the ``TZ`` variable can be specified
@@ -684,6 +684,8 @@ class tzrange(datetime.tzinfo):
     def __init__(self, stdabbr, stdoffset=None,
                  dstabbr=None, dstoffset=None,
                  start=None, end=None):
+        super(tzrange, self).__init__()
+
         global relativedelta
         from dateutil import relativedelta
 
@@ -724,6 +726,8 @@ class tzrange(datetime.tzinfo):
         else:
             self._end_delta = end
 
+        self._dst_base_offset = self._dst_offset - self._std_offset
+
     def utcoffset(self, dt):
         if dt is None:
             return None
@@ -735,7 +739,7 @@ class tzrange(datetime.tzinfo):
 
     def dst(self, dt):
         if self._isdst(dt):
-            return self._dst_offset-self._std_offset
+            return self._dst_offset - self._std_offset
         else:
             return ZERO
 
@@ -747,16 +751,35 @@ class tzrange(datetime.tzinfo):
             return self._std_abbr
 
     def _isdst(self, dt):
-        if not self._start_delta:
+        transitions = self._transitions(dt.year)
+
+        if transitions is None:
             return False
-        year = datetime.datetime(dt.year, 1, 1)
-        start = year+self._start_delta
-        end = year+self._end_delta
+
+        start, end = transitions
+
         dt = dt.replace(tzinfo=None)
+
+        # Handle ambiguous dates
+        if self._fold is not None:
+            if end <= dt < end + self._dst_base_offset:
+                return self._fold
+
         if start < end:
-            return dt >= start and dt < end
+            return start <= dt < end
         else:
-            return dt >= start or dt < end
+            return not end <= dt < start
+
+    def _transitions(self, year):
+        if not self._start_delta:
+            return None
+
+        base_year = datetime.datetime(year, 1, 1)
+
+        start = base_year + self._start_delta
+        end = base_year + self._end_delta
+
+        return (start, end)
 
     def __eq__(self, other):
         if not isinstance(other, tzrange):

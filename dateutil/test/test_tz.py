@@ -806,7 +806,30 @@ class ZoneInfoGettzTest(GettzTest):
         self.assertEqual(CHI, CHI_COPY)
 
 
-class TZRangeTest(unittest.TestCase):
+class TZRangeTest(unittest.TestCase, TzFoldMixin):
+    TZ_EST = tz.tzrange('EST', timedelta(hours=-5),
+                        'EDT', timedelta(hours=-4),
+                        start=relativedelta(month=3, day=1, hour=2,
+                                            weekday=SU(+2)),
+                        end=relativedelta(month=11, day=1, hour=1,
+                                          weekday=SU(+1)))
+
+    TZ_AEST = tz.tzrange('AEST', timedelta(hours=10),
+                         'AEDT', timedelta(hours=11),
+                         start=relativedelta(month=10, day=1, hour=2,
+                                             weekday=SU(+1)),
+                         end=relativedelta(month=4, day=1, hour=2,
+                                           weekday=SU(+1)))
+    # POSIX string for UTC
+    UTC = 'UTC'
+
+    def gettz(self, tzname):
+        tzname_map = {'Australia/Sydney': self.TZ_AEST,
+                      'America/Toronto': self.TZ_EST,
+                      'America/New_York': self.TZ_EST}
+
+        return tzname_map[tzname]
+
     def testRangeCmp1(self):
         self.assertEqual(tz.tzstr("EST5EDT"),
                          tz.tzrange("EST", -18000, "EDT", -14400,
