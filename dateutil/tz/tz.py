@@ -58,7 +58,15 @@ class tzutc(datetime.tzinfo):
 
 
 class tzoffset(datetime.tzinfo):
+    """
+    A simple class for representing a fixed offset from UTC.
 
+    :param name:
+        The timezone name, to be returned when ``tzname()`` is called.
+
+    :param offset:
+        The time zone offset in seconds.
+    """
     def __init__(self, name, offset):
         self._name = name
         self._offset = datetime.timedelta(seconds=offset)
@@ -85,7 +93,7 @@ class tzoffset(datetime.tzinfo):
     def __repr__(self):
         return "%s(%s, %s)" % (self.__class__.__name__,
                                repr(self._name),
-                               self._offset.days*86400+self._offset.seconds)
+                               int(_total_seconds(self._offset)))
 
     __reduce__ = object.__reduce__
 
