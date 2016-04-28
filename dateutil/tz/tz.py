@@ -99,6 +99,9 @@ class tzoffset(datetime.tzinfo):
 
 
 class tzlocal(_tzinfo):
+    """
+    A :class:`tzinfo` subclass built around the ``time`` timezone functions.
+    """
     def __init__(self):
         super(tzlocal, self).__init__()
 
