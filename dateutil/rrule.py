@@ -707,7 +707,7 @@ class rrule(rrulebase):
             parts.append('INTERVAL=' + str(self._interval))
 
         if self._wkst:
-            parts.append('WKST=' + str(self._wkst))
+            parts.append('WKST=' + repr(weekday(self._wkst))[0:2])
 
         if self._count:
             parts.append('COUNT=' + str(self._count))
