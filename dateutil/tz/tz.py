@@ -1000,14 +1000,15 @@ class tzical(object):
             self._s = fileobj
             # ical should be encoded in UTF-8 with CRLF
             fileobj = open(fileobj, 'r')
-        elif hasattr(fileobj, "name"):
-            self._s = fileobj.name
+            file_opened_here = True
         else:
-            self._s = repr(fileobj)
+            self._s = getattr(fileobj, 'name', repr(fileobj))
+            fileobj = _ContextWrapper(fileobj)
 
         self._vtz = {}
 
-        self._parse_rfc(fileobj.read())
+        with fileobj as fobj:
+            self._parse_rfc(fobj.read())
 
     def keys(self):
         return list(self._vtz.keys())
@@ -1032,11 +1033,11 @@ class tzical(object):
         else:
             signal = +1
         if len(s) == 4:
-            return (int(s[:2])*3600+int(s[2:])*60)*signal
+            return (int(s[:2]) * 3600 + int(s[2:]) * 60) * signal
         elif len(s) == 6:
-            return (int(s[:2])*3600+int(s[2:4])*60+int(s[4:]))*signal
+            return (int(s[:2]) * 3600 + int(s[2:4]) * 60 + int(s[4:])) * signal
         else:
-            raise ValueError("invalid offset: "+s)
+            raise ValueError("invalid offset: " + s)
 
     def _parse_rfc(self, s):
         lines = s.splitlines()
