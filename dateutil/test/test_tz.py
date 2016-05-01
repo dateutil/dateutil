@@ -129,6 +129,27 @@ END:DAYLIGHT
 END:VTIMEZONE
 """
 
+TZICAL_PST8PDT = """
+BEGIN:VTIMEZONE
+TZID:US-Pacific
+LAST-MODIFIED:19870101T000000Z
+BEGIN:STANDARD
+DTSTART:19671029T020000
+RRULE:FREQ=YEARLY;BYDAY=-1SU;BYMONTH=10
+TZOFFSETFROM:-0700
+TZOFFSETTO:-0800
+TZNAME:PST
+END:STANDARD
+BEGIN:DAYLIGHT
+DTSTART:19870405T020000
+RRULE:FREQ=YEARLY;BYDAY=1SU;BYMONTH=4
+TZOFFSETFROM:-0800
+TZOFFSETTO:-0700
+TZNAME:PDT
+END:DAYLIGHT
+END:VTIMEZONE
+"""
+
 ###
 # Mix-ins
 class context_passthrough(object):
@@ -1106,6 +1127,144 @@ class TZStrTest(unittest.TestCase, TzFoldMixin):
             tz.tzstr('InvalidString;439999')
 
 
+class TZICalTest(unittest.TestCase):
+    def testRepr(self):
+        instr = StringIO(TZICAL_PST8PDT)
+        instr.name = 'StringIO(PST8PDT)'
+        tzc = tz.tzical(instr)
+
+        self.assertEqual(repr(tzc), "tzical('StringIO(PST8PDT)')")
+
+    # Test performance
+    def _test_us_zone(self, tzc, func, values, start):
+        if start:
+            dt1 = datetime(2003, 4, 6, 1, 59)
+            dt2 = datetime(2003, 4, 6, 2, 00)
+        else:
+            dt1 = datetime(2003, 10, 26, 0, 59)
+            dt2 = datetime(2003, 10, 26, 1, 00)
+        
+        dts = (dt.replace(tzinfo=tzc) for dt in (dt1, dt2))
+
+        for value, dt in zip(values, dts):
+            self.assertEqual(func(dt), value)
+
+    def _test_multi_zones(self, tzstrs, tzids, func, values, start):
+        tzic = tz.tzical(StringIO(''.join(tzstrs)))
+        for tzid, vals in zip(tzids, values):
+            print(tzid)
+            print(vals)
+            tzc = tzic.get(tzid)
+
+            self._test_us_zone(tzc, func, vals, start)
+ 
+    def _prepare_EST(self):
+        return tz.tzical(StringIO(TZICAL_EST5EDT)).get()
+
+    def _testEST(self, start, test_type):
+        tzc = self._prepare_EST()
+        argdict = {
+            'name':   (datetime.tzname, ('EST', 'EDT')),
+            'offset': (datetime.utcoffset, (timedelta(hours=-5),
+                                            timedelta(hours=-4))),
+            'dst':    (datetime.dst, (timedelta(hours=0),
+                                      timedelta(hours=1)))
+        }
+        
+        func, values = argdict[test_type]
+
+        if not start:
+            values = reversed(values)
+
+        self._test_us_zone(tzc, func, values, start=start)
+
+    def testESTStartName(self):
+        self._testEST(start=True, test_type='name')
+
+    def testESTEndName(self):
+        self._testEST(start=False, test_type='name')
+
+    def testESTStartOffset(self):
+        self._testEST(start=True, test_type='offset')
+
+    def testESTEndOffset(self):
+        self._testEST(start=False, test_type='offset')
+
+    def testESTStartDST(self):
+        self._testEST(start=True, test_type='dst')
+
+    def testESTEndDST(self):
+        self._testEST(start=False, test_type='dst')
+
+    def _testMultizone(self, start, test_type):
+        tzstrs = (TZICAL_EST5EDT, TZICAL_PST8PDT)
+        tzids = ('US-Eastern', 'US-Pacific')
+
+        argdict = {
+            'name':   (datetime.tzname, (('EST', 'EDT'),
+                                         ('PST', 'PDT'))),
+            'offset': (datetime.utcoffset, ((timedelta(hours=-5),
+                                             timedelta(hours=-4)),
+                                            (timedelta(hours=-8),
+                                             timedelta(hours=-7)))),
+            'dst':    (datetime.dst, ((timedelta(hours=0),
+                                       timedelta(hours=1)),
+                                      (timedelta(hours=0),
+                                       timedelta(hours=1))))
+        }
+
+        func, values = argdict[test_type]
+
+        if not start:
+            values = map(reversed, values)
+
+        self._test_multi_zones(tzstrs, tzids, func, values, start)
+
+    def testMultiZoneStartName(self):
+        self._testMultizone(start=True, test_type='name')
+
+    def testMultiZoneEndName(self):
+        self._testMultizone(start=False, test_type='name')
+
+    def testMultiZoneStartOffset(self):
+        self._testMultizone(start=True, test_type='offset')
+
+    def testMultiZoneEndOffset(self):
+        self._testMultizone(start=False, test_type='offset')
+
+    def testMultiZoneStartDST(self):
+        self._testMultizone(start=True, test_type='dst')
+
+    def testMultiZoneEndDST(self):
+        self._testMultizone(start=False, test_type='dst')
+
+    def testMultiZoneKeys(self):
+        tzic = tz.tzical(StringIO(''.join((TZICAL_EST5EDT, TZICAL_PST8PDT))))
+
+        # Sort keys because they are in a random order, being dictionary keys
+        keys = sorted(tzic.keys())
+
+        self.assertEqual(keys, ['US-Eastern', 'US-Pacific'])
+
+    # Test error conditions
+    def testEmptyString(self):
+        with self.assertRaises(ValueError):
+            tz.tzical(StringIO(""))
+
+    def testMultiZoneGet(self):
+        tzic = tz.tzical(StringIO(TZICAL_EST5EDT + TZICAL_PST8PDT))
+
+        with self.assertRaises(ValueError):
+            tzic.get()
+
+    # Test Parsing
+    def testGap(self):
+        tzic = tz.tzical(StringIO('\n'.join((TZICAL_EST5EDT, TZICAL_PST8PDT))))
+        
+        keys = sorted(tzic.keys())
+        self.assertEqual(keys, ['US-Eastern', 'US-Pacific'])
+
+
 class TZTest(unittest.TestCase):
     def testFileStart1(self):
         tzc = tz.tzfile(BytesIO(base64.b64decode(TZFILE_EST5EDT)))
@@ -1135,16 +1294,6 @@ class TZTest(unittest.TestCase):
         # Should throw a ValueError if an invalid file is passed
         with self.assertRaises(ValueError):
             tz.tzfile(BytesIO(b'BadFile'))
-
-    def testICalStart1(self):
-        tzc = tz.tzical(StringIO(TZICAL_EST5EDT)).get()
-        self.assertEqual(datetime(2003, 4, 6, 1, 59, tzinfo=tzc).tzname(), "EST")
-        self.assertEqual(datetime(2003, 4, 6, 2, 00, tzinfo=tzc).tzname(), "EDT")
-
-    def testICalEnd1(self):
-        tzc = tz.tzical(StringIO(TZICAL_EST5EDT)).get()
-        self.assertEqual(datetime(2003, 10, 26, 0, 59, tzinfo=tzc).tzname(), "EDT")
-        self.assertEqual(datetime(2003, 10, 26, 1, 00, tzinfo=tzc).tzname(), "EST")
 
     def testRoundNonFullMinutes(self):
         # This timezone has an offset of 5992 seconds in 1900-01-01.
