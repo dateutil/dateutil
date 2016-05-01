@@ -816,8 +816,7 @@ class tzstr(tzrange):
     """
     ``tzstr`` objects are time zone objects specified by a time-zone string as
     it would be passed to a ``TZ`` variable on POSIX-style systems (see
-    https://www.gnu.org/software/libc/manual/html_node/TZ-Variable.html for
-    more information).
+    the `GNU C Library: TZ Variable`_ for more details).
 
     There is one notable exception, which is that POSIX-style time zones use an
     inverted offset format, so normally ``GMT+3`` would be parsed as an offset
@@ -838,6 +837,9 @@ class tzstr(tzrange):
         Optional. If set to ``True``, interpret strings such as ``GMT+3`` or
         ``UTC+3`` as being 3 hours *behind* UTC rather than ahead, per the
         POSIX standard.
+
+    .. _`GNU C Library: TZ Variable`:
+        https://www.gnu.org/software/libc/manual/html_node/TZ-Variable.html
     """
     def __init__(self, s, posix_offset=False):
         global parser
@@ -992,6 +994,16 @@ class _tzicalvtz(datetime.tzinfo):
 
 
 class tzical(object):
+    """
+    This object is designed to parse an iCalendar-style ``VTIMEZONE`` structure
+    as set out in `RFC 2445`_ Section 4.6.5 into one or more `tzinfo` objects.
+
+    :param `fileobj`:
+        A file or stream in iCalendar format, which should be UTF-8 encoded
+        with CRLF endings.
+
+    .. _`RFC 2445`: https://www.ietf.org/rfc/rfc2445.txt
+    """
     def __init__(self, fileobj):
         global rrule
         from dateutil import rrule
@@ -1011,16 +1023,36 @@ class tzical(object):
             self._parse_rfc(fobj.read())
 
     def keys(self):
+        """
+        Retrieves the available time zones as a list.
+        """
         return list(self._vtz.keys())
 
     def get(self, tzid=None):
+        """
+        Retrieve a :py:class:`datetime.tzinfo` object by its ``tzid``.
+
+        :param tzid:
+            If there is exactly one time zone available, omitting ``tzid``
+            or passing :py:const:`None` value returns it. Otherwise a valid
+            key (which can be retrieved from :func:`keys`) is required.
+
+        :raises ValueError:
+            Raised if ``tzid`` is not specified but there are either more
+            or fewer than 1 zone defined.
+
+        :returns:
+            Returns either a :py:class:`datetime.tzinfo` object representing
+            the relevant time zone or :py:const:`None` if the ``tzid`` was
+            not found.
+        """
         if tzid is None:
-            keys = list(self._vtz.keys())
-            if len(keys) == 0:
+            if len(self._vtz) == 0:
                 raise ValueError("no timezones defined")
-            elif len(keys) > 1:
+            elif len(self._vtz) > 1:
                 raise ValueError("more than one timezone available")
-            tzid = keys[0]
+            tzid = next(iter(self._vtz))
+
         return self._vtz.get(tzid)
 
     def _parse_offset(self, s):
