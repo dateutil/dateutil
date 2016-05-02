@@ -1119,8 +1119,8 @@ class TZStrTest(unittest.TestCase, TzFoldMixin):
         TZS1 = tz.tzstr('EST5EDT4')
         TZS2 = tz.tzstr('EST')
 
-        self.assertEqual(repr(TZS1), "tzstr('EST5EDT4')")
-        self.assertEqual(repr(TZS2), "tzstr('EST')")
+        self.assertEqual(repr(TZS1), "tzstr(" + repr('EST5EDT4') + ")")
+        self.assertEqual(repr(TZS2), "tzstr(" + repr('EST') + ")")
 
     def testTzStrFailure(self):
         with self.assertRaises(ValueError):
@@ -1133,7 +1133,7 @@ class TZICalTest(unittest.TestCase):
         instr.name = 'StringIO(PST8PDT)'
         tzc = tz.tzical(instr)
 
-        self.assertEqual(repr(tzc), "tzical('StringIO(PST8PDT)')")
+        self.assertEqual(repr(tzc), "tzical(" + repr(instr.name) + ")")
 
     # Test performance
     def _test_us_zone(self, tzc, func, values, start):
