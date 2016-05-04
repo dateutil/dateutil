@@ -1127,7 +1127,57 @@ class TZStrTest(unittest.TestCase, TzFoldMixin):
             tz.tzstr('InvalidString;439999')
 
 
-class TZICalTest(unittest.TestCase):
+class TZICalTest(unittest.TestCase, TzFoldMixin):
+
+    def gettz(self, tzname):
+        TZ_EST = (
+            'BEGIN:VTIMEZONE',
+            'TZID:US-Eastern',
+            'BEGIN:STANDARD',
+            'DTSTART:19971029T020000',
+            'RRULE:FREQ=YEARLY;BYDAY=+1SU;BYMONTH=11',
+            'TZOFFSETFROM:-0400',
+            'TZOFFSETTO:-0500',
+            'TZNAME:EST',
+            'END:STANDARD',
+            'BEGIN:DAYLIGHT',
+            'DTSTART:19980301T020000',
+            'RRULE:FREQ=YEARLY;BYDAY=+2SU;BYMONTH=03',
+            'TZOFFSETFROM:-0500',
+            'TZOFFSETTO:-0400',
+            'TZNAME:EDT',
+            'END:DAYLIGHT',
+            'END:VTIMEZONE'
+            )
+
+        TZ_AEST = (
+            'BEGIN:VTIMEZONE',
+            'TZID:Australia-Sydney',
+            'BEGIN:STANDARD',
+            'DTSTART:19980301T020000',
+            'RRULE:FREQ=YEARLY;BYDAY=+1SU;BYMONTH=04',
+            'TZOFFSETFROM:+1000',
+            'TZOFFSETTO:+1100',
+            'TZNAME:AEST',
+            'END:STANDARD',
+            'BEGIN:DAYLIGHT',
+            'DTSTART:19971029T030000',
+            'RRULE:FREQ=YEARLY;BYDAY=+1SU;BYMONTH=10',
+            'TZOFFSETFROM:+1100',
+            'TZOFFSETTO:+1000',
+            'TZNAME:AEDT',
+            'END:DAYLIGHT',
+            'END:VTIMEZONE'
+            )
+
+        tzname_map = {'Australia/Sydney': TZ_AEST,
+                      'America/Toronto': TZ_EST,
+                      'America/New_York': TZ_EST}
+
+        tzc = tz.tzical(StringIO('\n'.join(tzname_map[tzname]))).get()
+
+        return tzc
+
     def testRepr(self):
         instr = StringIO(TZICAL_PST8PDT)
         instr.name = 'StringIO(PST8PDT)'

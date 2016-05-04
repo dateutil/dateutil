@@ -920,14 +920,16 @@ class _tzicalvtzcomp(object):
                  tzname=None, rrule=None):
         self.tzoffsetfrom = datetime.timedelta(seconds=tzoffsetfrom)
         self.tzoffsetto = datetime.timedelta(seconds=tzoffsetto)
-        self.tzoffsetdiff = self.tzoffsetto-self.tzoffsetfrom
+        self.tzoffsetdiff = self.tzoffsetto - self.tzoffsetfrom
         self.isdst = isdst
         self.tzname = tzname
         self.rrule = rrule
 
 
-class _tzicalvtz(datetime.tzinfo):
+class _tzicalvtz(_tzinfo):
     def __init__(self, tzid, comps=[]):
+        super(_tzicalvtz, self).__init__()
+
         self._tzid = tzid
         self._comps = comps
         self._cachedate = []
@@ -936,22 +938,16 @@ class _tzicalvtz(datetime.tzinfo):
     def _find_comp(self, dt):
         if len(self._comps) == 1:
             return self._comps[0]
+
         dt = dt.replace(tzinfo=None)
+
         try:
             return self._cachecomp[self._cachedate.index(dt)]
         except ValueError:
             pass
-        lastcomp = None
-        lastcompdt = None
-        for comp in self._comps:
-            if not comp.isdst:
-                # Handle the extra hour in DST -> STD
-                compdt = comp.rrule.before(dt-comp.tzoffsetdiff, inc=True)
-            else:
-                compdt = comp.rrule.before(dt, inc=True)
-            if compdt and (not lastcompdt or lastcompdt < compdt):
-                lastcompdt = compdt
-                lastcomp = comp
+
+        lastcomp, lastcompdt, is_ambiguous = self._find_last_transition(dt)
+
         if not lastcomp:
             # RFC says nothing about what to do when a given
             # time is before the first onset date. We'll look for the
@@ -963,11 +959,14 @@ class _tzicalvtz(datetime.tzinfo):
                     break
             else:
                 lastcomp = comp[0]
+
         self._cachedate.insert(0, dt)
         self._cachecomp.insert(0, lastcomp)
+
         if len(self._cachedate) > 10:
             self._cachedate.pop()
             self._cachecomp.pop()
+
         return lastcomp
 
     def utcoffset(self, dt):
@@ -982,6 +981,29 @@ class _tzicalvtz(datetime.tzinfo):
             return comp.tzoffsetdiff
         else:
             return ZERO
+
+    def _find_last_transition(self, dt):
+        lastcomp = None
+        lastcompdt = None
+        is_ambiguous = None
+
+        for comp in self._comps:
+            if not comp.isdst:
+                # Handle the extra hour in DST -> STD
+                compdt = comp.rrule.before(dt - comp.tzoffsetdiff, inc=True)
+            else:
+                compdt = comp.rrule.before(dt, inc=True)
+
+            if compdt and (not lastcompdt or lastcompdt < compdt):
+                lastcompdt = compdt
+                lastcomp = comp
+
+        if lastcomp:
+            comp_diff = (-1 * lastcomp.isdst) * lastcomp.tzoffsetdiff
+            c1, c2 = sorted((lastcompdt, lastcompdt + comp_diff))
+            is_ambiguous = c1 <= dt < c2
+
+        return lastcomp, lastcompdt, is_ambiguous
 
     @tzname_in_python2
     def tzname(self, dt):
