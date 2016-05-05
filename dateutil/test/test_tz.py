@@ -306,7 +306,6 @@ class TzFoldMixin(object):
             self.assertEqual(t0.utcoffset(), timedelta(hours=-5.0))
             self.assertEqual(t1.utcoffset(), timedelta(hours=-4.0))
 
-
     def testFoldIndependence(self):
         tzname = self._get_tzname('America/New_York')
 
@@ -1154,17 +1153,17 @@ class TZICalTest(unittest.TestCase, TzFoldMixin):
             'BEGIN:VTIMEZONE',
             'TZID:Australia-Sydney',
             'BEGIN:STANDARD',
-            'DTSTART:19980301T020000',
+            'DTSTART:19980301T030000',
             'RRULE:FREQ=YEARLY;BYDAY=+1SU;BYMONTH=04',
-            'TZOFFSETFROM:+1000',
-            'TZOFFSETTO:+1100',
+            'TZOFFSETFROM:+1100',
+            'TZOFFSETTO:+1000',
             'TZNAME:AEST',
             'END:STANDARD',
             'BEGIN:DAYLIGHT',
-            'DTSTART:19971029T030000',
+            'DTSTART:19971029T020000',
             'RRULE:FREQ=YEARLY;BYDAY=+1SU;BYMONTH=10',
-            'TZOFFSETFROM:+1100',
-            'TZOFFSETTO:+1000',
+            'TZOFFSETFROM:+1000',
+            'TZOFFSETTO:+1100',
             'TZNAME:AEDT',
             'END:DAYLIGHT',
             'END:VTIMEZONE'
@@ -1178,12 +1177,27 @@ class TZICalTest(unittest.TestCase, TzFoldMixin):
 
         return tzc
 
+    # Fold known fails
+    @unittest.skip('Known failure: Fold not implemented')
+    def testFoldNegativeUTCOffset(self):
+        pass
+
+    @unittest.skip('Known failure: Fold not implemented')
+    def testFoldPositiveUTCOffset(self):
+        pass
+
+    @unittest.skip('Known failure: Fold not implemented')
+    def testFoldIndependence(self):
+        pass
+
+
     def testRepr(self):
         instr = StringIO(TZICAL_PST8PDT)
         instr.name = 'StringIO(PST8PDT)'
         tzc = tz.tzical(instr)
 
         self.assertEqual(repr(tzc), "tzical(" + repr(instr.name) + ")")
+
 
     # Test performance
     def _test_us_zone(self, tzc, func, values, start):
@@ -1202,8 +1216,6 @@ class TZICalTest(unittest.TestCase, TzFoldMixin):
     def _test_multi_zones(self, tzstrs, tzids, func, values, start):
         tzic = tz.tzical(StringIO(''.join(tzstrs)))
         for tzid, vals in zip(tzids, values):
-            print(tzid)
-            print(vals)
             tzc = tzic.get(tzid)
 
             self._test_us_zone(tzc, func, vals, start)

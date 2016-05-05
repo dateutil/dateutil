@@ -946,7 +946,15 @@ class _tzicalvtz(_tzinfo):
         except ValueError:
             pass
 
-        lastcomp, lastcompdt, is_ambiguous = self._find_last_transition(dt)
+        lastcomp = None
+        lastcompdt = None
+
+        for comp in self._comps:
+            compdt = self._find_compdt(comp, dt)
+
+            if compdt and (not lastcompdt or lastcompdt < compdt):
+                lastcompdt = compdt
+                lastcomp = comp
 
         if not lastcomp:
             # RFC says nothing about what to do when a given
@@ -969,6 +977,17 @@ class _tzicalvtz(_tzinfo):
 
         return lastcomp
 
+    def _find_compdt(self, comp, dt):
+        if not comp.isdst:
+            dt -= comp.tzoffsetdiff
+
+        compdt = comp.rrule.before(dt, inc=True)
+        compdt2 = comp.rrule.after(dt, inc=False)
+        d1 = compdt2 + comp.tzoffsetdiff
+        d2 = compdt2
+
+        return compdt
+
     def utcoffset(self, dt):
         if dt is None:
             return None
@@ -981,29 +1000,6 @@ class _tzicalvtz(_tzinfo):
             return comp.tzoffsetdiff
         else:
             return ZERO
-
-    def _find_last_transition(self, dt):
-        lastcomp = None
-        lastcompdt = None
-        is_ambiguous = None
-
-        for comp in self._comps:
-            if not comp.isdst:
-                # Handle the extra hour in DST -> STD
-                compdt = comp.rrule.before(dt - comp.tzoffsetdiff, inc=True)
-            else:
-                compdt = comp.rrule.before(dt, inc=True)
-
-            if compdt and (not lastcompdt or lastcompdt < compdt):
-                lastcompdt = compdt
-                lastcomp = comp
-
-        if lastcomp:
-            comp_diff = (-1 * lastcomp.isdst) * lastcomp.tzoffsetdiff
-            c1, c2 = sorted((lastcompdt, lastcompdt + comp_diff))
-            is_ambiguous = c1 <= dt < c2
-
-        return lastcomp, lastcompdt, is_ambiguous
 
     @tzname_in_python2
     def tzname(self, dt):
