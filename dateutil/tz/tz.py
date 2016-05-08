@@ -30,7 +30,9 @@ EPOCH = datetime.datetime.utcfromtimestamp(0)
 EPOCHORDINAL = EPOCH.toordinal()
 
 class tzutc(datetime.tzinfo):
-
+    """
+    This is a tzinfo object that represents the UTC time zone.
+    """
     def utcoffset(self, dt):
         return ZERO
 
@@ -252,9 +254,26 @@ class _tzfile(object):
 
 
 class tzfile(_tzinfo):
+    """
+    This is a ``tzinfo`` subclass that allows one to use the ``tzfile(5)``
+    format timezone files to extract current and historical zone information.
 
-    # http://www.twinsun.com/tz/tz-link.htm
-    # ftp://ftp.iana.org/tz/tz*.tar.gz
+    :param fileobj:
+        This can be an opened file stream or a file name that the time zone
+        information can be read from.
+
+    :param filename:
+        This is an optional parameter specifying the source of the time zone
+        information in the event that ``fileobj`` is a file object. If omitted
+        and ``fileobj`` is a file stream, this parameter will be set either to
+        ``fileobj``'s ``name`` attribute or to ``repr(fileobj)``.
+
+    See `Sources for Time Zone and Daylight Saving Time Data 
+    <http://www.twinsun.com/tz/tz-link.htm>`_ for more information. Time zone
+    files can be compiled from the `IANA Time Zone database files
+    <https://www.iana.org/time-zones>`_ with the `zic time zone compiler
+    <https://www.freebsd.org/cgi/man.cgi?query=zic&sektion=8>`_
+    """
 
     def __init__(self, fileobj, filename=None):
         super(tzfile, self).__init__()
