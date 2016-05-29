@@ -59,7 +59,7 @@ Binary releases
 ----------
 It should always be possible to generate a universal wheel binary distribution
 for each release. Generally we do not generate .egg files. In order to generate
-a wheel, you need the wheel package (https://wheel.readthedocs.org/en/latest/)
+a wheel, you need the wheel package (https://wheel.readthedocs.io/en/latest/)
 installed, which can be installed with:
 
     pip install wheel
