@@ -15,6 +15,8 @@ import os
 import bisect
 import copy
 
+from operator import itemgetter
+
 from contextlib import contextmanager
 
 from six import string_types, PY3
@@ -30,7 +32,9 @@ EPOCH = datetime.datetime.utcfromtimestamp(0)
 EPOCHORDINAL = EPOCH.toordinal()
 
 class tzutc(datetime.tzinfo):
-
+    """
+    This is a tzinfo object that represents the UTC time zone.
+    """
     def utcoffset(self, dt):
         return ZERO
 
@@ -58,7 +62,15 @@ class tzutc(datetime.tzinfo):
 
 
 class tzoffset(datetime.tzinfo):
+    """
+    A simple class for representing a fixed offset from UTC.
 
+    :param name:
+        The timezone name, to be returned when ``tzname()`` is called.
+
+    :param offset:
+        The time zone offset in seconds.
+    """
     def __init__(self, name, offset):
         self._name = name
         self._offset = datetime.timedelta(seconds=offset)
@@ -85,12 +97,15 @@ class tzoffset(datetime.tzinfo):
     def __repr__(self):
         return "%s(%s, %s)" % (self.__class__.__name__,
                                repr(self._name),
-                               self._offset.days*86400+self._offset.seconds)
+                               int(_total_seconds(self._offset)))
 
     __reduce__ = object.__reduce__
 
 
 class tzlocal(_tzinfo):
+    """
+    A :class:`tzinfo` subclass built around the ``time`` timezone functions.
+    """
     def __init__(self):
         super(tzlocal, self).__init__()
 
@@ -241,9 +256,26 @@ class _tzfile(object):
 
 
 class tzfile(_tzinfo):
+    """
+    This is a ``tzinfo`` subclass that allows one to use the ``tzfile(5)``
+    format timezone files to extract current and historical zone information.
 
-    # http://www.twinsun.com/tz/tz-link.htm
-    # ftp://ftp.iana.org/tz/tz*.tar.gz
+    :param fileobj:
+        This can be an opened file stream or a file name that the time zone
+        information can be read from.
+
+    :param filename:
+        This is an optional parameter specifying the source of the time zone
+        information in the event that ``fileobj`` is a file object. If omitted
+        and ``fileobj`` is a file stream, this parameter will be set either to
+        ``fileobj``'s ``name`` attribute or to ``repr(fileobj)``.
+
+    See `Sources for Time Zone and Daylight Saving Time Data 
+    <http://www.twinsun.com/tz/tz-link.htm>`_ for more information. Time zone
+    files can be compiled from the `IANA Time Zone database files
+    <https://www.iana.org/time-zones>`_ with the `zic time zone compiler
+    <https://www.freebsd.org/cgi/man.cgi?query=zic&sektion=8>`_
+    """
 
     def __init__(self, fileobj, filename=None):
         super(tzfile, self).__init__()
@@ -607,36 +639,126 @@ class tzfile(_tzinfo):
         return (self.__class__, (None, self._filename), self.__dict__)
 
 
-class tzrange(datetime.tzinfo):
+class tzrange(_tzinfo):
+    """
+    The ``tzrange`` object is a time zone specified by a set of offsets and
+    abbreviations, equivalent to the way the ``TZ`` variable can be specified
+    in POSIX-like systems, but using Python delta objects to specify DST
+    start, end and offsets.
+
+    :param stdabbr:
+        The abbreviation for standard time (e.g. ``'EST'``).
+
+    :param stdoffset:
+        An integer or :class:`datetime.timedelta` object or equivalent
+        specifying the base offset from UTC.
+
+        If unspecified, +00:00 is used.
+
+    :param dstabbr:
+        The abbreviation for DST / "Summer" time (e.g. ``'EDT'``).
+
+        If specified, with no other DST information, DST is assumed to occur
+        and the default behavior or ``dstoffset``, ``start`` and ``end`` is
+        used. If unspecified and no other DST information is specified, it
+        is assumed that this zone has no DST.
+
+        If this is unspecified and other DST information is *is* specified,
+        DST occurs in the zone but the time zone abbreviation is left
+        unchanged.
+
+    :param dstoffset:
+        A an integer or :class:`datetime.timedelta` object or equivalent
+        specifying the UTC offset during DST. If unspecified and any other DST
+        information is specified, it is assumed to be the STD offset +1 hour.
+
+    :param start:
+        A :class:`relativedelta.relativedelta` object or equivalent specifying
+        the time and time of year that daylight savings time starts. To specify,
+        for example, that DST starts at 2AM on the 2nd Sunday in March, pass:
+
+            ``relativedelta(hours=2, month=3, day=1, weekday=SU(+2))``
+
+        If unspecified and any other DST information is specified, the default
+        value is 2 AM on the first Sunday in April.
+
+    :param end:
+        A :class:`relativedelta.relativedelta` object or equivalent representing
+        the time and time of year that daylight savings time ends, with the
+        same specification method as in ``start``. One note is that this should
+        point to the first time in the *standard* zone, so if a transition
+        occurs at 2AM in the DST zone and the clocks are set back 1 hour to 1AM,
+        set the `hours` parameter to +1.
+
+
+    **Examples:**
+
+    .. testsetup:: tzrange
+
+        from dateutil.tz import tzrange, tzstr
+
+    .. doctest:: tzrange
+
+        >>> tzstr('EST5EDT') == tzrange("EST", -18000, "EDT")
+        True
+
+        >>> from dateutil.relativedelta import *
+        >>> range1 = tzrange("EST", -18000, "EDT")
+        >>> range2 = tzrange("EST", -18000, "EDT", -14400,
+        ...                  relativedelta(hours=+2, month=4, day=1,
+        ...                                weekday=SU(+1)),
+        ...                  relativedelta(hours=+1, month=10, day=31,
+        ...                                weekday=SU(-1)))
+        >>> tzstr('EST5EDT') == range1 == range2
+        True
+
+    """
     def __init__(self, stdabbr, stdoffset=None,
                  dstabbr=None, dstoffset=None,
                  start=None, end=None):
+        super(tzrange, self).__init__()
+
         global relativedelta
         from dateutil import relativedelta
 
         self._std_abbr = stdabbr
         self._dst_abbr = dstabbr
 
+        try:
+            stdoffset = _total_seconds(stdoffset)
+        except (TypeError, AttributeError):
+            pass
+
+        try:
+            dstoffset = _total_seconds(dstoffset)
+        except (TypeError, AttributeError):
+            pass
+
         if stdoffset is not None:
             self._std_offset = datetime.timedelta(seconds=stdoffset)
         else:
             self._std_offset = ZERO
+
         if dstoffset is not None:
             self._dst_offset = datetime.timedelta(seconds=dstoffset)
         elif dstabbr and stdoffset is not None:
             self._dst_offset = self._std_offset+datetime.timedelta(hours=+1)
         else:
             self._dst_offset = ZERO
+
         if dstabbr and start is None:
             self._start_delta = relativedelta.relativedelta(
                 hours=+2, month=4, day=1, weekday=relativedelta.SU(+1))
         else:
             self._start_delta = start
+
         if dstabbr and end is None:
             self._end_delta = relativedelta.relativedelta(
                 hours=+1, month=10, day=31, weekday=relativedelta.SU(-1))
         else:
             self._end_delta = end
+
+        self._dst_base_offset = self._dst_offset - self._std_offset
 
     def utcoffset(self, dt):
         if dt is None:
@@ -649,7 +771,7 @@ class tzrange(datetime.tzinfo):
 
     def dst(self, dt):
         if self._isdst(dt):
-            return self._dst_offset-self._std_offset
+            return self._dst_offset - self._std_offset
         else:
             return ZERO
 
@@ -661,16 +783,35 @@ class tzrange(datetime.tzinfo):
             return self._std_abbr
 
     def _isdst(self, dt):
-        if not self._start_delta:
+        transitions = self._transitions(dt.year)
+
+        if transitions is None:
             return False
-        year = datetime.datetime(dt.year, 1, 1)
-        start = year+self._start_delta
-        end = year+self._end_delta
+
+        start, end = transitions
+
         dt = dt.replace(tzinfo=None)
+
+        # Handle ambiguous dates
+        if self._fold is not None:
+            if end <= dt < end + self._dst_base_offset:
+                return self._fold
+
         if start < end:
-            return dt >= start and dt < end
+            return start <= dt < end
         else:
-            return dt >= start or dt < end
+            return not end <= dt < start
+
+    def _transitions(self, year):
+        if not self._start_delta:
+            return None
+
+        base_year = datetime.datetime(year, 1, 1)
+
+        start = base_year + self._start_delta
+        end = base_year + self._end_delta
+
+        return (start, end)
 
     def __eq__(self, other):
         if not isinstance(other, tzrange):
@@ -684,7 +825,7 @@ class tzrange(datetime.tzinfo):
                 self._end_delta == other._end_delta)
 
     def __ne__(self, other):
-        return not self.__eq__(other)
+        return not (self == other)
 
     def __repr__(self):
         return "%s(...)" % self.__class__.__name__
@@ -693,7 +834,35 @@ class tzrange(datetime.tzinfo):
 
 
 class tzstr(tzrange):
-    def __init__(self, s):
+    """
+    ``tzstr`` objects are time zone objects specified by a time-zone string as
+    it would be passed to a ``TZ`` variable on POSIX-style systems (see
+    the `GNU C Library: TZ Variable`_ for more details).
+
+    There is one notable exception, which is that POSIX-style time zones use an
+    inverted offset format, so normally ``GMT+3`` would be parsed as an offset
+    3 hours *behind* GMT. The ``tzstr`` time zone object will parse this as an
+    offset 3 hours *ahead* of GMT. If you would like to maintain the POSIX
+    behavior, pass a ``True`` value to ``posix_offset``.
+
+    The :class:`tzrange` object provides the same functionality, but is
+    specified using :class:`relativedelta.relativedelta` objects. rather than
+    strings.
+
+    :param s:
+        A time zone string in ``TZ`` variable format. This can be a
+        :class:`bytes` (2.x: :class:`str`), :class:`str` (2.x: :class:`unicode`)
+        or a stream emitting unicode characters (e.g. :class:`StringIO`).
+
+    :param posix_offset:
+        Optional. If set to ``True``, interpret strings such as ``GMT+3`` or
+        ``UTC+3`` as being 3 hours *behind* UTC rather than ahead, per the
+        POSIX standard.
+
+    .. _`GNU C Library: TZ Variable`:
+        https://www.gnu.org/software/libc/manual/html_node/TZ-Variable.html
+    """
+    def __init__(self, s, posix_offset=False):
         global parser
         from dateutil import parser
 
@@ -705,7 +874,7 @@ class tzstr(tzrange):
 
         # Here we break the compatibility with the TZ variable handling.
         # GMT-3 actually *means* the timezone -3.
-        if res.stdabbr in ("GMT", "UTC"):
+        if res.stdabbr in ("GMT", "UTC") and not posix_offset:
             res.stdoffset *= -1
 
         # We must initialize it first, since _delta() needs
@@ -759,8 +928,8 @@ class tzstr(tzrange):
             # Convert to standard time, to follow the documented way
             # of working with the extra hour. See the documentation
             # of the tzinfo class.
-            delta = self._dst_offset-self._std_offset
-            kwargs["seconds"] -= delta.seconds+delta.days*86400
+            delta = self._dst_offset - self._std_offset
+            kwargs["seconds"] -= delta.seconds + delta.days * 86400
         return relativedelta.relativedelta(**kwargs)
 
     def __repr__(self):
@@ -772,14 +941,16 @@ class _tzicalvtzcomp(object):
                  tzname=None, rrule=None):
         self.tzoffsetfrom = datetime.timedelta(seconds=tzoffsetfrom)
         self.tzoffsetto = datetime.timedelta(seconds=tzoffsetto)
-        self.tzoffsetdiff = self.tzoffsetto-self.tzoffsetfrom
+        self.tzoffsetdiff = self.tzoffsetto - self.tzoffsetfrom
         self.isdst = isdst
         self.tzname = tzname
         self.rrule = rrule
 
 
-class _tzicalvtz(datetime.tzinfo):
+class _tzicalvtz(_tzinfo):
     def __init__(self, tzid, comps=[]):
+        super(_tzicalvtz, self).__init__()
+
         self._tzid = tzid
         self._comps = comps
         self._cachedate = []
@@ -788,22 +959,25 @@ class _tzicalvtz(datetime.tzinfo):
     def _find_comp(self, dt):
         if len(self._comps) == 1:
             return self._comps[0]
+
         dt = dt.replace(tzinfo=None)
+
         try:
-            return self._cachecomp[self._cachedate.index(dt)]
+            return self._cachecomp[self._cachedate.index((dt, self._fold))]
         except ValueError:
             pass
-        lastcomp = None
+
+
         lastcompdt = None
+        lastcomp = None
+
         for comp in self._comps:
-            if not comp.isdst:
-                # Handle the extra hour in DST -> STD
-                compdt = comp.rrule.before(dt-comp.tzoffsetdiff, inc=True)
-            else:
-                compdt = comp.rrule.before(dt, inc=True)
+            compdt = self._find_compdt(comp, dt)
+
             if compdt and (not lastcompdt or lastcompdt < compdt):
                 lastcompdt = compdt
                 lastcomp = comp
+
         if not lastcomp:
             # RFC says nothing about what to do when a given
             # time is before the first onset date. We'll look for the
@@ -815,12 +989,23 @@ class _tzicalvtz(datetime.tzinfo):
                     break
             else:
                 lastcomp = comp[0]
-        self._cachedate.insert(0, dt)
+
+        self._cachedate.insert(0, (dt, self._fold))
         self._cachecomp.insert(0, lastcomp)
+
         if len(self._cachedate) > 10:
             self._cachedate.pop()
             self._cachecomp.pop()
+
         return lastcomp
+
+    def _find_compdt(self, comp, dt):
+        if comp.tzoffsetdiff < ZERO and not self._fold:
+            dt -= comp.tzoffsetdiff
+
+        compdt = comp.rrule.before(dt, inc=True)
+
+        return compdt
 
     def utcoffset(self, dt):
         if dt is None:
@@ -846,6 +1031,16 @@ class _tzicalvtz(datetime.tzinfo):
 
 
 class tzical(object):
+    """
+    This object is designed to parse an iCalendar-style ``VTIMEZONE`` structure
+    as set out in `RFC 2445`_ Section 4.6.5 into one or more `tzinfo` objects.
+
+    :param `fileobj`:
+        A file or stream in iCalendar format, which should be UTF-8 encoded
+        with CRLF endings.
+
+    .. _`RFC 2445`: https://www.ietf.org/rfc/rfc2445.txt
+    """
     def __init__(self, fileobj):
         global rrule
         from dateutil import rrule
@@ -854,26 +1049,47 @@ class tzical(object):
             self._s = fileobj
             # ical should be encoded in UTF-8 with CRLF
             fileobj = open(fileobj, 'r')
-        elif hasattr(fileobj, "name"):
-            self._s = fileobj.name
+            file_opened_here = True
         else:
-            self._s = repr(fileobj)
+            self._s = getattr(fileobj, 'name', repr(fileobj))
+            fileobj = _ContextWrapper(fileobj)
 
         self._vtz = {}
 
-        self._parse_rfc(fileobj.read())
+        with fileobj as fobj:
+            self._parse_rfc(fobj.read())
 
     def keys(self):
+        """
+        Retrieves the available time zones as a list.
+        """
         return list(self._vtz.keys())
 
     def get(self, tzid=None):
+        """
+        Retrieve a :py:class:`datetime.tzinfo` object by its ``tzid``.
+
+        :param tzid:
+            If there is exactly one time zone available, omitting ``tzid``
+            or passing :py:const:`None` value returns it. Otherwise a valid
+            key (which can be retrieved from :func:`keys`) is required.
+
+        :raises ValueError:
+            Raised if ``tzid`` is not specified but there are either more
+            or fewer than 1 zone defined.
+
+        :returns:
+            Returns either a :py:class:`datetime.tzinfo` object representing
+            the relevant time zone or :py:const:`None` if the ``tzid`` was
+            not found.
+        """
         if tzid is None:
-            keys = list(self._vtz.keys())
-            if len(keys) == 0:
+            if len(self._vtz) == 0:
                 raise ValueError("no timezones defined")
-            elif len(keys) > 1:
+            elif len(self._vtz) > 1:
                 raise ValueError("more than one timezone available")
-            tzid = keys[0]
+            tzid = next(iter(self._vtz))
+
         return self._vtz.get(tzid)
 
     def _parse_offset(self, s):
@@ -886,11 +1102,11 @@ class tzical(object):
         else:
             signal = +1
         if len(s) == 4:
-            return (int(s[:2])*3600+int(s[2:])*60)*signal
+            return (int(s[:2]) * 3600 + int(s[2:]) * 60) * signal
         elif len(s) == 6:
-            return (int(s[:2])*3600+int(s[2:4])*60+int(s[4:]))*signal
+            return (int(s[:2]) * 3600 + int(s[2:4]) * 60 + int(s[4:])) * signal
         else:
-            raise ValueError("invalid offset: "+s)
+            raise ValueError("invalid offset: " + s)
 
     def _parse_rfc(self, s):
         lines = s.splitlines()
