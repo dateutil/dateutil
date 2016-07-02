@@ -15,6 +15,8 @@ import os
 import bisect
 import copy
 
+from operator import itemgetter
+
 from contextlib import contextmanager
 
 from six import string_types, PY3
@@ -961,12 +963,13 @@ class _tzicalvtz(_tzinfo):
         dt = dt.replace(tzinfo=None)
 
         try:
-            return self._cachecomp[self._cachedate.index(dt)]
+            return self._cachecomp[self._cachedate.index((dt, self._fold))]
         except ValueError:
             pass
 
-        lastcomp = None
+
         lastcompdt = None
+        lastcomp = None
 
         for comp in self._comps:
             compdt = self._find_compdt(comp, dt)
@@ -987,7 +990,7 @@ class _tzicalvtz(_tzinfo):
             else:
                 lastcomp = comp[0]
 
-        self._cachedate.insert(0, dt)
+        self._cachedate.insert(0, (dt, self._fold))
         self._cachecomp.insert(0, lastcomp)
 
         if len(self._cachedate) > 10:
@@ -997,13 +1000,10 @@ class _tzicalvtz(_tzinfo):
         return lastcomp
 
     def _find_compdt(self, comp, dt):
-        if not comp.isdst:
+        if comp.tzoffsetdiff < ZERO and not self._fold:
             dt -= comp.tzoffsetdiff
 
         compdt = comp.rrule.before(dt, inc=True)
-        compdt2 = comp.rrule.after(dt, inc=False)
-        d1 = compdt2 + comp.tzoffsetdiff
-        d2 = compdt2
 
         return compdt
 

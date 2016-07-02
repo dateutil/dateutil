@@ -1177,20 +1177,6 @@ class TZICalTest(unittest.TestCase, TzFoldMixin):
 
         return tzc
 
-    # Fold known fails
-    @unittest.skip('Known failure: Fold not implemented')
-    def testFoldNegativeUTCOffset(self):
-        pass
-
-    @unittest.skip('Known failure: Fold not implemented')
-    def testFoldPositiveUTCOffset(self):
-        pass
-
-    @unittest.skip('Known failure: Fold not implemented')
-    def testFoldIndependence(self):
-        pass
-
-
     def testRepr(self):
         instr = StringIO(TZICAL_PST8PDT)
         instr.name = 'StringIO(PST8PDT)'
