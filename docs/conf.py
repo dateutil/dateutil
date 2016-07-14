@@ -253,6 +253,8 @@ texinfo_documents = [
    'Miscellaneous'),
 ]
 
+autodoc_member_order = 'groupwise'
+
 # Documents to append as an appendix to all manuals.
 #texinfo_appendices = []
 

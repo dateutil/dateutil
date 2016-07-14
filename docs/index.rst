@@ -16,6 +16,7 @@ Contents:
    self
    easter
    parser
+   absolutedelta
    relativedelta
    rrule
    tz

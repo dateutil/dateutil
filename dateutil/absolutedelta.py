@@ -1,4 +1,10 @@
 # -*- coding: utf-8 -*-
+"""
+The absolutedelta module handles functions related to absolute elapsed time
+between timestamps.
+
+.. versionadded:: 2.6.0
+"""
 
 from datetime import datetime, timedelta
 from dateutil.tz import tzutc
