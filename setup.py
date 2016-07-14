@@ -33,6 +33,7 @@ datetime module available in the Python standard library.
       zip_safe=True,
       requires=["six"],
       install_requires=["six >=1.5"],  # XXX fix when packaging is sane again
+      tests_requre=["nose-parameterized"],
       classifiers=[
           'Development Status :: 5 - Production/Stable',
           'Intended Audience :: Developers',
