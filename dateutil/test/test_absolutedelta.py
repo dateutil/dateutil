@@ -222,3 +222,94 @@ class AbsoluteDeltaTest(unittest.TestCase):
     def test_repr(self, name, ad, ad_repr):
         self.assertEqual(repr(ad), ad_repr)
 
+    @parameterized.expand([
+        ('int_pos',
+            absolutedelta(days=1),
+            3,
+            absolutedelta(days=3)),
+        ('int_neg',
+            absolutedelta(days=1),
+            -4,
+            absolutedelta(days=-4)),
+        ('int_zero',
+            absolutedelta(days=1),
+            0,
+            absolutedelta(0)),
+        ('float_pos',
+            absolutedelta(days=1),
+            1.5,
+            absolutedelta(days=1, hours=12)),
+        ('float_neg',
+            absolutedelta(days=1),
+            -2.25,
+            absolutedelta(days=-2, hours=-6)),
+        ('float_zero',
+            absolutedelta(days=1),
+            0.0,
+            absolutedelta(0))
+    ])
+    def test_mul(self, name, ad_in, fac, ad_out):
+        # Test __mul__
+        ad_a = ad_in * fac
+
+        self.assertEqual(ad_a, ad_out)
+        self.assertIsInstance(ad_a, type(ad_out))
+
+        # Test __rmul__
+        ad_ar = fac * ad_in
+
+        self.assertEqual(ad_ar, ad_out)
+        self.assertIsInstance(ad_ar, type(ad_out))
+
+    @parameterized.expand([
+        ('int_even',
+            absolutedelta(4),
+            2,
+            absolutedelta(2)),
+        ('int_not_divisible',
+            absolutedelta(microseconds=17),
+            3,
+            absolutedelta(microseconds=6)),
+        ('absolutedelta_int',
+            absolutedelta(days=4, hours=18),
+            absolutedelta(hours=2),
+            57.0),
+        ('absolutedelta_float',
+            absolutedelta(days=4, hours=17),
+            absolutedelta(hours=2),
+            56.5),
+        ('timedelta_int',
+            absolutedelta(days=4, hours=18),
+            timedelta(hours=2),
+            57.0),
+        ('timedelta_float',
+            absolutedelta(days=4, hours=17),
+            timedelta(hours=2),
+            56.5),
+    ])
+    def test_div(self, name, ad_in, fac, ad_out):
+        ad_a = ad_in / fac
+
+        self.assertEqual(ad_a, ad_out)
+        self.assertIsInstance(ad_a, type(ad_out))
+
+    @parameterized.expand([
+        ('int',
+            absolutedelta(microseconds=17),
+            3,
+            absolutedelta(microseconds=5)),
+        ('absolutedelta',
+            absolutedelta(microseconds=42),
+            absolutedelta(microseconds=15),
+            2),
+        ('absolutedelta',
+            absolutedelta(microseconds=42),
+            timedelta(microseconds=15),
+            2)
+    ])
+    def test_floor_div(self, name, ad_in, fac, ad_out):
+        ad_a = ad_in // fac
+
+        self.assertEqual(ad_a, ad_out)
+        self.assertIsInstance(ad_a, type(ad_out))
+

@@ -165,6 +165,25 @@ class absolutedelta(object):
     def __le__(self, other):
         return self < other or self == other
 
+    def __mul__(self, other):
+        return self.__class__.from_timedelta(self._base_delta * other)
+
+    __rmul__ = __mul__
+
+    def __truediv__(self, other):
+        if isinstance(other, (timedelta, absolutedelta)):
+            return self._base_delta / getattr(other, '_base_delta', other)
+        else:
+            return self.__class__.from_timedelta(self._base_delta / other)
+
+    __div__ = __truediv__
+
+    def __floordiv__(self, other):
+        if isinstance(other, (timedelta, absolutedelta)):
+            return self._base_delta // getattr(other, '_base_delta', other)
+        else:
+            return self.__class__.from_timedelta(self._base_delta // other)
+
     def __repr__(self):
         if self.microseconds:
             args = (self.days, self.seconds, self.microseconds)
