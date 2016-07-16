@@ -570,6 +570,12 @@ class TzUTCTest(unittest.TestCase):
 
 
 class TzOffsetTest(unittest.TestCase):
+    def testTimedeltaOffset(self):
+        est = tz.tzoffset('EST', timedelta(hours=-5))
+        est_s = tz.tzoffset('EST', -18000)
+
+        self.assertEqual(est, est_s)
+
     def testTzNameNone(self):
         gmt5 = tz.tzoffset(None, -18000)       # -5:00
         self.assertIs(datetime(2003, 10, 26, 0, 0, tzinfo=gmt5).tzname(),
@@ -585,6 +591,7 @@ class TzOffsetTest(unittest.TestCase):
         tname = 'EST'
         tzo = tz.tzoffset(tname, -5 * 3600)
         self.assertEqual(repr(tzo), "tzoffset(" + repr(tname) + ", -18000)")
+
 
     def testEquality(self):
         utc = tz.tzoffset('UTC', 0)
