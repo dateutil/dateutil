@@ -486,7 +486,7 @@ class parser(object):
     def __init__(self, info=None):
         self.info = info or parserinfo()
 
-    def parse(self, timestr, default=None, ignoretz=False, tzinfos=None, **kwargs):
+    def parse(self, timestr, default=None, ignoretz=False, tzinfos=None, defaultdate=True, **kwargs):
         """
         Parse the date/time string into a :class:`datetime.datetime` object.
 
@@ -526,6 +526,10 @@ class parser(object):
                                   tzinfo=tzfile('/usr/share/zoneinfo/America/Chicago'))
 
             This parameter is ignored if ``ignoretz`` is set.
+        :param defaultdate:
+            If True, parse() will provide a default day, month, or year element to the datetime object if it can't
+            extract one from the input string. If false, parse() will raise a ValueError() indicating that there is a
+            missing day, month, or year element.
 
         :param **kwargs:
             Keyword arguments as passed to ``_parse()``.
@@ -567,16 +571,19 @@ class parser(object):
             value = getattr(res, attr)
             if value is not None:
                 repl[attr] = value
+        if defaultdate:
+            if 'day' not in repl:
+                # If the default day exceeds the last day of the month, fall back to
+                # the end of the month.
+                cyear = default.year if res.year is None else res.year
+                cmonth = default.month if res.month is None else res.month
+                cday = default.day if res.day is None else res.day
 
-        if 'day' not in repl:
-            # If the default day exceeds the last day of the month, fall back to
-            # the end of the month.
-            cyear = default.year if res.year is None else res.year
-            cmonth = default.month if res.month is None else res.month
-            cday = default.day if res.day is None else res.day
-
-            if cday > monthrange(cyear, cmonth)[1]:
-                repl['day'] = monthrange(cyear, cmonth)[1]
+                if cday > monthrange(cyear, cmonth)[1]:
+                    repl['day'] = monthrange(cyear, cmonth)[1]
+        else:
+            if 'day' not in repl or 'month' not in repl or 'year' not in repl:
+                raise ValueError("String does not contain either a day, month, or year value.")
 
         ret = default.replace(**repl)
 
