@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from ._common import unittest, WarningTestMixin, NotAValue
 
 import calendar
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 
 from dateutil.relativedelta import *
 
@@ -34,7 +34,7 @@ class RelativeDeltaTest(WarningTestMixin, unittest.TestCase):
 
         self.assertEqual(type(ccRD * 5.0), type(ccRD),
                          msg='Multiplication does not inherit type.')
-        
+
         self.assertEqual(type(ccRD / 5.0), type(ccRD),
                          msg='Division does not inherit type.')
 
@@ -239,11 +239,11 @@ class RelativeDeltaTest(WarningTestMixin, unittest.TestCase):
         self.assertTrue(relativedelta(days=1))
 
     def testComparison(self):
-        d1 = relativedelta(years=1, months=1, days=1, leapdays=0, hours=1, 
+        d1 = relativedelta(years=1, months=1, days=1, leapdays=0, hours=1,
                            minutes=1, seconds=1, microseconds=1)
-        d2 = relativedelta(years=1, months=1, days=1, leapdays=0, hours=1, 
+        d2 = relativedelta(years=1, months=1, days=1, leapdays=0, hours=1,
                            minutes=1, seconds=1, microseconds=1)
-        d3 = relativedelta(years=1, months=1, days=1, leapdays=0, hours=1, 
+        d3 = relativedelta(years=1, months=1, days=1, leapdays=0, hours=1,
                            minutes=1, seconds=1, microseconds=2)
 
         self.assertEqual(d1, d2)
@@ -262,15 +262,15 @@ class RelativeDeltaTest(WarningTestMixin, unittest.TestCase):
         wday_mo_1 = relativedelta(year=1997, month=4, weekday=MO(+1))
         wday_mo_2 = relativedelta(year=1997, month=4, weekday=MO(+2))
         wday_tu = relativedelta(year=1997, month=4, weekday=TU)
-        
+
         self.assertTrue(wday_mo_1 == wday_mo_1)
-        
+
         self.assertFalse(no_wday == wday_mo_1)
         self.assertFalse(wday_mo_1 == no_wday)
 
         self.assertFalse(wday_mo_1 == wday_mo_2)
         self.assertFalse(wday_mo_2 == wday_mo_1)
-       
+
         self.assertFalse(wday_mo_1 == wday_tu)
         self.assertFalse(wday_tu == wday_mo_1)
 
@@ -282,7 +282,7 @@ class RelativeDeltaTest(WarningTestMixin, unittest.TestCase):
         # Test that the weeks property is working properly.
         rd = relativedelta(years=4, months=2, weeks=8, days=6)
         self.assertEqual((rd.weeks, rd.days), (8, 8 * 7 + 6))
-        
+
         rd.weeks = 3
         self.assertEqual((rd.weeks, rd.days), (3, 3 * 7 + 6))
 
@@ -309,7 +309,7 @@ class RelativeDeltaTest(WarningTestMixin, unittest.TestCase):
         # check for the deprecation warning.
         with self.assertWarns(DeprecationWarning):
             relativedelta(year=2.86)
-        
+
         with self.assertWarns(DeprecationWarning):
             relativedelta(month=1.29)
 
@@ -499,3 +499,73 @@ class RelativeDeltaTest(WarningTestMixin, unittest.TestCase):
         with self.assertRaises(ValueError):
             relativedelta(yearday=367)
 
+    def testAddTimedeltaToUnpopulatedRelativedelta(self):
+        td = timedelta(
+            days=1,
+            seconds=1,
+            microseconds=1,
+            milliseconds=1,
+            minutes=1,
+            hours=1,
+            weeks=1
+        )
+
+        expected = relativedelta(
+            weeks=1,
+            days=1,
+            hours=1,
+            minutes=1,
+            seconds=1,
+            microseconds=1001
+        )
+
+        self.assertEqual(expected, relativedelta() + td)
+
+    def testAddTimedeltaToPopulatedRelativeDelta(self):
+        td = timedelta(
+            days=1,
+            seconds=1,
+            microseconds=1,
+            milliseconds=1,
+            minutes=1,
+            hours=1,
+            weeks=1
+        )
+
+        rd = relativedelta(
+            year=1,
+            month=1,
+            day=1,
+            hour=1,
+            minute=1,
+            second=1,
+            microsecond=1,
+            years=1,
+            months=1,
+            days=1,
+            weeks=1,
+            hours=1,
+            minutes=1,
+            seconds=1,
+            microseconds=1
+        )
+
+        expected = relativedelta(
+            year=1,
+            month=1,
+            day=1,
+            hour=1,
+            minute=1,
+            second=1,
+            microsecond=1,
+            years=1,
+            months=1,
+            weeks=2,
+            days=2,
+            hours=2,
+            minutes=2,
+            seconds=2,
+            microseconds=1002,
+        )
+
+        self.assertEqual(expected, rd + td)
