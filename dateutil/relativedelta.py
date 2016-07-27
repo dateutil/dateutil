@@ -69,7 +69,7 @@ class relativedelta(object):
             Relative information, may be negative (argument is plural); adding
             or subtracting a relativedelta with relative information performs
             the corresponding aritmetic operation on the original datetime value
-            with the information in the relativedelta.  
+            with the information in the relativedelta.
 
         weekday:
             One of the weekday instances (MO, TU, etc). These instances may
@@ -299,16 +299,16 @@ class relativedelta(object):
 
         >>> relativedelta(days=1.5, hours=2).normalized()
         relativedelta(days=1, hours=14)
-        
+
         :return:
             Returns a :class:`dateutil.relativedelta.relativedelta` object.
         """
         # Cascade remainders down (rounding each to roughly nearest microsecond)
         days = int(self.days)
-        
+
         hours_f = round(self.hours + 24 * (self.days - days), 11)
         hours = int(hours_f)
-        
+
         minutes_f = round(self.minutes + 60 * (hours_f - hours), 10)
         minutes = int(minutes_f)
 
@@ -347,6 +347,23 @@ class relativedelta(object):
                                  second=other.second or self.second,
                                  microsecond=(other.microsecond or
                                               self.microsecond))
+        if isinstance(other, datetime.timedelta):
+            return self.__class__(years=self.years,
+                                  months=self.months,
+                                  days=self.days + other.days,
+                                  hours=self.hours,
+                                  minutes=self.minutes,
+                                  seconds=self.seconds + other.seconds,
+                                  microseconds=self.microseconds + other.microseconds,
+                                  leapdays=self.leapdays,
+                                  year=self.year,
+                                  month=self.month,
+                                  day=self.day,
+                                  weekday=self.weekday,
+                                  hour=self.hour,
+                                  minute=self.minute,
+                                  second=self.second,
+                                  microsecond=self.microsecond)
         if not isinstance(other, datetime.date):
             return NotImplemented
         elif self._has_time and not isinstance(other, datetime.datetime):
