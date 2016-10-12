@@ -19,5 +19,8 @@ script:
   - coverage run --omit=setup.py,dateutil/test/* setup.py test
 after_success:
   - codecov
+cache:
+  directories:
+    - .hypothesis
 
 sudo: false

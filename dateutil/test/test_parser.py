@@ -11,6 +11,9 @@ import six
 from six import assertRaisesRegex, PY3
 from six.moves import StringIO
 
+from hypothesis import given
+from hypothesis.extra.datetime import datetimes
+
 class ParserTest(unittest.TestCase):
 
     def setUp(self):
@@ -859,3 +862,12 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(parse(dtstr, dayfirst=True, yearfirst=True),
                          datetime(2015, 9, 25))
 
+    def testWithDateCloseToYearZero(self):
+        # https://github.com/dateutil/dateutil/issues/293
+        dtstr = '0004-04-01'
+        self.assertEqual(parse(dtstr), datetime(4, 4, 1))
+
+    @example(datetime(4, 4, 1))
+    @given(datetimes())
+    def testRoundTripParsing(self, dt):
+        self.assertEqual(parse(str(dt)), dt)
