@@ -52,6 +52,8 @@ class tzutc(datetime.tzinfo):
         return (isinstance(other, tzutc) or
                 (isinstance(other, tzoffset) and other._offset == ZERO))
 
+    __hash__ = None
+
     def __ne__(self, other):
         return not (self == other)
 
@@ -90,6 +92,8 @@ class tzoffset(datetime.tzinfo):
             return NotImplemented
 
         return self._offset == other._offset
+
+    __hash__ = None
 
     def __ne__(self, other):
         return not (self == other)
@@ -190,6 +194,8 @@ class tzlocal(_tzinfo):
         return (self._std_offset == other._std_offset and
                 self._dst_offset == other._dst_offset)
 
+    __hash__ = None
+
     def __ne__(self, other):
         return not (self == other)
 
@@ -226,6 +232,8 @@ class _ttinfo(object):
                 self.isstd == other.isstd and
                 self.isgmt == other.isgmt and
                 self.dstoffset == other.dstoffset)
+
+    __hash__ = None
 
     def __ne__(self, other):
         return not (self == other)
@@ -626,6 +634,8 @@ class tzfile(_tzinfo):
                 self._trans_idx == other._trans_idx and
                 self._ttinfo_list == other._ttinfo_list)
 
+    __hash__ = None
+
     def __ne__(self, other):
         return not (self == other)
 
@@ -823,6 +833,8 @@ class tzrange(_tzinfo):
                 self._dst_offset == other._dst_offset and
                 self._start_delta == other._start_delta and
                 self._end_delta == other._end_delta)
+
+    __hash__ = None
 
     def __ne__(self, other):
         return not (self == other)

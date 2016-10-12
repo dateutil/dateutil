@@ -32,6 +32,8 @@ class weekday(object):
             return False
         return True
 
+    __hash__ = None
+
     def __repr__(self):
         s = ("MO", "TU", "WE", "TH", "FR", "SA", "SU")[self.weekday]
         if not self.n:
@@ -521,6 +523,8 @@ class relativedelta(object):
                 self.minute == other.minute and
                 self.second == other.second and
                 self.microsecond == other.microsecond)
+
+    __hash__ = None
 
     def __ne__(self, other):
         return not self.__eq__(other)
