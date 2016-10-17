@@ -18,7 +18,7 @@ western_easter_dates = [
     date(2004, 4, 11), date(2005, 3, 27), date(2006, 4, 16), date(2007, 4,  8),
     date(2008, 3, 23), date(2009, 4, 12),
 
-    date(2010, 4,  4), date(2011, 4, 24), date(2012, 4,  8), date(2013, 3, 31), 
+    date(2010, 4,  4), date(2011, 4, 24), date(2012, 4,  8), date(2013, 3, 31),
     date(2014, 4, 20), date(2015, 4,  5), date(2016, 3, 27), date(2017, 4, 16),
     date(2018, 4,  1), date(2019, 4, 21),
 
@@ -80,7 +80,7 @@ julian_easter_dates = [
 class EasterTest(unittest.TestCase):
     def testEasterWestern(self):
         for easter_date in western_easter_dates:
-            self.assertEqual(easter_date, 
+            self.assertEqual(easter_date,
                              easter(easter_date.year, EASTER_WESTERN))
 
     def testEasterOrthodox(self):
