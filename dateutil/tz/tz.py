@@ -101,7 +101,7 @@ class tzoffset(datetime.tzinfo):
     def __repr__(self):
         return "%s(%s, %s)" % (self.__class__.__name__,
                                repr(self._name),
-                               int(_total_seconds(self._offset)))
+                               int(self._offset.total_seconds()))
 
     __reduce__ = object.__reduce__
 
@@ -735,12 +735,12 @@ class tzrange(_tzinfo):
         self._dst_abbr = dstabbr
 
         try:
-            stdoffset = _total_seconds(stdoffset)
+            stdoffset = stdoffset.total_seconds()
         except (TypeError, AttributeError):
             pass
 
         try:
-            dstoffset = _total_seconds(dstoffset)
+            dstoffset = dstoffset.total_seconds()
         except (TypeError, AttributeError):
             pass
 
@@ -1320,19 +1320,12 @@ def gettz(name=None):
                             tz = tzlocal()
     return tz
 
-def _total_seconds(td):
-    # Python 2.6 doesn't have a total_seconds() method on timedelta objects
-    return ((td.seconds + td.days * 86400) * 1000000 +
-            td.microseconds) // 1000000
-
-_total_seconds = getattr(datetime.timedelta, 'total_seconds', _total_seconds)
-
 def _datetime_to_timestamp(dt):
     """
     Convert a :class:`datetime.datetime` object to an epoch timestamp in seconds
     since January 1, 1970, ignoring the time zone.
     """
-    return _total_seconds((dt.replace(tzinfo=None) - EPOCH))
+    return (dt.replace(tzinfo=None) - EPOCH).total_seconds()
 
 class _ContextWrapper(object):
     """
