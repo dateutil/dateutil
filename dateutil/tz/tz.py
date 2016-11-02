@@ -984,7 +984,7 @@ class _tzicalvtz(_tzinfo):
         dt = dt.replace(tzinfo=None)
 
         try:
-            return self._cachecomp[self._cachedate.index((dt, self._fold))]
+            return self._cachecomp[self._cachedate.index((dt, self._fold(dt)))]
         except ValueError:
             pass
 
@@ -1011,7 +1011,7 @@ class _tzicalvtz(_tzinfo):
             else:
                 lastcomp = comp[0]
 
-        self._cachedate.insert(0, (dt, self._fold))
+        self._cachedate.insert(0, (dt, self._fold(dt)))
         self._cachecomp.insert(0, lastcomp)
 
         if len(self._cachedate) > 10:
@@ -1021,7 +1021,7 @@ class _tzicalvtz(_tzinfo):
         return lastcomp
 
     def _find_compdt(self, comp, dt):
-        if comp.tzoffsetdiff < ZERO and not self._fold:
+        if comp.tzoffsetdiff < ZERO and self._fold(dt):
             dt -= comp.tzoffsetdiff
 
         compdt = comp.rrule.before(dt, inc=True)
