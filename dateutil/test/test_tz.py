@@ -211,7 +211,6 @@ class TzFoldMixin(object):
             self.assertEqual(t1_syd1.replace(tzinfo=None),
                              datetime(2012, 4, 1, 2, 30))
 
-            self.assertNotEqual(t0_syd0, t1_syd1)
             self.assertEqual(t0_syd0.utcoffset(), timedelta(hours=11))
             self.assertEqual(t1_syd1.utcoffset(), timedelta(hours=10))
 
@@ -269,7 +268,6 @@ class TzFoldMixin(object):
                 self.assertEqual(t1_tor1.replace(tzinfo=None),
                                  datetime(2011, 11, 6, 1, 30))
 
-                self.assertNotEqual(t0_tor0, t1_tor1)
                 self.assertEqual(t0_tor0.utcoffset(), timedelta(hours=-4.0))
                 self.assertEqual(t1_tor1.utcoffset(), timedelta(hours=-5.0))
 
@@ -324,11 +322,14 @@ class TzFoldMixin(object):
 
             # Ambiguous between 2015-11-01 1:30 EDT-4 and 2015-11-01 1:30 EST-5
             in_dst = pre_dst + hour
-            in_dst_tzname_0 = in_dst.tzname()     # Stash the tzname - EST
+            in_dst_tzname_0 = in_dst.tzname()     # Stash the tzname - EDT
 
             # Doing the arithmetic in UTC creates a date that is unambiguously
-            # 2015-11-01 1:30 EDT-4
-            in_dst_via_utc = (pre_dst.astimezone(UTC) + hour).astimezone(NYC)
+            # 2015-11-01 1:30 EDT-5
+            in_dst_via_utc = (pre_dst.astimezone(UTC) + 2*hour).astimezone(NYC)
+
+            # Make sure the dates are actually ambiguous
+            self.assertEqual(in_dst, in_dst_via_utc)
 
             # Make sure we got the right folding behavior
             self.assertNotEqual(in_dst_via_utc.tzname(), in_dst_tzname_0)

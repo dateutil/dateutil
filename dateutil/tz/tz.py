@@ -144,7 +144,16 @@ class tzlocal(_tzinfo):
     def tzname(self, dt):
         return time.tzname[self._isdst(dt)]
 
-    def _isdst(self, dt):
+    def _naive_is_dst(self, dt):
+        timestamp = _datetime_to_timestamp(dt)
+        return time.localtime(timestamp + time.timezone).tm_isdst
+
+    def _is_ambiguous(self, dt):
+        naive_dst = self._naive_is_dst(dt)
+        return (not naive_dst and
+                (naive_dst != self._naive_is_dst(dt - self._dst_saved)))
+
+    def _isdst(self, dt, fold_naive=True):
         # We can't use mktime here. It is unstable when deciding if
         # the hour near to a change is DST or not.
         #
@@ -172,20 +181,17 @@ class tzlocal(_tzinfo):
         if not self._hasdst:
             return False
 
-        dstval = self._naive_is_dst(dt)
-
         # Check for ambiguous times:
-        if not dstval and self._fold is not None:
-            dst_fold_offset = self._naive_is_dst(dt - self._dst_saved)
+        dstval = self._naive_is_dst(dt)
+        fold = getattr(dt, 'fold', None)
 
-            if dst_fold_offset:
-                return self._fold
-
+        if self._is_ambiguous(dt):
+            if fold is not None:
+                return not self._fold(dt)
+            else:
+                return True
+        
         return dstval
-
-    def _naive_is_dst(self, dt):
-        timestamp = _datetime_to_timestamp(dt)
-        return time.localtime(timestamp + time.timezone).tm_isdst
 
     def __eq__(self, other):
         if not isinstance(other, tzlocal):
