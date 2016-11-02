@@ -980,8 +980,10 @@ class TZStrTest(unittest.TestCase, TzFoldMixin):
     def testStrEnd1(self):
         self.assertEqual(datetime(2003, 10, 26, 0, 59,
                                   tzinfo=tz.tzstr("EST5EDT")).tzname(), "EDT")
-        self.assertEqual(datetime(2003, 10, 26, 1, 00,
-                                  tzinfo=tz.tzstr("EST5EDT")).tzname(), "EST")
+        
+        end = tz.enfold(datetime(2003, 10, 26, 1, 00,
+                                  tzinfo=tz.tzstr("EST5EDT")), fold=1)
+        self.assertEqual(end.tzname(), "EST")
 
     def testStrStart2(self):
         s = "EST5EDT,4,0,6,7200,10,0,26,7200,3600"
@@ -994,8 +996,10 @@ class TZStrTest(unittest.TestCase, TzFoldMixin):
         s = "EST5EDT,4,0,6,7200,10,0,26,7200,3600"
         self.assertEqual(datetime(2003, 10, 26, 0, 59,
                                   tzinfo=tz.tzstr(s)).tzname(), "EDT")
-        self.assertEqual(datetime(2003, 10, 26, 1, 00,
-                                  tzinfo=tz.tzstr(s)).tzname(), "EST")
+        
+        end = tz.enfold(datetime(2003, 10, 26, 1, 00,
+                                  tzinfo=tz.tzstr(s)), fold=1)
+        self.assertEqual(end.tzname(), "EST")
 
     def testStrStart3(self):
         s = "EST5EDT,4,1,0,7200,10,-1,0,7200,3600"
@@ -1008,8 +1012,10 @@ class TZStrTest(unittest.TestCase, TzFoldMixin):
         s = "EST5EDT,4,1,0,7200,10,-1,0,7200,3600"
         self.assertEqual(datetime(2003, 10, 26, 0, 59,
                                   tzinfo=tz.tzstr(s)).tzname(), "EDT")
-        self.assertEqual(datetime(2003, 10, 26, 1, 00,
-                                  tzinfo=tz.tzstr(s)).tzname(), "EST")
+
+        end = tz.enfold(datetime(2003, 10, 26, 1, 00,
+                                  tzinfo=tz.tzstr(s)), fold=1)
+        self.assertEqual(end.tzname(), "EST")
 
     def testStrStart4(self):
         s = "EST5EDT4,M4.1.0/02:00:00,M10-5-0/02:00"
@@ -1022,8 +1028,9 @@ class TZStrTest(unittest.TestCase, TzFoldMixin):
         s = "EST5EDT4,M4.1.0/02:00:00,M10-5-0/02:00"
         self.assertEqual(datetime(2003, 10, 26, 0, 59,
                                   tzinfo=tz.tzstr(s)).tzname(), "EDT")
-        self.assertEqual(datetime(2003, 10, 26, 1, 00,
-                                  tzinfo=tz.tzstr(s)).tzname(), "EST")
+        end = tz.enfold(datetime(2003, 10, 26, 1, 00, tzinfo=tz.tzstr(s)),
+                        fold=1)
+        self.assertEqual(end.tzname(), "EST")
 
     def testStrStart5(self):
         s = "EST5EDT4,95/02:00:00,298/02:00"
@@ -1036,8 +1043,9 @@ class TZStrTest(unittest.TestCase, TzFoldMixin):
         s = "EST5EDT4,95/02:00:00,298/02"
         self.assertEqual(datetime(2003, 10, 26, 0, 59,
                                   tzinfo=tz.tzstr(s)).tzname(), "EDT")
-        self.assertEqual(datetime(2003, 10, 26, 1, 00,
-                                  tzinfo=tz.tzstr(s)).tzname(), "EST")
+        end = tz.enfold(datetime(2003, 10, 26, 1, 00,
+                                  tzinfo=tz.tzstr(s)), fold=1)
+        self.assertEqual(end.tzname(), "EST")
 
     def testStrStart6(self):
         s = "EST5EDT4,J96/02:00:00,J299/02:00"
@@ -1050,8 +1058,10 @@ class TZStrTest(unittest.TestCase, TzFoldMixin):
         s = "EST5EDT4,J96/02:00:00,J299/02"
         self.assertEqual(datetime(2003, 10, 26, 0, 59,
                                   tzinfo=tz.tzstr(s)).tzname(), "EDT")
-        self.assertEqual(datetime(2003, 10, 26, 1, 00,
-                                  tzinfo=tz.tzstr(s)).tzname(), "EST")
+
+        end = tz.enfold(datetime(2003, 10, 26, 1, 00,
+                                 tzinfo=tz.tzstr(s)), fold=1)
+        self.assertEqual(end.tzname(), "EST")
 
     def testStrStr(self):
         # Test that tz.tzstr() won't throw an error if given a str instead

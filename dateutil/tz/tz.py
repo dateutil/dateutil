@@ -792,6 +792,16 @@ class tzrange(_tzinfo):
         else:
             return self._std_abbr
 
+    def _is_ambiguous(self, dt):
+        transitions = self._transitions(dt.year)
+        if transitions is None:
+            return False
+
+        start, end = transitions
+
+        dt = dt.replace(tzinfo=None)
+        return (end <= dt < end + self._dst_base_offset)
+
     def _isdst(self, dt):
         transitions = self._transitions(dt.year)
 
@@ -803,9 +813,8 @@ class tzrange(_tzinfo):
         dt = dt.replace(tzinfo=None)
 
         # Handle ambiguous dates
-        if self._fold is not None:
-            if end <= dt < end + self._dst_base_offset:
-                return self._fold
+        if self._is_ambiguous(dt):
+            return not self._fold(dt)
 
         if start < end:
             return start <= dt < end
