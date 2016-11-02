@@ -20,7 +20,7 @@ from operator import itemgetter
 from contextlib import contextmanager
 
 from six import string_types, PY3
-from ._common import tzname_in_python2, _tzinfo
+from ._common import tzname_in_python2, _tzinfo, enfold
 
 try:
     from .win import tzwin, tzwinlocal
@@ -570,40 +570,34 @@ class tzfile(_tzinfo):
 
         return self._get_ttinfo(idx)
 
-    def _resolve_ambiguous_time(self, dt, idx=None):
+    def _is_ambiguous(self, dt, idx=None):
         if idx is None:
             idx = self._find_last_transition(dt)
 
-        # If we're fold-naive or we have no transitions, return the index.
-        if self._fold is None or idx is None:
-            return idx
-
+        # Calculate the difference in offsets from current to previous
         timestamp = _datetime_to_timestamp(dt)
         tti = self._get_ttinfo(idx)
 
-        if idx > 0:
-            # Calculate the difference in offsets from the current to previous
-            od = self._get_ttinfo(idx - 1).offset - tti.offset
-            tt = self._trans_list[idx]      # Transition time
+        if idx is None or idx <= 0:
+            return False
 
-            if timestamp < tt + od:
-                if self._fold:
-                    return idx - 1
-                else:
-                    return idx
+        od = self._get_ttinfo(idx - 1).offset - tti.offset
+        tt = self._trans_list[idx]          # Transition time
 
-        if idx < len(self._trans_list):
-            # Calculate the difference in offsets from the previous to current
-            od = self._get_ttinfo(idx + 1).offset - tti.offset
-            tt = self._trans_list[idx + 1]
+        return timestamp < tt + od
 
-            if timestamp > tt - od:
-                if self._fold:
-                    return idx + 1
-                else:
-                    return idx
+    def _resolve_ambiguous_time(self, dt):
+        idx = self._find_last_transition(dt)
 
-        return idx
+        # If we have no transitions, return the index
+        _fold = self._fold(dt)
+        if idx is None or idx == 0:
+            return idx
+
+        # Get the current datetime as a timestamp
+        idx_offset = int(not _fold and self._is_ambiguous(dt, idx))
+
+        return idx - idx_offset
 
     def utcoffset(self, dt):
         if dt is None:

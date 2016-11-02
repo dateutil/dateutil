@@ -797,8 +797,9 @@ class ZoneInfoGettzTest(GettzTest):
         tzc = self.gettz("EST5EDT")
         self.assertEqual(datetime(2003, 10, 26, 0, 59, tzinfo=tzc).tzname(),
                          "EDT", MISSING_TARBALL)
-        self.assertEqual(datetime(2003, 10, 26, 1, 00, tzinfo=tzc).tzname(),
-                         "EST")
+
+        end_est = tz.enfold(datetime(2003, 10, 26, 1, 00, tzinfo=tzc), fold=1)
+        self.assertEqual(end_est.tzname(), "EST")
 
     def testZoneInfoOffsetSignal(self):
         utc = self.gettz("UTC")
@@ -1191,11 +1192,14 @@ class TZICalTest(unittest.TestCase, TzFoldMixin):
         if start:
             dt1 = datetime(2003, 4, 6, 1, 59)
             dt2 = datetime(2003, 4, 6, 2, 00)
+            fold = [0, 0]
         else:
             dt1 = datetime(2003, 10, 26, 0, 59)
             dt2 = datetime(2003, 10, 26, 1, 00)
+            fold = [0, 1]
         
-        dts = (dt.replace(tzinfo=tzc) for dt in (dt1, dt2))
+        dts = (tz.enfold(dt.replace(tzinfo=tzc), fold=f)
+               for dt, f in zip((dt1, dt2), fold))
 
         for value, dt in zip(values, dts):
             self.assertEqual(func(dt), value)
@@ -1324,8 +1328,8 @@ class TZTest(unittest.TestCase):
         tzc = tz.tzfile(BytesIO(base64.b64decode(TZFILE_EST5EDT)))
         self.assertEqual(datetime(2003, 10, 26, 0, 59, tzinfo=tzc).tzname(),
                          "EDT")
-        self.assertEqual(datetime(2003, 10, 26, 1, 00, tzinfo=tzc).tzname(),
-                         "EST")
+        end_est = tz.enfold(datetime(2003, 10, 26, 1, 00, tzinfo=tzc))
+        self.assertEqual(end_est.tzname(), "EST")
 
     def testFileLastTransition(self):
         # After the last transition, it goes to standard time in perpetuity
@@ -1333,7 +1337,8 @@ class TZTest(unittest.TestCase):
         self.assertEqual(datetime(2037, 10, 25, 0, 59, tzinfo=tzc).tzname(),
                          "EDT")
 
-        self.assertEqual(datetime(2037, 10, 25, 1, 00, tzinfo=tzc).tzname(),
+        last_date = tz.enfold(datetime(2037, 10, 25, 1, 00, tzinfo=tzc), fold=1)
+        self.assertEqual(last_date.tzname(),
                          "EST")
 
         self.assertEqual(datetime(2038, 5, 25, 12, 0, tzinfo=tzc).tzname(),
