@@ -30,7 +30,6 @@ if hasattr(datetime, 'fold'):
     def enfold(dt, fold=1):
         return dt.replace(fold=fold)
 
-    _fromutc = tzinfo
 else:
     class _DatetimeWithFold(datetime):
         """
@@ -55,47 +54,47 @@ else:
         else:
             return datetime.datetime(*args)
 
-    def _fromutc(self, dt):
-        """
-        Given a timezone-aware datetime in a given timezone, calculates a
-        timezone-aware datetime in a new timezone.
+def _fromutc(self, dt):
+    """
+    Given a timezone-aware datetime in a given timezone, calculates a
+    timezone-aware datetime in a new timezone.
 
-        Since this is the one time that we *know* we have an unambiguous
-        datetime object, we take this opportunity to determine whether the
-        datetime is ambiguous and in a "fold" state (e.g. if it's the first
-        occurence, chronologically, of the ambiguous datetime).
+    Since this is the one time that we *know* we have an unambiguous
+    datetime object, we take this opportunity to determine whether the
+    datetime is ambiguous and in a "fold" state (e.g. if it's the first
+    occurence, chronologically, of the ambiguous datetime).
 
-        :param dt:
-            A timezone-aware :class:`datetime.dateime` object.
-        """
+    :param dt:
+        A timezone-aware :class:`datetime.dateime` object.
+    """
 
-        # Re-implement the algorithm from Python's datetime.py
-        if not isinstance(dt, datetime):
-            raise TypeError("fromutc() requires a datetime argument")
-        if dt.tzinfo is not self:
-            raise ValueError("dt.tzinfo is not self")
+    # Re-implement the algorithm from Python's datetime.py
+    if not isinstance(dt, datetime):
+        raise TypeError("fromutc() requires a datetime argument")
+    if dt.tzinfo is not self:
+        raise ValueError("dt.tzinfo is not self")
 
-        dtoff = dt.utcoffset()
-        if dtoff is None:
-            raise ValueError("fromutc() requires a non-None utcoffset() "
-                             "result")
+    dtoff = dt.utcoffset()
+    if dtoff is None:
+        raise ValueError("fromutc() requires a non-None utcoffset() "
+                         "result")
 
-        # The original datetime.py code assumes that `dst()` defaults to
-        # zero during ambiguous times. PEP 495 inverts this presumption, so
-        # for pre-PEP 495 versions of python, we need to tweak the algorithm.
-        dtdst = dt.dst()
+    # The original datetime.py code assumes that `dst()` defaults to
+    # zero during ambiguous times. PEP 495 inverts this presumption, so
+    # for pre-PEP 495 versions of python, we need to tweak the algorithm.
+    dtdst = dt.dst()
+    if dtdst is None:
+        raise ValueError("fromutc() requires a non-None dst() result")
+    delta = dtoff - dtdst
+    if delta:
+        dt += delta
+        # Set fold=1 so we can default to being in the fold for
+        # ambiguous dates.
+        dtdst = enfold(dt, fold=1).dst()
         if dtdst is None:
-            raise ValueError("fromutc() requires a non-None dst() result")
-        delta = dtoff - dtdst
-        if delta:
-            dt += delta
-            # Set fold=1 so we can default to being in the fold for
-            # ambiguous dates.
-            dtdst = enfold(dt, fold=1).dst()
-            if dtdst is None:
-                raise ValueError("fromutc(): dt.dst gave inconsistent "
-                                 "results; cannot convert")
-        return dt + dtdst
+            raise ValueError("fromutc(): dt.dst gave inconsistent "
+                             "results; cannot convert")
+    return dt + dtdst
 
 
 class _tzinfo(tzinfo):
@@ -106,11 +105,20 @@ class _tzinfo(tzinfo):
     def __init__(self, *args, **kwargs):
         super(_tzinfo, self).__init__(*args, **kwargs)
 
-    def _is_ambiguous(self, dt):
+    def is_ambiguous(self, dt):
+        """
+        Determines whether a given datetime is an ambiguous dat
+        """
+
+        dt = dt.replace(tzinfo=self)
+
         wall_0 = enfold(dt, fold=0)
         wall_1 = enfold(dt, fold=1)
 
-        return wall_0.utcoffset() != wall_1.utcoffset()
+        same_offset = wall_0.utcoffset() == wall_1.utcoffset()
+        same_dt = wall_0.replace(tzinfo=None) == wall_1.replace(tzinfo=None)
+        
+        return same_dt and not same_offset
 
     def _fold_status(self, dt_utc, dt_wall):
         """
@@ -129,16 +137,11 @@ class _tzinfo(tzinfo):
             :class:`datetime.tzinfo` attached, otherwise the calculation may
             fail.
         """
-        _fold = getattr(dt_wall, 'fold', None)          # PEP 495
-
-        if _fold is None:
-            # This is always true on the DST side, but _fold has no meaning
-            # outside of ambiguous times.
-            if self._is_ambiguous(dt_wall):
-                delta_wall = dt_wall - dt_utc
-                _fold = int(delta_wall == (dt_utc.utcoffset() - dt_utc.dst()))
-            else:
-                _fold = 0
+        if self.is_ambiguous(dt_wall):
+            delta_wall = dt_wall - dt_utc
+            _fold = int(delta_wall == (dt_utc.utcoffset() - dt_utc.dst()))
+        else:
+            _fold = 0
 
         return _fold
 

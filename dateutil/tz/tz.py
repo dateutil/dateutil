@@ -148,7 +148,7 @@ class tzlocal(_tzinfo):
         timestamp = _datetime_to_timestamp(dt)
         return time.localtime(timestamp + time.timezone).tm_isdst
 
-    def _is_ambiguous(self, dt):
+    def is_ambiguous(self, dt):
         naive_dst = self._naive_is_dst(dt)
         return (not naive_dst and
                 (naive_dst != self._naive_is_dst(dt - self._dst_saved)))
@@ -185,7 +185,7 @@ class tzlocal(_tzinfo):
         dstval = self._naive_is_dst(dt)
         fold = getattr(dt, 'fold', None)
 
-        if self._is_ambiguous(dt):
+        if self.is_ambiguous(dt):
             if fold is not None:
                 return not self._fold(dt)
             else:
@@ -570,7 +570,7 @@ class tzfile(_tzinfo):
 
         return self._get_ttinfo(idx)
 
-    def _is_ambiguous(self, dt, idx=None):
+    def is_ambiguous(self, dt, idx=None):
         if idx is None:
             idx = self._find_last_transition(dt)
 
@@ -595,7 +595,7 @@ class tzfile(_tzinfo):
             return idx
 
         # Get the current datetime as a timestamp
-        idx_offset = int(not _fold and self._is_ambiguous(dt, idx))
+        idx_offset = int(not _fold and self.is_ambiguous(dt, idx))
 
         return idx - idx_offset
 
@@ -792,7 +792,7 @@ class tzrange(_tzinfo):
         else:
             return self._std_abbr
 
-    def _is_ambiguous(self, dt):
+    def is_ambiguous(self, dt):
         transitions = self._transitions(dt.year)
         if transitions is None:
             return False
@@ -813,7 +813,7 @@ class tzrange(_tzinfo):
         dt = dt.replace(tzinfo=None)
 
         # Handle ambiguous dates
-        if self._is_ambiguous(dt):
+        if self.is_ambiguous(dt):
             return not self._fold(dt)
 
         if start < end:
