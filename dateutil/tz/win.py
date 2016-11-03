@@ -176,6 +176,10 @@ class tzwinbase(_tzinfo):
 
     def transitions(self, year):
         """ Gets the transition day and times for a given year """
+
+        if self._dstmonth == 0:
+            return None
+
         dston = picknthweekday(year, self._dstmonth, self._dstdayofweek,
                                self._dsthour, self._dstminute,
                                self._dstweeknumber)
@@ -189,6 +193,19 @@ class tzwinbase(_tzinfo):
 
         return dston, dstoff
 
+    def _is_ambiguous(self, dt):
+        if dt is not None:
+            transitions = self.transitions(dt.year)
+
+        if dt is None or transitions is None:
+            return False
+
+        dston, dstoff = transitions
+
+        naive_dt = dt.replace(tzinfo=None)
+
+        return (dstoff <= naive_dt < dstoff + self._dst_base_offset)
+
     def _isdst(self, dt):
         if not self._dstmonth:
             # dstmonth == 0 signals the zone has no daylight saving time
@@ -201,10 +218,8 @@ class tzwinbase(_tzinfo):
         naive_dt = dt.replace(tzinfo=None)
 
         # Check to see if we're in an ambiguous time
-        if self._fold is not None:
-            dst_base_offset = self._dst_base_offset
-            if dstoff <= naive_dt < dstoff + dst_base_offset:
-                return self._fold
+        if self._is_ambiguous(dt):
+            return not self._fold(dt)
 
         if dston < dstoff:
             return dston <= naive_dt < dstoff

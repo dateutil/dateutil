@@ -350,10 +350,13 @@ class TzWinFoldMixin(object):
             t0_u = t_n.replace(tzinfo=tzi).astimezone(tz.tzutc())
             t1_u = t0_u + timedelta(hours=1)
         else:
-            t_n = dstoff + timedelta(minutes=30)
+            # Get 1 hour before the first ambiguous date
+            t_n = dstoff - timedelta(minutes=30)
 
-            t1_u = t_n.replace(tzinfo=tzi).astimezone(tz.tzutc())
-            t0_u = t1_u - timedelta(hours=1)
+            t0_u = t_n.replace(tzinfo=tzi).astimezone(tz.tzutc())
+            t_n += timedelta(hours=1)                   # Naive ambiguous date
+            t0_u = t0_u + timedelta(hours=1)            # First ambiguous date
+            t1_u = t0_u + timedelta(hours=1)            # Second ambiguous date
 
         return t_n, t0_u, t1_u
 
@@ -439,7 +442,7 @@ class TzWinFoldMixin(object):
             self.assertEqual(t0_tor0.replace(tzinfo=None), t_n)
             self.assertEqual(t1_tor1.replace(tzinfo=None), t_n)
 
-            self.assertNotEqual(t0_tor0, t1_tor1)
+            self.assertNotEqual(t0_tor0.tzname(), t1_tor1.tzname())
             self.assertEqual(t0_tor0.utcoffset(), timedelta(hours=-4.0))
             self.assertEqual(t1_tor1.utcoffset(), timedelta(hours=-5.0))
 
@@ -498,11 +501,11 @@ class TzWinFoldMixin(object):
 
             # Ambiguous between 2015-11-01 1:30 EDT-4 and 2015-11-01 1:30 EST-5
             in_dst = pre_dst + hour
-            in_dst_tzname_0 = in_dst.tzname()     # Stash the tzname - EST
+            in_dst_tzname_0 = in_dst.tzname()     # Stash the tzname - EDT
 
             # Doing the arithmetic in UTC creates a date that is unambiguously
-            # 2015-11-01 1:30 EDT-4
-            in_dst_via_utc = (pre_dst.astimezone(UTC) + hour).astimezone(NYC)
+            # 2015-11-01 1:30 EDT-5
+            in_dst_via_utc = (pre_dst.astimezone(UTC) + 2*hour).astimezone(NYC)
 
             # Make sure we got the right folding behavior
             self.assertNotEqual(in_dst_via_utc.tzname(), in_dst_tzname_0)
