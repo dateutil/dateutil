@@ -14,12 +14,15 @@ install:
   - set path=c:\Program Files\PostgreSQL\9.3\bin\;%PATH%
   - set path=%PATH%;%PYTHON%;%PYTHON%/Scripts
 
+  # If this isn't done, I guess Appveyor will install to the Python2.7 version
+  - set pip_cmd=%PYTHON%/python.exe -m pip
+
   # Download scripts and dependencies
   - ps: Start-FileDownload 'https://bootstrap.pypa.io/get-pip.py'
-  - "python get-pip.py"
-  - "pip install six"
-  - "pip install coverage"
-  - "pip install codecov"
+  - "%PYTHON%/python.exe get-pip.py"
+  - "%pip_cmd% install six"
+  - "%pip_cmd% install coverage"
+  - "%pip_cmd% install codecov"
 
   # This frequently fails with network errors, so we'll retry it up to 5 times
   # with a 1 minute rate limit.
