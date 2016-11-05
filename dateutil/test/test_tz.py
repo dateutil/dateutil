@@ -887,9 +887,16 @@ class TZRangeTest(unittest.TestCase, TzFoldMixin):
         self.assertEqual(dt_std.tzname(), 'EST')
         self.assertEqual(dt_dst.tzname(), 'EDT')
 
+    def testTimeOnlyRangeFixed(self):
+        # This is a fixed-offset zone, so tzrange allows this
+        tz_range = tz.tzrange('dflt', stdoffset=timedelta(hours=-3))
+        self.assertEqual(dt_time(13, 20, tzinfo=tz_range).utcoffset(),
+                         timedelta(hours=-3))
+
     def testTimeOnlyRange(self):
-        # tzrange returns None
-        tz_range = tz.tzrange('dflt')
+        # tzrange returns None because this zone has DST
+        tz_range = tz.tzrange('EST', timedelta(hours=-5),
+                              'EDT', timedelta(hours=-4))
         self.assertIs(dt_time(13, 20, tzinfo=tz_range).utcoffset(), None)
 
     def testBrokenIsDstHandling(self):

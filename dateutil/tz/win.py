@@ -13,6 +13,7 @@ except ValueError:
     raise ImportError("Running tzwin on non-Windows system")
 
 from ._common import tzname_in_python2, _tzinfo
+from ._common import tzrangebase
 
 __all__ = ["tzwin", "tzwinlocal", "tzres"]
 
@@ -112,15 +113,18 @@ class tzres(object):
         return self.load_name(offset)
 
 
-class tzwinbase(_tzinfo):
+class tzwinbase(tzrangebase):
     """tzinfo class based on win32's timezones available in the registry."""
+    def __init__(self):
+        raise NotImplementedError('tzwinbase is an abstract base class')
+
     def __eq__(self, other):
         # Compare on all relevant dimensions, including name.
         if not isinstance(other, tzwinbase):
             return NotImplemented
 
-        return  (self._stdoffset == other._stdoffset and
-                 self._dstoffset == other._dstoffset and
+        return  (self._std_offset == other._std_offset and
+                 self._dst_offset == other._dst_offset and
                  self._stddayofweek == other._stddayofweek and
                  self._dstdayofweek == other._dstdayofweek and
                  self._stdweeknumber == other._stdweeknumber and
@@ -129,38 +133,8 @@ class tzwinbase(_tzinfo):
                  self._dsthour == other._dsthour and
                  self._stdminute == other._stdminute and
                  self._dstminute == other._dstminute and
-                 self._stdname == other._stdname and
-                 self._dstname == other._dstname)
-
-    def __ne__(self, other):
-        return not (self == other)
-
-    def utcoffset(self, dt):
-        isdst = self._isdst(dt)
-
-        if isdst is None:
-            return None
-        elif isdst:
-            return datetime.timedelta(minutes=self._dstoffset)
-        else:
-            return datetime.timedelta(minutes=self._stdoffset)
-
-    def dst(self, dt):
-        isdst = self._isdst(dt)
-
-        if isdst is None:
-            return None
-        elif isdst:
-            return self._dst_base_offset
-        else:
-            return datetime.timedelta(0)
-
-    @tzname_in_python2
-    def tzname(self, dt):
-        if self._isdst(dt):
-            return self._dstname
-        else:
-            return self._stdname
+                 self._std_abbr == other._std_abbr and
+                 self._dst_abbr == other._dst_abbr)
 
     @staticmethod
     def list():
@@ -177,7 +151,7 @@ class tzwinbase(_tzinfo):
     def transitions(self, year):
         """ Gets the transition day and times for a given year """
 
-        if self._dstmonth == 0:
+        if not self.hasdst:
             return None
 
         dston = picknthweekday(year, self._dstmonth, self._dstdayofweek,
@@ -193,50 +167,17 @@ class tzwinbase(_tzinfo):
 
         return dston, dstoff
 
-    def _is_ambiguous(self, dt):
-        if dt is not None:
-            transitions = self.transitions(dt.year)
-
-        if dt is None or transitions is None:
-            return False
-
-        dston, dstoff = transitions
-
-        naive_dt = dt.replace(tzinfo=None)
-
-        return (dstoff <= naive_dt < dstoff + self._dst_base_offset)
-
-    def _isdst(self, dt):
-        if not self._dstmonth:
-            # dstmonth == 0 signals the zone has no daylight saving time
-            return False
-        elif dt is None:
-            return None
-
-        dston, dstoff = self.transitions(dt.year)
-
-        naive_dt = dt.replace(tzinfo=None)
-
-        # Check to see if we're in an ambiguous time
-        if self._is_ambiguous(dt):
-            return not self._fold(dt)
-
-        if dston < dstoff:
-            return dston <= naive_dt < dstoff
-        else:
-            return not dstoff <= naive_dt < dston
+    def _get_hasdst(self):
+        return self._dstmonth != 0
 
     @property
     def _dst_base_offset(self):
-        # Get the offset between DST and STD
-        return datetime.timedelta(minutes=(self._dstoffset - self._stdoffset)) 
+        return self._dst_base_offset_
 
 
 class tzwin(tzwinbase):
 
     def __init__(self, name):
-        super(tzwin, self).__init__()
-
         self._name = name
 
         # multiple contexts only possible in 2.7 and 3.1, we still support 2.6
@@ -245,15 +186,17 @@ class tzwin(tzwinbase):
             with winreg.OpenKey(handle, tzkeyname) as tzkey:
                 keydict = valuestodict(tzkey)
 
-        self._stdname = keydict["Std"]
-        self._dstname = keydict["Dlt"]
+        self._std_abbr = keydict["Std"]
+        self._dst_abbr = keydict["Dlt"]
 
         self._display = keydict["Display"]
 
         # See http://ww_winreg.jsiinc.com/SUBA/tip0300/rh0398.htm
         tup = struct.unpack("=3l16h", keydict["TZI"])
-        self._stdoffset = -tup[0]-tup[1]          # Bias + StandardBias * -1
-        self._dstoffset = self._stdoffset-tup[2]  # + DaylightBias * -1
+        stdoffset = -tup[0]-tup[1]          # Bias + StandardBias * -1
+        dstoffset = stdoffset-tup[2]        # + DaylightBias * -1
+        self._std_offset = datetime.timedelta(minutes=stdoffset)
+        self._dst_offset = datetime.timedelta(minutes=dstoffset)
 
         # for the meaning see the win32 TIME_ZONE_INFORMATION structure docs
         # http://msdn.microsoft.com/en-us/library/windows/desktop/ms725481(v=vs.85).aspx
@@ -269,6 +212,9 @@ class tzwin(tzwinbase):
          self._dsthour,
          self._dstminute) = tup[12:17]
 
+        self._dst_base_offset_ = self._dst_offset - self._std_offset
+        self.hasdst = self._get_hasdst()
+
     def __repr__(self):
         return "tzwin(%s)" % repr(self._name)
 
@@ -278,25 +224,27 @@ class tzwin(tzwinbase):
 
 class tzwinlocal(tzwinbase):
     def __init__(self):
-        super(tzwinlocal, self).__init__()
         with winreg.ConnectRegistry(None, winreg.HKEY_LOCAL_MACHINE) as handle:
             with winreg.OpenKey(handle, TZLOCALKEYNAME) as tzlocalkey:
                 keydict = valuestodict(tzlocalkey)
 
-            self._stdname = keydict["StandardName"]
-            self._dstname = keydict["DaylightName"]
+            self._std_abbr = keydict["StandardName"]
+            self._dst_abbr = keydict["DaylightName"]
 
             try:
                 tzkeyname = text_type('{kn}\{sn}').format(kn=TZKEYNAME,
-                                                          sn=self._stdname)
+                                                          sn=self._std_abbr)
                 with winreg.OpenKey(handle, tzkeyname) as tzkey:
                     _keydict = valuestodict(tzkey)
                     self._display = _keydict["Display"]
             except OSError:
                 self._display = None
 
-        self._stdoffset = -keydict["Bias"]-keydict["StandardBias"]
-        self._dstoffset = self._stdoffset-keydict["DaylightBias"]
+        stdoffset = -keydict["Bias"]-keydict["StandardBias"]
+        dstoffset = stdoffset-keydict["DaylightBias"]
+
+        self._std_offset = datetime.timedelta(minutes=stdoffset)
+        self._dst_offset = datetime.timedelta(minutes=dstoffset)
 
         # For reasons unclear, in this particular key, the day of week has been
         # moved to the END of the SYSTEMTIME structure.
@@ -318,12 +266,15 @@ class tzwinlocal(tzwinbase):
 
         self._dstdayofweek = tup[7]
 
+        self._dst_base_offset_ = self._dst_offset - self._std_offset
+        self.hasdst = self._get_hasdst()
+
     def __repr__(self):
         return "tzwinlocal()"
 
     def __str__(self):
         # str will return the standard name, not the daylight name.
-        return "tzwinlocal(%s)" % repr(self._stdname)
+        return "tzwinlocal(%s)" % repr(self._std_abbr)
 
     def __reduce__(self):
         return (self.__class__, ())
