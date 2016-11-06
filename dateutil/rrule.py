@@ -19,6 +19,8 @@ from six import advance_iterator, integer_types
 from six.moves import _thread, range
 import heapq
 
+from ._common import weekday as weekdaybase
+
 # For warning about deprecation of until and count
 from warnings import warn
 
@@ -58,37 +60,15 @@ FREQNAMES = ['YEARLY','MONTHLY','WEEKLY','DAILY','HOURLY','MINUTELY','SECONDLY']
 easter = None
 parser = None
 
-
-class weekday(object):
-    __slots__ = ["weekday", "n"]
-
-    def __init__(self, weekday, n=None):
+class weekday(weekdaybase):
+    """
+    This version of weekday does not allow n = 0.
+    """
+    def __init__(self, wkday, n=None):
         if n == 0:
-            raise ValueError("Can't create weekday with n == 0")
+            raise ValueError("Can't create weekday with n==0")
 
-        self.weekday = weekday
-        self.n = n
-
-    def __call__(self, n):
-        if n == self.n:
-            return self
-        else:
-            return self.__class__(self.weekday, n)
-
-    def __eq__(self, other):
-        try:
-            if self.weekday != other.weekday or self.n != other.n:
-                return False
-        except AttributeError:
-            return False
-        return True
-
-    def __repr__(self):
-        s = ("MO", "TU", "WE", "TH", "FR", "SA", "SU")[self.weekday]
-        if not self.n:
-            return s
-        else:
-            return "%s(%+d)" % (s, self.n)
+        super(weekday, self).__init__(wkday, n)
 
 MO, TU, WE, TH, FR, SA, SU = weekdays = tuple([weekday(x) for x in range(7)])
 
