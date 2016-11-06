@@ -845,6 +845,21 @@ class GettzTest(unittest.TestCase, TzFoldMixin):
         tz_get = self.gettz('Europe/Minsk')
         self.assertIs(dt_time(13, 20, tzinfo=tz_get).utcoffset(), None)
 
+    def testTimeOnlyGettzDST(self):
+        # gettz returns None
+        tz_get = self.gettz('Europe/Minsk')
+        self.assertIs(dt_time(13, 20, tzinfo=tz_get).dst(), None)
+
+    def testTimeOnlyGettzTzName(self):
+        tz_get = self.gettz('Europe/Minsk')
+        self.assertIs(dt_time(13, 20, tzinfo=tz_get).tzname(), None)
+
+    def testTimeOnlyFormatZ(self):
+        tz_get = self.gettz('Europe/Minsk')
+        t = dt_time(13, 20, tzinfo=tz_get)
+
+        self.assertEqual(t.strftime('%H%M%Z'), '1320')
+
     def testPortugalDST(self):
         # In 1996, Portugal changed from CET to WET
         PORTUGAL = self.gettz('Portugal')

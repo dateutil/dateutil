@@ -675,6 +675,9 @@ class tzfile(_tzinfo):
         return self._find_ttinfo(dt).delta
 
     def dst(self, dt):
+        if dt is None:
+            return None
+
         if not self._ttinfo_dst:
             return ZERO
         
@@ -689,7 +692,7 @@ class tzfile(_tzinfo):
 
     @tzname_in_python2
     def tzname(self, dt):
-        if not self._ttinfo_std:
+        if not self._ttinfo_std or dt is None:
             return None
         return self._find_ttinfo(dt).abbr
 
