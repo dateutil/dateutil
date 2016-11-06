@@ -46,6 +46,9 @@ class tzutc(datetime.tzinfo):
     def tzname(self, dt):
         return "UTC"
 
+    def is_ambiguous(self, dt):
+        return False
+
     def __eq__(self, other):
         if not isinstance(other, (tzutc, tzoffset)):
             return NotImplemented
@@ -83,6 +86,9 @@ class tzoffset(datetime.tzinfo):
 
     def dst(self, dt):
         return ZERO
+
+    def is_ambiguous(self, dt):
+        return False
 
     @tzname_in_python2
     def tzname(self, dt):
@@ -145,14 +151,14 @@ class tzlocal(_tzinfo):
     def tzname(self, dt):
         return time.tzname[self._isdst(dt)]
 
-    def _naive_is_dst(self, dt):
-        timestamp = _datetime_to_timestamp(dt)
-        return time.localtime(timestamp + time.timezone).tm_isdst
-
     def is_ambiguous(self, dt):
         naive_dst = self._naive_is_dst(dt)
         return (not naive_dst and
                 (naive_dst != self._naive_is_dst(dt - self._dst_saved)))
+
+    def _naive_is_dst(self, dt):
+        timestamp = _datetime_to_timestamp(dt)
+        return time.localtime(timestamp + time.timezone).tm_isdst
 
     def _isdst(self, dt, fold_naive=True):
         # We can't use mktime here. It is unstable when deciding if
@@ -191,7 +197,7 @@ class tzlocal(_tzinfo):
                 return not self._fold(dt)
             else:
                 return True
-        
+
         return dstval
 
     def __eq__(self, other):
@@ -1288,6 +1294,81 @@ def gettz(name=None):
                         elif name in time.tzname:
                             tz = tzlocal()
     return tz
+
+
+def datetime_exists(dt, tz=None):
+    """
+    Given a datetime and a time zone, determine whether or not a given datetime
+    would fall in a gap.
+
+    :param dt:
+        A :class:`datetime.datetime` (whose time zone will be ignored if ``tz``
+        is provided.)
+
+    :param tz:
+        A :class:`datetime.tzinfo` with support for the ``fold`` attribute. If
+        ``None`` or not provided, the datetime's own time zone will be used.
+    
+    :return:
+        Returns a boolean value whether or not the "wall time" exists in ``tz``.
+    """
+    if tz is None:
+        if dt.tzinfo is None:
+            raise ValueError('Datetime is naive and no time zone provided.')
+        tz = dt.tzinfo
+
+    dt = dt.replace(tzinfo=None)
+
+    # This is essentially a test of whether or not the datetime can survive
+    # a round trip to UTC.
+    dt_rt = dt.replace(tzinfo=tz).astimezone(tzutc()).astimezone(tz)
+    dt_rt = dt_rt.replace(tzinfo=None)
+
+    return dt == dt_rt
+
+
+def datetime_ambiguous(dt, tz=None):
+    """
+    Given a datetime and a time zone, determine whether or not a given datetime
+    is ambiguous (i.e if there are two times differentiated only by their DST
+    status).
+
+    :param dt:
+        A :class:`datetime.datetime` (whose time zone will be ignored if ``tz``
+        is provided.)
+
+    :param tz:
+        A :class:`datetime.tzinfo` with support for the ``fold`` attribute. If
+        ``None`` or not provided, the datetime's own time zone will be used.
+    
+    :return:
+        Returns a boolean value whether or not the "wall time" is ambiguous in
+        ``tz``.
+    """
+    if tz is None:
+        if dt.tzinfo is None:
+            raise ValueError('Datetime is naive and no time zone provided.')
+
+        tz = dt.tzinfo
+
+    # If a time zone defines its own "is_ambiguous" function, we'll use that.
+    is_ambiguous_fn = getattr(tz, 'is_ambiguous', None)
+    if is_ambiguous_fn is not None:
+        try:
+            return tz.is_ambiguous(dt)
+        except:
+            pass
+
+    # If it doesn't come out and tell us it's ambiguous, we'll just check if
+    # the fold attribute has any effect on this particular date and time.
+    dt = dt.replace(tzinfo=tz)
+    wall_0 = enfold(dt, fold=0)
+    wall_1 = enfold(dt, fold=1)
+
+    same_offset = wall_0.utcoffset() == wall_1.utcoffset()
+    same_dst = wall_0.dst() == wall_1.dst()
+
+    return not (same_offset and same_dst)
 
 
 def _datetime_to_timestamp(dt):
