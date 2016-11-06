@@ -75,10 +75,17 @@ class tzoffset(datetime.tzinfo):
         The timezone name, to be returned when ``tzname()`` is called.
 
     :param offset:
-        The time zone offset in seconds.
+        The time zone offset in seconds, or represented as a
+        :py:class:`datetime.timedelta` object.
     """
     def __init__(self, name, offset):
         self._name = name
+        
+        try:
+            # Allow a timedelta
+            offset = _total_seconds(offset)
+        except (TypeError, AttributeError):
+            pass
         self._offset = datetime.timedelta(seconds=offset)
 
     def utcoffset(self, dt):
