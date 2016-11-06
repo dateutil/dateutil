@@ -149,7 +149,19 @@ class tzwinbase(tzrangebase):
         return self._display
 
     def transitions(self, year):
-        """ Gets the transition day and times for a given year """
+        """
+        For a given year, get the DST on and off transition times, expressed
+        always on the standard time side. For zones with no transitions, this
+        function returns ``None``.
+
+        :param year:
+            The year whose transitions you would like to query.
+
+        :return:
+            Returns a :class:`tuple` of :class:`datetime.datetime` objects,
+            ``(dston, dstoff)`` for zones with an annual DST transition, or
+            ``None`` for fixed offset zones.
+        """
 
         if not self.hasdst:
             return None

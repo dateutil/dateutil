@@ -47,6 +47,19 @@ class tzutc(datetime.tzinfo):
         return "UTC"
 
     def is_ambiguous(self, dt):
+        """
+        Whether or not the "wall time" of a given datetime is ambiguous in this
+        zone.
+
+        :param dt:
+            A :py:class:`datetime.datetime`, naive or time zone aware.
+
+
+        :return:
+            Returns ``True`` if ambiguous, ``False`` otherwise.
+
+        ..versionadded:: 2.6.0
+        """
         return False
 
     def __eq__(self, other):
@@ -75,8 +88,8 @@ class tzoffset(datetime.tzinfo):
         The timezone name, to be returned when ``tzname()`` is called.
 
     :param offset:
-        The time zone offset in seconds, or represented as a
-        :py:class:`datetime.timedelta` object.
+        The time zone offset in seconds, or (since version 2.6.0, represented
+        as a :py:class:`datetime.timedelta` object.
     """
     def __init__(self, name, offset):
         self._name = name
@@ -95,6 +108,19 @@ class tzoffset(datetime.tzinfo):
         return ZERO
 
     def is_ambiguous(self, dt):
+        """
+        Whether or not the "wall time" of a given datetime is ambiguous in this
+        zone.
+
+        :param dt:
+            A :py:class:`datetime.datetime`, naive or time zone aware.
+
+
+        :return:
+            Returns ``True`` if ambiguous, ``False`` otherwise.
+
+        ..versionadded:: 2.6.0
+        """
         return False
 
     @tzname_in_python2
@@ -159,6 +185,19 @@ class tzlocal(_tzinfo):
         return time.tzname[self._isdst(dt)]
 
     def is_ambiguous(self, dt):
+        """
+        Whether or not the "wall time" of a given datetime is ambiguous in this
+        zone.
+
+        :param dt:
+            A :py:class:`datetime.datetime`, naive or time zone aware.
+
+
+        :return:
+            Returns ``True`` if ambiguous, ``False`` otherwise.
+
+        ..versionadded:: 2.6.0
+        """
         naive_dst = self._naive_is_dst(dt)
         return (not naive_dst and
                 (naive_dst != self._naive_is_dst(dt - self._dst_saved)))
@@ -585,6 +624,19 @@ class tzfile(_tzinfo):
         return self._get_ttinfo(idx)
 
     def is_ambiguous(self, dt, idx=None):
+        """
+        Whether or not the "wall time" of a given datetime is ambiguous in this
+        zone.
+
+        :param dt:
+            A :py:class:`datetime.datetime`, naive or time zone aware.
+
+
+        :return:
+            Returns ``True`` if ambiguous, ``False`` otherwise.
+
+        ..versionadded:: 2.6.0
+        """
         if idx is None:
             idx = self._find_last_transition(dt)
 
@@ -1351,6 +1403,8 @@ def datetime_ambiguous(dt, tz=None):
     :return:
         Returns a boolean value whether or not the "wall time" is ambiguous in
         ``tz``.
+
+    ..versionadded:: 2.6.0
     """
     if tz is None:
         if dt.tzinfo is None:
