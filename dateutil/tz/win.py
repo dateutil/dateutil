@@ -42,7 +42,7 @@ class tzres(object):
     Class for accessing `tzres.dll`, which contains timezone name related
     resources.
 
-    ..versionadded:: 2.5.0
+    .. versionadded:: 2.5.0
     """
     p_wchar = ctypes.POINTER(wintypes.WCHAR)        # Pointer to a wide char
 
