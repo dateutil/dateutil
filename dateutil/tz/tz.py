@@ -1341,9 +1341,11 @@ def gettz(name=None):
                         tz = tzwin(name)
                     except WindowsError:
                         tz = None
+
                 if not tz:
-                    from dateutil.zoneinfo import gettz
-                    tz = gettz(name)
+                    from dateutil.zoneinfo import get_zonefile_instance
+                    tz = get_zonefile_instance().get(name)
+
                 if not tz:
                     for c in name:
                         # name must have at least one offset to be a tzstr
