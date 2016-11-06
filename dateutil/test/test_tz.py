@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from ._common import unittest, PicklableMixin
 from ._common import total_seconds
 from ._common import TZEnvContext, TZWinContext
+from ._common import WarningTestMixin
 from ._common import ComparesEqual
 
 from datetime import datetime, timedelta
@@ -862,8 +863,10 @@ class GettzTest(unittest.TestCase, TzFoldMixin):
         self.assertEqual(t_west.dst(), timedelta(hours=1))
 
 
-class ZoneInfoGettzTest(GettzTest):
-    gettz = staticmethod(zoneinfo.gettz)
+class ZoneInfoGettzTest(GettzTest, WarningTestMixin):
+    def gettz(self, name):
+        zoneinfo_file = zoneinfo.get_zonefile_instance()
+        return zoneinfo_file.get(name)
 
     def testZoneInfoFileStart1(self):
         tz = self.gettz("EST5EDT")
@@ -904,6 +907,28 @@ class ZoneInfoGettzTest(GettzTest):
 
         self.assertIsNot(CHI, CHI_COPY)
         self.assertEqual(CHI, CHI_COPY)
+
+    def testZoneInfoInstanceCaching(self):
+        zif_0 = zoneinfo.get_zonefile_instance()
+        zif_1 = zoneinfo.get_zonefile_instance()
+
+        self.assertIs(zif_0, zif_1)
+
+    def testZoneInfoNewInstance(self):
+        zif_0 = zoneinfo.get_zonefile_instance()
+        zif_1 = zoneinfo.get_zonefile_instance(new_instance=True)
+        zif_2 = zoneinfo.get_zonefile_instance()
+
+        self.assertIsNot(zif_0, zif_1)
+        self.assertIs(zif_1, zif_2)
+
+    def testZoneInfoDeprecated(self):
+        with self.assertWarns(DeprecationWarning):
+            tzi = zoneinfo.gettz('US/Eastern')
+
+    def testZoneInfoMetadataDeprecated(self):
+        with self.assertWarns(DeprecationWarning):
+            tzdb_md = zoneinfo.gettz_db_metadata()
 
 
 class TZRangeTest(unittest.TestCase, TzFoldMixin):
@@ -1811,7 +1836,10 @@ class TzPickleTest(PicklableMixin, unittest.TestCase):
         self.assertPicklable(tz.gettz('America/New_York'))
 
     def testPickleZoneFileGettz(self):
-        self.assertPicklable(zoneinfo.gettz('America/New_York'))
+        zoneinfo_file = zoneinfo.get_zonefile_instance()
+        tzi = zoneinfo_file.get('America/New_York')
+        self.assertIsNot(tzi, None)
+        self.assertPicklable(tzi)
 
 
 class TzPickleFileTest(TzPickleTest):

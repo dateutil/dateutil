@@ -314,7 +314,7 @@ class tzrangebase(_tzinfo):
         :return:
             Returns ``True`` if ambiguous, ``False`` otherwise.
 
-        ..versionadded:: 2.6.0
+        .. versionadded:: 2.6.0
         """
         if not self.hasdst:
             return False
