@@ -30,13 +30,33 @@ def tzname_in_python2(namefunc):
 if hasattr(datetime, 'fold'):
     # This is the pre-python 3.6 fold situation
     def enfold(dt, fold=1):
+        """
+        Provides a unified interface for assigning the ``fold`` attribute to
+        datetimes both before and after the implementation of PEP-495.
+
+        :param fold:
+            The value for the ``fold`` attribute in the returned datetime. This
+            should be either 0 or 1.
+
+        :return:
+            Returns an object for which ``getattr(dt, 'fold', 0)`` returns
+            ``fold`` for all versions of Python. In versions prior to
+            Python 3.6, this is a ``_DatetimeWithFold`` object, which is a
+            subclass of :py:class:`datetime.datetime` with the ``fold``
+            attribute added, if ``fold`` is 1.
+
+        ..versionadded:: 2.6.0
+        """
         return dt.replace(fold=fold)
 
 else:
     class _DatetimeWithFold(datetime):
         """
         This is a class designed to provide a PEP 495-compliant interface for
-        Python versions before 3.6.
+        Python versions before 3.6. It is used only for dates in a fold, so
+        the ``fold`` attribute is fixed at ``1``.
+
+        ..versionadded:: 2.6.0
         """
         __slots__ = ()
 
@@ -45,6 +65,23 @@ else:
             return 1
 
     def enfold(dt, fold=1):
+        """
+        Provides a unified interface for assigning the ``fold`` attribute to
+        datetimes both before and after the implementation of PEP-495.
+
+        :param fold:
+            The value for the ``fold`` attribute in the returned datetime. This
+            should be either 0 or 1.
+
+        :return:
+            Returns an object for which ``getattr(dt, 'fold', 0)`` returns
+            ``fold`` for all versions of Python. In versions prior to
+            Python 3.6, this is a ``_DatetimeWithFold`` object, which is a
+            subclass of :py:class:`datetime.datetime` with the ``fold``
+            attribute added, if ``fold`` is 1.
+
+        ..versionadded:: 2.6.0
+        """
         if getattr(dt, 'fold', 0) == fold:
             return dt
 
@@ -64,7 +101,17 @@ class _tzinfo(tzinfo):
 
     def is_ambiguous(self, dt):
         """
-        Determines whether a given datetime is an ambiguous dat
+        Whether or not the "wall time" of a given datetime is ambiguous in this
+        zone.
+
+        :param dt:
+            A :py:class:`datetime.datetime`, naive or time zone aware.
+
+
+        :return:
+            Returns ``True`` if ambiguous, ``False`` otherwise.
+
+        ..versionadded:: 2.6.0
         """
 
         dt = dt.replace(tzinfo=self)
@@ -188,6 +235,8 @@ class tzrangebase(_tzinfo):
         * ``_dst_abbr`` / ``_std_abbr``: Strings representing the timezone short
           abbreviations in DST and STD, respectively.
         * ``_hasdst``: Whether or not the zone has DST.
+
+    ..versionadded:: 2.6.0
     """
     def __init__(self):
         raise NotImplementedError('tzrangebase is an abstract base class')
@@ -254,6 +303,19 @@ class tzrangebase(_tzinfo):
         return enfold(dt_wall, fold=_fold)
 
     def is_ambiguous(self, dt):
+        """
+        Whether or not the "wall time" of a given datetime is ambiguous in this
+        zone.
+
+        :param dt:
+            A :py:class:`datetime.datetime`, naive or time zone aware.
+
+
+        :return:
+            Returns ``True`` if ambiguous, ``False`` otherwise.
+
+        ..versionadded:: 2.6.0
+        """
         if not self.hasdst:
             return False
 
