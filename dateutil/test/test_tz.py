@@ -7,6 +7,7 @@ from ._common import ComparesEqual
 
 from datetime import datetime, timedelta
 from datetime import time as dt_time
+from datetime import tzinfo
 from six import BytesIO, StringIO
 
 import os
@@ -174,27 +175,11 @@ class TzFoldMixin(object):
     def _gettz_context(self, tzname):
         return context_passthrough()
 
-    def get_utc_transitions(self, tzi, year, gap):
-        dston, dstoff = tzi.transitions(year)
-        if gap:
-            t_n = dston - timedelta(minutes=30)
-
-            t0_u = t_n.replace(tzinfo=tzi).astimezone(tz.tzutc())
-            t1_u = t0_u + timedelta(hours=1)
-        else:
-            t_n = dstoff + timedelta(minutes=30)
-
-            t1_u = t_n.replace(tzinfo=tzi).astimezone(tz.tzutc())
-            t0_u = t1_u - timedelta(hours=1)
-
-        return t_n, t0_u, t1_u
-
     def testFoldPositiveUTCOffset(self):
         # Test that we can resolve ambiguous times
         tzname = self._get_tzname('Australia/Sydney')
 
         with self._gettz_context(tzname):
-            # Calling fromutc() alters the tzfile object
             SYD0 = self.gettz(tzname)
             SYD1 = self.gettz(tzname)
 
@@ -211,23 +196,15 @@ class TzFoldMixin(object):
             self.assertEqual(t1_syd1.replace(tzinfo=None),
                              datetime(2012, 4, 1, 2, 30))
 
-            self.assertNotEqual(t0_syd0, t1_syd1)
             self.assertEqual(t0_syd0.utcoffset(), timedelta(hours=11))
             self.assertEqual(t1_syd1.utcoffset(), timedelta(hours=10))
 
-            # Re-using them across (make sure there's no cache problem)
-            t0_syd1 = t0_u.astimezone(SYD1)
-            t1_syd0 = t1_u.astimezone(SYD0)
-
-            self.assertEqual(t0_syd0, t0_syd1)
-            self.assertEqual(t1_syd1, t1_syd0)
 
     def testGapPositiveUTCOffset(self):
         # Test that we don't have a problem around gaps.
         tzname = self._get_tzname('Australia/Sydney')
 
         with self._gettz_context(tzname):
-            # Calling fromutc() alters the tzfile object
             SYD0 = self.gettz(tzname)
             SYD1 = self.gettz(tzname)
 
@@ -269,16 +246,8 @@ class TzFoldMixin(object):
                 self.assertEqual(t1_tor1.replace(tzinfo=None),
                                  datetime(2011, 11, 6, 1, 30))
 
-                self.assertNotEqual(t0_tor0, t1_tor1)
                 self.assertEqual(t0_tor0.utcoffset(), timedelta(hours=-4.0))
                 self.assertEqual(t1_tor1.utcoffset(), timedelta(hours=-5.0))
-
-                # Re-using them across (make sure there's no cache problem)
-                t0_tor1 = t0_u.astimezone(TOR1)
-                t1_tor0 = t1_u.astimezone(TOR0)
-
-                self.assertEqual(t0_tor0, t0_tor1)
-                self.assertEqual(t1_tor1, t1_tor0)
 
     def testGapNegativeUTCOffset(self):
         # Test that we don't have a problem around gaps.
@@ -324,17 +293,105 @@ class TzFoldMixin(object):
 
             # Ambiguous between 2015-11-01 1:30 EDT-4 and 2015-11-01 1:30 EST-5
             in_dst = pre_dst + hour
-            in_dst_tzname_0 = in_dst.tzname()     # Stash the tzname - EST
+            in_dst_tzname_0 = in_dst.tzname()     # Stash the tzname - EDT
 
             # Doing the arithmetic in UTC creates a date that is unambiguously
-            # 2015-11-01 1:30 EDT-4
-            in_dst_via_utc = (pre_dst.astimezone(UTC) + hour).astimezone(NYC)
+            # 2015-11-01 1:30 EDT-5
+            in_dst_via_utc = (pre_dst.astimezone(UTC) + 2*hour).astimezone(NYC)
+
+            # Make sure the dates are actually ambiguous
+            self.assertEqual(in_dst, in_dst_via_utc)
 
             # Make sure we got the right folding behavior
             self.assertNotEqual(in_dst_via_utc.tzname(), in_dst_tzname_0)
 
             # Now check to make sure in_dst's tzname hasn't changed
             self.assertEqual(in_dst_tzname_0, in_dst.tzname())
+
+    def _test_ambiguous_time(self, dt, tzid, ambiguous):
+        # This is a test to check that the individual is_ambiguous values
+        # on the _tzinfo subclasses work.
+        tzname = self._get_tzname(tzid)
+
+        with self._gettz_context(tzname):
+            tzi = self.gettz(tzname)
+
+            self.assertEqual(tz.datetime_ambiguous(dt, tz=tzi), ambiguous)
+
+    def testAmbiguousNegativeUTCOffset(self):
+        self._test_ambiguous_time(datetime(2015, 11, 1, 1, 30),
+                                  'America/New_York', True)
+
+    def testAmbiguousPositiveUTCOffset(self):
+        self._test_ambiguous_time(datetime(2012, 4, 1, 2, 30),
+                                  'Australia/Sydney', True)
+
+    def testUnambiguousNegativeUTCOffset(self):
+        self._test_ambiguous_time(datetime(2015, 11, 1, 2, 30),
+                                  'America/New_York', False)
+
+    def testUnambiguousPositiveUTCOffset(self):
+        self._test_ambiguous_time(datetime(2012, 4, 1, 3, 30),
+                                  'Australia/Sydney', False)
+
+    def testUnambiguousGapNegativeUTCOffset(self):
+        # Imaginary time
+        self._test_ambiguous_time(datetime(2011, 3, 13, 2, 30),
+                                  'America/New_York', False)
+
+    def testUnambiguousGapPositiveUTCOffset(self):
+        # Imaginary time
+        self._test_ambiguous_time(datetime(2012, 10, 7, 2, 30),
+                                  'Australia/Sydney', False)
+
+    def _test_imaginary_time(self, dt, tzid, exists):
+        tzname = self._get_tzname(tzid)
+        with self._gettz_context(tzname):
+            tzi = self.gettz(tzname)
+
+            self.assertEqual(tz.datetime_exists(dt, tz=tzi), exists)
+
+    def testImaginaryNegativeUTCOffset(self):
+        self._test_imaginary_time(datetime(2011, 3, 13, 2, 30),
+                                  'America/New_York', False)
+
+    def testNotImaginaryNegativeUTCOffset(self):
+        self._test_imaginary_time(datetime(2011, 3, 13, 1, 30),
+                                  'America/New_York', True)
+
+    def testImaginaryPositiveUTCOffset(self):
+        self._test_imaginary_time(datetime(2012, 10, 7, 2, 30),
+                                  'Australia/Sydney', False)
+
+    def testNotImaginaryPositiveUTCOffset(self):
+        self._test_imaginary_time(datetime(2012, 10, 7, 1, 30),
+                                  'Australia/Sydney', True)
+
+    def testNotImaginaryFoldNegativeUTCOffset(self):
+        self._test_imaginary_time(datetime(2015, 11, 1, 1, 30),
+                                  'America/New_York', True)
+
+    def testNotImaginaryFoldPositiveUTCOffset(self):
+        self._test_imaginary_time(datetime(2012, 4, 1, 3, 30),
+                                  'Australia/Sydney', True)
+
+    @unittest.skip("Known failure in Python 3.6.")
+    def testEqualAmbiguousComparison(self):
+        tzname = self._get_tzname('Australia/Sydney')
+
+        with self._gettz_context(tzname):
+            SYD0 = self.gettz(tzname)
+            SYD1 = self.gettz(tzname)
+
+            t0_u = datetime(2012, 3, 31, 14, 30, tzinfo=tz.tzutc())  # AEST
+            t1_u = datetime(2012, 3, 31, 16, 30, tzinfo=tz.tzutc())  # AEDT
+
+            t0_syd0 = t0_u.astimezone(SYD0)
+            t0_syd1 = t0_u.astimezone(SYD1)
+
+            # This is considered an "inter-zone comparison" because it's an
+            # ambiguous datetime.
+            self.assertEqual(t0_syd0, t0_syd1)
 
 
 class TzWinFoldMixin(object):
@@ -359,10 +416,13 @@ class TzWinFoldMixin(object):
             t0_u = t_n.replace(tzinfo=tzi).astimezone(tz.tzutc())
             t1_u = t0_u + timedelta(hours=1)
         else:
-            t_n = dstoff + timedelta(minutes=30)
+            # Get 1 hour before the first ambiguous date
+            t_n = dstoff - timedelta(minutes=30)
 
-            t1_u = t_n.replace(tzinfo=tzi).astimezone(tz.tzutc())
-            t0_u = t1_u - timedelta(hours=1)
+            t0_u = t_n.replace(tzinfo=tzi).astimezone(tz.tzutc())
+            t_n += timedelta(hours=1)                   # Naive ambiguous date
+            t0_u = t0_u + timedelta(hours=1)            # First ambiguous date
+            t1_u = t0_u + timedelta(hours=1)            # Second ambiguous date
 
         return t_n, t0_u, t1_u
 
@@ -448,7 +508,7 @@ class TzWinFoldMixin(object):
             self.assertEqual(t0_tor0.replace(tzinfo=None), t_n)
             self.assertEqual(t1_tor1.replace(tzinfo=None), t_n)
 
-            self.assertNotEqual(t0_tor0, t1_tor1)
+            self.assertNotEqual(t0_tor0.tzname(), t1_tor1.tzname())
             self.assertEqual(t0_tor0.utcoffset(), timedelta(hours=-4.0))
             self.assertEqual(t1_tor1.utcoffset(), timedelta(hours=-5.0))
 
@@ -507,11 +567,11 @@ class TzWinFoldMixin(object):
 
             # Ambiguous between 2015-11-01 1:30 EDT-4 and 2015-11-01 1:30 EST-5
             in_dst = pre_dst + hour
-            in_dst_tzname_0 = in_dst.tzname()     # Stash the tzname - EST
+            in_dst_tzname_0 = in_dst.tzname()     # Stash the tzname - EDT
 
             # Doing the arithmetic in UTC creates a date that is unambiguously
-            # 2015-11-01 1:30 EDT-4
-            in_dst_via_utc = (pre_dst.astimezone(UTC) + hour).astimezone(NYC)
+            # 2015-11-01 1:30 EDT-5
+            in_dst_via_utc = (pre_dst.astimezone(UTC) + 2*hour).astimezone(NYC)
 
             # Make sure we got the right folding behavior
             self.assertNotEqual(in_dst_via_utc.tzname(), in_dst_tzname_0)
@@ -568,6 +628,12 @@ class TzUTCTest(unittest.TestCase):
         self.assertEqual(dt_time(13, 20, tzinfo=tz_utc).utcoffset(),
                          timedelta(0))
 
+    def testAmbiguity(self):
+        # Pick an arbitrary datetime, this should always return False.
+        dt = datetime(2011, 9, 1, 2, 30, tzinfo=tz.tzutc())
+
+        self.assertFalse(tz.datetime_ambiguous(dt))
+
 
 class TzOffsetTest(unittest.TestCase):
     def testTzNameNone(self):
@@ -610,6 +676,12 @@ class TzOffsetTest(unittest.TestCase):
         self.assertTrue(tzo == ComparesEqual)
         self.assertFalse(tzo != ComparesEqual)
         self.assertEqual(tzo, ComparesEqual)
+
+    def testAmbiguity(self):
+        # Pick an arbitrary datetime, this should always return False.
+        dt = datetime(2011, 9, 1, 2, 30, tzinfo=tz.tzoffset("EST", -5 * 3600))
+
+        self.assertFalse(tz.datetime_ambiguous(dt))
 
 
 class TzLocalTest(unittest.TestCase):
@@ -771,7 +843,7 @@ class GettzTest(unittest.TestCase, TzFoldMixin):
         PORTUGAL = self.gettz('Portugal')
 
         t_cet = datetime(1996, 3, 31, 1, 59, tzinfo=PORTUGAL)
-        
+
         self.assertEqual(t_cet.tzname(), 'CET')
         self.assertEqual(t_cet.utcoffset(), timedelta(hours=1))
         self.assertEqual(t_cet.dst(), timedelta(0))
@@ -796,8 +868,9 @@ class ZoneInfoGettzTest(GettzTest):
         tzc = self.gettz("EST5EDT")
         self.assertEqual(datetime(2003, 10, 26, 0, 59, tzinfo=tzc).tzname(),
                          "EDT", MISSING_TARBALL)
-        self.assertEqual(datetime(2003, 10, 26, 1, 00, tzinfo=tzc).tzname(),
-                         "EST")
+
+        end_est = tz.enfold(datetime(2003, 10, 26, 1, 00, tzinfo=tzc), fold=1)
+        self.assertEqual(end_est.tzname(), "EST")
 
     def testZoneInfoOffsetSignal(self):
         utc = self.gettz("UTC")
@@ -892,9 +965,16 @@ class TZRangeTest(unittest.TestCase, TzFoldMixin):
         self.assertEqual(dt_std.tzname(), 'EST')
         self.assertEqual(dt_dst.tzname(), 'EDT')
 
+    def testTimeOnlyRangeFixed(self):
+        # This is a fixed-offset zone, so tzrange allows this
+        tz_range = tz.tzrange('dflt', stdoffset=timedelta(hours=-3))
+        self.assertEqual(dt_time(13, 20, tzinfo=tz_range).utcoffset(),
+                         timedelta(hours=-3))
+
     def testTimeOnlyRange(self):
-        # tzrange returns None
-        tz_range = tz.tzrange('dflt')
+        # tzrange returns None because this zone has DST
+        tz_range = tz.tzrange('EST', timedelta(hours=-5),
+                              'EDT', timedelta(hours=-4))
         self.assertIs(dt_time(13, 20, tzinfo=tz_range).utcoffset(), None)
 
     def testBrokenIsDstHandling(self):
@@ -938,7 +1018,7 @@ class TZRangeTest(unittest.TestCase, TzFoldMixin):
                           start=relativedelta(hours=+1, month=3,
                                               day=1, weekday=SU(+2)))
         self.assertNotEqual(TZR1, TZR6)
-                                 
+
         # End delta different
         TZR7 = tz.tzrange('EST', -18000, 'EDT', -14400,
             end=relativedelta(hours=+1, month=11,
@@ -978,8 +1058,10 @@ class TZStrTest(unittest.TestCase, TzFoldMixin):
     def testStrEnd1(self):
         self.assertEqual(datetime(2003, 10, 26, 0, 59,
                                   tzinfo=tz.tzstr("EST5EDT")).tzname(), "EDT")
-        self.assertEqual(datetime(2003, 10, 26, 1, 00,
-                                  tzinfo=tz.tzstr("EST5EDT")).tzname(), "EST")
+
+        end = tz.enfold(datetime(2003, 10, 26, 1, 00,
+                                  tzinfo=tz.tzstr("EST5EDT")), fold=1)
+        self.assertEqual(end.tzname(), "EST")
 
     def testStrStart2(self):
         s = "EST5EDT,4,0,6,7200,10,0,26,7200,3600"
@@ -992,8 +1074,10 @@ class TZStrTest(unittest.TestCase, TzFoldMixin):
         s = "EST5EDT,4,0,6,7200,10,0,26,7200,3600"
         self.assertEqual(datetime(2003, 10, 26, 0, 59,
                                   tzinfo=tz.tzstr(s)).tzname(), "EDT")
-        self.assertEqual(datetime(2003, 10, 26, 1, 00,
-                                  tzinfo=tz.tzstr(s)).tzname(), "EST")
+
+        end = tz.enfold(datetime(2003, 10, 26, 1, 00,
+                                  tzinfo=tz.tzstr(s)), fold=1)
+        self.assertEqual(end.tzname(), "EST")
 
     def testStrStart3(self):
         s = "EST5EDT,4,1,0,7200,10,-1,0,7200,3600"
@@ -1006,8 +1090,10 @@ class TZStrTest(unittest.TestCase, TzFoldMixin):
         s = "EST5EDT,4,1,0,7200,10,-1,0,7200,3600"
         self.assertEqual(datetime(2003, 10, 26, 0, 59,
                                   tzinfo=tz.tzstr(s)).tzname(), "EDT")
-        self.assertEqual(datetime(2003, 10, 26, 1, 00,
-                                  tzinfo=tz.tzstr(s)).tzname(), "EST")
+
+        end = tz.enfold(datetime(2003, 10, 26, 1, 00,
+                                  tzinfo=tz.tzstr(s)), fold=1)
+        self.assertEqual(end.tzname(), "EST")
 
     def testStrStart4(self):
         s = "EST5EDT4,M4.1.0/02:00:00,M10-5-0/02:00"
@@ -1020,8 +1106,9 @@ class TZStrTest(unittest.TestCase, TzFoldMixin):
         s = "EST5EDT4,M4.1.0/02:00:00,M10-5-0/02:00"
         self.assertEqual(datetime(2003, 10, 26, 0, 59,
                                   tzinfo=tz.tzstr(s)).tzname(), "EDT")
-        self.assertEqual(datetime(2003, 10, 26, 1, 00,
-                                  tzinfo=tz.tzstr(s)).tzname(), "EST")
+        end = tz.enfold(datetime(2003, 10, 26, 1, 00, tzinfo=tz.tzstr(s)),
+                        fold=1)
+        self.assertEqual(end.tzname(), "EST")
 
     def testStrStart5(self):
         s = "EST5EDT4,95/02:00:00,298/02:00"
@@ -1034,8 +1121,9 @@ class TZStrTest(unittest.TestCase, TzFoldMixin):
         s = "EST5EDT4,95/02:00:00,298/02"
         self.assertEqual(datetime(2003, 10, 26, 0, 59,
                                   tzinfo=tz.tzstr(s)).tzname(), "EDT")
-        self.assertEqual(datetime(2003, 10, 26, 1, 00,
-                                  tzinfo=tz.tzstr(s)).tzname(), "EST")
+        end = tz.enfold(datetime(2003, 10, 26, 1, 00,
+                                  tzinfo=tz.tzstr(s)), fold=1)
+        self.assertEqual(end.tzname(), "EST")
 
     def testStrStart6(self):
         s = "EST5EDT4,J96/02:00:00,J299/02:00"
@@ -1048,8 +1136,10 @@ class TZStrTest(unittest.TestCase, TzFoldMixin):
         s = "EST5EDT4,J96/02:00:00,J299/02"
         self.assertEqual(datetime(2003, 10, 26, 0, 59,
                                   tzinfo=tz.tzstr(s)).tzname(), "EDT")
-        self.assertEqual(datetime(2003, 10, 26, 1, 00,
-                                  tzinfo=tz.tzstr(s)).tzname(), "EST")
+
+        end = tz.enfold(datetime(2003, 10, 26, 1, 00,
+                                 tzinfo=tz.tzstr(s)), fold=1)
+        self.assertEqual(end.tzname(), "EST")
 
     def testStrStr(self):
         # Test that tz.tzstr() won't throw an error if given a str instead
@@ -1093,7 +1183,7 @@ class TZStrTest(unittest.TestCase, TzFoldMixin):
         # Start delta different
         TZS2 = tz.tzstr('EST5EDT4,M4.2.0/02:00:00,M10-5-0/02:00')
         self.assertNotEqual(TZS1, TZS2)
-                                 
+
         # End delta different
         TZS3 = tz.tzstr('EST5EDT4,M4.2.0/02:00:00,M11-5-0/02:00')
         self.assertNotEqual(TZS1, TZS3)
@@ -1190,11 +1280,14 @@ class TZICalTest(unittest.TestCase, TzFoldMixin):
         if start:
             dt1 = datetime(2003, 4, 6, 1, 59)
             dt2 = datetime(2003, 4, 6, 2, 00)
+            fold = [0, 0]
         else:
             dt1 = datetime(2003, 10, 26, 0, 59)
             dt2 = datetime(2003, 10, 26, 1, 00)
-        
-        dts = (dt.replace(tzinfo=tzc) for dt in (dt1, dt2))
+            fold = [0, 1]
+
+        dts = (tz.enfold(dt.replace(tzinfo=tzc), fold=f)
+               for dt, f in zip((dt1, dt2), fold))
 
         for value, dt in zip(values, dts):
             self.assertEqual(func(dt), value)
@@ -1205,7 +1298,7 @@ class TZICalTest(unittest.TestCase, TzFoldMixin):
             tzc = tzic.get(tzid)
 
             self._test_us_zone(tzc, func, vals, start)
- 
+
     def _prepare_EST(self):
         return tz.tzical(StringIO(TZICAL_EST5EDT)).get()
 
@@ -1218,7 +1311,7 @@ class TZICalTest(unittest.TestCase, TzFoldMixin):
             'dst':    (datetime.dst, (timedelta(hours=0),
                                       timedelta(hours=1)))
         }
-        
+
         func, values = argdict[test_type]
 
         if not start:
@@ -1308,7 +1401,7 @@ class TZICalTest(unittest.TestCase, TzFoldMixin):
     # Test Parsing
     def testGap(self):
         tzic = tz.tzical(StringIO('\n'.join((TZICAL_EST5EDT, TZICAL_PST8PDT))))
-        
+
         keys = sorted(tzic.keys())
         self.assertEqual(keys, ['US-Eastern', 'US-Pacific'])
 
@@ -1323,8 +1416,8 @@ class TZTest(unittest.TestCase):
         tzc = tz.tzfile(BytesIO(base64.b64decode(TZFILE_EST5EDT)))
         self.assertEqual(datetime(2003, 10, 26, 0, 59, tzinfo=tzc).tzname(),
                          "EDT")
-        self.assertEqual(datetime(2003, 10, 26, 1, 00, tzinfo=tzc).tzname(),
-                         "EST")
+        end_est = tz.enfold(datetime(2003, 10, 26, 1, 00, tzinfo=tzc))
+        self.assertEqual(end_est.tzname(), "EST")
 
     def testFileLastTransition(self):
         # After the last transition, it goes to standard time in perpetuity
@@ -1332,7 +1425,8 @@ class TZTest(unittest.TestCase):
         self.assertEqual(datetime(2037, 10, 25, 0, 59, tzinfo=tzc).tzname(),
                          "EDT")
 
-        self.assertEqual(datetime(2037, 10, 25, 1, 00, tzinfo=tzc).tzname(),
+        last_date = tz.enfold(datetime(2037, 10, 25, 1, 00, tzinfo=tzc), fold=1)
+        self.assertEqual(last_date.tzname(),
                          "EST")
 
         self.assertEqual(datetime(2038, 5, 25, 12, 0, tzinfo=tzc).tzname(),
@@ -1489,7 +1583,7 @@ class TzWinTest(unittest.TestCase, TzWinFoldMixin):
                         'Argentina Standard Time'))
 
         for tzwn1, tzwn2 in tzwin_names:
-            # Get two different instances to compare            
+            # Get two different instances to compare
             tw1 = tz.tzwin(tzwn1)
             tw2 = tz.tzwin(tzwn2)
 
@@ -1500,7 +1594,7 @@ class TzWinTest(unittest.TestCase, TzWinFoldMixin):
         # (should default to False)
         UTC = tz.tzutc()
         EST = tz.tzwin('Eastern Standard Time')
-        
+
         self.assertFalse(EST == UTC)
         self.assertFalse(EST == 1)
         self.assertFalse(UTC == EST)
@@ -1510,7 +1604,7 @@ class TzWinTest(unittest.TestCase, TzWinFoldMixin):
 
     def testTzWinInequalityUnsupported(self):
         # Compare it to an object that is promiscuous about equality, but for
-        # which tzwin does not implement an equality operator. 
+        # which tzwin does not implement an equality operator.
         EST = tz.tzwin('Eastern Standard Time')
         self.assertTrue(EST == ComparesEqual)
         self.assertFalse(EST != ComparesEqual)
@@ -1605,7 +1699,7 @@ class TzWinLocalTest(unittest.TestCase, TzWinFoldMixin):
         with TZWinContext('Pacific Standard Time'):
             tw = tz.tzwinlocal()
 
-            self.assertEqual(str(tw), 'tzwinlocal(' + 
+            self.assertEqual(str(tw), 'tzwinlocal(' +
                                       repr('Pacific Standard Time') + ')')
 
     def testTzwinLocalEquality(self):
@@ -1716,3 +1810,255 @@ class TzPickleTest(PicklableMixin, unittest.TestCase):
 class TzPickleFileTest(TzPickleTest):
     """ Run all the TzPickleTest tests, using a temporary file """
     _asfile = True
+
+
+class DatetimeAmbiguousTest(unittest.TestCase):
+    """ Test the datetime_exists / datetime_ambiguous functions """
+
+    def testNoTzSpecified(self):
+        with self.assertRaises(ValueError):
+            tz.datetime_ambiguous(datetime(2016, 4, 1, 2, 9))
+
+    def _get_no_support_tzinfo_class(self, dt_start, dt_end, dst_only=False):
+        # Generates a class of tzinfo with no support for is_ambiguous
+        # where dates between dt_start and dt_end are ambiguous.
+
+        class FoldingTzInfo(tzinfo):
+            def utcoffset(self, dt):
+                if not dst_only:
+                    dt_n = dt.replace(tzinfo=None)
+
+                    if dt_start <= dt_n < dt_end and getattr(dt_n, 'fold', 0):
+                        return timedelta(hours=-1)
+
+                return timedelta(hours=0)
+
+            def dst(self, dt):
+                dt_n = dt.replace(tzinfo=None)
+
+                if dt_start <= dt_n < dt_end and getattr(dt_n, 'fold', 0):
+                    return timedelta(hours=1)
+                else:
+                    return timedelta(0)
+
+        return FoldingTzInfo
+
+    def _get_no_support_tzinfo(self, dt_start, dt_end, dst_only=False):
+        return self._get_no_support_tzinfo_class(dt_start, dt_end, dst_only)()
+
+    def testNoSupportAmbiguityFoldNaive(self):
+        dt_start = datetime(2018, 9, 1, 1, 0)
+        dt_end = datetime(2018, 9, 1, 2, 0)
+
+        tzi = self._get_no_support_tzinfo(dt_start, dt_end)
+
+        self.assertTrue(tz.datetime_ambiguous(datetime(2018, 9, 1, 1, 30),
+                                              tz=tzi))
+
+    def testNoSupportAmbiguityFoldAware(self):
+        dt_start = datetime(2018, 9, 1, 1, 0)
+        dt_end = datetime(2018, 9, 1, 2, 0)
+
+        tzi = self._get_no_support_tzinfo(dt_start, dt_end)
+
+        self.assertTrue(tz.datetime_ambiguous(datetime(2018, 9, 1, 1, 30,
+                                                       tzinfo=tzi)))
+
+    def testNoSupportAmbiguityUnambiguousNaive(self):
+        dt_start = datetime(2018, 9, 1, 1, 0)
+        dt_end = datetime(2018, 9, 1, 2, 0)
+
+        tzi = self._get_no_support_tzinfo(dt_start, dt_end)
+
+        self.assertFalse(tz.datetime_ambiguous(datetime(2018, 10, 1, 12, 30),
+                                              tz=tzi))
+
+    def testNoSupportAmbiguityUnambiguousAware(self):
+        dt_start = datetime(2018, 9, 1, 1, 0)
+        dt_end = datetime(2018, 9, 1, 2, 0)
+
+        tzi = self._get_no_support_tzinfo(dt_start, dt_end)
+
+        self.assertFalse(tz.datetime_ambiguous(datetime(2018, 10, 1, 12, 30,
+                                                        tzinfo=tzi)))
+
+    def testNoSupportAmbiguityFoldDSTOnly(self):
+        dt_start = datetime(2018, 9, 1, 1, 0)
+        dt_end = datetime(2018, 9, 1, 2, 0)
+
+        tzi = self._get_no_support_tzinfo(dt_start, dt_end, dst_only=True)
+
+        self.assertTrue(tz.datetime_ambiguous(datetime(2018, 9, 1, 1, 30),
+                                              tz=tzi))
+
+    def testNoSupportAmbiguityUnambiguousDSTOnly(self):
+        dt_start = datetime(2018, 9, 1, 1, 0)
+        dt_end = datetime(2018, 9, 1, 2, 0)
+
+        tzi = self._get_no_support_tzinfo(dt_start, dt_end, dst_only=True)
+
+        self.assertFalse(tz.datetime_ambiguous(datetime(2018, 10, 1, 12, 30),
+                                               tz=tzi))
+
+    def testSupportAmbiguityFoldNaive(self):
+        tzi = tz.gettz('US/Eastern')
+
+        dt = datetime(2011, 11, 6, 1, 30)
+
+        self.assertTrue(tz.datetime_ambiguous(dt, tz=tzi))
+
+    def testSupportAmbiguityFoldAware(self):
+        tzi = tz.gettz('US/Eastern')
+
+        dt = datetime(2011, 11, 6, 1, 30, tzinfo=tzi)
+
+        self.assertTrue(tz.datetime_ambiguous(dt))
+
+    def testSupportAmbiguityUnambiguousAware(self):
+        tzi = tz.gettz('US/Eastern')
+
+        dt = datetime(2011, 11, 6, 4, 30)
+
+        self.assertFalse(tz.datetime_ambiguous(dt, tz=tzi))
+
+    def testSupportAmbiguityUnambiguousNaive(self):
+        tzi = tz.gettz('US/Eastern')
+
+        dt = datetime(2011, 11, 6, 4, 30, tzinfo=tzi)
+
+        self.assertFalse(tz.datetime_ambiguous(dt))
+
+    def _get_ambig_error_tzinfo(self, dt_start, dt_end, dst_only=False):
+        cTzInfo = self._get_no_support_tzinfo_class(dt_start, dt_end, dst_only)
+
+        # Takes the wrong number of arguments and raises an error anyway.
+        class FoldTzInfoRaises(cTzInfo):
+            def is_ambiguous(self, dt, other_arg):
+                raise NotImplementedError('This is not implemented')
+
+        return FoldTzInfoRaises()
+
+    def testIncompatibleAmbiguityFoldNaive(self):
+        dt_start = datetime(2018, 9, 1, 1, 0)
+        dt_end = datetime(2018, 9, 1, 2, 0)
+
+        tzi = self._get_ambig_error_tzinfo(dt_start, dt_end)
+
+        self.assertTrue(tz.datetime_ambiguous(datetime(2018, 9, 1, 1, 30),
+                                              tz=tzi))
+
+    def testIncompatibleAmbiguityFoldAware(self):
+        dt_start = datetime(2018, 9, 1, 1, 0)
+        dt_end = datetime(2018, 9, 1, 2, 0)
+
+        tzi = self._get_ambig_error_tzinfo(dt_start, dt_end)
+
+        self.assertTrue(tz.datetime_ambiguous(datetime(2018, 9, 1, 1, 30,
+                                                       tzinfo=tzi)))
+
+    def testIncompatibleAmbiguityUnambiguousNaive(self):
+        dt_start = datetime(2018, 9, 1, 1, 0)
+        dt_end = datetime(2018, 9, 1, 2, 0)
+
+        tzi = self._get_ambig_error_tzinfo(dt_start, dt_end)
+
+        self.assertFalse(tz.datetime_ambiguous(datetime(2018, 10, 1, 12, 30),
+                                              tz=tzi))
+
+    def testIncompatibleAmbiguityUnambiguousAware(self):
+        dt_start = datetime(2018, 9, 1, 1, 0)
+        dt_end = datetime(2018, 9, 1, 2, 0)
+
+        tzi = self._get_ambig_error_tzinfo(dt_start, dt_end)
+
+        self.assertFalse(tz.datetime_ambiguous(datetime(2018, 10, 1, 12, 30,
+                                                        tzinfo=tzi)))
+
+    def testIncompatibleAmbiguityFoldDSTOnly(self):
+        dt_start = datetime(2018, 9, 1, 1, 0)
+        dt_end = datetime(2018, 9, 1, 2, 0)
+
+        tzi = self._get_ambig_error_tzinfo(dt_start, dt_end, dst_only=True)
+
+        self.assertTrue(tz.datetime_ambiguous(datetime(2018, 9, 1, 1, 30),
+                                              tz=tzi))
+
+    def testIncompatibleAmbiguityUnambiguousDSTOnly(self):
+        dt_start = datetime(2018, 9, 1, 1, 0)
+        dt_end = datetime(2018, 9, 1, 2, 0)
+
+        tzi = self._get_ambig_error_tzinfo(dt_start, dt_end, dst_only=True)
+
+        self.assertFalse(tz.datetime_ambiguous(datetime(2018, 10, 1, 12, 30),
+                                               tz=tzi))
+
+    def testSpecifiedTzOverridesAttached(self):
+        # If a tz is specified, the datetime will be treated as naive.
+
+        # This is not ambiguous in the local zone
+        dt = datetime(2011, 11, 6, 1, 30, tzinfo=tz.gettz('Australia/Sydney'))
+
+        self.assertFalse(tz.datetime_ambiguous(dt))
+
+        tzi = tz.gettz('US/Eastern')
+        self.assertTrue(tz.datetime_ambiguous(dt, tz=tzi))
+
+
+class DatetimeExistsTest(unittest.TestCase):
+    def testNoTzSpecified(self):
+        with self.assertRaises(ValueError):
+            tz.datetime_exists(datetime(2016, 4, 1, 2, 9))
+
+    def testInGapNaive(self):
+        tzi = tz.gettz('Australia/Sydney')
+
+        dt = datetime(2012, 10, 7, 2, 30)
+
+        self.assertFalse(tz.datetime_exists(dt, tz=tzi))
+
+    def testInGapAware(self):
+        tzi = tz.gettz('Australia/Sydney')
+
+        dt = datetime(2012, 10, 7, 2, 30, tzinfo=tzi)
+
+        self.assertFalse(tz.datetime_exists(dt))
+
+    def testExistsNaive(self):
+        tzi = tz.gettz('Australia/Sydney')
+
+        dt = datetime(2012, 10, 7, 10, 30)
+
+        self.assertTrue(tz.datetime_exists(dt, tz=tzi))
+
+    def testExistsAware(self):
+        tzi = tz.gettz('Australia/Sydney')
+
+        dt = datetime(2012, 10, 7, 10, 30, tzinfo=tzi)
+
+        self.assertTrue(tz.datetime_exists(dt))
+
+    def testSpecifiedTzOverridesAttached(self):
+        EST = tz.gettz('US/Eastern')
+        AEST = tz.gettz('Australia/Sydney')
+
+        dt = datetime(2012, 10, 7, 2, 30, tzinfo=EST)  # This time exists
+
+        self.assertFalse(tz.datetime_exists(dt, tz=AEST))
+
+
+class EnfoldTest(unittest.TestCase):
+    def testEnterFoldDefault(self):
+        dt = tz.enfold(datetime(2020, 1, 19, 3, 32))
+
+        self.assertEqual(dt.fold, 1)
+
+    def testEnterFold(self):
+        dt = tz.enfold(datetime(2020, 1, 19, 3, 32), fold=1)
+
+        self.assertEqual(dt.fold, 1)
+
+    def testExitFold(self):
+        dt = tz.enfold(datetime(2020, 1, 19, 3, 32), fold=0)
+
+        # Before Python 3.6, dt.fold won't exist if fold is 0.
+        self.assertEqual(getattr(dt, 'fold', 0), 0)

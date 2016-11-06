@@ -20,7 +20,8 @@ from operator import itemgetter
 from contextlib import contextmanager
 
 from six import string_types, PY3
-from ._common import tzname_in_python2, _tzinfo
+from ._common import tzname_in_python2, _tzinfo, _total_seconds
+from ._common import tzrangebase, enfold
 
 try:
     from .win import tzwin, tzwinlocal
@@ -44,6 +45,9 @@ class tzutc(datetime.tzinfo):
     @tzname_in_python2
     def tzname(self, dt):
         return "UTC"
+
+    def is_ambiguous(self, dt):
+        return False
 
     def __eq__(self, other):
         if not isinstance(other, (tzutc, tzoffset)):
@@ -82,6 +86,9 @@ class tzoffset(datetime.tzinfo):
 
     def dst(self, dt):
         return ZERO
+
+    def is_ambiguous(self, dt):
+        return False
 
     @tzname_in_python2
     def tzname(self, dt):
@@ -144,7 +151,16 @@ class tzlocal(_tzinfo):
     def tzname(self, dt):
         return time.tzname[self._isdst(dt)]
 
-    def _isdst(self, dt):
+    def is_ambiguous(self, dt):
+        naive_dst = self._naive_is_dst(dt)
+        return (not naive_dst and
+                (naive_dst != self._naive_is_dst(dt - self._dst_saved)))
+
+    def _naive_is_dst(self, dt):
+        timestamp = _datetime_to_timestamp(dt)
+        return time.localtime(timestamp + time.timezone).tm_isdst
+
+    def _isdst(self, dt, fold_naive=True):
         # We can't use mktime here. It is unstable when deciding if
         # the hour near to a change is DST or not.
         #
@@ -172,20 +188,17 @@ class tzlocal(_tzinfo):
         if not self._hasdst:
             return False
 
-        dstval = self._naive_is_dst(dt)
-
         # Check for ambiguous times:
-        if not dstval and self._fold is not None:
-            dst_fold_offset = self._naive_is_dst(dt - self._dst_saved)
+        dstval = self._naive_is_dst(dt)
+        fold = getattr(dt, 'fold', None)
 
-            if dst_fold_offset:
-                return self._fold
+        if self.is_ambiguous(dt):
+            if fold is not None:
+                return not self._fold(dt)
+            else:
+                return True
 
         return dstval
-
-    def _naive_is_dst(self, dt):
-        timestamp = _datetime_to_timestamp(dt)
-        return time.localtime(timestamp + time.timezone).tm_isdst
 
     def __eq__(self, other):
         if not isinstance(other, tzlocal):
@@ -564,40 +577,34 @@ class tzfile(_tzinfo):
 
         return self._get_ttinfo(idx)
 
-    def _resolve_ambiguous_time(self, dt, idx=None):
+    def is_ambiguous(self, dt, idx=None):
         if idx is None:
             idx = self._find_last_transition(dt)
 
-        # If we're fold-naive or we have no transitions, return the index.
-        if self._fold is None or idx is None:
-            return idx
-
+        # Calculate the difference in offsets from current to previous
         timestamp = _datetime_to_timestamp(dt)
         tti = self._get_ttinfo(idx)
 
-        if idx > 0:
-            # Calculate the difference in offsets from the current to previous
-            od = self._get_ttinfo(idx - 1).offset - tti.offset
-            tt = self._trans_list[idx]      # Transition time
+        if idx is None or idx <= 0:
+            return False
 
-            if timestamp < tt + od:
-                if self._fold:
-                    return idx - 1
-                else:
-                    return idx
+        od = self._get_ttinfo(idx - 1).offset - tti.offset
+        tt = self._trans_list[idx]          # Transition time
 
-        if idx < len(self._trans_list):
-            # Calculate the difference in offsets from the previous to current
-            od = self._get_ttinfo(idx + 1).offset - tti.offset
-            tt = self._trans_list[idx + 1]
+        return timestamp < tt + od
 
-            if timestamp > tt - od:
-                if self._fold:
-                    return idx + 1
-                else:
-                    return idx
+    def _resolve_ambiguous_time(self, dt):
+        idx = self._find_last_transition(dt)
 
-        return idx
+        # If we have no transitions, return the index
+        _fold = self._fold(dt)
+        if idx is None or idx == 0:
+            return idx
+
+        # Get the current datetime as a timestamp
+        idx_offset = int(not _fold and self.is_ambiguous(dt, idx))
+
+        return idx - idx_offset
 
     def utcoffset(self, dt):
         if dt is None:
@@ -649,7 +656,7 @@ class tzfile(_tzinfo):
         return (self.__class__, (None, self._filename), self.__dict__)
 
 
-class tzrange(_tzinfo):
+class tzrange(tzrangebase):
     """
     The ``tzrange`` object is a time zone specified by a set of offsets and
     abbreviations, equivalent to the way the ``TZ`` variable can be specified
@@ -726,7 +733,6 @@ class tzrange(_tzinfo):
     def __init__(self, stdabbr, stdoffset=None,
                  dstabbr=None, dstoffset=None,
                  start=None, end=None):
-        super(tzrange, self).__init__()
 
         global relativedelta
         from dateutil import relativedelta
@@ -752,7 +758,7 @@ class tzrange(_tzinfo):
         if dstoffset is not None:
             self._dst_offset = datetime.timedelta(seconds=dstoffset)
         elif dstabbr and stdoffset is not None:
-            self._dst_offset = self._std_offset+datetime.timedelta(hours=+1)
+            self._dst_offset = self._std_offset + datetime.timedelta(hours=+1)
         else:
             self._dst_offset = ZERO
 
@@ -768,52 +774,24 @@ class tzrange(_tzinfo):
         else:
             self._end_delta = end
 
-        self._dst_base_offset = self._dst_offset - self._std_offset
+        self._dst_base_offset_ = self._dst_offset - self._std_offset
+        self.hasdst = bool(self._start_delta)
 
-    def utcoffset(self, dt):
-        if dt is None:
-            return None
+    def transitions(self, year):
+        """
+        For a given year, get the DST on and off transition times, expressed
+        always on the standard time side. For zones with no transitions, this
+        function returns ``None``.
 
-        if self._isdst(dt):
-            return self._dst_offset
-        else:
-            return self._std_offset
+        :param year:
+            The year whose transitions you would like to query.
 
-    def dst(self, dt):
-        if self._isdst(dt):
-            return self._dst_offset - self._std_offset
-        else:
-            return ZERO
-
-    @tzname_in_python2
-    def tzname(self, dt):
-        if self._isdst(dt):
-            return self._dst_abbr
-        else:
-            return self._std_abbr
-
-    def _isdst(self, dt):
-        transitions = self._transitions(dt.year)
-
-        if transitions is None:
-            return False
-
-        start, end = transitions
-
-        dt = dt.replace(tzinfo=None)
-
-        # Handle ambiguous dates
-        if self._fold is not None:
-            if end <= dt < end + self._dst_base_offset:
-                return self._fold
-
-        if start < end:
-            return start <= dt < end
-        else:
-            return not end <= dt < start
-
-    def _transitions(self, year):
-        if not self._start_delta:
+        :return:
+            Returns a :class:`tuple` of :class:`datetime.datetime` objects,
+            ``(dston, dstoff)`` for zones with an annual DST transition, or
+            ``None`` for fixed offset zones.
+        """
+        if not self.hasdst:
             return None
 
         base_year = datetime.datetime(year, 1, 1)
@@ -834,15 +812,9 @@ class tzrange(_tzinfo):
                 self._start_delta == other._start_delta and
                 self._end_delta == other._end_delta)
 
-    __hash__ = None
-
-    def __ne__(self, other):
-        return not (self == other)
-
-    def __repr__(self):
-        return "%s(...)" % self.__class__.__name__
-
-    __reduce__ = object.__reduce__
+    @property
+    def _dst_base_offset(self):
+        return self._dst_base_offset_
 
 
 class tzstr(tzrange):
@@ -904,7 +876,10 @@ class tzstr(tzrange):
             if self._start_delta:
                 self._end_delta = self._delta(res.end, isend=1)
 
+        self.hasdst = bool(self._start_delta)
+
     def _delta(self, x, isend=0):
+        from dateutil import relativedelta
         kwargs = {}
         if x.month is not None:
             kwargs["month"] = x.month
@@ -975,7 +950,7 @@ class _tzicalvtz(_tzinfo):
         dt = dt.replace(tzinfo=None)
 
         try:
-            return self._cachecomp[self._cachedate.index((dt, self._fold))]
+            return self._cachecomp[self._cachedate.index((dt, self._fold(dt)))]
         except ValueError:
             pass
 
@@ -1002,7 +977,7 @@ class _tzicalvtz(_tzinfo):
             else:
                 lastcomp = comp[0]
 
-        self._cachedate.insert(0, (dt, self._fold))
+        self._cachedate.insert(0, (dt, self._fold(dt)))
         self._cachecomp.insert(0, lastcomp)
 
         if len(self._cachedate) > 10:
@@ -1012,7 +987,7 @@ class _tzicalvtz(_tzinfo):
         return lastcomp
 
     def _find_compdt(self, comp, dt):
-        if comp.tzoffsetdiff < ZERO and not self._fold:
+        if comp.tzoffsetdiff < ZERO and self._fold(dt):
             dt -= comp.tzoffsetdiff
 
         compdt = comp.rrule.before(dt, inc=True)
@@ -1320,12 +1295,81 @@ def gettz(name=None):
                             tz = tzlocal()
     return tz
 
-def _total_seconds(td):
-    # Python 2.6 doesn't have a total_seconds() method on timedelta objects
-    return ((td.seconds + td.days * 86400) * 1000000 +
-            td.microseconds) // 1000000
 
-_total_seconds = getattr(datetime.timedelta, 'total_seconds', _total_seconds)
+def datetime_exists(dt, tz=None):
+    """
+    Given a datetime and a time zone, determine whether or not a given datetime
+    would fall in a gap.
+
+    :param dt:
+        A :class:`datetime.datetime` (whose time zone will be ignored if ``tz``
+        is provided.)
+
+    :param tz:
+        A :class:`datetime.tzinfo` with support for the ``fold`` attribute. If
+        ``None`` or not provided, the datetime's own time zone will be used.
+    
+    :return:
+        Returns a boolean value whether or not the "wall time" exists in ``tz``.
+    """
+    if tz is None:
+        if dt.tzinfo is None:
+            raise ValueError('Datetime is naive and no time zone provided.')
+        tz = dt.tzinfo
+
+    dt = dt.replace(tzinfo=None)
+
+    # This is essentially a test of whether or not the datetime can survive
+    # a round trip to UTC.
+    dt_rt = dt.replace(tzinfo=tz).astimezone(tzutc()).astimezone(tz)
+    dt_rt = dt_rt.replace(tzinfo=None)
+
+    return dt == dt_rt
+
+
+def datetime_ambiguous(dt, tz=None):
+    """
+    Given a datetime and a time zone, determine whether or not a given datetime
+    is ambiguous (i.e if there are two times differentiated only by their DST
+    status).
+
+    :param dt:
+        A :class:`datetime.datetime` (whose time zone will be ignored if ``tz``
+        is provided.)
+
+    :param tz:
+        A :class:`datetime.tzinfo` with support for the ``fold`` attribute. If
+        ``None`` or not provided, the datetime's own time zone will be used.
+    
+    :return:
+        Returns a boolean value whether or not the "wall time" is ambiguous in
+        ``tz``.
+    """
+    if tz is None:
+        if dt.tzinfo is None:
+            raise ValueError('Datetime is naive and no time zone provided.')
+
+        tz = dt.tzinfo
+
+    # If a time zone defines its own "is_ambiguous" function, we'll use that.
+    is_ambiguous_fn = getattr(tz, 'is_ambiguous', None)
+    if is_ambiguous_fn is not None:
+        try:
+            return tz.is_ambiguous(dt)
+        except:
+            pass
+
+    # If it doesn't come out and tell us it's ambiguous, we'll just check if
+    # the fold attribute has any effect on this particular date and time.
+    dt = dt.replace(tzinfo=tz)
+    wall_0 = enfold(dt, fold=0)
+    wall_1 = enfold(dt, fold=1)
+
+    same_offset = wall_0.utcoffset() == wall_1.utcoffset()
+    same_dst = wall_0.dst() == wall_1.dst()
+
+    return not (same_offset and same_dst)
+
 
 def _datetime_to_timestamp(dt):
     """
