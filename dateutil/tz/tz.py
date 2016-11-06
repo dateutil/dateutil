@@ -1277,7 +1277,10 @@ class tzical(object):
 
 if sys.platform != "win32":
     TZFILES = ["/etc/localtime", "localtime"]
-    TZPATHS = ["/usr/share/zoneinfo", "/usr/lib/zoneinfo", "/etc/zoneinfo"]
+    TZPATHS = ["/usr/share/zoneinfo",
+               "/usr/lib/zoneinfo",
+               "/usr/share/lib/zoneinfo",
+               "/etc/zoneinfo"]
 else:
     TZFILES = []
     TZPATHS = []
