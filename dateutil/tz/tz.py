@@ -58,7 +58,7 @@ class tzutc(datetime.tzinfo):
         :return:
             Returns ``True`` if ambiguous, ``False`` otherwise.
 
-        ..versionadded:: 2.6.0
+        .. versionadded:: 2.6.0
         """
         return False
 
@@ -119,7 +119,7 @@ class tzoffset(datetime.tzinfo):
         :return:
             Returns ``True`` if ambiguous, ``False`` otherwise.
 
-        ..versionadded:: 2.6.0
+        .. versionadded:: 2.6.0
         """
         return False
 
@@ -196,7 +196,7 @@ class tzlocal(_tzinfo):
         :return:
             Returns ``True`` if ambiguous, ``False`` otherwise.
 
-        ..versionadded:: 2.6.0
+        .. versionadded:: 2.6.0
         """
         naive_dst = self._naive_is_dst(dt)
         return (not naive_dst and
@@ -635,7 +635,7 @@ class tzfile(_tzinfo):
         :return:
             Returns ``True`` if ambiguous, ``False`` otherwise.
 
-        ..versionadded:: 2.6.0
+        .. versionadded:: 2.6.0
         """
         if idx is None:
             idx = self._find_last_transition(dt)
@@ -1412,7 +1412,7 @@ def datetime_ambiguous(dt, tz=None):
         Returns a boolean value whether or not the "wall time" is ambiguous in
         ``tz``.
 
-    ..versionadded:: 2.6.0
+    .. versionadded:: 2.6.0
     """
     if tz is None:
         if dt.tzinfo is None:
