@@ -13,7 +13,7 @@ from contextlib import closing
 
 from dateutil.tz import tzfile
 
-__all__ = ["gettz", "gettz_db_metadata", "rebuild"]
+__all__ = ["get_zonefile_instance", "gettz", "gettz_db_metadata", "rebuild"]
 
 ZONEFILENAME = "dateutil-zoneinfo.tar.gz"
 METADATA_FN = 'METADATA'
@@ -71,8 +71,21 @@ class ZoneInfoFile(object):
             self.zones = dict()
             self.metadata = None
 
-    def get(self, name):
-        return self.zones.get(name)
+    def get(self, name, default=None):
+        """
+        Wrapper for :func:`ZoneInfoFile.zones.get`. This is a convenience method
+        for retrieving zones from the zone dictionary.
+        
+        :param name:
+            The name of the zone to retrieve. (Generally IANA zone names)
+
+        :param default:
+            The value to return in the event of a missing key.
+
+        .. versionadded:: 2.6.0
+
+        """
+        return self.zones.get(name, default)
 
 
 # The current API has gettz as a module function, although in fact it taps into
