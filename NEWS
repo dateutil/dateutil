@@ -1,3 +1,68 @@
+Version 2.6.0
+-------------
+- Added PEP-495-compatible methods to address ambiguous and imaginary dates in
+  time zones in a backwards-compatible way. Ambiguous dates and times can now
+  be safely represented by all dateutil time zones. Many thanks to Alexander
+  Belopolski (@abalkin) and Tim Peters @tim-one for their inputs on how to
+  address this. Original issues reported by Yupeng and @zed (lP: 1390262,
+  gh issues #57, #112, #249, #284, #286, prs #127, #225, #248, #264, #302).
+- Added new methods for working with ambiguous and imaginary dates to the tz
+  module. datetime_ambiguous() determines if a datetime is ambiguous for a given
+  zone and datetime_exists() determines if a datetime exists in a given zone.
+  This works for all fold-aware datetimes, not just those provided by dateutil.
+  (gh issue #253, gh pr #302)
+- Fixed an issue where dst() in Portugal in 1996 was returning the wrong value
+  in tz.tzfile objects. Reported by @abalkin (gh issue #128, pr #225)
+- Fixed an issue where zoneinfo.ZoneInfoFile errors were not being properly
+  deep-copied. (gh issue #226, pr #225)
+- Refactored tzwin and tzrange as a subclass of a common class, tzrangebase, as
+  there was substantial overlapping functionality. As part of this change,
+  tzrange and tzstr now expose a transitions() function, which returns the
+  DST on and off transitions for a given year. (gh issue #260, pr #302)
+- Deprecated zoneinfo.gettz() due to confusion with tz.gettz(), in favor of
+  get() method of zoneinfo.ZoneInfoFile objects. (gh issue #11, pr #310)
+- For non-character, non-stream arguments, parser.parse now raises TypeError
+  instead of AttributeError. (gh issues #171, #269, pr #247)
+- Fixed an issue where tzfile objects were not properly handling dst() and
+  tzname() when attached to datetime.time objects. Reported by @ovacephaloid.
+  (gh issue #292, pr #309)
+- /usr/share/lib/zoneinfo was added to TZPATHS for compatibility with Solaris
+  systems. Reported by @dhduvall (gh issue #276, pr #307)
+- tzoffset and tzrange objects now accept either a number of seconds or a
+  datetime.timedelta() object wherever previously only a number of seconds was
+  allowed. (gh pr #264, #277)
+- datetime.timedelta objects can now be added to relativedelta objects. Reported
+  and added by Alec Nikolas Reiter (@justanr) (gh issue #282, pr #283
+- Refactored relativedelta.weekday and rrule.weekday into a common base class
+  to reduce code duplication. (gh issue #140, pr #311)
+- An issue where the WKST parameter was improperly rendering in str(rrule) was
+  reported and fixed by Daniel LePage (@dplepage). (gh issue #262, pr #263)
+- A replace() method has been added to rrule objects by @jendas1, which creates
+  new rrule with modified attributes, analogous to datetime.replace (gh pr #167)
+- Made some significant performance improvements to rrule objects in Python 2.x
+  (gh pr #245)
+- All classes defining equality functions now return NotImplemented when
+  compared to unsupported classes, rather than raising TypeError, to allow other
+  classes to provide fallback support. (gh pr #236)
+- Several classes have been marked as explicitly unhashable to maintain
+  identical behavior between Python 2 and 3. Submitted by Roy Williams 
+  (@rowillia) (gh pr #296)
+- Trailing whitespace in easter.py has been removed. Submitted by @OmgImAlexis
+  (gh pr #299)
+- Windows-only batch files in build scripts had line endings switched to CRLF.
+  (gh pr #237)
+- @adamchainz updated the documentation links to reflect that the canonical
+  location for readthedocs links is now at .io, not .org. (gh pr #272)
+- Made some changes to the CI and codecov to test against newer versions of
+  Python and pypy, and to adjust the code coverage requirements. For the moment,
+  full pypy3 compatibility is not supported until a new release is available,
+  due to upstream bugs in the old version affecting PEP-495 support.
+  (gh prs #265, #266, #304, #308)
+- The full PGP signing key fingerprint was added to the README.md in favor of
+  the previously used long-id. Reported by @valholl (gh issue #287, pr #304)
+- Updated zoneinfo to 2016i. (gh issue #298, gh pr #306)
+
+
 Version 2.5.3
 -------------
 - Updated zoneinfo to 2016d
