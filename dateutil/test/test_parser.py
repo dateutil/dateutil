@@ -2,6 +2,9 @@
 from __future__ import unicode_literals
 from ._common import unittest
 
+import os
+import time
+
 from datetime import datetime, timedelta, date
 
 from dateutil.tz import tzoffset
@@ -10,6 +13,7 @@ from dateutil.parser import *
 import six
 from six import assertRaisesRegex, PY3
 from six.moves import StringIO
+
 
 class ParserTest(unittest.TestCase):
 
@@ -50,7 +54,6 @@ class ParserTest(unittest.TestCase):
 
             def read(self, *args, **kwargs):
                 return self.stream.read(*args, **kwargs)
-
 
         dstr = StringPassThrough(StringIO('2014 January 19'))
 
@@ -112,7 +115,6 @@ class ParserTest(unittest.TestCase):
                          datetime(2003, 9, 25, 10, 36, 28,
                                   tzinfo=self.brsttz))
 
-
     def testDateCommandFormatReversed(self):
         self.assertEqual(parse("2003 10:36:28 BRST 25 Sep Thu",
                                tzinfos=self.tzinfos),
@@ -125,10 +127,22 @@ class ParserTest(unittest.TestCase):
                                    tzinfos={"BRST": long(-10800)}),
                              datetime(2003, 9, 25, 10, 36, 28,
                                       tzinfo=self.brsttz))
+
     def testDateCommandFormatIgnoreTz(self):
         self.assertEqual(parse("Thu Sep 25 10:36:28 BRST 2003",
                                ignoretz=True),
                          datetime(2003, 9, 25, 10, 36, 28))
+
+    def testDateCommandFormatRespectTz(self):
+        orig = os.environ.pop("TZ", None)
+        os.environ["TZ"] = "Europe/London"
+        time.tzset()
+        self.assertEqual(parse("Wed, 02 Oct 2002 13:00:00 GMT"),
+                         datetime(2002, 10, 2, 13, 0, tzinfo=tzoffset('GMT', 0)))
+        del os.environ["TZ"]
+        if orig is not None:
+            os.environ["TZ"] = orig
+        time.tzset()
 
     def testDateCommandFormatStrip1(self):
         self.assertEqual(parse("Thu Sep 25 10:36:28 2003"),
