@@ -8,9 +8,12 @@ import os
 import datetime
 import time
 import subprocess
+import sys
 import warnings
 import tempfile
 import pickle
+
+IS_WIN = sys.platform.startswith('win')
 
 
 class WarningTestMixin(object):
