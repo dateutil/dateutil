@@ -45,7 +45,7 @@ if hasattr(datetime, 'fold'):
             subclass of :py:class:`datetime.datetime` with the ``fold``
             attribute added, if ``fold`` is 1.
 
-        ..versionadded:: 2.6.0
+        .. versionadded:: 2.6.0
         """
         return dt.replace(fold=fold)
 
@@ -56,7 +56,7 @@ else:
         Python versions before 3.6. It is used only for dates in a fold, so
         the ``fold`` attribute is fixed at ``1``.
 
-        ..versionadded:: 2.6.0
+        .. versionadded:: 2.6.0
         """
         __slots__ = ()
 
@@ -80,7 +80,7 @@ else:
             subclass of :py:class:`datetime.datetime` with the ``fold``
             attribute added, if ``fold`` is 1.
 
-        ..versionadded:: 2.6.0
+        .. versionadded:: 2.6.0
         """
         if getattr(dt, 'fold', 0) == fold:
             return dt
@@ -111,7 +111,7 @@ class _tzinfo(tzinfo):
         :return:
             Returns ``True`` if ambiguous, ``False`` otherwise.
 
-        ..versionadded:: 2.6.0
+        .. versionadded:: 2.6.0
         """
 
         dt = dt.replace(tzinfo=self)
@@ -236,7 +236,7 @@ class tzrangebase(_tzinfo):
           abbreviations in DST and STD, respectively.
         * ``_hasdst``: Whether or not the zone has DST.
 
-    ..versionadded:: 2.6.0
+    .. versionadded:: 2.6.0
     """
     def __init__(self):
         raise NotImplementedError('tzrangebase is an abstract base class')
