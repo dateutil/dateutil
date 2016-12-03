@@ -256,12 +256,12 @@ class rrulebase(object):
         n = 0
         for d in gen:
             if comp(d, dt):
-                yield d
-
                 if count is not None:
                     n += 1
-                    if n >= count:
+                    if n > count:
                         break
+
+                yield d
 
     def between(self, after, before, inc=False, count=1):
         """ Returns all the occurrences of the rrule between after and before.
@@ -444,7 +444,7 @@ class rrule(rrulebase):
             until = datetime.datetime.fromordinal(until.toordinal())
         self._until = until
 
-        if count and until:
+        if count is not None and until:
             warn("Using both 'count' and 'until' is inconsistent with RFC 2445"
                  " and has been deprecated in dateutil. Future versions will "
                  "raise an error.", DeprecationWarning)
@@ -689,7 +689,7 @@ class rrule(rrulebase):
         if self._wkst:
             parts.append('WKST=' + repr(weekday(self._wkst))[0:2])
 
-        if self._count:
+        if self._count is not None:
             parts.append('COUNT=' + str(self._count))
 
         if self._until:
@@ -844,13 +844,13 @@ class rrule(rrulebase):
                         self._len = total
                         return
                     elif res >= self._dtstart:
-                        total += 1
-                        yield res
-                        if count:
+                        if count is not None:
                             count -= 1
-                            if not count:
+                            if count < 0:
                                 self._len = total
                                 return
+                        total += 1
+                        yield res
             else:
                 for i in dayset[start:end]:
                     if i is not None:
@@ -861,13 +861,14 @@ class rrule(rrulebase):
                                 self._len = total
                                 return
                             elif res >= self._dtstart:
-                                total += 1
-                                yield res
-                                if count:
+                                if count is not None:
                                     count -= 1
-                                    if not count:
+                                    if count < 0:
                                         self._len = total
                                         return
+
+                                total += 1
+                                yield res
 
             # Handle frequency and interval
             fixday = False
