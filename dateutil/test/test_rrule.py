@@ -2472,6 +2472,12 @@ class RRuleTest(WarningTestMixin, unittest.TestCase):
                                dtstart=datetime(1997, 9, 2, 9, 0)).count(),
                          3)
 
+    def testCountZero(self):
+        self.assertEqual(rrule(YEARLY,
+                               count=0,
+                               dtstart=datetime(1997, 9, 2, 9, 0)).count(),
+                         0)
+
     def testContains(self):
         rr = rrule(DAILY, count=3, dtstart=datetime(1997, 9, 2, 9, 0))
         self.assertEqual(datetime(1997, 9, 3, 9, 0) in rr, True)
