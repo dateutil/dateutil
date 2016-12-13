@@ -551,13 +551,19 @@ class ParserTest(unittest.TestCase):
                                   tzinfo=self.brsttz))
 
     def testFuzzyWithTokens(self):
-        s = "Today is 25 of September of 2003, exactly " \
+        s1 = "Today is 25 of September of 2003, exactly " \
             "at 10:49:41 with timezone -03:00."
-        self.assertEqual(parse(s, fuzzy_with_tokens=True),
+        self.assertEqual(parse(s1, fuzzy_with_tokens=True),
                          (datetime(2003, 9, 25, 10, 49, 41,
                                    tzinfo=self.brsttz),
                          ('Today is ', 'of ', ', exactly at ',
                           ' with timezone ', '.')))
+
+        s2 = "http://biz.yahoo.com/ipo/p/600221.html"
+        self.assertEqual(parse(s2, fuzzy_with_tokens=True),
+                         (datetime(2060, 2, 21, 0, 0, 0),
+                         ('http://biz.yahoo.com/ipo/p/', '.html')))
+
 
     def testFuzzyAMPMProblem(self):
         # Sometimes fuzzy parsing results in AM/PM flag being set without
