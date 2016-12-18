@@ -969,7 +969,7 @@ class parser(object):
                         res.ampm = value
 
                     elif fuzzy:
-                        last_skipped_token_i = skip_token(skipped_tokens, 
+                        last_skipped_token_i = self._skip_token(skipped_tokens, 
                                                     last_skipped_token_i, i, l)
                     i += 1
                     continue
@@ -1035,7 +1035,7 @@ class parser(object):
                 if not (info.jump(l[i]) or fuzzy):
                     return None, None
 
-                last_skipped_token_i = skip_token(skipped_tokens,
+                last_skipped_token_i = self._skip_token(skipped_tokens,
                                                 last_skipped_token_i, i, l)
                 i += 1
 
@@ -1062,18 +1062,20 @@ class parser(object):
         else:
             return res, None
 
+    @staticmethod
+    def _skip_token(skipped_tokens, last_skipped_token_i, i, l):
+        if last_skipped_token_i == i - 1:
+            # recombine the tokens
+            skipped_tokens[-1] += l[i]
+        else:
+            # just append
+            skipped_tokens.append(l[i])
+        last_skipped_token_i = i
+        return last_skipped_token_i
+
+
 DEFAULTPARSER = parser()
 
-
-def skip_token(skipped_tokens, last_skipped_token_i, i, l):
-    if last_skipped_token_i == i - 1:
-        # recombine the tokens
-        skipped_tokens[-1] += l[i]
-    else:
-        # just append
-        skipped_tokens.append(l[i])
-    last_skipped_token_i = i
-    return last_skipped_token_i
 
 
 
