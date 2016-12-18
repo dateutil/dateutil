@@ -1077,8 +1077,6 @@ class parser(object):
 DEFAULTPARSER = parser()
 
 
-
-
 def parse(timestr, parserinfo=None, **kwargs):
     """
 
