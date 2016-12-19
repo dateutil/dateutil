@@ -376,6 +376,26 @@ class _ymd(list):
         super(self.__class__, self).__init__(*args, **kwargs)
         self.century_specified = False
         self.tzstr = tzstr
+        self.mstridx = -1
+
+    @property
+    def has_year(self):
+        """
+        has_year checks whether a token has been appended that is
+        unambiguously a year.  Or more precisely, that is unambiguously
+        neither a day nor a month.
+        """
+        return self.century_specified or any(x > 31 for x in self)
+
+    @property
+    def has_month(self):
+        """
+        self.mstridx is assigned when a value is appended based on a
+        month-name, which is unambiguously a month.  has_month is
+        True if and only if this has occurred.
+        """
+        return self.mstridx != -1
+
 
     @staticmethod
     def token_could_be_year(token, year):
@@ -408,6 +428,11 @@ class _ymd(list):
         super(self.__class__, self).append(int(val))
 
     def resolve_ymd(self, mstridx, yearfirst, dayfirst):
+        if mstridx == -1:
+            # If the user does not pass a non-null mstridx, use the
+            # inferred value.
+            mstridx = self.mstridx
+
         len_ymd = len(self)
         (year, month, day) = (None, None, None)
 
@@ -838,6 +863,7 @@ class parser(object):
                                     ymd.append(value)
                                     assert mstridx == -1
                                     mstridx = len(ymd)-1
+                                    ymd.mstridx = mstridx
                                 else:
                                     return None, None
 
@@ -850,8 +876,9 @@ class parser(object):
 
                                 if value is not None:
                                     ymd.append(value)
-                                    mstridx = len(ymd)-1
                                     assert mstridx == -1
+                                    mstridx = len(ymd)-1
+                                    ymd.mstridx = mstridx
                                 else:
                                     ymd.append(l[i])
 
@@ -901,6 +928,7 @@ class parser(object):
                     ymd.append(value)
                     assert mstridx == -1
                     mstridx = len(ymd)-1
+                    ymd.mstridx = mstridx
 
                     i += 1
                     if i < len_l:
