@@ -859,3 +859,56 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(parse(dtstr, dayfirst=True, yearfirst=True),
                          datetime(2015, 9, 25))
 
+
+    def testYMDResolveOrderingConventions(self):
+        # Start with two relatively simple cases.
+        dstr = "Feb 20 14"
+        expected = datetime(2014, 2, 20)
+        self.assertEqual(parse(dstr), expected)
+
+        dstr = "20 Feb 14"
+        expected = datetime(2014, 2, 20)
+        self.assertEqual(parse(dstr), expected)
+
+        # "Feb 28, 2029" and "Feb 29, 2028" are both valid dates.
+        # We prefer the option with the year in the last position
+        dstr = "28 Feb 29"
+        expected = datetime(2029, 2, 28)
+        self.assertEqual(parse(dstr), expected)
+
+
+
+    def testYMDResolveCalendarChecks(self):
+        # "April 30, 2031" is a valid date, but "April 31, 2030" is not.
+        dstr = "April 31 30"
+        expected = datetime(2031, 4, 30)
+        self.assertEqual(parse(dstr), expected)
+
+    def testYMDResolveInferMSTRIDX(self):
+        # Even if we do not find the string "April", we can infer given the
+        # options that 04 is the only viable month.
+        expected = datetime(2031, 4, 30)
+        dstrs = ["04 31 30", "04 30 31", "30 04 31", "30 31 04", "31 04 30", "31 30 04"]
+        for dstr in dstrs:
+            self.assertEqual(parse(dstr), expected, dstr)
+
+    def testYMDResolveFails(self):
+        # In the following case, 02 must be the month, so the question
+        # is whether 20 is the year and 14 is the day, or the other way
+        # around.
+        dstr = "20 14 02"
+        expected = datetime(2020, 2, 14)
+        self.assertEqual(parse(dstr), expected)
+
+    def testYMDResolveRaises(self):
+        # Within resolve_ymd, the message raised should be
+        # "More than one YMD value exceeds 31"
+        assertRaisesRegex(self, ValueError, 'Unknown string format',
+                          parse, '32 04 2016')
+        
+        # Within resolve_ymd, the message raised should be
+        # "No YMD values are between 1 and 12"
+        assertRaisesRegex(self, ValueError, 'Unknown string format',
+                          parse, '14 13 2016')
+
+
