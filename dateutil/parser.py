@@ -409,7 +409,7 @@ class _ymd(list):
 
     def resolve_ymd(self, mstridx, yearfirst, dayfirst):
         len_ymd = len(self)
-        year, month, day = (None, None, None)
+        (year, month, day) = (None, None, None)
 
         if len_ymd > 3:
             raise ValueError("More than three YMD values")
@@ -429,39 +429,39 @@ class _ymd(list):
             # Two members with numbers
             if self[0] > 31:
                 # 99-01
-                year, month = self
+                (year, month) = self
             elif self[1] > 31:
                 # 01-99
-                month, year = self
+                (month, year) = self
             elif dayfirst and self[1] <= 12:
                 # 13-01
-                day, month = self
+                (day, month) = self
             else:
                 # 01-13
-                month, day = self
+                (month, day) = self
 
         elif len_ymd == 3:
             # Three members
             if mstridx == 0:
-                month, day, year = self
+                (month, day, year) = self
             elif mstridx == 1:
                 if self[0] > 31 or (yearfirst and self[2] <= 31):
                     # 99-Jan-01
-                    year, month, day = self
+                    (year, month, day) = self
                 else:
                     # 01-Jan-01
                     # Give precendence to day-first, since
                     # two-digit years is usually hand-written.
-                    day, month, year = self
+                    (day, month, year) = self
 
             elif mstridx == 2:
                 # WTF!?
                 if self[1] > 31:
                     # 01-99-Jan
-                    day, year, month = self
+                    (day, year, month) = self
                 else:
                     # 99-01-Jan
-                    year, day, month = self
+                    (year, day, month) = self
 
             else:
                 if self[0] > 31 or \
@@ -469,17 +469,17 @@ class _ymd(list):
                    (yearfirst and self[1] <= 12 and self[2] <= 31):
                     # 99-01-01
                     if dayfirst and self[2] <= 12:
-                        year, day, month = self
+                        (year, day, month) = self
                     else:
-                        year, month, day = self
+                        (year, month, day) = self
                 elif self[0] > 12 or (dayfirst and self[1] <= 12):
                     # 13-01-01
-                    day, month, year = self
+                    (day, month, year) = self
                 else:
                     # 01-13-01
-                    month, day, year = self
+                    (month, day, year) = self
 
-        return year, month, day
+        return (year, month, day)
 
 
 class parser(object):
