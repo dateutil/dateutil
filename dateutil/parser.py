@@ -376,7 +376,6 @@ class _ymd(list):
         super(self.__class__, self).__init__(*args, **kwargs)
         self.century_specified = False
         self.tzstr = tzstr
-        self.mstridx = -1
 
     @staticmethod
     def token_could_be_year(token, year):
@@ -500,11 +499,6 @@ class _ymd(list):
         return (year, month, day)
 
     def resolve_ymd(self, mstridx, yearfirst, dayfirst, guess_fail=False):
-        if mstridx == -1:
-            # If the user does not pass a non-null mstridx, use the
-            # inferred value.
-            mstridx = self.mstridx
-
         len_ymd = len(self)
         (year, month, day) = (None, None, None)
 
