@@ -6,6 +6,7 @@ from datetime import datetime, timedelta, date
 
 from dateutil.tz import tzoffset
 from dateutil.parser import *
+from dateutil.parser import _ymd
 
 import six
 from six import assertRaisesRegex, PY3
@@ -901,14 +902,21 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(parse(dstr), expected)
 
     def testYMDResolveRaises(self):
-        # Within resolve_ymd, the message raised should be
-        # "More than one YMD value exceeds 31"
-        assertRaisesRegex(self, ValueError, 'Unknown string format',
-                          parse, '32 04 2016')
+        ymd = _ymd('32 04 2016')
+        ymd.append(32)
+        ymd.append(04)
+        ymd.append(2016)
+        assertRaisesRegex(self, ValueError, 'More than one YMD value exceeds 31', 
+            ymd.resolve_ymd, mstridx=-1, yearfirst=False, dayfirst=False
+            )
+
+    def testYMDResolveNoMonthOptions(self):
+        ymd = _ymd('14 13 2016')
+        ymd.append(14)
+        ymd.append(13)
+        ymd.append(2016)
+        assertRaisesRegex(self, ValueError, 'No YMD values are between 1 and 12', 
+            ymd.resolve_ymd, mstridx=-1, yearfirst=False, dayfirst=False
+            )
+
         
-        # Within resolve_ymd, the message raised should be
-        # "No YMD values are between 1 and 12"
-        assertRaisesRegex(self, ValueError, 'Unknown string format',
-                          parse, '14 13 2016')
-
-
