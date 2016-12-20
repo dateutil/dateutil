@@ -541,6 +541,9 @@ class parser(object):
             :class:`tzinfo` is not in a valid format, or if an invalid date
             would be created.
 
+        :raises TypeError:
+            Raised for non-string or character stream input.
+
         :raises OverflowError:
             Raised if the parsed date exceeds the largest valid C integer on
             your system.
@@ -952,7 +955,7 @@ class parser(object):
                             raise ValueError('No hour specified with ' +
                                              'AM or PM flag.')
                     elif not 0 <= res.hour <= 12:
-                        # If AM/PM is found, it's a 12 hour clock, so raise 
+                        # If AM/PM is found, it's a 12 hour clock, so raise
                         # an error for invalid range
                         if fuzzy:
                             val_is_ampm = False
@@ -969,7 +972,7 @@ class parser(object):
                         res.ampm = value
 
                     elif fuzzy:
-                        last_skipped_token_i = self._skip_token(skipped_tokens, 
+                        last_skipped_token_i = self._skip_token(skipped_tokens,
                                                     last_skipped_token_i, i, l)
                     i += 1
                     continue
