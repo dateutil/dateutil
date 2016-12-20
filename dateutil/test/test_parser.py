@@ -904,7 +904,7 @@ class ParserTest(unittest.TestCase):
     def testYMDResolveRaises(self):
         ymd = _ymd('32 04 2016')
         ymd.append(32)
-        ymd.append(04)
+        ymd.append(4)
         ymd.append(2016)
         assertRaisesRegex(self, ValueError, 'More than one YMD value exceeds 31', 
             ymd.resolve_ymd, mstridx=-1, yearfirst=False, dayfirst=False
