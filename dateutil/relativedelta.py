@@ -311,14 +311,22 @@ class relativedelta(object):
                                  microseconds=(other.microseconds +
                                                self.microseconds),
                                  leapdays=other.leapdays or self.leapdays,
-                                 year=other.year or self.year,
-                                 month=other.month or self.month,
-                                 day=other.day or self.day,
-                                 weekday=other.weekday or self.weekday,
-                                 hour=other.hour or self.hour,
-                                 minute=other.minute or self.minute,
-                                 second=other.second or self.second,
-                                 microsecond=(other.microsecond or
+                                 year=(other.year if other.year is not None
+                                       else self.year),
+                                 month=(other.month if other.month is not None
+                                        else self.month),
+                                 day=(other.day if other.day is not None
+                                      else self.day),
+                                 weekday=(other.weekday if other.weekday is not None
+                                          else self.weekday),
+                                 hour=(other.hour if other.hour is not None
+                                       else self.hour),
+                                 minute=(other.minute if other.minute is not None
+                                         else self.minute),
+                                 second=(other.second if other.second is not None
+                                         else self.second),
+                                 microsecond=(other.microsecond if other.microsecond
+                                              is not None else
                                               self.microsecond))
         if isinstance(other, datetime.timedelta):
             return self.__class__(years=self.years,
@@ -396,14 +404,23 @@ class relativedelta(object):
                              seconds=self.seconds - other.seconds,
                              microseconds=self.microseconds - other.microseconds,
                              leapdays=self.leapdays or other.leapdays,
-                             year=self.year or other.year,
-                             month=self.month or other.month,
-                             day=self.day or other.day,
-                             weekday=self.weekday or other.weekday,
-                             hour=self.hour or other.hour,
-                             minute=self.minute or other.minute,
-                             second=self.second or other.second,
-                             microsecond=self.microsecond or other.microsecond)
+                             year=(self.year if self.year is not None
+                                   else other.year),
+                             month=(self.month if self.month is not None else
+                                    other.month),
+                             day=(self.day if self.day is not None else
+                                  other.day),
+                             weekday=(self.weekday if self.weekday is not None else
+                                      other.weekday),
+                             hour=(self.hour if self.hour is not None else
+                                   other.hour),
+                             minute=(self.minute if self.minute is not None else
+                                     other.minute),
+                             second=(self.second if self.second is not None else
+                                     other.second),
+                             microsecond=(self.microsecond if self.microsecond
+                                          is not None else
+                                          other.microsecond))
 
     def __neg__(self):
         return self.__class__(years=-self.years,
@@ -529,3 +546,5 @@ def _sign(x):
     return int(copysign(1, x))
 
 # vim:ts=4:sw=4:et
+
+
