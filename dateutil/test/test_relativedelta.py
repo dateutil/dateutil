@@ -180,6 +180,12 @@ class RelativeDeltaTest(WarningTestMixin, unittest.TestCase):
                          relativedelta(years=1, months=2, days=13, hours=4,
                                        minutes=5, microseconds=6))
 
+    def testAbsoluteAddition(self):
+        self.assertEqual(relativedelta() + relativedelta(day=0, hour=0),
+                         relativedelta(day=0, hour=0))
+        self.assertEqual(relativedelta(day=0, hour=0) + relativedelta(),
+                         relativedelta(day=0, hour=0))
+ 
     def testAdditionToDatetime(self):
         self.assertEqual(datetime(2000, 1, 1) + relativedelta(days=1),
                          datetime(2000, 1, 2))
