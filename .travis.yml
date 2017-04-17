@@ -34,5 +34,8 @@ script:
 
 after_success:
   - codecov
+cache:
+  directories:
+    - .hypothesis
 
 sudo: false
