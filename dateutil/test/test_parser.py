@@ -45,7 +45,6 @@ class ParserTest(unittest.TestCase):
             def read(self, *args, **kwargs):
                 return self.stream.read(*args, **kwargs)
 
-
         dstr = StringPassThrough(StringIO('2014 January 19'))
 
         self.assertEqual(parse(dstr), datetime(2014, 1, 19))
@@ -105,7 +104,6 @@ class ParserTest(unittest.TestCase):
                                tzinfos=self.tzinfos),
                          datetime(2003, 9, 25, 10, 36, 28,
                                   tzinfo=self.brsttz))
-
 
     def testDateCommandFormatReversed(self):
         self.assertEqual(parse("2003 10:36:28 BRST 25 Sep Thu",
@@ -558,7 +556,6 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(parse(s2, fuzzy_with_tokens=True),
                          (datetime(2060, 2, 21, 0, 0, 0),
                          ('http://biz.yahoo.com/ipo/p/', '.html')))
-
 
     def testFuzzyAMPMProblem(self):
         # Sometimes fuzzy parsing results in AM/PM flag being set without

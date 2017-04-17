@@ -200,7 +200,6 @@ class TzFoldMixin(object):
             self.assertEqual(t0_syd0.utcoffset(), timedelta(hours=11))
             self.assertEqual(t1_syd1.utcoffset(), timedelta(hours=10))
 
-
     def testGapPositiveUTCOffset(self):
         # Test that we don't have a problem around gaps.
         tzname = self._get_tzname('Australia/Sydney')
@@ -658,7 +657,6 @@ class TzOffsetTest(unittest.TestCase):
         tname = 'EST'
         tzo = tz.tzoffset(tname, -5 * 3600)
         self.assertEqual(repr(tzo), "tzoffset(" + repr(tname) + ", -18000)")
-
 
     def testEquality(self):
         utc = tz.tzoffset('UTC', 0)
@@ -1320,7 +1318,6 @@ class TZICalTest(unittest.TestCase, TzFoldMixin):
         tzc = tz.tzical(instr)
 
         self.assertEqual(repr(tzc), "tzical(" + repr(instr.name) + ")")
-
 
     # Test performance
     def _test_us_zone(self, tzc, func, values, start):

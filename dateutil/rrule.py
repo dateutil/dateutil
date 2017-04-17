@@ -745,7 +745,6 @@ class rrule(rrulebase):
         new_kwargs.update(kwargs)
         return rrule(**new_kwargs)
 
-
     def _iter(self):
         year, month, day, hour, minute, second, weekday, yearday, _ = \
             self._dtstart.timetuple()

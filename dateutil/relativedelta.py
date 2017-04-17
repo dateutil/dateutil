@@ -186,7 +186,6 @@ class relativedelta(object):
                      "This is not a well-defined condition and will raise " +
                      "errors in future versions.", DeprecationWarning)
 
-
             if isinstance(weekday, integer_types):
                 self.weekday = weekdays[weekday]
             else:
