@@ -70,7 +70,7 @@ class weekday(weekdaybase):
 
         super(weekday, self).__init__(wkday, n)
 
-MO, TU, WE, TH, FR, SA, SU = weekdays = tuple([weekday(x) for x in range(7)])
+MO, TU, WE, TH, FR, SA, SU = weekdays = tuple(weekday(x) for x in range(7))
 
 
 def _invalidates_cache(f):
@@ -533,8 +533,8 @@ class rrule(rrulebase):
 
             bymonthday = set(bymonthday)            # Ensure it's unique
 
-            self._bymonthday = tuple(sorted([x for x in bymonthday if x > 0]))
-            self._bynmonthday = tuple(sorted([x for x in bymonthday if x < 0]))
+            self._bymonthday = tuple(sorted(x for x in bymonthday if x > 0))
+            self._bynmonthday = tuple(sorted(x for x in bymonthday if x < 0))
 
             # Storing positive numbers first, then negative numbers
             if 'bymonthday' not in self._original_rule:
