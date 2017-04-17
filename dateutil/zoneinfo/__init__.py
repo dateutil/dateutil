@@ -1,9 +1,5 @@
 # -*- coding: utf-8 -*-
-import logging
-import os
 import warnings
-import tempfile
-import shutil
 import json
 
 from tarfile import TarFile

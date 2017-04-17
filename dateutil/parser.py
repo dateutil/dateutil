@@ -35,7 +35,7 @@ import time
 import collections
 import re
 from io import StringIO
-from calendar import monthrange, isleap
+from calendar import monthrange
 
 from six import text_type, binary_type, integer_types
 

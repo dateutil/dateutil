@@ -2,12 +2,11 @@
 from __future__ import unicode_literals
 from ._common import unittest
 
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta
 
 from dateutil.tz import tzoffset
 from dateutil.parser import *
 
-import six
 from six import assertRaisesRegex, PY3
 from six.moves import StringIO
 

@@ -1,8 +1,7 @@
 from six import PY3
-from six.moves import _thread
 
 from datetime import datetime, timedelta, tzinfo
-import copy
+
 
 ZERO = timedelta(0)
 

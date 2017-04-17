@@ -2,7 +2,6 @@
 from __future__ import unicode_literals
 from ._common import WarningTestMixin, unittest
 
-import calendar
 from datetime import datetime, date
 from six import PY3
 
