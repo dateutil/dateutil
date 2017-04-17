@@ -1330,7 +1330,7 @@ Check the daylight limit.
     'EDT'
     >>> datetime(2003, 10, 26, 1, 00, tzinfo=tz).tzname()
     'EST'
-  
+
 
 tzrange examples
 ----------------
@@ -1405,7 +1405,7 @@ Check the daylight limit.
     'EDT'
     >>> datetime(2003, 10, 26, 1, 00, tzinfo=tz).tzname()
     'EST'
-  
+
 
 tzical examples
 ---------------

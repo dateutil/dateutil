@@ -2818,7 +2818,7 @@ class RRuleTest(WarningTestMixin, unittest.TestCase):
 
     def testStrUntil(self):
         self.assertEqual(list(rrulestr(
-                              "DTSTART:19970902T090000\n" 
+                              "DTSTART:19970902T090000\n"
                               "RRULE:FREQ=YEARLY;"
                               "UNTIL=19990101T000000;BYDAY=1TU,-1TH\n"
                               )),
@@ -4405,7 +4405,7 @@ class RRuleTest(WarningTestMixin, unittest.TestCase):
                                   byminute=long(6),
                                   bysecond=long(6),
                                   dtstart=datetime(1997, 9, 2, 9, 0)))
-            
+
             self._rrulestr_reverse_test(rrule(YEARLY,
                                   count=long(2),
                                   bymonthday=long(5),
@@ -4678,7 +4678,7 @@ class WeekdayTest(unittest.TestCase):
                 self.n = n
 
         MO_Basic = BasicWeekday(0)
-        
+
         self.assertNotEqual(MO, MO_Basic)
         self.assertNotEqual(MO(1), MO_Basic)
 
@@ -4704,4 +4704,3 @@ class WeekdayTest(unittest.TestCase):
 
         for repstr, wday in zip(with_n_reprs, with_n_wdays):
             self.assertEqual(repr(wday), repstr)
-

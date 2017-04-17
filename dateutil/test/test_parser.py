@@ -744,11 +744,11 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(parse("April 2009", default=datetime(2010, 1, 31)),
                          datetime(2009, 4, 30))
 
-    def testUnspecifiedDayFallbackFebNoLeapYear(self):        
+    def testUnspecifiedDayFallbackFebNoLeapYear(self):
         self.assertEqual(parse("Feb 2007", default=datetime(2010, 1, 31)),
                          datetime(2007, 2, 28))
 
-    def testUnspecifiedDayFallbackFebLeapYear(self):        
+    def testUnspecifiedDayFallbackFebLeapYear(self):
         self.assertEqual(parse("Feb 2008", default=datetime(2010, 1, 31)),
                          datetime(2008, 2, 29))
 
@@ -857,11 +857,10 @@ class ParserTest(unittest.TestCase):
 
     def testUnambiguousDayFirst(self):
         dtstr = '2015 09 25'
-        self.assertEqual(parse(dtstr, dayfirst=True), 
+        self.assertEqual(parse(dtstr, dayfirst=True),
                          datetime(2015, 9, 25))
 
     def testUnambiguousDayFirstYearFirst(self):
         dtstr = '2015 09 25'
         self.assertEqual(parse(dtstr, dayfirst=True, yearfirst=True),
                          datetime(2015, 9, 25))
-

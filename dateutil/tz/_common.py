@@ -121,7 +121,7 @@ class _tzinfo(tzinfo):
 
         same_offset = wall_0.utcoffset() == wall_1.utcoffset()
         same_dt = wall_0.replace(tzinfo=None) == wall_1.replace(tzinfo=None)
-        
+
         return same_dt and not same_offset
 
     def _fold_status(self, dt_utc, dt_wall):
@@ -360,7 +360,7 @@ class tzrangebase(_tzinfo):
     @property
     def _dst_base_offset(self):
         return self._dst_offset - self._std_offset
-    
+
     __hash__ = None
 
     def __ne__(self, other):

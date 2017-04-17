@@ -49,7 +49,7 @@ class tzres(object):
     def __init__(self, tzres_loc='tzres.dll'):
         # Load the user32 DLL so we can load strings from tzres
         user32 = ctypes.WinDLL('user32')
-        
+
         # Specify the LoadStringW function
         user32.LoadStringW.argtypes = (wintypes.HINSTANCE,
                                        wintypes.UINT,
@@ -63,7 +63,7 @@ class tzres(object):
     def load_name(self, offset):
         """
         Load a timezone name from a DLL offset (integer).
-        
+
         >>> from dateutil.tzwin import tzres
         >>> tzr = tzres()
         >>> print(tzr.load_name(112))
@@ -266,7 +266,7 @@ class tzwinlocal(tzwinbase):
          self._stdweeknumber,  # Last = 5
          self._stdhour,
          self._stdminute) = tup[1:5]
-        
+
         self._stddayofweek = tup[7]
 
         tup = struct.unpack("=8h", keydict["DaylightStart"])

@@ -192,7 +192,7 @@ class TZWinContext(TZContextBase):
         p = subprocess.Popen(['tzutil', '/g'], stdout=subprocess.PIPE)
 
         ctzname, err = p.communicate()
-        ctzname = ctzname.decode()     # Popen returns 
+        ctzname = ctzname.decode()     # Popen returns
 
         if p.returncode:
             raise OSError('Failed to get current time zone: ' + err)
@@ -285,4 +285,3 @@ class UnsetTzClass(object):
     pass
 
 UnsetTz = UnsetTzClass()
-
