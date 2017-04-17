@@ -546,5 +546,3 @@ def _sign(x):
     return int(copysign(1, x))
 
 # vim:ts=4:sw=4:et
-
-

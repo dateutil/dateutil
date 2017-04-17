@@ -363,7 +363,7 @@ class rrule(rrulebase):
         limit of the recurrence. The last recurrence in the rule is the greatest
         datetime that is less than or equal to the value specified in the
         ``until`` parameter.
-        
+
         .. note::
             As of version 2.5.0, the use of the ``until`` keyword together
             with the ``count`` keyword is deprecated per RFC-2445 Sec. 4.3.10.

@@ -45,7 +45,7 @@ Version 2.6.0
   compared to unsupported classes, rather than raising TypeError, to allow other
   classes to provide fallback support. (gh pr #236)
 - Several classes have been marked as explicitly unhashable to maintain
-  identical behavior between Python 2 and 3. Submitted by Roy Williams 
+  identical behavior between Python 2 and 3. Submitted by Roy Williams
   (@rowillia) (gh pr #296)
 - Trailing whitespace in easter.py has been removed. Submitted by @OmgImAlexis
   (gh pr #299)

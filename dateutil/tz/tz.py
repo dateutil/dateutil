@@ -93,7 +93,7 @@ class tzoffset(datetime.tzinfo):
     """
     def __init__(self, name, offset):
         self._name = name
-        
+
         try:
             # Allow a timedelta
             offset = _total_seconds(offset)
@@ -337,7 +337,7 @@ class tzfile(_tzinfo):
         and ``fileobj`` is a file stream, this parameter will be set either to
         ``fileobj``'s ``name`` attribute or to ``repr(fileobj)``.
 
-    See `Sources for Time Zone and Daylight Saving Time Data 
+    See `Sources for Time Zone and Daylight Saving Time Data
     <http://www.twinsun.com/tz/tz-link.htm>`_ for more information. Time zone
     files can be compiled from the `IANA Time Zone database files
     <https://www.iana.org/time-zones>`_ with the `zic time zone compiler
@@ -585,7 +585,7 @@ class tzfile(_tzinfo):
 
             if not isinstance(tti.dstoffset, datetime.timedelta):
                 tti.dstoffset = datetime.timedelta(seconds=tti.dstoffset)
-            
+
             out.trans_idx[i] = tti
 
         out.trans_idx = tuple(out.trans_idx)
@@ -680,7 +680,7 @@ class tzfile(_tzinfo):
 
         if not self._ttinfo_dst:
             return ZERO
-        
+
         tti = self._find_ttinfo(dt)
 
         if not tti.isdst:
@@ -1375,7 +1375,7 @@ def datetime_exists(dt, tz=None):
     :param tz:
         A :class:`datetime.tzinfo` with support for the ``fold`` attribute. If
         ``None`` or not provided, the datetime's own time zone will be used.
-    
+
     :return:
         Returns a boolean value whether or not the "wall time" exists in ``tz``.
     """
@@ -1407,7 +1407,7 @@ def datetime_ambiguous(dt, tz=None):
     :param tz:
         A :class:`datetime.tzinfo` with support for the ``fold`` attribute. If
         ``None`` or not provided, the datetime's own time zone will be used.
-    
+
     :return:
         Returns a boolean value whether or not the "wall time" is ambiguous in
         ``tz``.
@@ -1449,7 +1449,7 @@ def _datetime_to_timestamp(dt):
 
 class _ContextWrapper(object):
     """
-    Class for wrapping contexts so that they are passed through in a 
+    Class for wrapping contexts so that they are passed through in a
     with statement.
     """
     def __init__(self, context):

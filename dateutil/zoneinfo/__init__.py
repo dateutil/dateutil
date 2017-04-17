@@ -75,7 +75,7 @@ class ZoneInfoFile(object):
         """
         Wrapper for :func:`ZoneInfoFile.zones.get`. This is a convenience method
         for retrieving zones from the zone dictionary.
-        
+
         :param name:
             The name of the zone to retrieve. (Generally IANA zone names)
 
@@ -183,5 +183,3 @@ def gettz_db_metadata():
     if len(_CLASS_ZONE_INSTANCE) == 0:
         _CLASS_ZONE_INSTANCE.append(ZoneInfoFile(getzoneinfofile_stream()))
     return _CLASS_ZONE_INSTANCE[0].metadata
-
-

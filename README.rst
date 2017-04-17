@@ -106,7 +106,7 @@ It is maintained by:
 * Yaron de Leeuw <me@jarondl.net> 2014-
 * Paul Ganssle <paul@ganssle.io> 2015-
 
-Our mailing list is available at `dateutil@python.org <https://mail.python.org/mailman/listinfo/dateutil>`_. As it is hosted by the PSF, it is subject to the `PSF code of 
+Our mailing list is available at `dateutil@python.org <https://mail.python.org/mailman/listinfo/dateutil>`_. As it is hosted by the PSF, it is subject to the `PSF code of
 conduct <https://www.python.org/psf/codeofconduct/>`_.
 
 Building and releasing
