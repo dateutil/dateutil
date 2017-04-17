@@ -2871,12 +2871,6 @@ class RRuleTest(WarningTestMixin, unittest.TestCase):
         self._rrulestr_reverse_test(rule)
 
     def testToStrYearlyByMonth(self):
-        rule = rrule(YEARLY, count=3, bymonth=(1, 3),
-                     dtstart=datetime(1997, 9, 2, 9, 0))
-
-        self._rrulestr_reverse_test(rule)
-
-    def testToStrYearlyByMonth(self):
         self._rrulestr_reverse_test(rrule(YEARLY,
                                           count=3,
                                           bymonth=(1, 3),

@@ -422,7 +422,7 @@ class RelativeDeltaTest(WarningTestMixin, unittest.TestCase):
         self.assertEqual(rd2.normalized(),
             relativedelta(days=1, hours=11, minutes=31, seconds=12))
 
-    def testRelativeDeltaNormalizeFractionalDays(self):
+    def testRelativeDeltaNormalizeFractionalDays2(self):
         # Equivalent to (hours=1, minutes=30)
         rd1 = relativedelta(hours=1.5)
 
@@ -453,7 +453,7 @@ class RelativeDeltaTest(WarningTestMixin, unittest.TestCase):
         self.assertEqual(rd1.normalized(),
             relativedelta(seconds=45, microseconds=25000))
 
-    def testRelativeDeltaFractionalPositiveOverflow(self):
+    def testRelativeDeltaFractionalPositiveOverflow2(self):
         # Equivalent to (days=1, hours=14)
         rd1 = relativedelta(days=1.5, hours=2)
         self.assertEqual(rd1.normalized(),
