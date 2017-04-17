@@ -196,12 +196,12 @@ class rrulebase(object):
             for i in gen:
                 if i > dt:
                     break
-                last = i
+            last = i
         else:
             for i in gen:
                 if i >= dt:
                     break
-                last = i
+            last = i
         return last
 
     def after(self, dt, inc=False):
