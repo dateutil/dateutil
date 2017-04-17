@@ -4641,7 +4641,7 @@ class RRuleSetTest(unittest.TestCase):
 class WeekdayTest(unittest.TestCase):
     def testInvalidNthWeekday(self):
         with self.assertRaises(ValueError):
-            zeroth_friday = FR(0)
+            FR(0)
 
     def testWeekdayCallable(self):
         # Calling a weekday instance generates a new weekday instance with the

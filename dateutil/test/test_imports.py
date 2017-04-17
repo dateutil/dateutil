@@ -128,7 +128,13 @@ class ImportTZWinTest(unittest.TestCase):
         from dateutil import tzwin
 
     def testTzwinStar(self):
-        tzwin_all = ["tzwin", "tzwinlocal"]
+        from dateutil.tzwin import tzwin
+        from dateutil.tzwin import tzwinlocal
+
+        tzwin_all = [tzwin, tzwinlocal]
+
+        for var in tzwin_all:
+            self.assertIsNot(var, None)
 
 
 class ImportZoneInfoTest(unittest.TestCase):

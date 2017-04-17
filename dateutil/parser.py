@@ -550,11 +550,8 @@ class parser(object):
         """
 
         if default is None:
-            effective_dt = datetime.datetime.now()
             default = datetime.datetime.now().replace(hour=0, minute=0,
                                                       second=0, microsecond=0)
-        else:
-            effective_dt = default
 
         res, skipped_tokens = self._parse(timestr, **kwargs)
 

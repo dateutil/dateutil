@@ -385,7 +385,6 @@ class TzFoldMixin(object):
             SYD1 = self.gettz(tzname)
 
             t0_u = datetime(2012, 3, 31, 14, 30, tzinfo=tz.tzutc())  # AEST
-            t1_u = datetime(2012, 3, 31, 16, 30, tzinfo=tz.tzutc())  # AEDT
 
             t0_syd0 = t0_u.astimezone(SYD0)
             t0_syd1 = t0_u.astimezone(SYD1)
@@ -434,7 +433,6 @@ class TzWinFoldMixin(object):
 
         with self.context(tzname):
             # Calling fromutc() alters the tzfile object
-            SYD = self.tzclass(*args)
             SYD0 = self.tzclass(*args)
             SYD1 = self.tzclass(*args)
 
@@ -939,11 +937,11 @@ class ZoneInfoGettzTest(GettzTest, WarningTestMixin):
 
     def testZoneInfoDeprecated(self):
         with self.assertWarns(DeprecationWarning):
-            tzi = zoneinfo.gettz('US/Eastern')
+            zoneinfo.gettz('US/Eastern')
 
     def testZoneInfoMetadataDeprecated(self):
         with self.assertWarns(DeprecationWarning):
-            tzdb_md = zoneinfo.gettz_db_metadata()
+            zoneinfo.gettz_db_metadata()
 
 
 class TZRangeTest(unittest.TestCase, TzFoldMixin):
@@ -1501,7 +1499,7 @@ class TZTest(unittest.TestCase):
         # work NEW_YORK must be in TZif version 1 format i.e. no more data
         # after TZif v1 header + data has been read
         fileobj = BytesIO(base64.b64decode(NEW_YORK))
-        tzc = tz.tzfile(fileobj)
+        tz.tzfile(fileobj)
         # we expect no remaining file content now, i.e. zero-length; if there's
         # still data we haven't read the file format correctly
         remaining_tzfile_content = fileobj.read()
