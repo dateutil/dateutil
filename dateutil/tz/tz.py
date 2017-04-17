@@ -1278,6 +1278,7 @@ class tzical(object):
     def __repr__(self):
         return "%s(%s)" % (self.__class__.__name__, repr(self._s))
 
+
 if sys.platform != "win32":
     TZFILES = ["/etc/localtime", "localtime"]
     TZPATHS = ["/usr/share/zoneinfo",
