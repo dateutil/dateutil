@@ -194,7 +194,7 @@ class tzwin(tzwinbase):
 
         # multiple contexts only possible in 2.7 and 3.1, we still support 2.6
         with winreg.ConnectRegistry(None, winreg.HKEY_LOCAL_MACHINE) as handle:
-            tzkeyname = text_type("{kn}\{name}").format(kn=TZKEYNAME, name=name)
+            tzkeyname = text_type("{kn}\\{name}").format(kn=TZKEYNAME, name=name)
             with winreg.OpenKey(handle, tzkeyname) as tzkey:
                 keydict = valuestodict(tzkey)
 
@@ -244,7 +244,7 @@ class tzwinlocal(tzwinbase):
             self._dst_abbr = keydict["DaylightName"]
 
             try:
-                tzkeyname = text_type('{kn}\{sn}').format(kn=TZKEYNAME,
+                tzkeyname = text_type('{kn}\\{sn}').format(kn=TZKEYNAME,
                                                           sn=self._std_abbr)
                 with winreg.OpenKey(handle, tzkeyname) as tzkey:
                     _keydict = valuestodict(tzkey)

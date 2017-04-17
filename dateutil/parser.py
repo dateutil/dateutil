@@ -47,7 +47,7 @@ __all__ = ["parse", "parserinfo"]
 
 class _timelex(object):
     # Fractional seconds are sometimes split by a comma
-    _split_decimal = re.compile("([\.,])")
+    _split_decimal = re.compile("([.,])")
 
     def __init__(self, instream):
         if isinstance(instream, binary_type):
