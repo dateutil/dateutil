@@ -19,14 +19,8 @@ class ParserTest(unittest.TestCase):
         self.default = datetime(2003, 9, 25)
 
         # Parser should be able to handle bytestring and unicode
-        base_str = '2014-05-01 08:00:00'
-        try:
-            # Python 2.x
-            self.uni_str = unicode(base_str)
-            self.str_str = str(base_str)
-        except NameError:
-            self.uni_str = str(base_str)
-            self.str_str = bytes(base_str.encode())
+        self.uni_str = '2014-05-01 08:00:00'
+        self.str_str = self.uni_str.encode()
 
     def testEmptyString(self):
         with self.assertRaises(ValueError):
