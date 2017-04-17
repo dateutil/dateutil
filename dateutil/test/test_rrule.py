@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-from ._common import WarningTestMixin, unittest
+from ._common import WarningTestMixin
 
 from datetime import datetime, date
+import unittest
 from six import PY3
 
 from dateutil.rrule import (

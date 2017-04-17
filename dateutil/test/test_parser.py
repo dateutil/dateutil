@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-from ._common import unittest
 
 from datetime import datetime, timedelta
+import unittest
 
 from dateutil.tz import tzoffset
 from dateutil.parser import parse, parserinfo

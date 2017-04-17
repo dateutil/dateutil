@@ -383,12 +383,3 @@ class tzrangebase(_tzinfo):
         return "%s(...)" % self.__class__.__name__
 
     __reduce__ = object.__reduce__
-
-
-def _total_seconds(td):
-    # Python 2.6 doesn't have a total_seconds() method on timedelta objects
-    return ((td.seconds + td.days * 86400) * 1000000 +
-            td.microseconds) // 1000000
-
-
-_total_seconds = getattr(timedelta, 'total_seconds', _total_seconds)

@@ -1,7 +1,6 @@
 language: python
 cache: pip
 python:
-  - "2.6"
   - "2.7"
   - "3.2"
   - "3.3"
@@ -25,7 +24,6 @@ before_install:
 
 install:
   - pip install six
-  - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then pip install unittest2; fi
   - ./ci_tools/retry.sh python updatezinfo.py
 
 script:

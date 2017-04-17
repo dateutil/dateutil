@@ -677,7 +677,7 @@ class parser(object):
         # keep up with the last token skipped so we can recombine
         # consecutively skipped tokens (-2 for when i begins at 0).
         last_skipped_token_i = -2
-        skipped_tokens = list()
+        skipped_tokens = []
 
         try:
             # year/month/day list

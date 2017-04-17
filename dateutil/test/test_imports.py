@@ -1,9 +1,5 @@
 import sys
-
-try:
-    import unittest2 as unittest
-except ImportError:
-    import unittest
+import unittest
 
 class ImportVersionTest(unittest.TestCase):
     """ Test that dateutil.__version__ can be imported"""
