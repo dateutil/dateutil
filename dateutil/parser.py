@@ -407,12 +407,116 @@ class _ymd(list):
 
         super(self.__class__, self).append(int(val))
 
-    def resolve_ymd(self, mstridx, yearfirst, dayfirst):
+
+    def _resolve_known_month(self, mstridx, yearfirst, dayfirst, guess_fail=False):
+        (year, month, day) = (None, None, None)
+
+        candidates = [x for x in self]
+        if mstridx != -1:
+            month = candidates.pop(mstridx)
+
+        gt31 = [x for x in candidates if x > 31 or x == 0]
+        # If there is a zero, it must be a truncated year, e.g. "00"
+        # is intended to be "2000".
+        if len(gt31) > 1:
+            raise ValueError("More than one YMD value exceeds 31", candidates)
+
+        elif gt31:
+            year = gt31[0]
+            candidates.remove(year) ## Is this operation ungainly?
+            day = candidates[0]
+
+        else:
+            # We need to choose between two possible assignments:
+            # (year, day) or (day, year).  the next check is to see
+            # if one or both of these induces a valid datetime.
+            mr0 = monthrange(candidates[0], month)[1]
+            mr1 = monthrange(candidates[1], month)[1]
+            
+            if candidates[1] > mr0 and candidates[0] > mr1:
+                # There are no valid assigments.
+                msg = "Neither assignment option produces a valid year/month/day for month %s"
+                raise ValueError(msg % month, candidates)
+
+            elif candidates[1] > mr0:
+                # There is only one valid assigment.
+                (day, year) = candidates
+            
+            elif candidates[0] > mr1:
+                # There is only one valid assigment.
+                (year, day) = candidates
+
+            elif yearfirst:
+                # Both assignments are valid: default to the user's
+                # specified preference.
+                (year, day) = candidates
+            
+            elif dayfirst:
+                # Both assignments are valid: default to the user's
+                # specified preference.
+                (day, year) = candidates
+
+            elif guess_fail:
+                # In the face of ambiguity...
+                raise ValueError('Failing instead of guessing', candidates)
+                ## is this part of what find_probable_year_index is for?
+            else:
+                # Finally if there is no other way to judge between the
+                # two options, use US conventions preferring the year be
+                # either first or last, preferably last.
+                #
+                # These tokens were appended to the list in the order
+                # they were found*, so we can ask what ordering of tokens
+                # makes the most sense.
+                #
+                # For example, suppose the remaining tokens are (20, 14)
+                # and the month found was Feb.  The date is either
+                # "Feb 20, 2014" or "Feb 14, 2020".  Which one of these
+                # makes the most sense depends on what order the three
+                # appear in.
+                #
+                # Feb 20 14 --> choose "Feb 20 2014" over "Feb 2020 14"
+                # 20 14 Feb --> choose "2020 14 Feb" over "20 2014 Feb"
+                # 20 Feb 14 --> choose "20 Feb 2014" over "2020 Feb 14"
+                #
+                # This last cast is less clear-cut than the others.
+                #
+                # * This behavior should probably not be relied on
+                # staying constant.
+
+                if mstridx == 0:
+                    # Put the year at the end
+                    (day, year) = candidates
+                elif mstridx == 1:
+                    # Both the beginning and the end are available for the year,
+                    # but we prefer the end.
+                    (day, year) = candidates
+                elif mstridx == 2:
+                    # To avoid having the year be "in the middle", we choose
+                    # to put the year first
+                    (year, day) = candidates
+        
+        return (year, month, day)
+
+    def resolve_ymd(self, mstridx, yearfirst, dayfirst, guess_fail=False):
         len_ymd = len(self)
-        year, month, day = (None, None, None)
+        (year, month, day) = (None, None, None)
+
+        candidates = [x for x in self]
+        gt31 = [x for x in candidates if x > 31 or x == 0]
+        # If there is a zero, it must be a truncated year, e.g. "00"
+        # is intended to be "2000".
+        if len(gt31) > 1:
+            raise ValueError("More than one YMD value exceeds 31", candidates)
+        
+        lt13 = [x for x in candidates if 0 < x < 13]
+        if len_ymd == 3 and lt13 == []:
+            raise ValueError("No YMD values are between 1 and 12", candidates)
 
         if len_ymd > 3:
             raise ValueError("More than three YMD values")
+        
+
         elif len_ymd == 1 or (mstridx != -1 and len_ymd == 2):
             # One member, or two members with a month string
             if mstridx != -1:
@@ -442,28 +546,19 @@ class _ymd(list):
 
         elif len_ymd == 3:
             # Three members
-            if mstridx == 0:
-                month, day, year = self
-            elif mstridx == 1:
-                if self[0] > 31 or (yearfirst and self[2] <= 31):
-                    # 99-Jan-01
-                    year, month, day = self
-                else:
-                    # 01-Jan-01
-                    # Give precendence to day-first, since
-                    # two-digit years is usually hand-written.
-                    day, month, year = self
 
-            elif mstridx == 2:
-                # WTF!?
-                if self[1] > 31:
-                    # 01-99-Jan
-                    day, year, month = self
-                else:
-                    # 99-01-Jan
-                    year, day, month = self
+            if len(lt13) == 1 and mstridx == -1:
+                # There is only one token that can possibly be the month,
+                # so we can infer mstridx.
+                mstridx = candidates.index(lt13[0])
 
-            else:
+            if mstridx != -1:
+                (year, month, day) = self._resolve_known_month(mstridx,
+                                                    yearfirst,
+                                                    dayfirst,
+                                                    guess_fail
+                                                    )
+            else:    
                 if self[0] > 31 or \
                     self.find_probable_year_index(_timelex.split(self.tzstr)) == 0 or \
                    (yearfirst and self[1] <= 12 and self[2] <= 31):
@@ -853,8 +948,8 @@ class parser(object):
 
                                 if value is not None:
                                     ymd.append(value)
-                                    mstridx = len(ymd)-1
                                     assert mstridx == -1
+                                    mstridx = len(ymd)-1
                                 else:
                                     ymd.append(l[i])
 
