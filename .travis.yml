@@ -1,4 +1,5 @@
 language: python
+cache: pip
 python:
   - "2.6"
   - "2.7"
@@ -8,7 +9,7 @@ python:
   - "3.5"
   - "3.6-dev"
   - "nightly"
-  - "pypy"
+  - "pypy-5.4"
   - "pypy3"
 
 matrix:
@@ -19,14 +20,6 @@ matrix:
     - python: "nightly"
 
 before_install:
-  # Travis version of Pypy is old and is causing some jobs to fail, so
-  # we should build this ourselves
-  - "export PYENV_ROOT=$HOME/.pyenv"
-  - |
-    if [ "$TRAVIS_PYTHON_VERSION" = "pypy" ]; then
-      export PYPY_VERSION="5.4.1"
-      source ./ci_tools/pypy_upgrade.sh
-    fi
   # Install codecov
   - if [[ $TRAVIS_PYTHON_VERSION == '3.2' ]]; then pip install coverage==3.7.1; fi
   - pip install codecov
@@ -35,11 +28,6 @@ install:
   - pip install six
   - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then pip install unittest2; fi
   - ./ci_tools/retry.sh python updatezinfo.py
-
-cache:
-  directories:
-    - $HOME/.pyenv
-    - $HOME/.cache/pip
 
 script:
   - coverage run --omit=setup.py,dateutil/test/* setup.py test
