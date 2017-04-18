@@ -469,10 +469,9 @@ class tzfile(_tzinfo):
         # The pairs of values are sorted in ascending order
         # by time.
 
-        # Not used, for now (but read anyway for correct file position)
+        # Not used, for now (but seek for correct file position)
         if leapcnt:
-            leap = struct.unpack(">%dl" % (leapcnt*2),
-                                 fileobj.read(leapcnt*8))
+            fileobj.seek(leapcnt * 8, os.SEEK_CUR)
 
         # Then there are tzh_ttisstdcnt standard/wall
         # indicators, each stored as a one-byte value;
@@ -1098,7 +1097,6 @@ class tzical(object):
             self._s = fileobj
             # ical should be encoded in UTF-8 with CRLF
             fileobj = open(fileobj, 'r')
-            file_opened_here = True
         else:
             self._s = getattr(fileobj, 'name', repr(fileobj))
             fileobj = _ContextWrapper(fileobj)
