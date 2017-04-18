@@ -290,7 +290,6 @@ class tzrangebase(_tzinfo):
         utc_transitions = (dston, dstoff)
         dt_utc = dt.replace(tzinfo=None)
 
-
         isdst = self._naive_isdst(dt_utc, utc_transitions)
 
         if isdst:

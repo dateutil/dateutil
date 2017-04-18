@@ -1015,7 +1015,6 @@ class _tzicalvtz(_tzinfo):
         except ValueError:
             pass
 
-
         lastcompdt = None
         lastcomp = None
 

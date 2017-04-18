@@ -186,7 +186,6 @@ class relativedelta(object):
                      "This is not a well-defined condition and will raise " +
                      "errors in future versions.", DeprecationWarning)
 
-
             if isinstance(weekday, integer_types):
                 self.weekday = weekdays[weekday]
             else:
@@ -251,6 +250,7 @@ class relativedelta(object):
     @property
     def weeks(self):
         return self.days // 7
+
     @weeks.setter
     def weeks(self, value):
         self.days = self.days - (self.weeks * 7) + value * 7
