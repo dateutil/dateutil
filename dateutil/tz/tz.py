@@ -13,13 +13,9 @@ import time
 import sys
 import os
 import bisect
-import copy
 
-from operator import itemgetter
 
-from contextlib import contextmanager
-
-from six import string_types, PY3
+from six import string_types
 from ._common import tzname_in_python2, _tzinfo, _total_seconds
 from ._common import tzrangebase, enfold
 
@@ -31,6 +27,14 @@ except ImportError:
 ZERO = datetime.timedelta(0)
 EPOCH = datetime.datetime.utcfromtimestamp(0)
 EPOCHORDINAL = EPOCH.toordinal()
+
+
+try:
+    from datetime import timezone as py_tz
+    HAVE_PY_TZ = True
+except ImportError:
+    HAVE_PY_TZ = False
+
 
 class tzutc(datetime.tzinfo):
     """
@@ -128,6 +132,10 @@ class tzoffset(datetime.tzinfo):
         return self._name
 
     def __eq__(self, other):
+        if HAVE_PY_TZ:
+            if isinstance(other, py_tz):
+                return self._offset == other.utcoffset(None)
+
         if not isinstance(other, tzoffset):
             return NotImplemented
 
