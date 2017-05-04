@@ -1555,7 +1555,7 @@ class _rrulestr(object):
                 elif name == "EXDATE":
                     for parm in parms:
                         if parm != "VALUE=DATE-TIME":
-                            raise ValueError("unsupported RDATE parm: "+parm)
+                            raise ValueError("unsupported EXDATE parm: "+parm)
                     exdatevals.append(value)
                 elif name == "DTSTART":
                     for parm in parms:
