@@ -11,12 +11,9 @@ from datetime import time as dt_time
 from datetime import tzinfo
 from six import BytesIO, StringIO
 
-import os
-import subprocess
 import sys
 import base64
 import copy
-import itertools
 
 from functools import partial
 

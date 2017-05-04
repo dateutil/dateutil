@@ -13,13 +13,8 @@ import time
 import sys
 import os
 import bisect
-import copy
 
-from operator import itemgetter
-
-from contextlib import contextmanager
-
-from six import string_types, PY3
+from six import string_types
 from ._common import tzname_in_python2, _tzinfo, _total_seconds
 from ._common import tzrangebase, enfold
 
