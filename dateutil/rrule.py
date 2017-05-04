@@ -70,6 +70,7 @@ class weekday(weekdaybase):
 
         super(weekday, self).__init__(wkday, n)
 
+
 MO, TU, WE, TH, FR, SA, SU = weekdays = tuple(weekday(x) for x in range(7))
 
 
@@ -1601,6 +1602,7 @@ class _rrulestr(object):
 
     def __call__(self, s, **kwargs):
         return self._parse_rfc(s, **kwargs)
+
 
 rrulestr = _rrulestr()
 

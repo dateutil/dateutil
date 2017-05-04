@@ -376,4 +376,5 @@ def _total_seconds(td):
     return ((td.seconds + td.days * 86400) * 1000000 +
             td.microseconds) // 1000000
 
+
 _total_seconds = getattr(timedelta, 'total_seconds', _total_seconds)
