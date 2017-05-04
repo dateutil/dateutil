@@ -103,7 +103,7 @@ It is maintained by:
 
 * Gustavo Niemeyer <gustavo@niemeyer.net> 2003-2011
 * Tomi Pieviläinen <tomi.pievilainen@iki.fi> 2012-2014
-* Yaron de Leeuw <me@jarondl.net> 2014-
+* Yaron de Leeuw <me@jarondl.net> 2014-2016
 * Paul Ganssle <paul@ganssle.io> 2015-
 
 Our mailing list is available at `dateutil@python.org <https://mail.python.org/mailman/listinfo/dateutil>`_. As it is hosted by the PSF, it is subject to the `PSF code of
