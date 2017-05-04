@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
+from ._common import IS_WIN
 from ._common import unittest, PicklableMixin
 from ._common import total_seconds
 from ._common import TZEnvContext, TZWinContext
@@ -16,8 +17,6 @@ import base64
 import copy
 
 from functools import partial
-
-IS_WIN = sys.platform.startswith('win')
 
 # dateutil imports
 from dateutil.relativedelta import relativedelta, SU

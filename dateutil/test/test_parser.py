@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-from ._common import unittest
+from ._common import unittest, IS_WIN
+
+import os
+import time
 
 from datetime import datetime, timedelta
 
@@ -9,6 +12,12 @@ from dateutil.parser import *
 
 from six import assertRaisesRegex, PY3
 from six.moves import StringIO
+
+if IS_WIN:
+    from ._common import TZWinContext as TZContext
+else:
+    from ._common import TZEnvContext as TZContext
+
 
 class ParserTest(unittest.TestCase):
 
@@ -121,6 +130,12 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(parse("Thu Sep 25 10:36:28 BRST 2003",
                                ignoretz=True),
                          datetime(2003, 9, 25, 10, 36, 28))
+
+    def testDateCommandFormatRespectTz(self):
+        tz = "British Summer Time" if IS_WIN else "Europe/London"
+        with TZContext(tz):
+            self.assertEqual(parse("Wed, 02 Oct 2002 13:00:00 GMT"),
+                            datetime(2002, 10, 2, 13, 0, tzinfo=tzoffset('GMT', 0)))
 
     def testDateCommandFormatStrip1(self):
         self.assertEqual(parse("Thu Sep 25 10:36:28 2003"),
