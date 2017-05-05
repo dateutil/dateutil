@@ -2,6 +2,7 @@
 Common code used in multiple modules.
 """
 
+
 class weekday(object):
     __slots__ = ["weekday", "n"]
 

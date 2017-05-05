@@ -38,6 +38,7 @@ def rebuild(filename, tag=None, format="gz", zonegroups=[], metadata=None):
     finally:
         shutil.rmtree(tmpdir)
 
+
 def _print_on_nosuchfile(e):
     """Print helpful troubleshooting message
 

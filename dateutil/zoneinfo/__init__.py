@@ -92,6 +92,7 @@ class ZoneInfoFile(object):
 # TODO: Remove after deprecation period.
 _CLASS_ZONE_INSTANCE = list()
 
+
 def get_zonefile_instance(new_instance=False):
     """
     This is a convenience function which provides a :class:`ZoneInfoFile`
@@ -119,6 +120,7 @@ def get_zonefile_instance(new_instance=False):
         get_zonefile_instance._cached_instance = zif
 
     return zif
+
 
 def gettz(name):
     """
