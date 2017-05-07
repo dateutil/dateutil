@@ -27,6 +27,7 @@ ZERO = datetime.timedelta(0)
 EPOCH = datetime.datetime.utcfromtimestamp(0)
 EPOCHORDINAL = EPOCH.toordinal()
 
+
 class tzutc(datetime.tzinfo):
     """
     This is a tzinfo object that represents the UTC time zone.
@@ -1439,6 +1440,7 @@ def _datetime_to_timestamp(dt):
     since January 1, 1970, ignoring the time zone.
     """
     return _total_seconds((dt.replace(tzinfo=None) - EPOCH))
+
 
 class _ContextWrapper(object):
     """

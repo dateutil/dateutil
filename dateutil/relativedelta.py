@@ -542,6 +542,7 @@ class relativedelta(object):
         return "{classname}({attrs})".format(classname=self.__class__.__name__,
                                              attrs=", ".join(l))
 
+
 def _sign(x):
     return int(copysign(1, x))
 

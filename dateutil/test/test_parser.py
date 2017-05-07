@@ -10,6 +10,7 @@ from dateutil.parser import *
 from six import assertRaisesRegex, PY3
 from six.moves import StringIO
 
+
 class ParserTest(unittest.TestCase):
 
     def setUp(self):

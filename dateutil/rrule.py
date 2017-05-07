@@ -60,6 +60,7 @@ FREQNAMES = ['YEARLY','MONTHLY','WEEKLY','DAILY','HOURLY','MINUTELY','SECONDLY']
 easter = None
 parser = None
 
+
 class weekday(weekdaybase):
     """
     This version of weekday does not allow n = 0.
