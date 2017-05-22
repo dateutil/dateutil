@@ -806,6 +806,25 @@ class ParserTest(unittest.TestCase):
         dt = myparser.parse("01/Foo/2007")
         self.assertEqual(dt, datetime(2007, 1, 1))
 
+    def testCustomParserShortDaynames(self):
+        # Horacio Hoyos discovered that day names shorter than 3 characters,
+        # for example two letter German day name abbreviations, don't work:
+        # https://github.com/dateutil/dateutil/issues/343
+        from dateutil.parser import parserinfo, parser
+
+        class GermanParserInfo(parserinfo):
+            WEEKDAYS = [("Mo", "Montag"),
+                        ("Di", "Dienstag"),
+                        ("Mi", "Mittwoch"),
+                        ("Do", "Donnerstag"),
+                        ("Fr", "Freitag"),
+                        ("Sa", "Samstag"),
+                        ("So", "Sonntag")]
+
+        myparser = parser(GermanParserInfo())
+        dt = myparser.parse("Sa 21. Jan 2017")
+        self.assertEqual(dt, datetime(2017, 1, 21))
+
     def testNoYearFirstNoDayFirst(self):
         dtstr = '090107'
 
