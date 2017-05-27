@@ -309,7 +309,7 @@ class parserinfo(object):
         return name.lower() in self._jump
 
     def weekday(self, name):
-        if len(name) >= min(len(n) for n in self._weekdays.keys()):
+        if len(name) >= min(len(n) for n in self._weekdays):
             try:
                 return self._weekdays[name.lower()]
             except KeyError:
@@ -317,7 +317,7 @@ class parserinfo(object):
         return None
 
     def month(self, name):
-        if len(name) >= min(len(n) for n in self._months.keys()):
+        if len(name) >= min(len(n) for n in self._months):
             try:
                 return self._months[name.lower()] + 1
             except KeyError:
