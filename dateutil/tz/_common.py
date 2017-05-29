@@ -162,7 +162,7 @@ class _tzinfo(tzinfo):
         occurence, chronologically, of the ambiguous datetime).
 
         :param dt:
-            A timezone-aware :class:`datetime.dateime` object.
+            A timezone-aware :class:`datetime.datetime` object.
         """
 
         # Re-implement the algorithm from Python's datetime.py
@@ -204,7 +204,7 @@ class _tzinfo(tzinfo):
         occurance, chronologically, of the ambiguous datetime).
 
         :param dt:
-            A timezone-aware :class:`datetime.dateime` object.
+            A timezone-aware :class:`datetime.datetime` object.
         """
         dt_wall = self._fromutc(dt)
 
