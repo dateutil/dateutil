@@ -65,7 +65,7 @@ class weekday(weekdaybase):
     """
     This version of weekday does not allow n = 0.
     """
-    def __init__(self, wkday, n=None):
+    def __init__(self, weekday, n=None):
         if n == 0:
             raise ValueError("Can't create weekday with n==0")
 
