@@ -180,15 +180,13 @@ class TzFoldMixin(object):
         tzname = self._get_tzname('Australia/Sydney')
 
         with self._gettz_context(tzname):
-            SYD0 = self.gettz(tzname)
-            SYD1 = self.gettz(tzname)
+            SYD = self.gettz(tzname)
 
             t0_u = datetime(2012, 3, 31, 15, 30, tzinfo=tz.tzutc())  # AEST
             t1_u = datetime(2012, 3, 31, 16, 30, tzinfo=tz.tzutc())  # AEDT
 
-            # Using fresh tzfiles
-            t0_syd0 = t0_u.astimezone(SYD0)
-            t1_syd1 = t1_u.astimezone(SYD1)
+            t0_syd0 = t0_u.astimezone(SYD)
+            t1_syd1 = t1_u.astimezone(SYD)
 
             self.assertEqual(t0_syd0.replace(tzinfo=None),
                              datetime(2012, 4, 1, 2, 30))
@@ -204,15 +202,13 @@ class TzFoldMixin(object):
         tzname = self._get_tzname('Australia/Sydney')
 
         with self._gettz_context(tzname):
-            SYD0 = self.gettz(tzname)
-            SYD1 = self.gettz(tzname)
+            SYD = self.gettz(tzname)
 
             t0_u = datetime(2012, 10, 6, 15, 30, tzinfo=tz.tzutc())  # AEST
             t1_u = datetime(2012, 10, 6, 16, 30, tzinfo=tz.tzutc())  # AEDT
 
-            # Using fresh tzfiles
-            t0 = t0_u.astimezone(SYD0)
-            t1 = t1_u.astimezone(SYD1)
+            t0 = t0_u.astimezone(SYD)
+            t1 = t1_u.astimezone(SYD)
 
             self.assertEqual(t0.replace(tzinfo=None),
                              datetime(2012, 10, 7, 1, 30))
@@ -228,41 +224,36 @@ class TzFoldMixin(object):
             tzname = self._get_tzname('America/Toronto')
 
             with self._gettz_context(tzname):
-                # Calling fromutc() alters the tzfile object
-                TOR0 = self.gettz(tzname)
-                TOR1 = self.gettz(tzname)
+                TOR = self.gettz(tzname)
 
                 t0_u = datetime(2011, 11, 6, 5, 30, tzinfo=tz.tzutc())
                 t1_u = datetime(2011, 11, 6, 6, 30, tzinfo=tz.tzutc())
 
-                # Using fresh tzfiles
-                t0_tor0 = t0_u.astimezone(TOR0)
-                t1_tor1 = t1_u.astimezone(TOR1)
+                t0_tor = t0_u.astimezone(TOR)
+                t1_tor = t1_u.astimezone(TOR)
 
-                self.assertEqual(t0_tor0.replace(tzinfo=None),
+                self.assertEqual(t0_tor.replace(tzinfo=None),
                                  datetime(2011, 11, 6, 1, 30))
 
-                self.assertEqual(t1_tor1.replace(tzinfo=None),
+                self.assertEqual(t1_tor.replace(tzinfo=None),
                                  datetime(2011, 11, 6, 1, 30))
 
-                self.assertEqual(t0_tor0.utcoffset(), timedelta(hours=-4.0))
-                self.assertEqual(t1_tor1.utcoffset(), timedelta(hours=-5.0))
+                self.assertNotEqual(t0_tor.tzname(), t1_tor.tzname())
+                self.assertEqual(t0_tor.utcoffset(), timedelta(hours=-4.0))
+                self.assertEqual(t1_tor.utcoffset(), timedelta(hours=-5.0))
 
     def testGapNegativeUTCOffset(self):
         # Test that we don't have a problem around gaps.
         tzname = self._get_tzname('America/Toronto')
 
         with self._gettz_context(tzname):
-            # Calling fromutc() alters the tzfile object
-            TOR0 = self.gettz(tzname)
-            TOR1 = self.gettz(tzname)
+            TOR = self.gettz(tzname)
 
             t0_u = datetime(2011, 3, 13, 6, 30, tzinfo=tz.tzutc())
             t1_u = datetime(2011, 3, 13, 7, 30, tzinfo=tz.tzutc())
 
-            # Using fresh tzfiles
-            t0 = t0_u.astimezone(TOR0)
-            t1 = t1_u.astimezone(TOR1)
+            t0 = t0_u.astimezone(TOR)
+            t1 = t1_u.astimezone(TOR)
 
             self.assertEqual(t0.replace(tzinfo=None),
                              datetime(2011, 3, 13, 1, 30))
@@ -285,11 +276,6 @@ class TzFoldMixin(object):
             # Firmly 2015-11-01 0:30 EDT-4
             pre_dst = datetime(2015, 11, 1, 0, 30, tzinfo=NYC)
 
-            # Currently, there's no way around the fact that this resolves to an
-            # ambiguous date, which defaults to EST. I'm not hard-coding in the
-            # answer, though, because the preferred behavior would be that this
-            # results in a time on the EDT side.
-
             # Ambiguous between 2015-11-01 1:30 EDT-4 and 2015-11-01 1:30 EST-5
             in_dst = pre_dst + hour
             in_dst_tzname_0 = in_dst.tzname()     # Stash the tzname - EDT
@@ -306,6 +292,25 @@ class TzFoldMixin(object):
 
             # Now check to make sure in_dst's tzname hasn't changed
             self.assertEqual(in_dst_tzname_0, in_dst.tzname())
+
+    def testInZoneFoldEquality(self):
+        # Two datetimes in the same zone are considered to be equal if their
+        # wall times are equal, even if they have different absolute times. 
+
+        tzname = self._get_tzname('America/New_York')
+
+        with self._gettz_context(tzname):
+            NYC = self.gettz(tzname)
+            UTC = tz.tzutc()
+            
+            dt0 = datetime(2011, 11, 6, 1, 30, tzinfo=NYC)
+            dt1 = tz.enfold(dt0, fold=1)
+
+            # Make sure these actually represent different times
+            self.assertNotEqual(dt0.astimezone(UTC), dt1.astimezone(UTC))
+
+            # Test that they compare equal
+            self.assertEqual(dt0, dt1)
 
     def _test_ambiguous_time(self, dt, tzid, ambiguous):
         # This is a test to check that the individual is_ambiguous values
@@ -431,33 +436,23 @@ class TzWinFoldMixin(object):
 
         with self.context(tzname):
             # Calling fromutc() alters the tzfile object
-            SYD0 = self.tzclass(*args)
-            SYD1 = self.tzclass(*args)
-
-            self.assertIsNot(SYD0, SYD1)
+            SYD = self.tzclass(*args)
 
             # Get the transition time in UTC from the object, because
             # Windows doesn't store historical info
-            t_n, t0_u, t1_u = self.get_utc_transitions(SYD0, 2012, False)
+            t_n, t0_u, t1_u = self.get_utc_transitions(SYD, 2012, False)
 
             # Using fresh tzfiles
-            t0_syd0 = t0_u.astimezone(SYD0)
-            t1_syd1 = t1_u.astimezone(SYD1)
+            t0_syd = t0_u.astimezone(SYD)
+            t1_syd = t1_u.astimezone(SYD)
 
-            self.assertEqual(t0_syd0.replace(tzinfo=None), t_n)
+            self.assertEqual(t0_syd.replace(tzinfo=None), t_n)
 
-            self.assertEqual(t1_syd1.replace(tzinfo=None), t_n)
+            self.assertEqual(t1_syd.replace(tzinfo=None), t_n)
 
-            self.assertNotEqual(t0_syd0, t1_syd1)
-            self.assertEqual(t0_syd0.utcoffset(), timedelta(hours=11))
-            self.assertEqual(t1_syd1.utcoffset(), timedelta(hours=10))
-
-            # Re-using them across (make sure there's no cache problem)
-            t0_syd1 = t0_u.astimezone(SYD1)
-            t1_syd0 = t1_u.astimezone(SYD0)
-
-            self.assertEqual(t0_syd0, t0_syd1)
-            self.assertEqual(t1_syd1, t1_syd0)
+            self.assertEqual(t0_syd.utcoffset(), timedelta(hours=11))
+            self.assertEqual(t1_syd.utcoffset(), timedelta(hours=10))
+            self.assertNotEqual(t0_syd.tzname(), t1_syd.tzname())
 
     def testGapPositiveUTCOffset(self):
         # Test that we don't have a problem around gaps.
@@ -465,18 +460,12 @@ class TzWinFoldMixin(object):
         args = self.get_args(tzname)
 
         with self.context(tzname):
-            # Calling fromutc() alters the tzfile object
             SYD = self.tzclass(*args)
-            SYD0 = self.tzclass(*args)
-            SYD1 = self.tzclass(*args)
-
-            self.assertIsNot(SYD0, SYD1)
 
             t_n, t0_u, t1_u = self.get_utc_transitions(SYD, 2012, True)
 
-            # Using fresh tzfiles
-            t0 = t0_u.astimezone(SYD0)
-            t1 = t1_u.astimezone(SYD1)
+            t0 = t0_u.astimezone(SYD)
+            t1 = t1_u.astimezone(SYD)
 
             self.assertEqual(t0.replace(tzinfo=None), t_n)
 
@@ -490,48 +479,33 @@ class TzWinFoldMixin(object):
         tzname = 'Eastern Standard Time'
         args = self.get_args(tzname)
 
-        # Calling fromutc() alters the tzfile object
         with self.context(tzname):
             TOR = self.tzclass(*args)
-            TOR0 = self.tzclass(*args)
-            TOR1 = self.tzclass(*args)
 
             t_n, t0_u, t1_u = self.get_utc_transitions(TOR, 2011, False)
 
-            # Using fresh tzfiles
-            t0_tor0 = t0_u.astimezone(TOR0)
-            t1_tor1 = t1_u.astimezone(TOR1)
+            t0_tor = t0_u.astimezone(TOR)
+            t1_tor = t1_u.astimezone(TOR)
 
-            self.assertEqual(t0_tor0.replace(tzinfo=None), t_n)
-            self.assertEqual(t1_tor1.replace(tzinfo=None), t_n)
+            self.assertEqual(t0_tor.replace(tzinfo=None), t_n)
+            self.assertEqual(t1_tor.replace(tzinfo=None), t_n)
 
-            self.assertNotEqual(t0_tor0.tzname(), t1_tor1.tzname())
-            self.assertEqual(t0_tor0.utcoffset(), timedelta(hours=-4.0))
-            self.assertEqual(t1_tor1.utcoffset(), timedelta(hours=-5.0))
-
-            # Re-using them across (make sure there's no cache problem)
-            t0_tor1 = t0_u.astimezone(TOR1)
-            t1_tor0 = t1_u.astimezone(TOR0)
-
-            self.assertEqual(t0_tor0, t0_tor1)
-            self.assertEqual(t1_tor1, t1_tor0)
+            self.assertNotEqual(t0_tor.tzname(), t1_tor.tzname())
+            self.assertEqual(t0_tor.utcoffset(), timedelta(hours=-4.0))
+            self.assertEqual(t1_tor.utcoffset(), timedelta(hours=-5.0))
 
     def testGapNegativeUTCOffset(self):
         # Test that we don't have a problem around gaps.
         tzname = 'Eastern Standard Time'
         args = self.get_args(tzname)
 
-        # Calling fromutc() alters the tzfile object
         with self.context(tzname):
             TOR = self.tzclass(*args)
-            TOR0 = self.tzclass(*args)
-            TOR1 = self.tzclass(*args)
 
             t_n, t0_u, t1_u = self.get_utc_transitions(TOR, 2011, True)
 
-            # Using fresh tzfiles
-            t0 = t0_u.astimezone(TOR0)
-            t1 = t1_u.astimezone(TOR1)
+            t0 = t0_u.astimezone(TOR)
+            t1 = t1_u.astimezone(TOR)
 
             self.assertEqual(t0.replace(tzinfo=None),
                              t_n)
@@ -539,7 +513,7 @@ class TzWinFoldMixin(object):
             self.assertEqual(t1.replace(tzinfo=None),
                              t_n + timedelta(hours=2))
 
-            self.assertNotEqual(t0, t1)
+            self.assertNotEqual(t0.tzname(), t1.tzname())
             self.assertEqual(t0.utcoffset(), timedelta(hours=-5.0))
             self.assertEqual(t1.utcoffset(), timedelta(hours=-4.0))
 
@@ -576,6 +550,26 @@ class TzWinFoldMixin(object):
             # Now check to make sure in_dst's tzname hasn't changed
             self.assertEqual(in_dst_tzname_0, in_dst.tzname())
 
+    def testInZoneFoldEquality(self):
+        # Two datetimes in the same zone are considered to be equal if their
+        # wall times are equal, even if they have different absolute times. 
+        tzname = 'Eastern Standard Time'
+        args = self.get_args(tzname)
+
+        with self.context(tzname):
+            NYC = self.tzclass(*args)
+            UTC = tz.tzutc()
+
+            t_n, t0_u, t1_u = self.get_utc_transitions(NYC, 2011, False)
+            
+            dt0 = t_n.replace(tzinfo=NYC)
+            dt1 = tz.enfold(dt0, fold=1)
+
+            # Make sure these actually represent different times
+            self.assertNotEqual(dt0.astimezone(UTC), dt1.astimezone(UTC))
+
+            # Test that they compare equal
+            self.assertEqual(dt0, dt1)
 
 ###
 # Test Cases
