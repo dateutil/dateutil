@@ -1,5 +1,7 @@
 from six import PY3
 
+from functools import wraps
+
 from datetime import datetime, timedelta, tzinfo
 
 
@@ -93,6 +95,23 @@ else:
             return datetime(*args)
 
 
+def _validate_fromutc_inputs(f):
+    """
+    The CPython version of ``fromutc`` checks that the input is a ``datetime``
+    object and that ``self`` is attached as its ``tzinfo``.
+    """
+    @wraps(f)
+    def fromutc(self, dt):
+        if not isinstance(dt, datetime):
+            raise TypeError("fromutc() requires a datetime argument")
+        if dt.tzinfo is not self:
+            raise ValueError("dt.tzinfo is not self")
+
+        return f(self, dt)
+
+    return fromutc
+
+
 class _tzinfo(tzinfo):
     """
     Base class for all ``dateutil`` ``tzinfo`` objects.
@@ -166,11 +185,6 @@ class _tzinfo(tzinfo):
         """
 
         # Re-implement the algorithm from Python's datetime.py
-        if not isinstance(dt, datetime):
-            raise TypeError("fromutc() requires a datetime argument")
-        if dt.tzinfo is not self:
-            raise ValueError("dt.tzinfo is not self")
-
         dtoff = dt.utcoffset()
         if dtoff is None:
             raise ValueError("fromutc() requires a non-None utcoffset() "
@@ -193,6 +207,7 @@ class _tzinfo(tzinfo):
                                  "results; cannot convert")
         return dt + dtdst
 
+    @_validate_fromutc_inputs
     def fromutc(self, dt):
         """
         Given a timezone-aware datetime in a given timezone, calculates a
