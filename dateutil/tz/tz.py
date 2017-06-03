@@ -112,6 +112,14 @@ class tzoffset(datetime.tzinfo):
     def dst(self, dt):
         return ZERO
 
+    @tzname_in_python2
+    def tzname(self, dt):
+        return self._name
+
+    @_validate_fromutc_inputs
+    def fromutc(self, dt):
+        return dt + self._offset
+
     def is_ambiguous(self, dt):
         """
         Whether or not the "wall time" of a given datetime is ambiguous in this
@@ -127,10 +135,6 @@ class tzoffset(datetime.tzinfo):
         .. versionadded:: 2.6.0
         """
         return False
-
-    @tzname_in_python2
-    def tzname(self, dt):
-        return self._name
 
     def __eq__(self, other):
         if not isinstance(other, tzoffset):
