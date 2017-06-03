@@ -183,14 +183,14 @@ class _tzinfo(tzinfo):
         if dtdst is None:
             raise ValueError("fromutc() requires a non-None dst() result")
         delta = dtoff - dtdst
-        if delta:
-            dt += delta
-            # Set fold=1 so we can default to being in the fold for
-            # ambiguous dates.
-            dtdst = enfold(dt, fold=1).dst()
-            if dtdst is None:
-                raise ValueError("fromutc(): dt.dst gave inconsistent "
-                                 "results; cannot convert")
+
+        dt += delta
+        # Set fold=1 so we can default to being in the fold for
+        # ambiguous dates.
+        dtdst = enfold(dt, fold=1).dst()
+        if dtdst is None:
+            raise ValueError("fromutc(): dt.dst gave inconsistent "
+                             "results; cannot convert")
         return dt + dtdst
 
     def fromutc(self, dt):
