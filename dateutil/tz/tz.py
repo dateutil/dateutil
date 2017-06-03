@@ -17,6 +17,7 @@ import bisect
 from six import string_types
 from ._common import tzname_in_python2, _tzinfo, _total_seconds
 from ._common import tzrangebase, enfold
+from ._common import _validate_fromutc_inputs
 
 try:
     from .win import tzwin, tzwinlocal
@@ -57,6 +58,14 @@ class tzutc(datetime.tzinfo):
         .. versionadded:: 2.6.0
         """
         return False
+
+    @_validate_fromutc_inputs
+    def fromutc(self, dt):
+        """
+        Fast track version of fromutc() returns the original ``dt`` object for
+        any valid :py:class:`datetime.datetime` object.
+        """
+        return dt
 
     def __eq__(self, other):
         if not isinstance(other, (tzutc, tzoffset)):
@@ -103,6 +112,14 @@ class tzoffset(datetime.tzinfo):
     def dst(self, dt):
         return ZERO
 
+    @tzname_in_python2
+    def tzname(self, dt):
+        return self._name
+
+    @_validate_fromutc_inputs
+    def fromutc(self, dt):
+        return dt + self._offset
+
     def is_ambiguous(self, dt):
         """
         Whether or not the "wall time" of a given datetime is ambiguous in this
@@ -118,10 +135,6 @@ class tzoffset(datetime.tzinfo):
         .. versionadded:: 2.6.0
         """
         return False
-
-    @tzname_in_python2
-    def tzname(self, dt):
-        return self._name
 
     def __eq__(self, other):
         if not isinstance(other, tzoffset):
