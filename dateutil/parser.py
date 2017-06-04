@@ -793,17 +793,19 @@ class parser(object):
                     elif (i == len_l and l[i-2] == ' ' and
                           info.hms(l[i-3]) is not None):
                         # X h MM or X m SS
-                        idx = info.hms(l[i-3]) + 1
+                        idx = info.hms(l[i-3])
 
-                        if idx == 1:
+                        if idx == 0:               # h
                             res.minute = int(value)
 
                             if value % 1:
                                 res.second = int(60*(value % 1))
-                            elif idx == 2:
-                                res.second, res.microsecond = \
-                                    _parsems(value_repr)
-                                i += 1
+                        elif idx == 1:             # m
+                            res.second, res.microsecond = \
+                                _parsems(value_repr)
+
+                        if idx == 0 or idx == 1:
+                            i += 1
 
                     elif i+1 < len_l and l[i] == ':':
                         # HH:MM[:SS[.ss]]
