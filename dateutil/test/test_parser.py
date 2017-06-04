@@ -452,6 +452,10 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(parse("10 h 36", default=self.default),
                          datetime(2003, 9, 25, 10, 36))
 
+    def testHourWithLetterStrip5(self):
+        self.assertEqual(parse("10 h 36.5", default=self.default),
+                         datetime(2003, 9, 25, 10, 36, 30))
+
     def testMinuteWithLettersSpaces1(self):
         self.assertEqual(parse("36 m 5", default=self.default),
                          datetime(2003, 9, 25, 0, 36, 5))

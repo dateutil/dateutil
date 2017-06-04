@@ -798,14 +798,16 @@ class parser(object):
                         if idx == 0:               # h
                             res.minute = int(value)
 
-                            if value % 1:
-                                res.second = int(60*(value % 1))
+                            sec_remainder = value % 1
+                            if sec_remainder:
+                                res.second = int(60 * sec_remainder)
                         elif idx == 1:             # m
                             res.second, res.microsecond = \
                                 _parsems(value_repr)
 
-                        if idx == 0 or idx == 1:
-                            i += 1
+                        # We don't need to advance the tokens here because the
+                        # i == len_l call indicates that we're looking at all
+                        # the tokens already.
 
                     elif i+1 < len_l and l[i] == ':':
                         # HH:MM[:SS[.ss]]
