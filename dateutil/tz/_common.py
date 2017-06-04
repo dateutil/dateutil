@@ -181,7 +181,7 @@ class _tzinfo(tzinfo):
         occurence, chronologically, of the ambiguous datetime).
 
         :param dt:
-            A timezone-aware :class:`datetime.dateime` object.
+            A timezone-aware :class:`datetime.datetime` object.
         """
 
         # Re-implement the algorithm from Python's datetime.py
@@ -197,14 +197,14 @@ class _tzinfo(tzinfo):
         if dtdst is None:
             raise ValueError("fromutc() requires a non-None dst() result")
         delta = dtoff - dtdst
-        if delta:
-            dt += delta
-            # Set fold=1 so we can default to being in the fold for
-            # ambiguous dates.
-            dtdst = enfold(dt, fold=1).dst()
-            if dtdst is None:
-                raise ValueError("fromutc(): dt.dst gave inconsistent "
-                                 "results; cannot convert")
+
+        dt += delta
+        # Set fold=1 so we can default to being in the fold for
+        # ambiguous dates.
+        dtdst = enfold(dt, fold=1).dst()
+        if dtdst is None:
+            raise ValueError("fromutc(): dt.dst gave inconsistent "
+                             "results; cannot convert")
         return dt + dtdst
 
     @_validate_fromutc_inputs
@@ -219,7 +219,7 @@ class _tzinfo(tzinfo):
         occurance, chronologically, of the ambiguous datetime).
 
         :param dt:
-            A timezone-aware :class:`datetime.dateime` object.
+            A timezone-aware :class:`datetime.datetime` object.
         """
         dt_wall = self._fromutc(dt)
 

@@ -265,6 +265,28 @@ class TzFoldMixin(object):
             self.assertEqual(t0.utcoffset(), timedelta(hours=-5.0))
             self.assertEqual(t1.utcoffset(), timedelta(hours=-4.0))
 
+    def testFoldLondon(self):
+        tzname = self._get_tzname('Europe/London')
+
+        with self._gettz_context(tzname):
+            LON = self.gettz(tzname)
+            UTC = tz.tzutc()
+
+            t0_u = datetime(2013, 10, 27, 0, 30, tzinfo=UTC)   # BST
+            t1_u = datetime(2013, 10, 27, 1, 30, tzinfo=UTC)   # GMT
+
+            t0 = t0_u.astimezone(LON)
+            t1 = t1_u.astimezone(LON)
+
+            self.assertEqual(t0.replace(tzinfo=None),
+                             datetime(2013, 10, 27, 1, 30))
+            
+            self.assertEqual(t1.replace(tzinfo=None),
+                             datetime(2013, 10, 27, 1, 30))
+
+            self.assertEqual(t0.utcoffset(), timedelta(hours=1))
+            self.assertEqual(t1.utcoffset(), timedelta(hours=0))
+
     def testFoldIndependence(self):
         tzname = self._get_tzname('America/New_York')
 
@@ -734,6 +756,9 @@ class TzLocalNixTest(unittest.TestCase, TzFoldMixin):
     # POSIX string for AEST/AEDT (valid >= 2008)
     TZ_AEST = 'AEST-10AEDT,M10.1.0/2,M4.1.0/3'
 
+    # POSIX string for BST/GMT
+    TZ_LON = 'GMT0BST,M3.5.0,M10.5.0'
+
     # POSIX string for UTC
     UTC = 'UTC'
 
@@ -744,7 +769,8 @@ class TzLocalNixTest(unittest.TestCase, TzFoldMixin):
     def _gettz_context(self, tzname):
         tzname_map = {'Australia/Sydney': self.TZ_AEST,
                       'America/Toronto': self.TZ_EST,
-                      'America/New_York': self.TZ_EST}
+                      'America/New_York': self.TZ_EST,
+                      'Europe/London': self.TZ_LON}
 
         return TZEnvContext(tzname_map.get(tzname, tzname))
 
@@ -949,13 +975,21 @@ class TZRangeTest(unittest.TestCase, TzFoldMixin):
                                              weekday=SU(+1)),
                          end=relativedelta(month=4, day=1, hour=2,
                                            weekday=SU(+1)))
+
+    TZ_LON = tz.tzrange('GMT', timedelta(hours=0),
+                        'BST', timedelta(hours=1),
+                        start=relativedelta(month=3, day=31, weekday=SU(-1),
+                                            hours=2),
+                        end=relativedelta(month=10, day=31, weekday=SU(-1),
+                                          hours=1))
     # POSIX string for UTC
     UTC = 'UTC'
 
     def gettz(self, tzname):
         tzname_map = {'Australia/Sydney': self.TZ_AEST,
                       'America/Toronto': self.TZ_EST,
-                      'America/New_York': self.TZ_EST}
+                      'America/New_York': self.TZ_EST,
+                      'Europe/London': self.TZ_LON}
 
         return tzname_map[tzname]
 
@@ -1077,11 +1111,15 @@ class TZStrTest(unittest.TestCase, TzFoldMixin):
     # POSIX string for AEST/AEDT (valid >= 2008)
     TZ_AEST = 'AEST-10AEDT,M10.1.0/2,M4.1.0/3'
 
+    # POSIX string for GMT/BST
+    TZ_LON = 'GMT0BST,M3.5.0,M10.5.0'
+
     def gettz(self, tzname):
         # Actual time zone changes are handled by the _gettz_context function
         tzname_map = {'Australia/Sydney': self.TZ_AEST,
                       'America/Toronto': self.TZ_EST,
-                      'America/New_York': self.TZ_EST}
+                      'America/New_York': self.TZ_EST,
+                      'Europe/London': self.TZ_LON}
 
         return tz.tzstr(tzname_map[tzname])
 
@@ -1295,9 +1333,30 @@ class TZICalTest(unittest.TestCase, TzFoldMixin):
             'END:VTIMEZONE'
             )
 
+        TZ_LON = (
+            'BEGIN:VTIMEZONE',
+            'TZID:Europe-London',
+            'BEGIN:STANDARD',
+            'DTSTART:19810301T030000',
+            'RRULE:FREQ=YEARLY;BYDAY=-1SU;BYMONTH=10;BYHOUR=02',
+            'TZOFFSETFROM:+0100',
+            'TZOFFSETTO:+0000',
+            'TZNAME:GMT',
+            'END:STANDARD',
+            'BEGIN:DAYLIGHT',
+            'DTSTART:19961001T030000',
+            'RRULE:FREQ=YEARLY;BYDAY=-1SU;BYMONTH=03;BYHOUR=01',
+            'TZOFFSETFROM:+0000',
+            'TZOFFSETTO:+0100',
+            'TZNAME:BST',
+            'END:DAYLIGHT',
+            'END:VTIMEZONE'
+            )
+
         tzname_map = {'Australia/Sydney': TZ_AEST,
                       'America/Toronto': TZ_EST,
-                      'America/New_York': TZ_EST}
+                      'America/New_York': TZ_EST,
+                      'Europe/London': TZ_LON}
 
         tzc = tz.tzical(StringIO('\n'.join(tzname_map[tzname]))).get()
 
