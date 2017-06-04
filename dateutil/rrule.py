@@ -681,7 +681,7 @@ class rrule(rrulebase):
         output = []
         h, m, s = [None] * 3
         if self._dtstart:
-            output.append(self._dtstart.strftime('DTSTART:%Y%m%dT%H%M%S'))
+            output.append(self._dtstart.strftime('DTSTART:%Y%m%dT%H%M%S%Z'))
             h, m, s = self._dtstart.timetuple()[3:6]
 
         parts = ['FREQ=' + FREQNAMES[self._freq]]
@@ -695,7 +695,7 @@ class rrule(rrulebase):
             parts.append('COUNT=' + str(self._count))
 
         if self._until:
-            parts.append(self._until.strftime('UNTIL=%Y%m%dT%H%M%S'))
+            parts.append(self._until.strftime('UNTIL=%Y%m%dT%H%M%S%Z'))
 
         if self._original_rule.get('byweekday') is not None:
             # The str() method on weekday objects doesn't generate
