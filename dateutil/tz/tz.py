@@ -1118,7 +1118,7 @@ class tzical(object):
         """
         Retrieves the available time zones as a list.
         """
-        return list(self._vtz.keys())
+        return list(self._vtz)
 
     def get(self, tzid=None):
         """
