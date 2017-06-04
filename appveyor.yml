@@ -9,6 +9,8 @@ environment:
     - PYTHON: "C:/Python34-x64"
     - PYTHON: "C:/Python35"
     - PYTHON: "C:/Python35-x64"
+    - PYTHON: "C:/Python36"
+    - PYTHON: "C:/Python36-x64"
 install:
   # Add PostgreSQL (zic), Python and scripts directory to current path
   - set path=c:\Program Files\PostgreSQL\9.3\bin\;%PATH%
