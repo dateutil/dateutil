@@ -5,7 +5,7 @@ from ._common import unittest
 from datetime import datetime, timedelta
 
 from dateutil.tz import tzoffset
-from dateutil.parser import *
+from dateutil.parser import parse, parserinfo
 
 from six import assertRaisesRegex, PY3
 from six.moves import StringIO

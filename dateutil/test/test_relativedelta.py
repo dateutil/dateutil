@@ -5,7 +5,7 @@ from ._common import unittest, WarningTestMixin, NotAValue
 import calendar
 from datetime import datetime, date, timedelta
 
-from dateutil.relativedelta import *
+from dateutil.relativedelta import relativedelta, MO, TU, WE, FR, SU
 
 
 class RelativeDeltaTest(WarningTestMixin, unittest.TestCase):
