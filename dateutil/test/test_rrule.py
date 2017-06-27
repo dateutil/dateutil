@@ -5,7 +5,12 @@ from ._common import WarningTestMixin, unittest
 from datetime import datetime, date
 from six import PY3
 
-from dateutil.rrule import *
+from dateutil.rrule import (
+    rrule, rruleset, rrulestr,
+    YEARLY, MONTHLY, WEEKLY, DAILY,
+    HOURLY, MINUTELY, SECONDLY,
+    MO, TU, WE, TH, FR, SA, SU
+)
 
 
 class RRuleTest(WarningTestMixin, unittest.TestCase):
