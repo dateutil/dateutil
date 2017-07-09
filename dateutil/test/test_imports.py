@@ -5,6 +5,17 @@ try:
 except ImportError:
     import unittest
 
+class ImportVersionTest(unittest.TestCase):
+    """ Test that dateutil.__version__ can be imported"""
+
+    def testImportVersionStr(self):
+        from dateutil import __version__
+
+    def testImportRoot(self):
+        import dateutil
+
+        self.assertTrue(hasattr(dateutil, '__version__'))
+
 
 class ImportEasterTest(unittest.TestCase):
     """ Test that dateutil.easter-related imports work properly """

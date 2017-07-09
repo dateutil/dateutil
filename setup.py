@@ -6,15 +6,10 @@ import re
 
 from setuptools import setup
 
+from dateutil._version import VERSION
 
 if isfile("MANIFEST"):
     os.unlink("MANIFEST")
-
-
-TOPDIR = os.path.dirname(__file__) or "."
-with codecs.open(TOPDIR + "/dateutil/__init__.py", encoding='utf-8') as f:
-    VERSION = re.search('__version__ = "([^"]+)"', f.read()).group(1)
-
 
 setup(name="python-dateutil",
       version=VERSION,
