@@ -1,3 +1,35 @@
+Version 2.6.1
+-------------
+- Updated zoneinfo file to 2017b. (gh pr #395)
+- Added Python 3.6 to CI testing (gh pr #365)
+- Removed duplicate test name that was preventing a test from being run.
+  Reported and fixed by @jdufresne (gh pr #371)
+- Fixed testing of folds and gaps, particularly on Windows (gh pr #392)
+- Fixed deprecated escape characters in regular expressions. Reported by
+  @nascheme and @thierryba (gh issue #361), fixed by @thierryba (gh pr #358)
+- Many PEP8 style violations and other code smells were fixed by @jdufresne
+  (gh prs #358, #363, #364, #366, #367, #368, #372, #374, #379, #380, #398)
+- Improved performance of tzutc and tzoffset objects. (gh pr #391)
+- Fixed issue with several time zone classes around DST transitions in any
+  zones with +0 standard offset (e.g. Europe/London) (gh issue #321, pr #390)
+- Fixed issue with fuzzy parsing where tokens similar to AM/PM that are in the
+  end skipped were dropped in the fuzzy_with_tokens list. Reported and fixed
+  by @jbrockmendel (gh pr #332).
+- Fixed issue with parsing dates of the form X m YY. Reported by @jbrockmendel.
+  (gh issue #333, pr #393)
+- Added support for parser weekdays with less than 3 characters. Reported by
+  @arcadefoam (gh issue #343), fixed by @jonemo (gh pr #382)
+- Fixed issue with the addition and subtraction of certain relativedeltas.
+  Reported and fixed by @kootenpv (gh issue #346, pr #347)
+- Fixed issue where the COUNT parameter of rrules was ignored if 0. Fixed by
+  @mshenfield (gh pr #330), reported by @vaultah (gh issue #329).
+- Updated documentation to include the new tz methods. (gh pr #324)
+- Update documentation to reflect that the parser can raise TypeError, reported
+  and fixed by @tomchuk (gh issue #336, pr #337)
+- Fixed an incorrect year in a parser doctest. Fixed by @xlotlu (gh pr #357)
+- Moved version information into _version.py and set up the versions more
+  granularly.
+
 Version 2.6.0
 -------------
 - Added PEP-495-compatible methods to address ambiguous and imaginary dates in
