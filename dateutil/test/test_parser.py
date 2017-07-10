@@ -895,3 +895,9 @@ class ParserTest(unittest.TestCase):
         dtstr = '2015 09 25'
         self.assertEqual(parse(dtstr, dayfirst=True, yearfirst=True),
                          datetime(2015, 9, 25))
+
+    def test_mstridx(self):
+        # See GH408
+        dtstr = '2015-15-May'
+        self.assertEqual(parse(dtstr),
+                         datetime(2015, 5, 15))

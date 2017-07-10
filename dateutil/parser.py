@@ -854,8 +854,8 @@ class parser(object):
 
                                 if value is not None:
                                     ymd.append(value)
-                                    mstridx = len(ymd)-1
                                     assert mstridx == -1
+                                    mstridx = len(ymd)-1
                                 else:
                                     ymd.append(l[i])
 
