@@ -34,15 +34,24 @@ import string
 import time
 import collections
 import re
+import locale
 from io import StringIO
 from calendar import monthrange
 
-from six import text_type, binary_type, integer_types
+from six import text_type, binary_type, integer_types, PY2
 
 from . import relativedelta
 from . import tz
 
 __all__ = ["parse", "parserinfo"]
+
+
+TZNAME = time.tzname
+if PY2:
+    TZNAME = tuple(
+        name.decode(locale.getpreferredencoding())
+        for name in TZNAME
+    )
 
 
 class _timelex(object):
@@ -602,7 +611,7 @@ class parser(object):
                     raise ValueError("Offset must be tzinfo subclass, "
                                      "tz string, or int offset.")
                 ret = ret.replace(tzinfo=tzinfo)
-            elif res.tzname and res.tzname in time.tzname:
+            elif res.tzname and res.tzname in TZNAME:
                 ret = ret.replace(tzinfo=tz.tzlocal())
             elif res.tzoffset == 0:
                 ret = ret.replace(tzinfo=tz.tzutc())
