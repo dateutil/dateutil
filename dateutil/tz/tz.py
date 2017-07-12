@@ -13,8 +13,9 @@ import time
 import sys
 import os
 import bisect
+import locale
 
-from six import string_types
+from six import string_types, PY2
 from ._common import tzname_in_python2, _tzinfo, _total_seconds
 from ._common import tzrangebase, enfold
 from ._common import _validate_fromutc_inputs
@@ -27,6 +28,19 @@ except ImportError:
 ZERO = datetime.timedelta(0)
 EPOCH = datetime.datetime.utcfromtimestamp(0)
 EPOCHORDINAL = EPOCH.toordinal()
+
+
+def _gettznames():
+    """Get current time zone names in Unicode."""
+
+    def decode(x):
+        """Decode from byte string in current locale."""
+        return x.decode(locale.getpreferredencoding())
+
+    names = time.tzname
+    if PY2:
+        names = tuple(map(decode, names))
+    return names
 
 
 class tzutc(datetime.tzinfo):
@@ -191,7 +205,7 @@ class tzlocal(_tzinfo):
 
     @tzname_in_python2
     def tzname(self, dt):
-        return time.tzname[self._isdst(dt)]
+        return _gettznames()[self._isdst(dt)]
 
     def is_ambiguous(self, dt):
         """
@@ -1404,7 +1418,7 @@ def gettz(name=None):
                     else:
                         if name in ("GMT", "UTC"):
                             tz = tzutc()
-                        elif name in time.tzname:
+                        elif name in _gettznames():
                             tz = tzlocal()
     return tz
 

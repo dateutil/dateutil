@@ -1,8 +1,14 @@
-from six import PY3
+from six import PY2
 
 from functools import wraps
 
 from datetime import datetime, timedelta, tzinfo
+
+if PY2:
+    from unidecode import unidecode
+
+import locale
+from six import text_type
 
 
 ZERO = timedelta(0)
@@ -18,8 +24,8 @@ def tzname_in_python2(namefunc):
     """
     def adjust_encoding(*args, **kwargs):
         name = namefunc(*args, **kwargs)
-        if name is not None and not PY3:
-            name = name.encode()
+        if PY2 and isinstance(name, text_type):
+            name = unidecode(name)
 
         return name
 
