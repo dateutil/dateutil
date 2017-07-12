@@ -25,7 +25,9 @@ before_install:
 
 install:
   - pip install six
-  - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then pip install unittest2; fi
+  - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then pip install Unidecode unittest2; fi
+  - if [[ $TRAVIS_PYTHON_VERSION == '2.7' ]]; then pip install Unidecode; fi
+  - if [[ $TRAVIS_PYTHON_VERSION == 'pypy-5.4' ]]; then pip install Unidecode; fi
   - ./ci_tools/retry.sh python updatezinfo.py
 
 script:
