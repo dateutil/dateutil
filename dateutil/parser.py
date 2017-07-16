@@ -556,10 +556,10 @@ class parser(object):
         res, skipped_tokens = self._parse(timestr, **kwargs)
 
         if res is None:
-            raise ValueError("Unknown string format")
+            raise ValueError("Unknown string format:", timestr)
 
         if len(res) == 0:
-            raise ValueError("String does not contain a date.")
+            raise ValueError("String does not contain a date:", timestr)
 
         repl = {}
         for attr in ("year", "month", "day", "hour",
