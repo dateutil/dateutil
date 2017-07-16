@@ -576,3 +576,11 @@ class RelativeDeltaTest(WarningTestMixin, unittest.TestCase):
         )
 
         self.assertEqual(expected, rd + td)
+
+    def testHashable(self):
+      try:
+        {relativedelta(minute=1): 'test'}
+      except:
+        self.fail("relativedelta() failed to hash!")
+
+# vim:ts=4:sw=4:et

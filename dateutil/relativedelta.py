@@ -512,7 +512,25 @@ class relativedelta(object):
                 self.second == other.second and
                 self.microsecond == other.microsecond)
 
-    __hash__ = None
+    def __hash__(self):
+        return hash((
+            self.weekday,
+            self.years,
+            self.months,
+            self.days,
+            self.hours,
+            self.minutes,
+            self.seconds,
+            self.microseconds,
+            self.leapdays,
+            self.year,
+            self.month,
+            self.day,
+            self.hour,
+            self.minute,
+            self.second,
+            self.microsecond,
+        ))
 
     def __ne__(self, other):
         return not self.__eq__(other)
