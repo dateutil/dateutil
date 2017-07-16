@@ -15,7 +15,7 @@ import os
 import bisect
 
 from six import string_types
-from ._common import tzname_in_python2, _tzinfo, _total_seconds
+from ._common import tzname_in_python2, _tzinfo
 from ._common import tzrangebase, enfold
 from ._common import _validate_fromutc_inputs
 
@@ -101,7 +101,7 @@ class tzoffset(datetime.tzinfo):
 
         try:
             # Allow a timedelta
-            offset = _total_seconds(offset)
+            offset = offset.total_seconds()
         except (TypeError, AttributeError):
             pass
         self._offset = datetime.timedelta(seconds=offset)
@@ -150,7 +150,7 @@ class tzoffset(datetime.tzinfo):
     def __repr__(self):
         return "%s(%s, %s)" % (self.__class__.__name__,
                                repr(self._name),
-                               int(_total_seconds(self._offset)))
+                               int(self._offset.total_seconds()))
 
     __reduce__ = object.__reduce__
 
@@ -616,7 +616,7 @@ class tzfile(_tzinfo):
         idx = bisect.bisect_right(trans_list, timestamp)
 
         # We want to know when the previous transition was, so subtract off 1
-        return idx - 1        
+        return idx - 1
 
     def _get_ttinfo(self, idx):
         # For no list or after the last transition, default to _ttinfo_std
@@ -850,12 +850,12 @@ class tzrange(tzrangebase):
         self._dst_abbr = dstabbr
 
         try:
-            stdoffset = _total_seconds(stdoffset)
+            stdoffset = stdoffset.total_seconds()
         except (TypeError, AttributeError):
             pass
 
         try:
-            dstoffset = _total_seconds(dstoffset)
+            dstoffset = dstoffset.total_seconds()
         except (TypeError, AttributeError):
             pass
 
@@ -1491,7 +1491,7 @@ def _datetime_to_timestamp(dt):
     Convert a :class:`datetime.datetime` object to an epoch timestamp in seconds
     since January 1, 1970, ignoring the time zone.
     """
-    return _total_seconds((dt.replace(tzinfo=None) - EPOCH))
+    return (dt.replace(tzinfo=None) - EPOCH).total_seconds()
 
 
 class _ContextWrapper(object):

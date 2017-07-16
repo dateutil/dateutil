@@ -584,13 +584,13 @@ class rrule(rrulebase):
                 self._byweekday = tuple(sorted(self._byweekday))
                 orig_byweekday = [weekday(x) for x in self._byweekday]
             else:
-                orig_byweekday = tuple()
+                orig_byweekday = ()
 
             if self._bynweekday is not None:
                 self._bynweekday = tuple(sorted(self._bynweekday))
                 orig_bynweekday = [weekday(*x) for x in self._bynweekday]
             else:
-                orig_bynweekday = tuple()
+                orig_bynweekday = ()
 
             if 'byweekday' not in self._original_rule:
                 self._original_rule['byweekday'] = tuple(itertools.chain(
@@ -599,7 +599,7 @@ class rrule(rrulebase):
         # byhour
         if byhour is None:
             if freq < HOURLY:
-                self._byhour = set((dtstart.hour,))
+                self._byhour = {dtstart.hour}
             else:
                 self._byhour = None
         else:
@@ -619,7 +619,7 @@ class rrule(rrulebase):
         # byminute
         if byminute is None:
             if freq < MINUTELY:
-                self._byminute = set((dtstart.minute,))
+                self._byminute = {dtstart.minute}
             else:
                 self._byminute = None
         else:

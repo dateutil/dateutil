@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-from ._common import unittest, PicklableMixin
-from ._common import total_seconds
+from ._common import PicklableMixin
 from ._common import TZEnvContext, TZWinContext
 from ._common import WarningTestMixin
 from ._common import ComparesEqual
@@ -10,6 +9,7 @@ from datetime import datetime, timedelta
 from datetime import time as dt_time
 from datetime import tzinfo
 from six import BytesIO, StringIO
+import unittest
 
 import sys
 import base64
@@ -280,7 +280,7 @@ class TzFoldMixin(object):
 
             self.assertEqual(t0.replace(tzinfo=None),
                              datetime(2013, 10, 27, 1, 30))
-            
+
             self.assertEqual(t1.replace(tzinfo=None),
                              datetime(2013, 10, 27, 1, 30))
 
@@ -317,14 +317,14 @@ class TzFoldMixin(object):
 
     def testInZoneFoldEquality(self):
         # Two datetimes in the same zone are considered to be equal if their
-        # wall times are equal, even if they have different absolute times. 
+        # wall times are equal, even if they have different absolute times.
 
         tzname = self._get_tzname('America/New_York')
 
         with self._gettz_context(tzname):
             NYC = self.gettz(tzname)
             UTC = tz.tzutc()
-            
+
             dt0 = datetime(2011, 11, 6, 1, 30, tzinfo=NYC)
             dt1 = tz.enfold(dt0, fold=1)
 
@@ -574,7 +574,7 @@ class TzWinFoldMixin(object):
 
     def testInZoneFoldEquality(self):
         # Two datetimes in the same zone are considered to be equal if their
-        # wall times are equal, even if they have different absolute times. 
+        # wall times are equal, even if they have different absolute times.
         tzname = 'Eastern Standard Time'
         args = self.get_args(tzname)
 
@@ -583,7 +583,7 @@ class TzWinFoldMixin(object):
             UTC = tz.tzutc()
 
             t_n, t0_u, t1_u = self.get_utc_transitions(NYC, 2011, False)
-            
+
             dt0 = t_n.replace(tzinfo=NYC)
             dt1 = tz.enfold(dt0, fold=1)
 
@@ -714,8 +714,8 @@ class TzLocalTest(unittest.TestCase):
 
     def testInequalityFixedOffset(self):
         tzl = tz.tzlocal()
-        tzos = tz.tzoffset('LST', total_seconds(tzl._std_offset))
-        tzod = tz.tzoffset('LDT', total_seconds(tzl._std_offset))
+        tzos = tz.tzoffset('LST', tzl._std_offset.total_seconds())
+        tzod = tz.tzoffset('LDT', tzl._std_offset.total_seconds())
 
         self.assertFalse(tzl == tzos)
         self.assertFalse(tzl == tzod)
@@ -1745,7 +1745,7 @@ class TzWinLocalTest(unittest.TestCase, TzWinFoldMixin):
         self.context = TZWinContext
 
     def get_args(self, tzname):
-        return tuple()
+        return ()
 
     def testLocal(self):
         # Not sure how to pin a local time zone, so for now we're just going

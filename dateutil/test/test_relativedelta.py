@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-from ._common import unittest, WarningTestMixin, NotAValue
+from ._common import WarningTestMixin, NotAValue
 
 import calendar
 from datetime import datetime, date, timedelta
+import unittest
 
 from dateutil.relativedelta import relativedelta, MO, TU, WE, FR, SU
 

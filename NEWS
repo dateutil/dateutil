@@ -1,3 +1,7 @@
+UNRELEASED
+----------
+- **Dropped support for Python 2.6.**
+
 Version 2.6.1
 -------------
 - Updated zoneinfo file to 2017b. (gh pr #395)
