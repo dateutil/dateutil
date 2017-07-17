@@ -961,22 +961,21 @@ class parser(object):
                 # Check for a numbered timezone
                 if res.hour is not None and l[i] in ('+', '-'):
                     signal = (-1, 1)[l[i] == '+']
-                    i += 1
-                    len_li = len(l[i])
+                    len_li = len(l[i+1])
 
                     if len_li == 4:
                         # -0300
-                        res.tzoffset = int(l[i][:2])*3600+int(l[i][2:])*60
-                    elif i+1 < len_l and l[i+1] == ':':
+                        res.tzoffset = int(l[i+1][:2])*3600+int(l[i+1][2:])*60
+                    elif i+2 < len_l and l[i+2] == ':':
                         # -03:00
-                        res.tzoffset = int(l[i])*3600+int(l[i+2])*60
+                        res.tzoffset = int(l[i+1])*3600+int(l[i+3])*60
                         i += 2
                     elif len_li <= 2:
                         # -[0]3
-                        res.tzoffset = int(l[i][:2])*3600
+                        res.tzoffset = int(l[i+1][:2])*3600
                     else:
                         return None, None
-                    i += 1
+                    i += 2
 
                     res.tzoffset *= signal
 
