@@ -841,7 +841,7 @@ class parser(object):
                                 if value is not None:
                                     ymd.append(value, 'M')
                                 else:
-                                    return None, None
+                                    raise InvalidDatetimeError(timestr)
 
                             if i+3 < len_l and l[i+3] == sep:
                                 # We have three members
@@ -875,7 +875,7 @@ class parser(object):
                         i += 2
 
                     elif not fuzzy:
-                        return None, None
+                        raise InvalidDatetimeError(timestr)
                     else:
                         i += 1
 
@@ -974,7 +974,7 @@ class parser(object):
                         # -[0]3
                         res.tzoffset = int(l[i+1][:2])*3600
                     else:
-                        return None, None
+                        raise InvalidDatetimeError(timestr)
                     i += 2
 
                     res.tzoffset *= signal
@@ -990,7 +990,7 @@ class parser(object):
 
                 # Check jumps
                 elif not (info.jump(l[i]) or fuzzy):
-                    return None, None
+                    raise InvalidDatetimeError(timestr)
 
                 else:
                     skipped_idxs.add(i)
@@ -1305,6 +1305,16 @@ DEFAULTTZPARSER = _tzparser()
 def _parsetz(tzstr):
     return DEFAULTTZPARSER.parse(tzstr)
 
+class InvalidDatetimeError(ValueError): pass
+class InvalidDateError(InvalidDatetimeError): pass
+class InvalidTimeError(InvalidDatetimeError): pass
+
+class ProgrammingError(AssertionError):
+    """ProgrammingError is for if we reach a state that we *think* should
+    be unreachable and would otherwise be inclined to assert is impossible.
+    Since an AssertionError is useful a user, a ProgrammingError clarifies
+    that they should file a bug report.
+    """
 
 def _ampm_validity(hour, ampm, fuzzy):
     """
