@@ -881,15 +881,15 @@ class parser(object):
                     continue
 
                 # Check weekday
-                value = info.weekday(l[i])
-                if value is not None:
+                elif info.weekday(l[i]) is not None:
+                    value = info.weekday(l[i])
                     res.weekday = value
                     i += 1
                     continue
 
                 # Check month name
-                value = info.month(l[i])
-                if value is not None:
+                elif info.month(l[i]) is not None:
+                    value = info.month(l[i])
                     ymd.append(value, 'M')
 
                     i += 1
@@ -923,8 +923,8 @@ class parser(object):
                     continue
 
                 # Check am/pm
-                value = info.ampm(l[i])
-                if value is not None:
+                elif info.ampm(l[i]) is not None:
+                    value = info.ampm(l[i])
                     val_is_ampm = _ampm_validity(res.hour, res.ampm, fuzzy)
 
                     if val_is_ampm:
@@ -938,7 +938,7 @@ class parser(object):
                     continue
 
                 # Check for a timezone name
-                if (res.hour is not None and len(l[i]) <= 5
+                elif (res.hour is not None and len(l[i]) <= 5
                     and res.tzname is None and res.tzoffset is None
                     and all(x in string.ascii_uppercase for x in l[i])):
                     res.tzname = l[i]
@@ -961,7 +961,7 @@ class parser(object):
                     continue
 
                 # Check for a numbered timezone
-                if res.hour is not None and l[i] in ('+', '-'):
+                elif res.hour is not None and l[i] in ('+', '-'):
                     signal = (-1, 1)[l[i] == '+']
                     len_li = len(l[i+1])
 
@@ -992,11 +992,12 @@ class parser(object):
                     continue
 
                 # Check jumps
-                if not (info.jump(l[i]) or fuzzy):
+                elif not (info.jump(l[i]) or fuzzy):
                     return None, None
 
-                skipped_idxs.add(i)
-                i += 1
+                else:
+                    skipped_idxs.add(i)
+                    i += 1
 
             # Process year/month/day
             year, month, day = ymd.resolve_ymd(yearfirst, dayfirst)
