@@ -712,11 +712,11 @@ class parser(object):
                 if value is not None:
                     # Token is a number
                     len_li = len(l[i])
-                    i += 1
 
                     if (len(ymd) == 3 and len_li in (2, 4)
-                        and res.hour is None and (i >= len_l or (l[i] != ':' and
-                                                  info.hms(l[i]) is None))):
+                        and res.hour is None and (i+1 >= len_l or (l[i+1] != ':' and
+                                                  info.hms(l[i+1]) is None))):
+                        i += 1
                         # 19990101T23[59]
                         s = l[i-1]
                         res.hour = int(s[:2])
@@ -724,7 +724,8 @@ class parser(object):
                         if len_li == 4:
                             res.minute = int(s[2:])
 
-                    elif len_li == 6 or (len_li > 6 and l[i-1].find('.') == 6):
+                    elif len_li == 6 or (len_li > 6 and l[i].find('.') == 6):
+                        i += 1
                         # YYMMDD or HHMMSS[.ss]
                         s = l[i-1]
 
@@ -741,6 +742,7 @@ class parser(object):
                             res.second, res.microsecond = _parsems(s[4:])
 
                     elif len_li in (8, 12, 14):
+                        i += 1
                         # YYYYMMDD
                         s = l[i-1]
                         ymd.append(s[:4])
@@ -754,9 +756,10 @@ class parser(object):
                             if len_li > 12:
                                 res.second = int(s[12:])
 
-                    elif ((i < len_l and info.hms(l[i]) is not None) or
-                          (i+1 < len_l and l[i] == ' ' and info.hms(l[i+1]) is not None)
-                          ):
+                    elif ((i+1 < len_l and info.hms(l[i+1]) is not None)
+                        or (i+2 < len_l and l[i+1] == ' ' and info.hms(l[i+2]) is not None)
+                            ):
+                        i += 1
 
                         # HH[ ]h or MM[ ]m or SS[.ss][ ]s
                         if l[i] == ' ':
@@ -797,7 +800,8 @@ class parser(object):
                                     if newidx is not None:
                                         idx = newidx
 
-                    elif (i == len_l and l[i-2] == ' ' and info.hms(l[i-3]) is not None):
+                    elif (i+1 == len_l and l[i-1] == ' ' and info.hms(l[i-2]) is not None):
+                        i += 1
                         # X h MM or X m SS
                         idx = info.hms(l[i-3])
 
@@ -810,7 +814,8 @@ class parser(object):
                         # i == len_l call indicates that we're looking at all
                         # the tokens already.
 
-                    elif i+1 < len_l and l[i] == ':':
+                    elif i+2 < len_l and l[i+1] == ':':
+                        i += 1
                         # HH:MM[:SS[.ss]]
                         res.hour = int(value)
                         i += 1
@@ -823,7 +828,8 @@ class parser(object):
                             res.second, res.microsecond = _parsems(l[i+1])
                             i += 2
 
-                    elif i < len_l and l[i] in ('-', '/', '.'):
+                    elif i+1 < len_l and l[i+1] in ('-', '/', '.'):
+                        i += 1
                         sep = l[i]
                         ymd.append(value_repr)
                         i += 1
@@ -855,7 +861,8 @@ class parser(object):
 
                                 i += 1
 
-                    elif i >= len_l or info.jump(l[i]):
+                    elif i+1 >= len_l or info.jump(l[i+1]):
+                        i += 1
                         if i+1 < len_l and info.ampm(l[i+1]) is not None:
                             # 12 am
                             hour = int(value)
@@ -866,8 +873,9 @@ class parser(object):
                             ymd.append(value)
                         i += 1
 
-                    elif info.ampm(l[i]) is not None:
+                    elif info.ampm(l[i+1]) is not None:
                         # 12am
+                        i += 1
                         hour = int(value)
                         res.hour = _adjust_ampm(hour, info.ampm(l[i]))
                         i += 1
@@ -936,9 +944,9 @@ class parser(object):
                     continue
 
                 # Check for a timezone name
-                if (res.hour is not None and len(l[i]) <= 5 and
-                        res.tzname is None and res.tzoffset is None and
-                        all(x in string.ascii_uppercase for x in l[i])):
+                if (res.hour is not None and len(l[i]) <= 5
+                    and res.tzname is None and res.tzoffset is None
+                    and all(x in string.ascii_uppercase for x in l[i])):
                     res.tzname = l[i]
                     res.tzoffset = info.tzoffset(res.tzname)
 
