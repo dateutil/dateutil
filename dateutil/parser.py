@@ -771,10 +771,7 @@ class parser(object):
                                     res.minute = int(60*(value % 1))
 
                             elif idx == 1:
-                                res.minute = int(value)
-
-                                if value % 1:
-                                    res.second = int(60*(value % 1))
+                                (res.minute, res.second) = _parse_min_sec(value)
 
                             elif idx == 2:
                                 res.second, res.microsecond = \
@@ -807,11 +804,7 @@ class parser(object):
                         idx = info.hms(l[i-3])
 
                         if idx == 0:               # h
-                            res.minute = int(value)
-
-                            sec_remainder = value % 1
-                            if sec_remainder:
-                                res.second = int(60 * sec_remainder)
+                            (res.minute, res.second) = _parse_min_sec(value)
                         elif idx == 1:             # m
                             res.second, res.microsecond = \
                                 _parsems(value_repr)
@@ -825,10 +818,7 @@ class parser(object):
                         res.hour = int(value)
                         i += 1
                         value = float(l[i])
-                        res.minute = int(value)
-
-                        if value % 1:
-                            res.second = int(60*(value % 1))
+                        (res.minute, res.second) = _parse_min_sec(value)
 
                         i += 1
 
@@ -1356,6 +1346,16 @@ DEFAULTTZPARSER = _tzparser()
 def _parsetz(tzstr):
     return DEFAULTTZPARSER.parse(tzstr)
 
+
+
+def _parse_min_sec(value):
+    minute = int(value)
+    second = None
+
+    sec_remainder = value % 1
+    if sec_remainder:
+        second = int(60 * sec_remainder)
+    return (minute, second)
 
 def _parsems(value):
     """Parse a I[.F] seconds value into (seconds, microseconds)."""
