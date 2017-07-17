@@ -925,30 +925,7 @@ class parser(object):
                 # Check am/pm
                 value = info.ampm(l[i])
                 if value is not None:
-                    # For fuzzy parsing, 'a' or 'am' (both valid English words)
-                    # may erroneously trigger the AM/PM flag. Deal with that
-                    # here.
-                    val_is_ampm = True
-
-                    # If there's already an AM/PM flag, this one isn't one.
-                    if fuzzy and res.ampm is not None:
-                        val_is_ampm = False
-
-                    # If AM/PM is found and hour is not, raise a ValueError
-                    if res.hour is None:
-                        if fuzzy:
-                            val_is_ampm = False
-                        else:
-                            raise ValueError('No hour specified with ' +
-                                             'AM or PM flag.')
-                    elif not 0 <= res.hour <= 12:
-                        # If AM/PM is found, it's a 12 hour clock, so raise
-                        # an error for invalid range
-                        if fuzzy:
-                            val_is_ampm = False
-                        else:
-                            raise ValueError('Invalid hour specified for ' +
-                                             '12-hour clock.')
+                    val_is_ampm = _ampm_validity(res.hour, res.ampm, fuzzy)
 
                     if val_is_ampm:
                         res.hour = _adjust_ampm(res.hour, value)
@@ -1332,6 +1309,35 @@ DEFAULTTZPARSER = _tzparser()
 
 def _parsetz(tzstr):
     return DEFAULTTZPARSER.parse(tzstr)
+
+
+def _ampm_validity(hour, ampm, fuzzy):
+    """
+    For fuzzy parsing, 'a' or 'am' (both valid English words)
+    may erroneously trigger the AM/PM flag. Deal with that
+    here.
+    """
+    val_is_ampm = True
+
+    # If there's already an AM/PM flag, this one isn't one.
+    if fuzzy and ampm is not None:
+        val_is_ampm = False
+
+    # If AM/PM is found and hour is not, raise a ValueError
+    if hour is None:
+        if fuzzy:
+            val_is_ampm = False
+        else:
+            raise ValueError('No hour specified with AM or PM flag.')
+    elif not 0 <= hour <= 12:
+        # If AM/PM is found, it's a 12 hour clock, so raise
+        # an error for invalid range
+        if fuzzy:
+            val_is_ampm = False
+        else:
+            raise ValueError('Invalid hour specified for 12-hour clock.')
+
+    return val_is_ampm
 
 
 def _adjust_ampm(hour, ampm):
