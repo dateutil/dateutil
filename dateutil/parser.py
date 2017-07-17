@@ -940,8 +940,7 @@ class parser(object):
                 # Check for a timezone name
                 if (res.hour is not None and len(l[i]) <= 5 and
                         res.tzname is None and res.tzoffset is None and
-                        not [x for x in l[i] if x not in
-                             string.ascii_uppercase]):
+                        all(x in string.ascii_uppercase for x in l[i])):
                     res.tzname = l[i]
                     res.tzoffset = info.tzoffset(res.tzname)
                     i += 1
@@ -987,8 +986,7 @@ class parser(object):
                     if (i+3 < len_l and
                         info.jump(l[i]) and l[i+1] == '(' and l[i+3] == ')' and
                         3 <= len(l[i+2]) <= 5 and
-                        not [x for x in l[i+2]
-                             if x not in string.ascii_uppercase]):
+                        all(x in string.ascii_uppercase for x in l[i+2])):
                         # -0300 (BRST)
                         res.tzname = l[i+2]
                         i += 4
