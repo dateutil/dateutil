@@ -716,20 +716,19 @@ class parser(object):
                     if (len(ymd) == 3 and len_li in (2, 4)
                         and res.hour is None and (i+1 >= len_l or (l[i+1] != ':' and
                                                   info.hms(l[i+1]) is None))):
-                        i += 1
                         # 19990101T23[59]
-                        s = l[i-1]
+                        s = l[i]
                         res.hour = int(s[:2])
 
                         if len_li == 4:
                             res.minute = int(s[2:])
+                        i += 1
 
                     elif len_li == 6 or (len_li > 6 and l[i].find('.') == 6):
-                        i += 1
                         # YYMMDD or HHMMSS[.ss]
-                        s = l[i-1]
+                        s = l[i]
 
-                        if not ymd and l[i-1].find('.') == -1:
+                        if not ymd and l[i].find('.') == -1:
                             #ymd.append(info.convertyear(int(s[:2])))
 
                             ymd.append(s[:2])
@@ -740,11 +739,11 @@ class parser(object):
                             res.hour = int(s[:2])
                             res.minute = int(s[2:4])
                             res.second, res.microsecond = _parsems(s[4:])
+                        i += 1
 
                     elif len_li in (8, 12, 14):
-                        i += 1
                         # YYYYMMDD
-                        s = l[i-1]
+                        s = l[i]
                         ymd.append(s[:4])
                         ymd.append(s[4:6])
                         ymd.append(s[6:8])
@@ -755,17 +754,17 @@ class parser(object):
 
                             if len_li > 12:
                                 res.second = int(s[12:])
+                        i += 1
 
                     elif ((i+1 < len_l and info.hms(l[i+1]) is not None)
                         or (i+2 < len_l and l[i+1] == ' ' and info.hms(l[i+2]) is not None)
                             ):
-                        i += 1
-
                         # HH[ ]h or MM[ ]m or SS[.ss][ ]s
-                        if l[i] == ' ':
+                        if l[i+1] == ' ':
                             i += 1
 
-                        idx = info.hms(l[i])
+                        idx = info.hms(l[i+1])
+                        i += 1
 
                         while True:
                             if idx == 0:
@@ -801,84 +800,79 @@ class parser(object):
                                         idx = newidx
 
                     elif (i+1 == len_l and l[i-1] == ' ' and info.hms(l[i-2]) is not None):
-                        i += 1
                         # X h MM or X m SS
-                        idx = info.hms(l[i-3])
+                        idx = info.hms(l[i-2])
 
                         if idx == 0:               # h
                             (res.minute, res.second) = _parse_min_sec(value)
                         elif idx == 1:             # m
                             res.second, res.microsecond = _parsems(value_repr)
 
+                        i += 1
                         # We don't need to advance the tokens here because the
                         # i == len_l call indicates that we're looking at all
                         # the tokens already.
 
                     elif i+2 < len_l and l[i+1] == ':':
-                        i += 1
                         # HH:MM[:SS[.ss]]
                         res.hour = int(value)
-                        i += 1
-                        value = float(l[i])
+                        value = float(l[i+2])
                         (res.minute, res.second) = _parse_min_sec(value)
 
-                        i += 1
-
-                        if i < len_l and l[i] == ':':
-                            res.second, res.microsecond = _parsems(l[i+1])
+                        if i+3 < len_l and l[i+3] == ':':
+                            res.second, res.microsecond = _parsems(l[i+4])
                             i += 2
 
-                    elif i+1 < len_l and l[i+1] in ('-', '/', '.'):
-                        i += 1
-                        sep = l[i]
-                        ymd.append(value_repr)
-                        i += 1
+                        i += 3
 
-                        if i < len_l and not info.jump(l[i]):
+                    elif i+1 < len_l and l[i+1] in ('-', '/', '.'):
+                        sep = l[i+1]
+                        ymd.append(value_repr)
+
+                        if i+2 < len_l and not info.jump(l[i+2]):
                             try:
                                 # 01-01[-01]
-                                ymd.append(l[i])
+                                ymd.append(l[i+2])
                             except ValueError:
                                 # 01-Jan[-01]
-                                value = info.month(l[i])
+                                value = info.month(l[i+2])
 
                                 if value is not None:
                                     ymd.append(value, 'M')
                                 else:
                                     return None, None
 
-                            i += 1
-
-                            if i < len_l and l[i] == sep:
+                            if i+3 < len_l and l[i+3] == sep:
                                 # We have three members
-                                i += 1
-                                value = info.month(l[i])
+                                value = info.month(l[i+4])
 
                                 if value is not None:
                                     ymd.append(value, 'M')
                                 else:
-                                    ymd.append(l[i])
+                                    ymd.append(l[i+4])
+                                i += 2
 
-                                i += 1
+                            i += 3
+
+                        else:
+                            i += 2
 
                     elif i+1 >= len_l or info.jump(l[i+1]):
-                        i += 1
-                        if i+1 < len_l and info.ampm(l[i+1]) is not None:
+                        if i+2 < len_l and info.ampm(l[i+2]) is not None:
                             # 12 am
                             hour = int(value)
-                            res.hour = _adjust_ampm(hour, info.ampm(l[i+1]))
+                            res.hour = _adjust_ampm(hour, info.ampm(l[i+2]))
                             i += 1
                         else:
                             # Year, month or day
                             ymd.append(value)
-                        i += 1
+                        i += 2
 
                     elif info.ampm(l[i+1]) is not None:
                         # 12am
-                        i += 1
                         hour = int(value)
-                        res.hour = _adjust_ampm(hour, info.ampm(l[i]))
-                        i += 1
+                        res.hour = _adjust_ampm(hour, info.ampm(l[i+1]))
+                        i += 2
 
                     elif not fuzzy:
                         return None, None
