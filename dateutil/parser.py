@@ -941,21 +941,21 @@ class parser(object):
                         all(x in string.ascii_uppercase for x in l[i])):
                     res.tzname = l[i]
                     res.tzoffset = info.tzoffset(res.tzname)
-                    i += 1
 
                     # Check for something like GMT+3, or BRST+3. Notice
                     # that it doesn't mean "I am 3 hours after GMT", but
                     # "my time +3 is GMT". If found, we reverse the
                     # logic so that timezone parsing code will get it
                     # right.
-                    if i < len_l and l[i] in ('+', '-'):
-                        l[i] = ('+', '-')[l[i] == '+']
+                    if i+1 < len_l and l[i+1] in ('+', '-'):
+                        l[i+1] = ('+', '-')[l[i+1] == '+']
                         res.tzoffset = None
                         if info.utczone(res.tzname):
                             # With something like GMT+3, the timezone
                             # is *not* GMT.
                             res.tzname = None
 
+                    i += 1
                     continue
 
                 # Check for a numbered timezone
