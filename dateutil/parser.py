@@ -674,10 +674,7 @@ class parser(object):
         res = self._result()
         l = _timelex.split(timestr)         # Splits the timestr into tokens
 
-        # keep up with the last token skipped so we can recombine
-        # consecutively skipped tokens (-2 for when i begins at 0).
-        last_skipped_token_i = -2
-        skipped_tokens = []
+        skipped_idxs = set()
 
         try:
             # year/month/day list
@@ -973,8 +970,8 @@ class parser(object):
                         res.ampm = value
 
                     elif fuzzy:
-                        last_skipped_token_i = self._skip_token(skipped_tokens,
-                                                    last_skipped_token_i, i, l)
+                        skipped_idxs.add(i)
+
                     i += 1
                     continue
 
@@ -1039,8 +1036,7 @@ class parser(object):
                 if not (info.jump(l[i]) or fuzzy):
                     return None, None
 
-                last_skipped_token_i = self._skip_token(skipped_tokens,
-                                                last_skipped_token_i, i, l)
+                skipped_idxs.add(i)
                 i += 1
 
             # Process year/month/day
@@ -1062,20 +1058,11 @@ class parser(object):
             return None, None
 
         if fuzzy_with_tokens:
+            skipped_tokens = _recombine_skipped(l, skipped_idxs)
             return res, tuple(skipped_tokens)
         else:
             return res, None
 
-    @staticmethod
-    def _skip_token(skipped_tokens, last_skipped_token_i, i, l):
-        if last_skipped_token_i == i - 1:
-            # recombine the tokens
-            skipped_tokens[-1] += l[i]
-        else:
-            # just append
-            skipped_tokens.append(l[i])
-        last_skipped_token_i = i
-        return last_skipped_token_i
 
 
 DEFAULTPARSER = parser()
@@ -1370,5 +1357,21 @@ def _parsems(value):
         i, f = value.split(".")
         return int(i), int(f.ljust(6, "0")[:6])
 
+def _recombine_skipped(tokens, skipped_idxs):
+    """
+
+    >>> tokens = ["foo", " ", "bar", " ", "19June2000", "baz"]
+    >>> skipped_idxs = set([0, 1, 2, 5])
+    >>> _recombine_skipped(tokens, skipped_idxs)
+    ["foo bar", "baz"]
+
+    """
+    skipped_tokens = []
+    for idx in sorted(list(skipped_idxs)):
+        if idx-1 in skipped_idxs:
+            skipped_tokens[-1] = skipped_tokens[-1] + tokens[idx]
+        else:
+            skipped_tokens.append(tokens[idx])
+    return skipped_tokens
 
 # vim:ts=4:sw=4:et
