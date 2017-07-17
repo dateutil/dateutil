@@ -755,8 +755,8 @@ class parser(object):
                                 res.second = int(s[12:])
 
                     elif ((i < len_l and info.hms(l[i]) is not None) or
-                          (i+1 < len_l and l[i] == ' ' and
-                           info.hms(l[i+1]) is not None)):
+                          (i+1 < len_l and l[i] == ' ' and info.hms(l[i+1]) is not None)
+                          ):
 
                         # HH[ ]h or MM[ ]m or SS[.ss][ ]s
                         if l[i] == ' ':
@@ -767,7 +767,6 @@ class parser(object):
                         while True:
                             if idx == 0:
                                 res.hour = int(value)
-
                                 if value % 1:
                                     res.minute = int(60*(value % 1))
 
@@ -775,8 +774,7 @@ class parser(object):
                                 (res.minute, res.second) = _parse_min_sec(value)
 
                             elif idx == 2:
-                                res.second, res.microsecond = \
-                                    _parsems(value_repr)
+                                (res.second, res.microsecond) = _parsems(value_repr)
 
                             i += 1
 
@@ -799,8 +797,7 @@ class parser(object):
                                     if newidx is not None:
                                         idx = newidx
 
-                    elif (i == len_l and l[i-2] == ' ' and
-                          info.hms(l[i-3]) is not None):
+                    elif (i == len_l and l[i-2] == ' ' and info.hms(l[i-3]) is not None):
                         # X h MM or X m SS
                         idx = info.hms(l[i-3])
 
@@ -857,6 +854,7 @@ class parser(object):
                                     ymd.append(l[i])
 
                                 i += 1
+
                     elif i >= len_l or info.jump(l[i]):
                         if i+1 < len_l and info.ampm(l[i+1]) is not None:
                             # 12 am
@@ -867,8 +865,8 @@ class parser(object):
                             # Year, month or day
                             ymd.append(value)
                         i += 1
-                    elif info.ampm(l[i]) is not None:
 
+                    elif info.ampm(l[i]) is not None:
                         # 12am
                         hour = int(value)
                         res.hour = _adjust_ampm(hour, info.ampm(l[i]))
@@ -1347,6 +1345,9 @@ def _adjust_ampm(hour, ampm):
 
 
 def _parse_min_sec(value):
+    # TODO: Every usage of this function sets res.second to the return value.
+    # Are there any cases where second will be returned as None and we *dont*
+    # want to set res.second = None?
     minute = int(value)
     second = None
 
