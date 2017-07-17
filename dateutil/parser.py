@@ -59,8 +59,10 @@ class _timelex(object):
 
             if not hasattr(instream, 'read'):
                 raise TypeError(
-                    'Parser must be a string or character stream, not '
-                    '{itype}'.format(itype=instream.__class__.__name__)
+                    'Parser must be a character stream, a string, or '
+                    'decodable to a string, not {itype}'.format(
+                        itype=instream.__class__.__name__
+                    )
                 )
 
         self.instream = instream
