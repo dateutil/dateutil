@@ -764,7 +764,6 @@ class parser(object):
                             i += 1
 
                         idx = info.hms(l[i+1])
-                        i += 1
 
                         while True:
                             if idx == 0:
@@ -780,12 +779,12 @@ class parser(object):
 
                             i += 1
 
-                            if i >= len_l or idx == 2:
+                            if i+1 >= len_l or idx == 2:
                                 break
 
                             # 12h00
                             try:
-                                value_repr = l[i]
+                                value_repr = l[i+1]
                                 value = float(value_repr)
                             except ValueError:
                                 break
@@ -793,11 +792,13 @@ class parser(object):
                                 i += 1
                                 idx += 1
 
-                                if i < len_l:
-                                    newidx = info.hms(l[i])
+                                if i+1 < len_l:
+                                    newidx = info.hms(l[i+1])
 
                                     if newidx is not None:
                                         idx = newidx
+
+                        i += 1
 
                     elif (i+1 == len_l and l[i-1] == ' ' and info.hms(l[i-2]) is not None):
                         # X h MM or X m SS
@@ -853,7 +854,6 @@ class parser(object):
                                 i += 2
 
                             i += 3
-
                         else:
                             i += 2
 
