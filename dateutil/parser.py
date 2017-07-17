@@ -617,21 +617,7 @@ class parser(object):
         if not ignoretz:
             if (isinstance(tzinfos, collections.Callable) or
                     tzinfos and res.tzname in tzinfos):
-
-                if isinstance(tzinfos, collections.Callable):
-                    tzdata = tzinfos(res.tzname, res.tzoffset)
-                else:
-                    tzdata = tzinfos.get(res.tzname)
-
-                if isinstance(tzdata, datetime.tzinfo):
-                    tzinfo = tzdata
-                elif isinstance(tzdata, text_type):
-                    tzinfo = tz.tzstr(tzdata)
-                elif isinstance(tzdata, integer_types):
-                    tzinfo = tz.tzoffset(res.tzname, tzdata)
-                else:
-                    raise ValueError("Offset must be tzinfo subclass, "
-                                     "tz string, or int offset.")
+                tzinfo = _build_tzinfo(tzinfos, res.tzname, res.tzoffset)
                 ret = ret.replace(tzinfo=tzinfo)
             elif res.tzname and res.tzname in time.tzname:
                 ret = ret.replace(tzinfo=tz.tzlocal())
@@ -1395,5 +1381,23 @@ def _recombine_skipped(tokens, skipped_idxs):
         else:
             skipped_tokens.append(tokens[idx])
     return skipped_tokens
+
+
+def _build_tzinfo(tzinfos, tzname, tzoffset):
+    if isinstance(tzinfos, collections.Callable):
+        tzdata = tzinfos(tzname, tzoffset)
+    else:
+        tzdata = tzinfos.get(tzname)
+
+    if isinstance(tzdata, datetime.tzinfo):
+        tzinfo = tzdata
+    elif isinstance(tzdata, text_type):
+        tzinfo = tz.tzstr(tzdata)
+    elif isinstance(tzdata, integer_types):
+        tzinfo = tz.tzoffset(tzname, tzdata)
+    else:
+        raise ValueError("Offset must be tzinfo subclass, "
+                         "tz string, or int offset.")
+    return tzinfo
 
 # vim:ts=4:sw=4:et
