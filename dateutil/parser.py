@@ -878,49 +878,49 @@ class parser(object):
                         return None, None
                     else:
                         i += 1
-                    continue
 
                 # Check weekday
                 elif info.weekday(l[i]) is not None:
                     value = info.weekday(l[i])
                     res.weekday = value
                     i += 1
-                    continue
 
                 # Check month name
                 elif info.month(l[i]) is not None:
                     value = info.month(l[i])
                     ymd.append(value, 'M')
 
-                    i += 1
-                    if i < len_l:
-                        if l[i] in ('-', '/'):
+                    if i+1 < len_l:
+                        if l[i+1] in ('-', '/'):
                             # Jan-01[-99]
-                            sep = l[i]
-                            i += 1
-                            ymd.append(l[i])
-                            i += 1
+                            sep = l[i+1]
+                            ymd.append(l[i+2])
 
-                            if i < len_l and l[i] == sep:
+                            if i+3 < len_l and l[i+3] == sep:
                                 # Jan-01-99
-                                i += 1
-                                ymd.append(l[i])
-                                i += 1
+                                ymd.append(l[i+4])
+                                i += 5
+                            else:
+                                i += 3
 
-                        elif (i+3 < len_l and l[i] == l[i+2] == ' '
-                              and info.pertain(l[i+1])):
+                        elif (i+4 < len_l and l[i+1] == l[i+3] == ' '
+                              and info.pertain(l[i+2])):
                             # Jan of 01
                             # In this case, 01 is clearly year
                             try:
-                                value = int(l[i+3])
+                                value = int(l[i+4])
                             except ValueError:
                                 # Wrong guess
                                 pass
                             else:
                                 # Convert it here to become unambiguous
                                 ymd.append(str(info.convertyear(value)))
-                            i += 4
-                    continue
+                            i += 5
+
+                        else:
+                            i += 1
+                    else:
+                        i += 1
 
                 # Check am/pm
                 elif info.ampm(l[i]) is not None:
@@ -935,7 +935,6 @@ class parser(object):
                         skipped_idxs.add(i)
 
                     i += 1
-                    continue
 
                 # Check for a timezone name
                 elif (res.hour is not None and len(l[i]) <= 5
@@ -958,7 +957,6 @@ class parser(object):
                             res.tzname = None
 
                     i += 1
-                    continue
 
                 # Check for a numbered timezone
                 elif res.hour is not None and l[i] in ('+', '-'):
@@ -989,7 +987,6 @@ class parser(object):
                         # -0300 (BRST)
                         res.tzname = l[i+2]
                         i += 4
-                    continue
 
                 # Check jumps
                 elif not (info.jump(l[i]) or fuzzy):
