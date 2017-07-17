@@ -777,26 +777,27 @@ class parser(object):
                             elif idx == 2:
                                 (res.second, res.microsecond) = _parsems(value_repr)
 
-                            i += 1
 
-                            if i+1 >= len_l or idx == 2:
+                            if i+2 >= len_l or idx == 2:
+                                i += 1
                                 break
 
                             # 12h00
                             try:
-                                value_repr = l[i+1]
+                                value_repr = l[i+2]
                                 value = float(value_repr)
                             except ValueError:
+                                i += 1
                                 break
                             else:
-                                i += 1
                                 idx += 1
 
-                                if i+1 < len_l:
-                                    newidx = info.hms(l[i+1])
+                                if i+3 < len_l:
+                                    newidx = info.hms(l[i+3])
 
                                     if newidx is not None:
                                         idx = newidx
+                                i += 2
 
                         i += 1
 
@@ -912,6 +913,7 @@ class parser(object):
                             except ValueError:
                                 # Wrong guess
                                 pass
+                                # TODO: not hit in tests
                             else:
                                 # Convert it here to become unambiguous
                                 ymd.append(str(info.convertyear(value)))
@@ -1315,6 +1317,8 @@ class ProgrammingError(AssertionError):
     Since an AssertionError is useful a user, a ProgrammingError clarifies
     that they should file a bug report.
     """
+
+
 
 def _ampm_validity(hour, ampm, fuzzy):
     """
