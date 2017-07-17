@@ -376,6 +376,21 @@ class _ymd(list):
         super(self.__class__, self).__init__(*args, **kwargs)
         self.century_specified = False
         self.tzstr = tzstr
+        self.dstridx = None
+        self.mstridx = None
+        self.ystridx = None
+
+    @property
+    def has_year(self):
+        return self.ystridx is not None
+
+    @property
+    def has_month(self):
+        return self.mstridx is not None
+
+    @property
+    def has_day(self):
+        return self.dstridx is not None
 
     @staticmethod
     def token_could_be_year(token, year):
@@ -398,7 +413,7 @@ class _ymd(list):
             if len(potential_year_tokens) == 1 and len(potential_year_tokens[0]) > 2:
                 return index
 
-    def append(self, val):
+    def append(self, val, label=None):
         if hasattr(val, '__len__'):
             if val.isdigit() and len(val) > 2:
                 self.century_specified = True
@@ -407,19 +422,35 @@ class _ymd(list):
 
         super(self.__class__, self).append(int(val))
 
-    def resolve_ymd(self, mstridx, yearfirst, dayfirst):
+        if label == 'M':
+            if self.has_month:
+                raise ValueError('Month is already set')
+            self.mstridx = len(self) - 1
+        elif label == 'D':
+            if self.has_day:
+                raise ValueError('Day is already set')
+            self.dstridx = len(self) - 1
+        elif label == 'Y':
+            if self.has_year:
+                raise ValueError('Year is already set')
+            self.ystridx = len(self) - 1
+
+
+    def resolve_ymd(self, yearfirst, dayfirst):
         len_ymd = len(self)
         year, month, day = (None, None, None)
 
+        mstridx = self.mstridx
+
         if len_ymd > 3:
             raise ValueError("More than three YMD values")
-        elif len_ymd == 1 or (mstridx != -1 and len_ymd == 2):
+        elif len_ymd == 1 or (mstridx is not None and len_ymd == 2):
             # One member, or two members with a month string
-            if mstridx != -1:
+            if mstridx is not None:
                 month = self[mstridx]
                 del self[mstridx]
 
-            if len_ymd > 1 or mstridx == -1:
+            if len_ymd > 1 or mstridx is None:
                 if self[0] > 31:
                     year = self[0]
                 else:
@@ -680,9 +711,6 @@ class parser(object):
             # year/month/day list
             ymd = _ymd(timestr)
 
-            # Index of the month string in ymd
-            mstridx = -1
-
             len_l = len(l)
             i = 0
             while i < len_l:
@@ -836,9 +864,7 @@ class parser(object):
                                 value = info.month(l[i])
 
                                 if value is not None:
-                                    ymd.append(value)
-                                    assert mstridx == -1
-                                    mstridx = len(ymd)-1
+                                    ymd.append(value, 'M')
                                 else:
                                     return None, None
 
@@ -850,9 +876,7 @@ class parser(object):
                                 value = info.month(l[i])
 
                                 if value is not None:
-                                    ymd.append(value)
-                                    assert mstridx == -1
-                                    mstridx = len(ymd)-1
+                                    ymd.append(value, 'M')
                                 else:
                                     ymd.append(l[i])
 
@@ -899,9 +923,7 @@ class parser(object):
                 # Check month name
                 value = info.month(l[i])
                 if value is not None:
-                    ymd.append(value)
-                    assert mstridx == -1
-                    mstridx = len(ymd)-1
+                    ymd.append(value, 'M')
 
                     i += 1
                     if i < len_l:
@@ -1040,7 +1062,7 @@ class parser(object):
                 i += 1
 
             # Process year/month/day
-            year, month, day = ymd.resolve_ymd(mstridx, yearfirst, dayfirst)
+            year, month, day = ymd.resolve_ymd(yearfirst, dayfirst)
             if year is not None:
                 res.year = year
                 res.century_specified = ymd.century_specified
