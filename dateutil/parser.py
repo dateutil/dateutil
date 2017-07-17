@@ -690,15 +690,16 @@ class parser(object):
 
         res = self._result()
         l = _timelex.split(timestr)         # Splits the timestr into tokens
+        tokens = l # alias that is easier to grep
 
         skipped_idxs = set()
 
-        try:
-            # year/month/day list
-            ymd = _ymd(timestr)
+        # year/month/day list
+        ymd = _ymd(timestr)
 
-            len_l = len(l)
-            i = 0
+        len_l = len(l)
+        i = 0
+        try:
             while i < len_l:
 
                 # Check if it's a number
@@ -806,8 +807,7 @@ class parser(object):
                         if idx == 0:               # h
                             (res.minute, res.second) = _parse_min_sec(value)
                         elif idx == 1:             # m
-                            res.second, res.microsecond = \
-                                _parsems(value_repr)
+                            res.second, res.microsecond = _parsems(value_repr)
 
                         # We don't need to advance the tokens here because the
                         # i == len_l call indicates that we're looking at all
