@@ -194,6 +194,7 @@ class rrulebase(object):
         """ Returns the last recurrence before the given datetime instance. The
             inc keyword defines what happens if dt is an occurrence. With
             inc=True, if dt itself is an occurrence, it will be returned. """
+        dt = self._event_wrapper(dt)
         if self._cache_complete:
             gen = self._cache
         else:
@@ -201,12 +202,12 @@ class rrulebase(object):
         last = None
         if inc:
             for i in gen:
-                if i > self._event_wrapper(dt):
+                if i > dt:
                     break
                 last = i
         else:
             for i in gen:
-                if i >= self._event_wrapper(dt):
+                if i >= dt:
                     break
                 last = i
         return last
@@ -215,17 +216,18 @@ class rrulebase(object):
         """ Returns the first recurrence after the given datetime instance. The
             inc keyword defines what happens if dt is an occurrence. With
             inc=True, if dt itself is an occurrence, it will be returned.  """
+        dt = self._event_wrapper(dt)
         if self._cache_complete:
             gen = self._cache
         else:
             gen = self
         if inc:
             for i in gen:
-                if i >= self._event_wrapper(dt):
+                if i >= dt:
                     return i
         else:
             for i in gen:
-                if i > self._event_wrapper(dt):
+                if i > dt:
                     return i
         return None
 
@@ -247,6 +249,7 @@ class rrulebase(object):
 
         :yields: Yields a sequence of `datetime` objects.
         """
+        dt = self._event_wrapper(dt)
 
         if self._cache_complete:
             gen = self._cache
@@ -262,7 +265,7 @@ class rrulebase(object):
         # Generate dates
         n = 0
         for d in gen:
-            if comp(d, self._event_wrapper(dt)):
+            if comp(d, dt):
                 if count is not None:
                     n += 1
                     if n > count:
