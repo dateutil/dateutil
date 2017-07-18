@@ -998,15 +998,12 @@ class parser(object):
 
             # Process year/month/day
             year, month, day = ymd.resolve_ymd(yearfirst, dayfirst)
-            if year is not None:
-                res.year = year
-                res.century_specified = ymd.century_specified
 
-            if month is not None:
-                res.month = month
+            res.century_specified = ymd.century_specified
+            res.year = year
+            res.month = month
+            res.day = day
 
-            if day is not None:
-                res.day = day
 
         except (IndexError, ValueError, AssertionError):
             return None, None
