@@ -721,8 +721,11 @@ class parser(object):
                     len_li = len(l[i])
 
                     if (len(ymd) == 3 and len_li in (2, 4)
-                        and res.hour is None and (i+1 >= len_l or (l[i+1] != ':' and
-                                                  info.hms(l[i+1]) is None))):
+                        and res.hour is None
+                        and (i+1 >= len_l
+                            or (l[i+1] != ':' and info.hms(l[i+1]) is None)
+                            )
+                        ):
                         # 19990101T23[59]
                         s = l[i]
                         res.hour = int(s[:2])
@@ -742,7 +745,7 @@ class parser(object):
                             ymd.append(s[4:])
                         else:
                             # 19990101T235959[.59]
-                            res.hour = int(s[:2])
+                            res.hour = int(s[:2]) # TODO: not checking that res.hour is not already set?
                             res.minute = int(s[2:4])
                             res.second, res.microsecond = _parsems(s[4:])
 
@@ -834,10 +837,10 @@ class parser(object):
                         ymd.append(value_repr)
 
                         if i+2 < len_l and not info.jump(l[i+2]):
-                            try:
+                            if l[i+2].isdigit():
                                 # 01-01[-01]
                                 ymd.append(l[i+2])
-                            except ValueError:
+                            else:
                                 # 01-Jan[-01]
                                 value = info.month(l[i+2])
 
@@ -1316,7 +1319,7 @@ class ProgrammingError(AssertionError):
 
 
 
-# TODO: requre len(toekn) >= 3 like we do for the between-parens version?
+# TODO: requre len(token) >= 3 like we do for the between-parens version?
 # do some other validation here instead of putting it off?  As of now, "Q"
 # will be accepted as a timezone...
 def _could_be_tzname(hour, tzname, tzoffset, token):
@@ -1377,6 +1380,7 @@ def _parse_min_sec(value):
         second = int(60 * sec_remainder)
     return (minute, second)
 
+
 def _parsems(value):
     """Parse a I[.F] seconds value into (seconds, microseconds)."""
     if "." not in value:
@@ -1384,6 +1388,7 @@ def _parsems(value):
     else:
         i, f = value.split(".")
         return int(i), int(f.ljust(6, "0")[:6])
+
 
 def _recombine_skipped(tokens, skipped_idxs):
     """
