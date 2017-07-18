@@ -201,12 +201,12 @@ class rrulebase(object):
         last = None
         if inc:
             for i in gen:
-                if i > dt:
+                if i > self._event_wrapper(dt):
                     break
                 last = i
         else:
             for i in gen:
-                if i >= dt:
+                if i >= self._event_wrapper(dt):
                     break
                 last = i
         return last
@@ -221,11 +221,11 @@ class rrulebase(object):
             gen = self
         if inc:
             for i in gen:
-                if i >= dt:
+                if i >= self._event_wrapper(dt):
                     return i
         else:
             for i in gen:
-                if i > dt:
+                if i > self._event_wrapper(dt):
                     return i
         return None
 
@@ -262,7 +262,7 @@ class rrulebase(object):
         # Generate dates
         n = 0
         for d in gen:
-            if comp(d, dt):
+            if comp(d, self._event_wrapper(dt):
                 if count is not None:
                     n += 1
                     if n > count:
