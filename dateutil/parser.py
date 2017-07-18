@@ -767,44 +767,8 @@ class parser(object):
                         or (i+2 < len_l and l[i+1] == ' ' and info.hms(l[i+2]) is not None)
                             ):
                         # HH[ ]h or MM[ ]m or SS[.ss][ ]s
-                        if l[i+1] == ' ':
-                            i += 1
+                        i = _parse_hms(i, l, info, res)
 
-                        idx = info.hms(l[i+1])
-
-                        while True:
-                            if idx == 0:
-                                res.hour = int(value)
-                                if value % 1:
-                                    res.minute = int(60*(value % 1))
-
-                            elif idx == 1:
-                                (res.minute, res.second) = _parse_min_sec(value)
-
-                            elif idx == 2:
-                                (res.second, res.microsecond) = _parsems(value_repr)
-
-
-                            if i+2 >= len_l or idx == 2:
-                                i += 1
-                                break
-
-                            # 12h00
-                            try:
-                                value_repr = l[i+2]
-                                value = float(value_repr)
-                            except ValueError:
-                                i += 1
-                                break
-                            else:
-                                idx += 1
-
-                                if i+3 < len_l:
-                                    newidx = info.hms(l[i+3])
-
-                                    if newidx is not None:
-                                        idx = newidx
-                                i += 2
 
 
                     elif (i+1 == len_l and l[i-1] == ' ' and info.hms(l[i-2]) is not None):
@@ -1317,6 +1281,57 @@ class ProgrammingError(AssertionError):
     """
 
 
+def _parse_hms(i, l, info, res):
+    # TODO: This is still a mess.  Can we make this recursive instead of
+    # using a while loop?
+    len_l = len(l)
+
+    if ((i+1 < len_l and info.hms(l[i+1]) is not None)
+        or (i+2 < len_l and l[i+1] == ' ' and info.hms(l[i+2]) is not None)
+            ):
+        # HH[ ]h or MM[ ]m or SS[.ss][ ]s
+
+        value_repr = l[i]
+        value = float(value_repr)
+
+        if l[i+1] == ' ':
+            i += 1
+
+        idx = info.hms(l[i+1])
+        while True:
+            if idx == 0:
+                res.hour = int(value)
+                if value % 1:
+                    res.minute = int(60*(value % 1))
+
+            elif idx == 1:
+                (res.minute, res.second) = _parse_min_sec(value)
+
+            elif idx == 2:
+                (res.second, res.microsecond) = _parsems(value_repr)
+
+
+            if i+2 >= len_l or idx == 2:
+                i += 1
+                break
+
+            # 12h00
+            try:
+                value_repr = l[i+2]
+                value = float(value_repr)
+            except ValueError:
+                i += 1
+                break
+            else:
+                idx += 1
+
+                if i+3 < len_l:
+                    newidx = info.hms(l[i+3])
+
+                    if newidx is not None:
+                        idx = newidx
+                i += 2
+    return i
 
 
 # TODO: requre len(token) >= 3 like we do for the between-parens version?
