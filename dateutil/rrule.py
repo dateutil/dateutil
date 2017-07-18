@@ -283,7 +283,7 @@ class rrulebase(object):
         l = []
         if inc:
             for i in gen:
-                if i > before:
+                if i > self._event_wrapper(before):
                     break
                 elif not started:
                     if i >= self._event_wrapper(after):
