@@ -262,7 +262,7 @@ class rrulebase(object):
         # Generate dates
         n = 0
         for d in gen:
-            if comp(d, self._event_wrapper(dt):
+            if comp(d, self._event_wrapper(dt)):
                 if count is not None:
                     n += 1
                     if n > count:
