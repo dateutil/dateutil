@@ -907,15 +907,15 @@ class parser(object):
                               and info.pertain(l[i+2])):
                             # Jan of 01
                             # In this case, 01 is clearly year
-                            try:
+                            if l[i+4].isdigit():
+                                # Convert it here to become unambiguous
                                 value = int(l[i+4])
-                            except ValueError:
+                                year = str(info.convertyear(value))
+                                ymd.append(year, 'Y')
+                            else:
                                 # Wrong guess
                                 pass
                                 # TODO: not hit in tests
-                            else:
-                                # Convert it here to become unambiguous
-                                ymd.append(str(info.convertyear(value)), 'Y')
                             i += 4
 
 
@@ -957,6 +957,7 @@ class parser(object):
                     signal = (-1, 1)[l[i] == '+']
                     len_li = len(l[i+1])
 
+                    # TODO: check that l[i+1] is integer?
                     if len_li == 4:
                         # -0300
                         hour_offset = int(l[i+1][:2])
