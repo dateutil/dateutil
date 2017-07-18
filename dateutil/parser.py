@@ -825,7 +825,7 @@ class parser(object):
                         value = float(l[i+2])
                         (res.minute, res.second) = _parse_min_sec(value)
 
-                        if i+3 < len_l and l[i+3] == ':':
+                        if i+4 < len_l and l[i+3] == ':':
                             res.second, res.microsecond = _parsems(l[i+4])
                             i += 2
 
