@@ -44,7 +44,9 @@ from . import tz
 
 __all__ = ["parse", "parserinfo"]
 
-
+# TODO: pandas.core.tools.datetimes imports this explicitly.  Might be worth
+# making public and/or figuring out if there is something we can
+# take off their plate.
 class _timelex(object):
     # Fractional seconds are sometimes split by a comma
     _split_decimal = re.compile("([.,])")
@@ -253,14 +255,14 @@ class parserinfo(object):
             "st", "nd", "rd", "th"]
 
     WEEKDAYS = [("Mon", "Monday"),
-                ("Tue", "Tuesday"),
+                ("Tue", "Tuesday"), # TODO: "Tues"
                 ("Wed", "Wednesday"),
-                ("Thu", "Thursday"),
+                ("Thu", "Thursday"), # TODO: "Thurs"
                 ("Fri", "Friday"),
                 ("Sat", "Saturday"),
                 ("Sun", "Sunday")]
     MONTHS = [("Jan", "January"),
-              ("Feb", "February"),
+              ("Feb", "February"), # TODO: "Febr"
               ("Mar", "March"),
               ("Apr", "April"),
               ("May", "May"),
@@ -279,6 +281,7 @@ class parserinfo(object):
     UTCZONE = ["UTC", "GMT", "Z"]
     PERTAIN = ["of"]
     TZOFFSET = {}
+    # TODO: ERA = ["AD", "BC", "CE", "BCE", "Stardate", "Anno Domini", "Year of Our Lord"]
 
     def __init__(self, dayfirst=False, yearfirst=False):
         self._jump = self._convert(self.JUMP)
@@ -817,7 +820,7 @@ class parser(object):
                     elif i+2 < len_l and l[i+1] == ':':
                         # HH:MM[:SS[.ss]]
                         res.hour = int(value)
-                        value = float(l[i+2])
+                        value = float(l[i+2]) # TODO: no try/except for this?
                         (res.minute, res.second) = _parse_min_sec(value)
 
                         if i+4 < len_l and l[i+3] == ':':
@@ -931,9 +934,7 @@ class parser(object):
 
 
                 # Check for a timezone name
-                elif (res.hour is not None and len(l[i]) <= 5
-                    and res.tzname is None and res.tzoffset is None
-                    and all(x in string.ascii_uppercase for x in l[i])):
+                elif _could_be_tzname(res.hour, res.tzname, res.tzoffset, l[i]):
                     res.tzname = l[i]
                     res.tzoffset = info.tzoffset(res.tzname)
 
@@ -958,24 +959,28 @@ class parser(object):
 
                     if len_li == 4:
                         # -0300
-                        res.tzoffset = int(l[i+1][:2])*3600+int(l[i+1][2:])*60
+                        hour_offset = int(l[i+1][:2])
+                        min_offset = int(l[i+1][2:])
                     elif i+2 < len_l and l[i+2] == ':':
                         # -03:00
-                        res.tzoffset = int(l[i+1])*3600+int(l[i+3])*60
+                        hour_offset = int(l[i+1])
+                        min_offset = int(l[i+3]) # TODO: Check that l[i+3] is minute-like?
                         i += 2
                     elif len_li <= 2:
                         # -[0]3
-                        res.tzoffset = int(l[i+1][:2])*3600
+                        hour_offset = int(l[i+1][:2])
+                        min_offset = 0
                     else:
                         raise InvalidDatetimeError(timestr)
 
-                    res.tzoffset *= signal
+                    res.tzoffset = signal * (hour_offset*3600 + min_offset*60)
 
+                    # TODO: Are we not requiring that res.tzname be None?
                     # Look for a timezone name between parenthesis
                     if (i+5 < len_l and
                         info.jump(l[i+2]) and l[i+3] == '(' and l[i+5] == ')' and
                         3 <= len(l[i+4]) <= 5 and
-                        all(x in string.ascii_uppercase for x in l[i+4])):
+                        all(x in string.ascii_uppercase for x in l[i+4])): # TODO: merge this with _could_be_tzname
                         # -0300 (BRST)
                         res.tzname = l[i+4]
                         i += 4
@@ -1311,6 +1316,19 @@ class ProgrammingError(AssertionError):
     """
 
 
+
+
+# TODO: requre len(toekn) >= 3 like we do for the between-parens version?
+# do some other validation here instead of putting it off?  As of now, "Q"
+# will be accepted as a timezone...
+def _could_be_tzname(hour, tzname, tzoffset, token):
+    return (
+        hour is not None
+        and tzname is None
+        and tzoffset is None
+        and len(token) <= 5
+        and all(x in string.ascii_uppercase for x in token)
+        )
 
 def _ampm_validity(hour, ampm, fuzzy):
     """
