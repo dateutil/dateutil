@@ -876,13 +876,11 @@ class parser(object):
                     elif not fuzzy:
                         raise InvalidDatetimeError(timestr)
 
-                    i += 1
 
                 # Check weekday
                 elif info.weekday(l[i]) is not None:
                     value = info.weekday(l[i])
                     res.weekday = value
-                    i += 1
 
                 # Check month name
                 elif info.month(l[i]) is not None:
@@ -918,7 +916,6 @@ class parser(object):
                             i += 4
 
 
-                    i += 1
 
                 # Check am/pm
                 elif info.ampm(l[i]) is not None:
@@ -932,7 +929,6 @@ class parser(object):
                     elif fuzzy:
                         skipped_idxs.add(i)
 
-                    i += 1
 
                 # Check for a timezone name
                 elif (res.hour is not None and len(l[i]) <= 5
@@ -954,7 +950,6 @@ class parser(object):
                             # is *not* GMT.
                             res.tzname = None
 
-                    i += 1
 
                 # Check for a numbered timezone
                 elif res.hour is not None and l[i] in ('+', '-'):
@@ -985,7 +980,7 @@ class parser(object):
                         res.tzname = l[i+4]
                         i += 4
 
-                    i += 2
+                    i += 1
 
                 # Check jumps
                 elif not (info.jump(l[i]) or fuzzy):
@@ -993,7 +988,7 @@ class parser(object):
 
                 else:
                     skipped_idxs.add(i)
-                    i += 1
+                i += 1
 
             # Process year/month/day
             year, month, day = ymd.resolve_ymd(yearfirst, dayfirst)
