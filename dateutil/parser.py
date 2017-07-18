@@ -726,7 +726,6 @@ class parser(object):
 
                         if len_li == 4:
                             res.minute = int(s[2:])
-                        i += 1
 
                     elif len_li == 6 or (len_li > 6 and l[i].find('.') == 6):
                         # YYMMDD or HHMMSS[.ss]
@@ -743,7 +742,6 @@ class parser(object):
                             res.hour = int(s[:2])
                             res.minute = int(s[2:4])
                             res.second, res.microsecond = _parsems(s[4:])
-                        i += 1
 
                     elif len_li in (8, 12, 14):
                         # YYYYMMDD
@@ -758,7 +756,6 @@ class parser(object):
 
                             if len_li > 12:
                                 res.second = int(s[12:])
-                        i += 1
 
                     elif ((i+1 < len_l and info.hms(l[i+1]) is not None)
                         or (i+2 < len_l and l[i+1] == ' ' and info.hms(l[i+2]) is not None)
@@ -803,7 +800,6 @@ class parser(object):
                                         idx = newidx
                                 i += 2
 
-                        i += 1
 
                     elif (i+1 == len_l and l[i-1] == ' ' and info.hms(l[i-2]) is not None):
                         # X h MM or X m SS
@@ -814,7 +810,6 @@ class parser(object):
                         elif idx == 1:             # m
                             res.second, res.microsecond = _parsems(value_repr)
 
-                        i += 1
                         # We don't need to advance the tokens here because the
                         # i == len_l call indicates that we're looking at all
                         # the tokens already.
@@ -829,7 +824,7 @@ class parser(object):
                             res.second, res.microsecond = _parsems(l[i+4])
                             i += 2
 
-                        i += 3
+                        i += 2
 
                     elif i+1 < len_l and l[i+1] in ('-', '/', '.'):
                         sep = l[i+1]
@@ -858,9 +853,8 @@ class parser(object):
                                     ymd.append(l[i+4])
                                 i += 2
 
-                            i += 3
-                        else:
-                            i += 2
+                            i += 1
+                        i += 1
 
                     elif i+1 >= len_l or info.jump(l[i+1]):
                         if i+2 < len_l and info.ampm(l[i+2]) is not None:
@@ -871,18 +865,18 @@ class parser(object):
                         else:
                             # Year, month or day
                             ymd.append(value)
-                        i += 2
+                        i += 1
 
                     elif info.ampm(l[i+1]) is not None:
                         # 12am
                         hour = int(value)
                         res.hour = _adjust_ampm(hour, info.ampm(l[i+1]))
-                        i += 2
+                        i += 1
 
                     elif not fuzzy:
                         raise InvalidDatetimeError(timestr)
-                    else:
-                        i += 1
+
+                    i += 1
 
                 # Check weekday
                 elif info.weekday(l[i]) is not None:
@@ -904,9 +898,9 @@ class parser(object):
                             if i+3 < len_l and l[i+3] == sep:
                                 # Jan-01-99
                                 ymd.append(l[i+4])
-                                i += 5
-                            else:
-                                i += 3
+                                i += 2
+
+                            i += 2
 
                         elif (i+4 < len_l and l[i+1] == l[i+3] == ' '
                               and info.pertain(l[i+2])):
@@ -921,12 +915,10 @@ class parser(object):
                             else:
                                 # Convert it here to become unambiguous
                                 ymd.append(str(info.convertyear(value)), 'Y')
-                            i += 5
+                            i += 4
 
-                        else:
-                            i += 1
-                    else:
-                        i += 1
+
+                    i += 1
 
                 # Check am/pm
                 elif info.ampm(l[i]) is not None:
@@ -981,18 +973,19 @@ class parser(object):
                         res.tzoffset = int(l[i+1][:2])*3600
                     else:
                         raise InvalidDatetimeError(timestr)
-                    i += 2
 
                     res.tzoffset *= signal
 
                     # Look for a timezone name between parenthesis
-                    if (i+3 < len_l and
-                        info.jump(l[i]) and l[i+1] == '(' and l[i+3] == ')' and
-                        3 <= len(l[i+2]) <= 5 and
-                        all(x in string.ascii_uppercase for x in l[i+2])):
+                    if (i+5 < len_l and
+                        info.jump(l[i+2]) and l[i+3] == '(' and l[i+5] == ')' and
+                        3 <= len(l[i+4]) <= 5 and
+                        all(x in string.ascii_uppercase for x in l[i+4])):
                         # -0300 (BRST)
-                        res.tzname = l[i+2]
+                        res.tzname = l[i+4]
                         i += 4
+
+                    i += 2
 
                 # Check jumps
                 elif not (info.jump(l[i]) or fuzzy):
