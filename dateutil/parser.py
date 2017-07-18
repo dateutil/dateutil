@@ -417,8 +417,12 @@ class _ymd(list):
         if hasattr(val, '__len__'):
             if val.isdigit() and len(val) > 2:
                 self.century_specified = True
+                assert label in [None, 'Y']
+                label = 'Y'
         elif val > 100:
             self.century_specified = True
+            assert label in [None, 'Y']
+            label = 'Y'
 
         super(self.__class__, self).append(int(val))
 
@@ -728,7 +732,7 @@ class parser(object):
                         # YYMMDD or HHMMSS[.ss]
                         s = l[i]
 
-                        if not ymd and l[i].find('.') == -1:
+                        if not ymd and '.' not in l[i]:
                             #ymd.append(info.convertyear(int(s[:2])))
 
                             ymd.append(s[:2])
@@ -744,7 +748,7 @@ class parser(object):
                     elif len_li in (8, 12, 14):
                         # YYYYMMDD
                         s = l[i]
-                        ymd.append(s[:4])
+                        ymd.append(s[:4], 'Y')
                         ymd.append(s[4:6])
                         ymd.append(s[6:8])
 
@@ -916,7 +920,7 @@ class parser(object):
                                 # TODO: not hit in tests
                             else:
                                 # Convert it here to become unambiguous
-                                ymd.append(str(info.convertyear(value)))
+                                ymd.append(str(info.convertyear(value)), 'Y')
                             i += 5
 
                         else:
