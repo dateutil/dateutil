@@ -88,8 +88,13 @@ def _invalidates_cache(f):
     return inner_func
 
 
+def _nothing_wrapper(date):
+    return date
+
+
 class rrulebase(object):
-    def __init__(self, cache=False):
+    def __init__(self, cache=False, event_wrapper=_nothing_wrapper):
+        self._event_wrapper = event_wrapper
         if cache:
             self._cache = []
             self._cache_lock = _thread.allocate_lock()
@@ -263,7 +268,7 @@ class rrulebase(object):
                     if n > count:
                         break
 
-                yield d
+                yield self._event_wrapper(d)
 
     def between(self, after, before, inc=False, count=1):
         """ Returns all the occurrences of the rrule between after and before.
@@ -421,8 +426,8 @@ class rrule(rrulebase):
                  bymonth=None, bymonthday=None, byyearday=None, byeaster=None,
                  byweekno=None, byweekday=None,
                  byhour=None, byminute=None, bysecond=None,
-                 cache=False):
-        super(rrule, self).__init__(cache)
+                 cache=False, event_wrapper=_nothing_wrapper):
+        super(rrule, self).__init__(cache, event_wrapper)
         global easter
         if not dtstart:
             dtstart = datetime.datetime.now().replace(microsecond=0)
@@ -851,7 +856,7 @@ class rrule(rrulebase):
                                 self._len = total
                                 return
                         total += 1
-                        yield res
+                        yield self._event_wrapper(res)
             else:
                 for i in dayset[start:end]:
                     if i is not None:
@@ -869,7 +874,7 @@ class rrule(rrulebase):
                                         return
 
                                 total += 1
-                                yield res
+                                yield self._event_wrapper(res)
 
             # Handle frequency and interval
             fixday = False
@@ -1320,8 +1325,8 @@ class rruleset(rrulebase):
         def __ne__(self, other):
             return self.dt != other.dt
 
-    def __init__(self, cache=False):
-        super(rruleset, self).__init__(cache)
+    def __init__(self, cache=False, event_wrapper=_nothing_wrapper):
+        super(rruleset, self).__init__(cache, event_wrapper)
         self._rrule = []
         self._rdate = []
         self._exrule = []
@@ -1379,7 +1384,7 @@ class rruleset(rrulebase):
                         heapq.heapreplace(exlist, exitem)
                 if not exlist or ritem != exlist[0]:
                     total += 1
-                    yield ritem.dt
+                    yield self._event_wrapper(ritem.dt)
                 lastdt = ritem.dt
             advance_iterator(ritem)
             if rlist and rlist[0] is ritem:
