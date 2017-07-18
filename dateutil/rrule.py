@@ -286,17 +286,17 @@ class rrulebase(object):
                 if i > before:
                     break
                 elif not started:
-                    if i >= after:
+                    if i >= self._event_wrapper(after):
                         started = True
                         l.append(i)
                 else:
                     l.append(i)
         else:
             for i in gen:
-                if i >= before:
+                if i >= self._event_wrapper(before):
                     break
                 elif not started:
-                    if i > after:
+                    if i > self._event_wrapper(after):
                         started = True
                         l.append(i)
                 else:
