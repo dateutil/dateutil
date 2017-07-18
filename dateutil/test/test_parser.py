@@ -901,3 +901,11 @@ class ParserTest(unittest.TestCase):
         dtstr = '2015-15-May'
         self.assertEqual(parse(dtstr),
                          datetime(2015, 5, 15))
+
+    def test_idx_check(self):
+        dtstr = '2017-07-17 06:15:'
+        # Pre-PR, the trailing colon will cause an IndexError at 824-825
+        # when checking `i < len_l` and then accessing `l[i+1]`
+        res = parse(dtstr, fuzzy=True)
+        self.assertEqual(res, datetime(2017, 7, 17, 6, 15))
+
