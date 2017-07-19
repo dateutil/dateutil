@@ -792,6 +792,7 @@ class parser(object):
 
                         if i+4 < len_l and l[i+3] == ':':
                             res.second, res.microsecond = _parsems(l[i+4])
+
                             i += 2
 
                         i += 2
