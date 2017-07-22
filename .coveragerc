@@ -1,0 +1,13 @@
+[run]
+omit =
+    .tox/*
+    .git/*
+    .hypothesis/*
+    __pycache__
+    */site-packages/*
+    */dist-packages/*
+
+[report]
+show_missing=True
+exclude_lines =
+    pragma: no cover
