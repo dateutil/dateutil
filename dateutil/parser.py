@@ -700,9 +700,19 @@ class parser(object):
                 if value is not None:
                     # Token is a number
                     len_li = len(l[i])
+                    i0 = i
                     i += 1
 
-                    if (len(ymd) == 3 and len_li in (2, 4)
+                    hms_idx = _find_hms_idx(i0, l, info, allow_jump=True)
+                    if hms_idx is not None:
+                        # HH[ ]h or MM[ ]m or SS[.ss][ ]s
+                        (i, hms) = _parse_hms(i0, l, info, hms_idx)
+                        if hms is not None:
+                            # TODO: checking that hour/minute/second are not
+                            # already set?
+                            _assign_hms(res, value_repr, hms)
+
+                    elif (len(ymd) == 3 and len_li in (2, 4)
                         and res.hour is None and (i >= len_l or (l[i] != ':' and
                                                   info.hms(l[i]) is None))):
                         # 19990101T23[59]
@@ -742,72 +752,6 @@ class parser(object):
                             if len_li > 12:
                                 res.second = int(s[12:])
 
-                    elif ((i < len_l and info.hms(l[i]) is not None) or
-                          (i+1 < len_l and l[i] == ' ' and
-                           info.hms(l[i+1]) is not None)):
-
-                        # HH[ ]h or MM[ ]m or SS[.ss][ ]s
-                        if l[i] == ' ':
-                            i += 1
-
-                        idx = info.hms(l[i])
-
-                        while True:
-                            if idx == 0:
-                                res.hour = int(value)
-
-                                if value % 1:
-                                    res.minute = int(60*(value % 1))
-
-                            elif idx == 1:
-                                res.minute = int(value)
-
-                                if value % 1:
-                                    res.second = int(60*(value % 1))
-
-                            elif idx == 2:
-                                res.second, res.microsecond = \
-                                    _parsems(value_repr)
-
-                            i += 1
-
-                            if i >= len_l or idx == 2:
-                                break
-
-                            # 12h00
-                            try:
-                                value_repr = l[i]
-                                value = float(value_repr)
-                            except ValueError:
-                                break
-                            else:
-                                i += 1
-                                idx += 1
-
-                                if i < len_l:
-                                    newidx = info.hms(l[i])
-
-                                    if newidx is not None:
-                                        idx = newidx
-
-                    elif (i == len_l and l[i-2] == ' ' and
-                          info.hms(l[i-3]) is not None):
-                        # X h MM or X m SS
-                        idx = info.hms(l[i-3])
-
-                        if idx == 0:               # h
-                            res.minute = int(value)
-
-                            sec_remainder = value % 1
-                            if sec_remainder:
-                                res.second = int(60 * sec_remainder)
-                        elif idx == 1:             # m
-                            res.second, res.microsecond = \
-                                _parsems(value_repr)
-
-                        # We don't need to advance the tokens here because the
-                        # i == len_l call indicates that we're looking at all
-                        # the tokens already.
 
                     elif i+1 < len_l and l[i] == ':':
                         # HH:MM[:SS[.ss]]
@@ -1362,6 +1306,92 @@ def _parsetz(tzstr):
     return DEFAULTTZPARSER.parse(tzstr)
 
 
+
+def _parse_hms(idx, tokens, info, hms_idx):
+    # TODO: Is this going to admit a lot of false-positives for when we
+    # just happen to have digits and "h", "m" or "s" characters in non-date
+    # text?  I guess hex hashes won't have that problem, but there's plenty
+    # of random junk out there.
+    value_repr = tokens[idx]
+    value = float(value_repr)
+
+    if hms_idx is None:
+        hms = None
+        new_idx = idx + 1
+    elif hms_idx > idx:
+        hms = info.hms(tokens[hms_idx])
+        new_idx = hms_idx + 1
+    else:
+        # Looking backwards, increment one.
+        hms = info.hms(tokens[hms_idx]) + 1
+        new_idx = idx + 1
+
+    return (new_idx, hms)
+
+
+def _find_hms_idx(idx, tokens, info, allow_jump):
+    len_l = len(tokens)
+
+    if idx+1 < len_l and info.hms(tokens[idx+1]) is not None:
+        # There is an "h", "m", or "s" label following this token.  We take
+        # assign the upcoming label to the current token.
+        # e.g. the "12" in 12h"
+        hms_idx = idx + 1
+
+    elif (allow_jump and idx+2 < len_l and tokens[idx+1] == ' ' and
+          info.hms(tokens[idx+2]) is not None):
+        # There is a space and then an "h", "m", or "s" label.
+        # e.g. the "12" in "12 h"
+        hms_idx = idx + 2
+
+    elif idx > 0 and info.hms(tokens[idx-1]) is not None:
+        # There is a "h", "m", or "s" preceeding this token.  Since neither
+        # of the previous cases was hit, there is no label following this
+        # token, so we use the previous label.
+        # e.g. the "04" in "12h04"
+        hms_idx = idx-1
+
+    elif (1 < idx == len(tokens)-1 and tokens[idx-1] == ' ' and
+          info.hms(tokens[idx-2]) is not None):
+        # If we are looking at the final token, we allow for a
+        # backward-looking check to skip over a space.
+        # TODO: Are we sure this is the right condition here?
+        hms_idx = idx - 2
+
+    else:
+        hms_idx = None
+
+    return hms_idx    
+
+
+def _assign_hms(res, value_repr, hms):
+    value = float(value_repr)
+    if hms == 0:
+        # Hour
+        res.hour = int(value)
+        if value % 1:
+            res.minute = int(60*(value % 1))
+
+    elif hms == 1:
+        (res.minute, res.second) = _parse_min_sec(value)
+
+    elif hms == 2:
+        (res.second, res.microsecond) = _parsems(value_repr)
+
+
+def _parse_min_sec(value):
+    # TODO: Every usage of this function sets res.second to the return value.
+    # Are there any cases where second will be returned as None and we *dont*
+    # want to set res.second = None?
+    minute = int(value)
+    second = None
+
+    sec_remainder = value % 1
+    if sec_remainder:
+        second = int(60 * sec_remainder)
+    return (minute, second)
+
+
 def _parsems(value):
     """Parse a I[.F] seconds value into (seconds, microseconds)."""
     if "." not in value:
@@ -1369,6 +1399,5 @@ def _parsems(value):
     else:
         i, f = value.split(".")
         return int(i), int(f.ljust(6, "0")[:6])
-
 
 # vim:ts=4:sw=4:et
