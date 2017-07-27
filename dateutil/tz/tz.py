@@ -15,6 +15,7 @@ import os
 import bisect
 
 from six import string_types
+from six.moves import _thread
 from ._common import tzname_in_python2, _tzinfo
 from ._common import tzrangebase, enfold
 from ._common import _validate_fromutc_inputs
@@ -1051,6 +1052,7 @@ class _tzicalvtz(_tzinfo):
         self._comps = comps
         self._cachedate = []
         self._cachecomp = []
+        self._cache_lock = _thread.allocate_lock()
 
     def _find_comp(self, dt):
         if len(self._comps) == 1:
@@ -1059,7 +1061,9 @@ class _tzicalvtz(_tzinfo):
         dt = dt.replace(tzinfo=None)
 
         try:
-            return self._cachecomp[self._cachedate.index((dt, self._fold(dt)))]
+            with self._cache_lock:
+                return self._cachecomp[self._cachedate.index(
+                    (dt, self._fold(dt)))]
         except ValueError:
             pass
 
@@ -1085,12 +1089,13 @@ class _tzicalvtz(_tzinfo):
             else:
                 lastcomp = comp[0]
 
-        self._cachedate.insert(0, (dt, self._fold(dt)))
-        self._cachecomp.insert(0, lastcomp)
+        with self._cache_lock:
+            self._cachedate.insert(0, (dt, self._fold(dt)))
+            self._cachecomp.insert(0, lastcomp)
 
-        if len(self._cachedate) > 10:
-            self._cachedate.pop()
-            self._cachecomp.pop()
+            if len(self._cachedate) > 10:
+                self._cachedate.pop()
+                self._cachecomp.pop()
 
         return lastcomp
 
