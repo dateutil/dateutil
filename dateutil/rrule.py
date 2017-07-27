@@ -1561,7 +1561,8 @@ class _rrulestr(object):
                     exdatevals.append(value)
                 elif name == "DTSTART":
                     for parm in parms:
-                        raise ValueError("unsupported DTSTART parm: "+parm)
+                        if parm != "VALUE=DATE-TIME":
+                            raise ValueError("unsupported DTSTART parm: "+parm)
                     if not parser:
                         from dateutil import parser
                     dtstart = parser.parse(value, ignoretz=ignoretz,
