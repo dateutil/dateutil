@@ -597,6 +597,11 @@ class ParserTest(unittest.TestCase):
 
         self.assertEqual(parse(s1, fuzzy=True), datetime(1945, 1, 29, 14, 45))
 
+    def testFuzzyWithDotNotation(self):
+        s1 = "27.08"
+        today_year = date.today().year
+        self.assertEqual(parse(s1, fuzzy=True), datetime(today_year, 8, 27, 0, 0))
+
     def testExtraSpace(self):
         self.assertEqual(parse("  July   4 ,  1976   12:01:02   am  "),
                          datetime(1976, 7, 4, 0, 1, 2))

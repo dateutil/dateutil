@@ -436,6 +436,9 @@ class _ymd(list):
             elif dayfirst and self[1] <= 12:
                 # 13-01
                 day, month = self
+
+            elif self[0] > 12 and self[1] <= 12:
+                day, month = self
             else:
                 # 01-13
                 month, day = self
@@ -711,6 +714,11 @@ class parser(object):
 
                         if len_li == 4:
                             res.minute = int(s[2:])
+
+                    elif len_li == 5 and len_l == 1 and value_repr.count('.') == 1:
+                        after_split = value_repr.split('.')
+                        ymd.append(after_split[0])
+                        ymd.append(after_split[1])
 
                     elif len_li == 6 or (len_li > 6 and l[i-1].find('.') == 6):
                         # YYMMDD or HHMMSS[.ss]
