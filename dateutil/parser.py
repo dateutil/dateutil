@@ -1274,13 +1274,6 @@ class InvalidDatetimeError(ValueError): pass
 class InvalidDateError(InvalidDatetimeError): pass
 class InvalidTimeError(InvalidDatetimeError): pass
 
-class ProgrammingError(AssertionError):
-    """ProgrammingError is for if we reach a state that we *think* should
-    be unreachable and would otherwise be inclined to assert is impossible.
-    Since an AssertionError is useful a user, a ProgrammingError clarifies
-    that they should file a bug report.
-    """
-
 
 def _parse_hms(i, l, info, res):
     # TODO: This is still a mess.  Can we make this recursive instead of
@@ -1335,7 +1328,7 @@ def _parse_hms(i, l, info, res):
     return i
 
 
-# TODO: requre len(token) >= 3 like we do for the between-parens version?
+# TODO: require len(token) >= 3 like we do for the between-parens version?
 # do some other validation here instead of putting it off?  As of now, "Q"
 # will be accepted as a timezone...
 def _could_be_tzname(hour, tzname, tzoffset, token):
@@ -1416,7 +1409,7 @@ def _recombine_skipped(tokens, skipped_idxs):
 
     """
     skipped_tokens = []
-    for idx in sorted(list(skipped_idxs)):
+    for idx in sorted(skipped_idxs):
         if idx-1 in skipped_idxs:
             skipped_tokens[-1] = skipped_tokens[-1] + tokens[idx]
         else:
