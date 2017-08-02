@@ -37,7 +37,7 @@ import re
 from io import StringIO
 from calendar import monthrange
 
-from six import text_type, binary_type, integer_types
+from six import text_type, integer_types
 
 from . import relativedelta
 from . import tz
@@ -52,15 +52,20 @@ class _timelex(object):
     _split_decimal = re.compile("([.,])")
 
     def __init__(self, instream):
-        if isinstance(instream, binary_type):
-            instream = instream.decode()
+        if not hasattr(instream, 'read'):
+            if hasattr(instream, 'decode'):
+                instream = instream.decode()
 
-        if isinstance(instream, text_type):
-            instream = StringIO(instream)
+            if isinstance(instream, text_type):
+                instream = StringIO(instream)
 
-        if getattr(instream, 'read', None) is None:
-            raise TypeError('Parser must be a string or character stream, not '
-                            '{itype}'.format(itype=instream.__class__.__name__))
+            if not hasattr(instream, 'read'):
+                raise TypeError(
+                    'Parser must be a character stream, a string, or '
+                    'decodable to a string, not {itype}'.format(
+                        itype=instream.__class__.__name__
+                    )
+                )
 
         self.instream = instream
         self.charstack = []
