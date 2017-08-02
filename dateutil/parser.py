@@ -699,7 +699,7 @@ class parser(object):
         l = _timelex.split(timestr)         # Splits the timestr into tokens
         tokens = l # alias that is easier to grep
 
-        skipped_idxs = set()
+        skipped_idxs = []
 
         # year/month/day list
         ymd = _ymd(timestr)
@@ -898,7 +898,7 @@ class parser(object):
                         res.ampm = value
 
                     elif fuzzy:
-                        skipped_idxs.add(i)
+                        skipped_idxs.append(i)
 
 
                 # Check for a timezone name
@@ -961,7 +961,7 @@ class parser(object):
                     raise InvalidDatetimeError(timestr)
 
                 else:
-                    skipped_idxs.add(i)
+                    skipped_idxs.append(i)
                 i += 1
 
             # Process year/month/day
@@ -1304,7 +1304,6 @@ def _parse_hms(i, l, info, res):
             elif idx == 2:
                 (res.second, res.microsecond) = _parsems(value_repr)
 
-
             if i+2 >= len_l or idx == 2:
                 i += 1
                 break
@@ -1328,9 +1327,6 @@ def _parse_hms(i, l, info, res):
     return i
 
 
-# TODO: require len(token) >= 3 like we do for the between-parens version?
-# do some other validation here instead of putting it off?  As of now, "Q"
-# will be accepted as a timezone...
 def _could_be_tzname(hour, tzname, tzoffset, token):
     return (
         hour is not None
@@ -1339,6 +1335,7 @@ def _could_be_tzname(hour, tzname, tzoffset, token):
         and len(token) <= 5
         and all(x in string.ascii_uppercase for x in token)
         )
+
 
 def _ampm_validity(hour, ampm, fuzzy):
     """
@@ -1401,19 +1398,20 @@ def _parsems(value):
 
 def _recombine_skipped(tokens, skipped_idxs):
     """
-
     >>> tokens = ["foo", " ", "bar", " ", "19June2000", "baz"]
     >>> skipped_idxs = set([0, 1, 2, 5])
     >>> _recombine_skipped(tokens, skipped_idxs)
     ["foo bar", "baz"]
 
     """
+
     skipped_tokens = []
-    for idx in sorted(skipped_idxs):
-        if idx-1 in skipped_idxs:
+    for i, idx in enumerate(sorted(skipped_idxs)):
+        if i > 0 and idx - 1 == skipped_idxs[i - 1]:
             skipped_tokens[-1] = skipped_tokens[-1] + tokens[idx]
         else:
             skipped_tokens.append(tokens[idx])
+
     return skipped_tokens
 
 
