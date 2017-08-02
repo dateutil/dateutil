@@ -1404,7 +1404,7 @@ def _parsems(value):
 def _recombine_skipped(tokens, skipped_idxs):
     """
     >>> tokens = ["foo", " ", "bar", " ", "19June2000", "baz"]
-    >>> skipped_idxs = set([0, 1, 2, 5])
+    >>> skipped_idxs = [0, 1, 2, 5]
     >>> _recombine_skipped(tokens, skipped_idxs)
     ["foo bar", "baz"]
 
