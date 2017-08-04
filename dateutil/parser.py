@@ -29,20 +29,22 @@ Additional resources about date/time string formats can be found below:
 """
 from __future__ import unicode_literals
 
+import collections
 import datetime
+import re
 import string
 import time
-import collections
-import re
-from io import StringIO
-from calendar import monthrange
 
-from six import text_type, binary_type, integer_types
+from calendar import monthrange
+from io import StringIO
+
+from six import binary_type, integer_types, text_type
 
 from . import relativedelta
 from . import tz
 
 __all__ = ["parse", "parserinfo"]
+
 
 # TODO: pandas.core.tools.datetimes imports this explicitly.  Might be worth
 # making public and/or figuring out if there is something we can
@@ -255,14 +257,14 @@ class parserinfo(object):
             "st", "nd", "rd", "th"]
 
     WEEKDAYS = [("Mon", "Monday"),
-                ("Tue", "Tuesday"), # TODO: "Tues"
+                ("Tue", "Tuesday"),     # TODO: "Tues"
                 ("Wed", "Wednesday"),
-                ("Thu", "Thursday"), # TODO: "Thurs"
+                ("Thu", "Thursday"),    # TODO: "Thurs"
                 ("Fri", "Friday"),
                 ("Sat", "Saturday"),
                 ("Sun", "Sunday")]
     MONTHS = [("Jan", "January"),
-              ("Feb", "February"), # TODO: "Febr"
+              ("Feb", "February"),      # TODO: "Febr"
               ("Mar", "March"),
               ("Apr", "April"),
               ("May", "May"),
@@ -281,7 +283,8 @@ class parserinfo(object):
     UTCZONE = ["UTC", "GMT", "Z"]
     PERTAIN = ["of"]
     TZOFFSET = {}
-    # TODO: ERA = ["AD", "BC", "CE", "BCE", "Stardate", "Anno Domini", "Year of Our Lord"]
+    # TODO: ERA = ["AD", "BC", "CE", "BCE", "Stardate",
+    #              "Anno Domini", "Year of Our Lord"]
 
     def __init__(self, dayfirst=False, yearfirst=False):
         self._jump = self._convert(self.JUMP)
@@ -404,7 +407,8 @@ class _ymd(list):
 
     @staticmethod
     def find_potential_year_tokens(year, tokens):
-        return [token for token in tokens if _ymd.token_could_be_year(token, year)]
+        return [token for token in tokens
+                if _ymd.token_could_be_year(token, year)]
 
     def find_probable_year_index(self, tokens):
         """
@@ -412,8 +416,10 @@ class _ymd(list):
          due to padded zeros being taken off
         """
         for index, token in enumerate(self):
-            potential_year_tokens = _ymd.find_potential_year_tokens(token, tokens)
-            if len(potential_year_tokens) == 1 and len(potential_year_tokens[0]) > 2:
+            potential_year_tokens = _ymd.find_potential_year_tokens(token,
+                                                                    tokens)
+            if (len(potential_year_tokens) == 1 and
+                    len(potential_year_tokens[0]) > 2):
                 return index
 
     def append(self, val, label=None):
@@ -441,7 +447,6 @@ class _ymd(list):
             if self.has_year:
                 raise ValueError('Year is already set')
             self.ystridx = len(self) - 1
-
 
     def resolve_ymd(self, yearfirst, dayfirst):
         len_ymd = len(self)
@@ -502,9 +507,9 @@ class _ymd(list):
                     year, day, month = self
 
             else:
-                if self[0] > 31 or \
-                    self.find_probable_year_index(_timelex.split(self.tzstr)) == 0 or \
-                   (yearfirst and self[1] <= 12 and self[2] <= 31):
+                if (self[0] > 31 or
+                    self.find_probable_year_index(_timelex.split(self.tzstr)) == 0 or
+                        (yearfirst and self[1] <= 12 and self[2] <= 31)):
                     # 99-01-01
                     if dayfirst and self[2] <= 12:
                         year, day, month = self
@@ -524,7 +529,8 @@ class parser(object):
     def __init__(self, info=None):
         self.info = info or parserinfo()
 
-    def parse(self, timestr, default=None, ignoretz=False, tzinfos=None, **kwargs):
+    def parse(self, timestr, default=None,
+              ignoretz=False, tzinfos=None, **kwargs):
         """
         Parse the date/time string into a :class:`datetime.datetime` object.
 
@@ -607,8 +613,8 @@ class parser(object):
                 repl[attr] = value
 
         if 'day' not in repl:
-            # If the default day exceeds the last day of the month, fall back to
-            # the end of the month.
+            # If the default day exceeds the last day of the month, fall back
+            # to the end of the month.
             cyear = default.year if res.year is None else res.year
             cmonth = default.month if res.month is None else res.month
             cday = default.day if res.day is None else res.day
@@ -619,7 +625,7 @@ class parser(object):
         ret = default.replace(**repl)
 
         if res.weekday is not None and not res.day:
-            ret = ret+relativedelta.relativedelta(weekday=res.weekday)
+            ret = ret + relativedelta.relativedelta(weekday=res.weekday)
 
         if not ignoretz:
             if (isinstance(tzinfos, collections.Callable) or
@@ -697,9 +703,8 @@ class parser(object):
 
         res = self._result()
         l = _timelex.split(timestr)         # Splits the timestr into tokens
-        tokens = l # alias that is easier to grep
 
-        skipped_idxs = set()
+        skipped_idxs = []
 
         # year/month/day list
         ymd = _ymd(timestr)
@@ -720,12 +725,11 @@ class parser(object):
                     # Token is a number
                     len_li = len(l[i])
 
-                    if (len(ymd) == 3 and len_li in (2, 4)
-                        and res.hour is None
-                        and (i+1 >= len_l
-                            or (l[i+1] != ':' and info.hms(l[i+1]) is None)
-                            )
-                        ):
+                    if (len(ymd) == 3 and len_li in (2, 4) and
+                        res.hour is None and
+                        (i + 1 >= len_l or
+                         (l[i + 1] != ':' and
+                          info.hms(l[i + 1]) is None))):
                         # 19990101T23[59]
                         s = l[i]
                         res.hour = int(s[:2])
@@ -738,14 +742,14 @@ class parser(object):
                         s = l[i]
 
                         if not ymd and '.' not in l[i]:
-                            #ymd.append(info.convertyear(int(s[:2])))
-
                             ymd.append(s[:2])
                             ymd.append(s[2:4])
                             ymd.append(s[4:])
                         else:
                             # 19990101T235959[.59]
-                            res.hour = int(s[:2]) # TODO: not checking that res.hour is not already set?
+
+                            # TODO: Check if res attributes already set.
+                            res.hour = int(s[:2])
                             res.minute = int(s[2:4])
                             res.second, res.microsecond = _parsems(s[4:])
 
@@ -763,17 +767,16 @@ class parser(object):
                             if len_li > 12:
                                 res.second = int(s[12:])
 
-                    elif ((i+1 < len_l and info.hms(l[i+1]) is not None)
-                        or (i+2 < len_l and l[i+1] == ' ' and info.hms(l[i+2]) is not None)
-                            ):
+                    elif ((i + 1 < len_l and info.hms(l[i + 1]) is not None) or
+                            (i + 2 < len_l and l[i + 1] == ' ' and
+                             info.hms(l[i + 2]) is not None)):
                         # HH[ ]h or MM[ ]m or SS[.ss][ ]s
                         i = _parse_hms(i, l, info, res)
 
-
-
-                    elif (i+1 == len_l and l[i-1] == ' ' and info.hms(l[i-2]) is not None):
+                    elif (i + 1 == len_l and l[i - 1] == ' ' and
+                          info.hms(l[i - 2]) is not None):
                         # X h MM or X m SS
-                        idx = info.hms(l[i-2])
+                        idx = info.hms(l[i - 2])
 
                         if idx == 0:               # h
                             (res.minute, res.second) = _parse_min_sec(value)
@@ -784,69 +787,68 @@ class parser(object):
                         # i == len_l call indicates that we're looking at all
                         # the tokens already.
 
-                    elif i+2 < len_l and l[i+1] == ':':
+                    elif i + 2 < len_l and l[i + 1] == ':':
                         # HH:MM[:SS[.ss]]
                         res.hour = int(value)
-                        value = float(l[i+2]) # TODO: no try/except for this?
+                        value = float(l[i + 2])  # TODO: try/except for this?
                         (res.minute, res.second) = _parse_min_sec(value)
 
-                        if i+4 < len_l and l[i+3] == ':':
-                            res.second, res.microsecond = _parsems(l[i+4])
+                        if i + 4 < len_l and l[i + 3] == ':':
+                            res.second, res.microsecond = _parsems(l[i + 4])
 
                             i += 2
 
                         i += 2
 
-                    elif i+1 < len_l and l[i+1] in ('-', '/', '.'):
-                        sep = l[i+1]
+                    elif i + 1 < len_l and l[i + 1] in ('-', '/', '.'):
+                        sep = l[i + 1]
                         ymd.append(value_repr)
 
-                        if i+2 < len_l and not info.jump(l[i+2]):
-                            if l[i+2].isdigit():
+                        if i + 2 < len_l and not info.jump(l[i + 2]):
+                            if l[i + 2].isdigit():
                                 # 01-01[-01]
-                                ymd.append(l[i+2])
+                                ymd.append(l[i + 2])
                             else:
                                 # 01-Jan[-01]
-                                value = info.month(l[i+2])
+                                value = info.month(l[i + 2])
 
                                 if value is not None:
                                     ymd.append(value, 'M')
                                 else:
                                     raise InvalidDatetimeError(timestr)
 
-                            if i+3 < len_l and l[i+3] == sep:
+                            if i + 3 < len_l and l[i + 3] == sep:
                                 # We have three members
-                                value = info.month(l[i+4])
+                                value = info.month(l[i + 4])
 
                                 if value is not None:
                                     ymd.append(value, 'M')
                                 else:
-                                    ymd.append(l[i+4])
+                                    ymd.append(l[i + 4])
                                 i += 2
 
                             i += 1
                         i += 1
 
-                    elif i+1 >= len_l or info.jump(l[i+1]):
-                        if i+2 < len_l and info.ampm(l[i+2]) is not None:
+                    elif i + 1 >= len_l or info.jump(l[i + 1]):
+                        if i + 2 < len_l and info.ampm(l[i + 2]) is not None:
                             # 12 am
                             hour = int(value)
-                            res.hour = _adjust_ampm(hour, info.ampm(l[i+2]))
+                            res.hour = _adjust_ampm(hour, info.ampm(l[i + 2]))
                             i += 1
                         else:
                             # Year, month or day
                             ymd.append(value)
                         i += 1
 
-                    elif info.ampm(l[i+1]) is not None:
+                    elif info.ampm(l[i + 1]) is not None:
                         # 12am
                         hour = int(value)
-                        res.hour = _adjust_ampm(hour, info.ampm(l[i+1]))
+                        res.hour = _adjust_ampm(hour, info.ampm(l[i + 1]))
                         i += 1
 
                     elif not fuzzy:
                         raise InvalidDatetimeError(timestr)
-
 
                 # Check weekday
                 elif info.weekday(l[i]) is not None:
@@ -858,26 +860,26 @@ class parser(object):
                     value = info.month(l[i])
                     ymd.append(value, 'M')
 
-                    if i+1 < len_l:
-                        if l[i+1] in ('-', '/'):
+                    if i + 1 < len_l:
+                        if l[i + 1] in ('-', '/'):
                             # Jan-01[-99]
-                            sep = l[i+1]
-                            ymd.append(l[i+2])
+                            sep = l[i + 1]
+                            ymd.append(l[i + 2])
 
-                            if i+3 < len_l and l[i+3] == sep:
+                            if i + 3 < len_l and l[i + 3] == sep:
                                 # Jan-01-99
-                                ymd.append(l[i+4])
+                                ymd.append(l[i + 4])
                                 i += 2
 
                             i += 2
 
-                        elif (i+4 < len_l and l[i+1] == l[i+3] == ' '
-                              and info.pertain(l[i+2])):
+                        elif (i + 4 < len_l and l[i + 1] == l[i + 3] == ' ' and
+                              info.pertain(l[i + 2])):
                             # Jan of 01
                             # In this case, 01 is clearly year
-                            if l[i+4].isdigit():
+                            if l[i + 4].isdigit():
                                 # Convert it here to become unambiguous
-                                value = int(l[i+4])
+                                value = int(l[i + 4])
                                 year = str(info.convertyear(value))
                                 ymd.append(year, 'Y')
                             else:
@@ -885,8 +887,6 @@ class parser(object):
                                 pass
                                 # TODO: not hit in tests
                             i += 4
-
-
 
                 # Check am/pm
                 elif info.ampm(l[i]) is not None:
@@ -898,8 +898,7 @@ class parser(object):
                         res.ampm = value
 
                     elif fuzzy:
-                        skipped_idxs.add(i)
-
+                        skipped_idxs.append(i)
 
                 # Check for a timezone name
                 elif _could_be_tzname(res.hour, res.tzname, res.tzoffset, l[i]):
@@ -911,47 +910,47 @@ class parser(object):
                     # "my time +3 is GMT". If found, we reverse the
                     # logic so that timezone parsing code will get it
                     # right.
-                    if i+1 < len_l and l[i+1] in ('+', '-'):
-                        l[i+1] = ('+', '-')[l[i+1] == '+']
+                    if i + 1 < len_l and l[i + 1] in ('+', '-'):
+                        l[i + 1] = ('+', '-')[l[i + 1] == '+']
                         res.tzoffset = None
                         if info.utczone(res.tzname):
                             # With something like GMT+3, the timezone
                             # is *not* GMT.
                             res.tzname = None
 
-
                 # Check for a numbered timezone
                 elif res.hour is not None and l[i] in ('+', '-'):
                     signal = (-1, 1)[l[i] == '+']
-                    len_li = len(l[i+1])
+                    len_li = len(l[i + 1])
 
-                    # TODO: check that l[i+1] is integer?
+                    # TODO: check that l[i + 1] is integer?
                     if len_li == 4:
                         # -0300
-                        hour_offset = int(l[i+1][:2])
-                        min_offset = int(l[i+1][2:])
-                    elif i+2 < len_l and l[i+2] == ':':
+                        hour_offset = int(l[i + 1][:2])
+                        min_offset = int(l[i + 1][2:])
+                    elif i + 2 < len_l and l[i + 2] == ':':
                         # -03:00
-                        hour_offset = int(l[i+1])
-                        min_offset = int(l[i+3]) # TODO: Check that l[i+3] is minute-like?
+                        hour_offset = int(l[i + 1])
+                        min_offset = int(l[i + 3])  # TODO: Check that l[i+3] is minute-like?
                         i += 2
                     elif len_li <= 2:
                         # -[0]3
-                        hour_offset = int(l[i+1][:2])
+                        hour_offset = int(l[i + 1][:2])
                         min_offset = 0
                     else:
                         raise InvalidDatetimeError(timestr)
 
-                    res.tzoffset = signal * (hour_offset*3600 + min_offset*60)
+                    res.tzoffset = signal * (hour_offset * 3600 + min_offset * 60)
 
-                    # TODO: Are we not requiring that res.tzname be None?
+                    # TODO: Check if res.tzname is not None
                     # Look for a timezone name between parenthesis
-                    if (i+5 < len_l and
-                        info.jump(l[i+2]) and l[i+3] == '(' and l[i+5] == ')' and
-                        3 <= len(l[i+4]) <= 5 and
-                        all(x in string.ascii_uppercase for x in l[i+4])): # TODO: merge this with _could_be_tzname
+                    if (i + 5 < len_l and
+                        info.jump(l[i + 2]) and l[i + 3] == '(' and
+                        l[i + 5] == ')' and
+                        3 <= len(l[i + 4]) <= 5 and
+                        all(x in string.ascii_uppercase for x in l[i + 4])):  # TODO: merge this with _could_be_tzname
                         # -0300 (BRST)
-                        res.tzname = l[i+4]
+                        res.tzname = l[i + 4]
                         i += 4
 
                     i += 1
@@ -961,7 +960,7 @@ class parser(object):
                     raise InvalidDatetimeError(timestr)
 
                 else:
-                    skipped_idxs.add(i)
+                    skipped_idxs.append(i)
                 i += 1
 
             # Process year/month/day
@@ -971,7 +970,6 @@ class parser(object):
             res.year = year
             res.month = month
             res.day = day
-
 
         except (IndexError, ValueError, AssertionError):
             return None, None
@@ -984,7 +982,6 @@ class parser(object):
             return res, tuple(skipped_tokens)
         else:
             return res, None
-
 
 
 DEFAULTPARSER = parser()
@@ -1144,17 +1141,18 @@ class _tzparser(object):
                         len_li = len(l[i])
                         if len_li == 4:
                             # -0300
-                            setattr(res, offattr, (int(l[i][:2])*3600 +
-                                                   int(l[i][2:])*60)*signal)
-                        elif i+1 < len_l and l[i+1] == ':':
+                            setattr(res, offattr, (int(l[i][:2]) * 3600 +
+                                                   int(l[i][2:]) * 60) * signal)
+                        elif i + 1 < len_l and l[i + 1] == ':':
                             # -03:00
                             setattr(res, offattr,
-                                    (int(l[i])*3600+int(l[i+2])*60)*signal)
+                                    (int(l[i]) * 3600 +
+                                     int(l[i + 2]) * 60) * signal)
                             i += 2
                         elif len_li <= 2:
                             # -[0]3
                             setattr(res, offattr,
-                                    int(l[i][:2])*3600*signal)
+                                    int(l[i][:2]) * 3600 * signal)
                         else:
                             return None
                         i += 1
@@ -1182,14 +1180,14 @@ class _tzparser(object):
                     x.month = int(l[i])
                     i += 2
                     if l[i] == '-':
-                        value = int(l[i+1])*-1
+                        value = int(l[i + 1]) * -1
                         i += 1
                     else:
                         value = int(l[i])
                     i += 2
                     if value:
                         x.week = value
-                        x.weekday = (int(l[i])-1) % 7
+                        x.weekday = (int(l[i]) - 1) % 7
                     else:
                         x.day = int(l[i])
                     i += 2
@@ -1201,7 +1199,7 @@ class _tzparser(object):
                         i += 1
                     else:
                         signal = 1
-                    res.dstoffset = (res.stdoffset+int(l[i]))*signal
+                    res.dstoffset = (res.stdoffset + int(l[i])) * signal
             elif (l.count(',') == 2 and l[i:].count('/') <= 2 and
                   not [y for x in l[i:] if x not in (',', '/', 'J', 'M',
                                                      '.', '-', ':')
@@ -1224,10 +1222,10 @@ class _tzparser(object):
                         i += 1
                         assert l[i] in ('-', '.')
                         i += 1
-                        x.weekday = (int(l[i])-1) % 7
+                        x.weekday = (int(l[i]) - 1) % 7
                     else:
                         # year day (zero based)
-                        x.yday = int(l[i])+1
+                        x.yday = int(l[i]) + 1
 
                     i += 1
 
@@ -1237,17 +1235,18 @@ class _tzparser(object):
                         len_li = len(l[i])
                         if len_li == 4:
                             # -0300
-                            x.time = (int(l[i][:2])*3600+int(l[i][2:])*60)
-                        elif i+1 < len_l and l[i+1] == ':':
+                            x.time = (int(l[i][:2]) * 3600 +
+                                      int(l[i][2:]) * 60)
+                        elif i + 1 < len_l and l[i + 1] == ':':
                             # -03:00
-                            x.time = int(l[i])*3600+int(l[i+2])*60
+                            x.time = int(l[i]) * 3600 + int(l[i + 2]) * 60
                             i += 2
-                            if i+1 < len_l and l[i+1] == ':':
+                            if i + 1 < len_l and l[i + 1] == ':':
                                 i += 2
                                 x.time += int(l[i])
                         elif len_li <= 2:
                             # -[0]3
-                            x.time = (int(l[i][:2])*3600)
+                            x.time = (int(l[i][:2]) * 3600)
                         else:
                             return None
                         i += 1
@@ -1270,9 +1269,17 @@ DEFAULTTZPARSER = _tzparser()
 def _parsetz(tzstr):
     return DEFAULTTZPARSER.parse(tzstr)
 
-class InvalidDatetimeError(ValueError): pass
-class InvalidDateError(InvalidDatetimeError): pass
-class InvalidTimeError(InvalidDatetimeError): pass
+
+class InvalidDatetimeError(ValueError):
+    pass
+
+
+class InvalidDateError(InvalidDatetimeError):
+    pass
+
+
+class InvalidTimeError(InvalidDatetimeError):
+    pass
 
 
 def _parse_hms(i, l, info, res):
@@ -1280,23 +1287,23 @@ def _parse_hms(i, l, info, res):
     # using a while loop?
     len_l = len(l)
 
-    if ((i+1 < len_l and info.hms(l[i+1]) is not None)
-        or (i+2 < len_l and l[i+1] == ' ' and info.hms(l[i+2]) is not None)
-            ):
+    if ((i + 1 < len_l and info.hms(l[i + 1]) is not None) or
+        (i + 2 < len_l and l[i + 1] == ' ' and
+            info.hms(l[i + 2]) is not None)):
         # HH[ ]h or MM[ ]m or SS[.ss][ ]s
 
         value_repr = l[i]
         value = float(value_repr)
 
-        if l[i+1] == ' ':
+        if l[i + 1] == ' ':
             i += 1
 
-        idx = info.hms(l[i+1])
+        idx = info.hms(l[i + 1])
         while True:
             if idx == 0:
                 res.hour = int(value)
                 if value % 1:
-                    res.minute = int(60*(value % 1))
+                    res.minute = int(60 * (value % 1))
 
             elif idx == 1:
                 (res.minute, res.second) = _parse_min_sec(value)
@@ -1304,14 +1311,13 @@ def _parse_hms(i, l, info, res):
             elif idx == 2:
                 (res.second, res.microsecond) = _parsems(value_repr)
 
-
-            if i+2 >= len_l or idx == 2:
+            if i + 2 >= len_l or idx == 2:
                 i += 1
                 break
 
             # 12h00
             try:
-                value_repr = l[i+2]
+                value_repr = l[i + 2]
                 value = float(value_repr)
             except ValueError:
                 i += 1
@@ -1319,8 +1325,8 @@ def _parse_hms(i, l, info, res):
             else:
                 idx += 1
 
-                if i+3 < len_l:
-                    newidx = info.hms(l[i+3])
+                if i + 3 < len_l:
+                    newidx = info.hms(l[i + 3])
 
                     if newidx is not None:
                         idx = newidx
@@ -1328,17 +1334,13 @@ def _parse_hms(i, l, info, res):
     return i
 
 
-# TODO: require len(token) >= 3 like we do for the between-parens version?
-# do some other validation here instead of putting it off?  As of now, "Q"
-# will be accepted as a timezone...
 def _could_be_tzname(hour, tzname, tzoffset, token):
-    return (
-        hour is not None
-        and tzname is None
-        and tzoffset is None
-        and len(token) <= 5
-        and all(x in string.ascii_uppercase for x in token)
-        )
+    return (hour is not None and
+            tzname is None and
+            tzoffset is None and
+            len(token) <= 5 and
+            all(x in string.ascii_uppercase for x in token))
+
 
 def _ampm_validity(hour, ampm, fuzzy):
     """
@@ -1401,19 +1403,20 @@ def _parsems(value):
 
 def _recombine_skipped(tokens, skipped_idxs):
     """
-
     >>> tokens = ["foo", " ", "bar", " ", "19June2000", "baz"]
-    >>> skipped_idxs = set([0, 1, 2, 5])
+    >>> skipped_idxs = [0, 1, 2, 5]
     >>> _recombine_skipped(tokens, skipped_idxs)
     ["foo bar", "baz"]
 
     """
+
     skipped_tokens = []
-    for idx in sorted(skipped_idxs):
-        if idx-1 in skipped_idxs:
+    for i, idx in enumerate(sorted(skipped_idxs)):
+        if i > 0 and idx - 1 == skipped_idxs[i - 1]:
             skipped_tokens[-1] = skipped_tokens[-1] + tokens[idx]
         else:
             skipped_tokens.append(tokens[idx])
+
     return skipped_tokens
 
 
