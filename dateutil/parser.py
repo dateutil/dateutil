@@ -507,8 +507,9 @@ class _ymd(list):
                     year, day, month = self
 
             else:
+                split_tzstr = _timelex.split(self.tzstr)
                 if (self[0] > 31 or
-                    self.find_probable_year_index(_timelex.split(self.tzstr)) == 0 or
+                    self.find_probable_year_index(split_tzstr) == 0 or
                         (yearfirst and self[1] <= 12 and self[2] <= 31)):
                     # 99-01-01
                     if dayfirst and self[2] <= 12:
@@ -725,11 +726,20 @@ class parser(object):
                     # Token is a number
                     len_li = len(l[i])
 
-                    if (len(ymd) == 3 and len_li in (2, 4) and
-                        res.hour is None and
-                        (i + 1 >= len_l or
-                         (l[i + 1] != ':' and
-                          info.hms(l[i + 1]) is None))):
+                    hms_idx = _find_hms_idx(i, l, info, allow_jump=True)
+                    if hms_idx is not None:
+                        # HH[ ]h or MM[ ]m or SS[.ss][ ]s
+                        (i, hms) = _parse_hms(i, l, info, hms_idx)
+                        if hms is not None:
+                            # TODO: checking that hour/minute/second are not
+                            # already set?
+                            _assign_hms(res, value_repr, hms)
+
+                    elif (len(ymd) == 3 and len_li in (2, 4) and
+                          res.hour is None and
+                          (i + 1 >= len_l or
+                          (l[i + 1] != ':' and
+                           info.hms(l[i + 1]) is None))):
                         # 19990101T23[59]
                         s = l[i]
                         res.hour = int(s[:2])
@@ -766,26 +776,6 @@ class parser(object):
 
                             if len_li > 12:
                                 res.second = int(s[12:])
-
-                    elif ((i + 1 < len_l and info.hms(l[i + 1]) is not None) or
-                            (i + 2 < len_l and l[i + 1] == ' ' and
-                             info.hms(l[i + 2]) is not None)):
-                        # HH[ ]h or MM[ ]m or SS[.ss][ ]s
-                        i = _parse_hms(i, l, info, res)
-
-                    elif (i + 1 == len_l and l[i - 1] == ' ' and
-                          info.hms(l[i - 2]) is not None):
-                        # X h MM or X m SS
-                        idx = info.hms(l[i - 2])
-
-                        if idx == 0:               # h
-                            (res.minute, res.second) = _parse_min_sec(value)
-                        elif idx == 1:             # m
-                            res.second, res.microsecond = _parsems(value_repr)
-
-                        # We don't need to advance the tokens here because the
-                        # i == len_l call indicates that we're looking at all
-                        # the tokens already.
 
                     elif i + 2 < len_l and l[i + 1] == ':':
                         # HH:MM[:SS[.ss]]
@@ -1282,56 +1272,73 @@ class InvalidTimeError(InvalidDatetimeError):
     pass
 
 
-def _parse_hms(i, l, info, res):
-    # TODO: This is still a mess.  Can we make this recursive instead of
-    # using a while loop?
-    len_l = len(l)
+def _find_hms_idx(idx, tokens, info, allow_jump):
+    len_l = len(tokens)
 
-    if ((i + 1 < len_l and info.hms(l[i + 1]) is not None) or
-        (i + 2 < len_l and l[i + 1] == ' ' and
-            info.hms(l[i + 2]) is not None)):
-        # HH[ ]h or MM[ ]m or SS[.ss][ ]s
+    if idx+1 < len_l and info.hms(tokens[idx+1]) is not None:
+        # There is an "h", "m", or "s" label following this token.  We take
+        # assign the upcoming label to the current token.
+        # e.g. the "12" in 12h"
+        hms_idx = idx + 1
 
-        value_repr = l[i]
-        value = float(value_repr)
+    elif (allow_jump and idx+2 < len_l and tokens[idx+1] == ' ' and
+          info.hms(tokens[idx+2]) is not None):
+        # There is a space and then an "h", "m", or "s" label.
+        # e.g. the "12" in "12 h"
+        hms_idx = idx + 2
 
-        if l[i + 1] == ' ':
-            i += 1
+    elif idx > 0 and info.hms(tokens[idx-1]) is not None:
+        # There is a "h", "m", or "s" preceeding this token.  Since neither
+        # of the previous cases was hit, there is no label following this
+        # token, so we use the previous label.
+        # e.g. the "04" in "12h04"
+        hms_idx = idx-1
 
-        idx = info.hms(l[i + 1])
-        while True:
-            if idx == 0:
-                res.hour = int(value)
-                if value % 1:
-                    res.minute = int(60 * (value % 1))
+    elif (1 < idx == len(tokens)-1 and tokens[idx-1] == ' ' and
+          info.hms(tokens[idx-2]) is not None):
+        # If we are looking at the final token, we allow for a
+        # backward-looking check to skip over a space.
+        # TODO: Are we sure this is the right condition here?
+        hms_idx = idx - 2
 
-            elif idx == 1:
-                (res.minute, res.second) = _parse_min_sec(value)
+    else:
+        hms_idx = None
 
-            elif idx == 2:
-                (res.second, res.microsecond) = _parsems(value_repr)
+    return hms_idx
 
-            if i + 2 >= len_l or idx == 2:
-                i += 1
-                break
 
-            # 12h00
-            try:
-                value_repr = l[i + 2]
-                value = float(value_repr)
-            except ValueError:
-                i += 1
-                break
-            else:
-                idx += 1
+def _parse_hms(idx, tokens, info, hms_idx):
+    # TODO: Is this going to admit a lot of false-positives for when we
+    # just happen to have digits and "h", "m" or "s" characters in non-date
+    # text?  I guess hex hashes won't have that problem, but there's plenty
+    # of random junk out there.
+    if hms_idx is None:
+        hms = None
+        new_idx = idx
+    elif hms_idx > idx:
+        hms = info.hms(tokens[hms_idx])
+        new_idx = hms_idx
+    else:
+        # Looking backwards, increment one.
+        hms = info.hms(tokens[hms_idx]) + 1
+        new_idx = idx
 
-                if i + 3 < len_l:
-                    newidx = info.hms(l[i + 3])
+    return (new_idx, hms)
 
-                    if newidx is not None:
-                        idx = newidx
-                i += 2
-    return i
+
+def _assign_hms(res, value_repr, hms):
+    value = float(value_repr)
+    if hms == 0:
+        # Hour
+        res.hour = int(value)
+        if value % 1:
+            res.minute = int(60*(value % 1))
+
+    elif hms == 1:
+        (res.minute, res.second) = _parse_min_sec(value)
+
+    elif hms == 2:
+        (res.second, res.microsecond) = _parsems(value_repr)
 
 
 def _could_be_tzname(hour, tzname, tzoffset, token):
