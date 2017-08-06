@@ -1560,8 +1560,19 @@ class _rrulestr(object):
                             raise ValueError("unsupported EXDATE parm: "+parm)
                     exdatevals.append(value)
                 elif name == "DTSTART":
+                    # RFC 5445 3.8.2.4: The VALUE parameter is optional, but
+                    # may be found only once.
+                    value_found = False
+                    valid_values = {"VALUE=DATE-TIME", "VALUE=DATE"}
                     for parm in parms:
-                        raise ValueError("unsupported DTSTART parm: "+parm)
+                        if parm not in valid_values:
+                            raise ValueError("unsupported DTSTART parm: "+parm)
+                        else:
+                            if value_found:
+                                msg = ("Duplicate value parameter found in " +
+                                       "DTSTART: " + parm)
+                                raise ValueError(msg)
+                            value_found = True
                     if not parser:
                         from dateutil import parser
                     dtstart = parser.parse(value, ignoretz=ignoretz,
