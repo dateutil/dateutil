@@ -2831,6 +2831,20 @@ class RRuleTest(WarningTestMixin, unittest.TestCase):
                           datetime(1998, 1, 6, 9, 0),
                           datetime(1998, 12, 31, 9, 0)])
 
+    def testStrValueDatetime(self):
+        rr = rrulestr("DTSTART;VALUE=DATE-TIME:19970902T090000\n"
+                       "RRULE:FREQ=YEARLY;COUNT=2")
+
+        self.assertEqual(list(rr), [datetime(1997, 9, 2, 9, 0, 0),
+                                    datetime(1998, 9, 2, 9, 0, 0)])
+
+    def testStrValueDate(self):
+        rr = rrulestr("DTSTART;VALUE=DATE:19970902\n"
+                       "RRULE:FREQ=YEARLY;COUNT=2")
+
+        self.assertEqual(list(rr), [datetime(1997, 9, 2, 0, 0, 0),
+                                    datetime(1998, 9, 2, 0, 0, 0)])
+
     def testStrInvalidUntil(self):
         with self.assertRaises(ValueError):
             list(rrulestr("DTSTART:19970902T090000\n"
