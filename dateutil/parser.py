@@ -507,9 +507,8 @@ class _ymd(list):
                     year, day, month = self
 
             else:
-                split_tzstr = _timelex.split(self.tzstr)
                 if (self[0] > 31 or
-                    self.find_probable_year_index(split_tzstr) == 0 or
+                    self.find_probable_year_index(_timelex.split(self.tzstr)) == 0 or
                         (yearfirst and self[1] <= 12 and self[2] <= 31)):
                     # 99-01-01
                     if dayfirst and self[2] <= 12:
@@ -726,16 +725,7 @@ class parser(object):
                     # Token is a number
                     len_li = len(l[i])
 
-                    hms_idx = _find_hms_idx(i, l, info, allow_jump=True)
-                    if hms_idx is not None:
-                        # HH[ ]h or MM[ ]m or SS[.ss][ ]s
-                        (i, hms) = _parse_hms(i, l, info, hms_idx)
-                        if hms is not None:
-                            # TODO: checking that hour/minute/second are not
-                            # already set?
-                            _assign_hms(res, value_repr, hms)
-
-                    elif (len(ymd) == 3 and len_li in (2, 4) and
+                    if (len(ymd) == 3 and len_li in (2, 4) and
                           res.hour is None and
                           (i + 1 >= len_l or
                           (l[i + 1] != ':' and
@@ -776,6 +766,15 @@ class parser(object):
 
                             if len_li > 12:
                                 res.second = int(s[12:])
+
+                    elif _find_hms_idx(i, l, info, allow_jump=True) is not None:
+                        # HH[ ]h or MM[ ]m or SS[.ss][ ]s
+                        hms_idx = _find_hms_idx(i, l, info, allow_jump=True)
+                        (i, hms) = _parse_hms(i, l, info, hms_idx)
+                        if hms is not None:
+                            # TODO: checking that hour/minute/second are not
+                            # already set?
+                            _assign_hms(res, value_repr, hms)
 
                     elif i + 2 < len_l and l[i + 1] == ':':
                         # HH:MM[:SS[.ss]]
@@ -1294,7 +1293,7 @@ def _find_hms_idx(idx, tokens, info, allow_jump):
         # e.g. the "04" in "12h04"
         hms_idx = idx-1
 
-    elif (1 < idx == len(tokens)-1 and tokens[idx-1] == ' ' and
+    elif (1 < idx == len_l-1 and tokens[idx-1] == ' ' and
           info.hms(tokens[idx-2]) is not None):
         # If we are looking at the final token, we allow for a
         # backward-looking check to skip over a space.
