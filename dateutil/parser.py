@@ -453,22 +453,8 @@ class _ymd(list):
         year, month, day = (None, None, None)
 
         mstridx = self.mstridx
-        ystridx = self.ystridx
-        dstridx = self.dstridx
-        if len_ymd == 3:
-            (ystridx, mstridx, dstridx) = _resolve_strides(ystridx, mstridx, dstridx)
 
-        strides = {'year': ystridx, 'month': mstridx, 'day': dstridx}
-        strides = {key: strides[key] for key in strides if strides[key] is not None}
-        if len(strides) == len_ymd:
-            if 'year' in strides:
-                year = self[strides['year']]
-            if 'month' in strides:
-                month = self[strides['month']]
-            if 'day' in strides:
-                day = self[strides['day']]
-
-        elif len_ymd > 3:
+        if len_ymd > 3:
             raise ValueError("More than three YMD values")
         elif len_ymd == 1 or (mstridx is not None and len_ymd == 2):
             # One member, or two members with a month string
@@ -500,7 +486,11 @@ class _ymd(list):
         elif len_ymd == 3:
             # Three members
             if mstridx == 0:
-                month, day, year = self
+                if self[1] > 31:
+                    # Apr-2003-25
+                    month, year, day = self
+                else:
+                    month, day, year = self
             elif mstridx == 1:
                 if self[0] > 31 or (yearfirst and self[2] <= 31):
                     # 99-Jan-01
@@ -1438,30 +1428,6 @@ def _recombine_skipped(tokens, skipped_idxs):
             skipped_tokens.append(tokens[idx])
 
     return skipped_tokens
-
-
-def _resolve_strides(ystridx, mstridx, dstridx):
-    """
-    If we know two out of three of `ystridx`, `mstridx`, `dstridx`,
-    infer the final stridx.
-    """
-    opts = [0, 1, 2]
-    if ystridx is not None:
-        opts.remove(ystridx)
-    if mstridx is not None:
-        opts.remove(mstridx)
-    if dstridx is not None:
-        opts.remove(dstridx)
-
-    if len(opts) == 1:
-        if ystridx is None:
-            ystridx = opts[0]
-        elif mstridx is None:
-            mstridx = opts[0]
-        elif dstridx is None:
-            dstridx = opts[0]
-    
-    return (ystridx, mstridx, dstridx)
 
 
 def _build_tzinfo(tzinfos, tzname, tzoffset):
