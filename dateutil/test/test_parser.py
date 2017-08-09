@@ -155,10 +155,6 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(parse("Thu Sep 25 2003"),
                          datetime(2003, 9, 25))
 
-    def testDateCommandFormatStrip9(self):
-        self.assertEqual(parse("Sep 25 2003"),
-                         datetime(2003, 9, 25))
-
     def testDateCommandFormatStrip10(self):
         self.assertEqual(parse("Sep 2003", default=self.default),
                          datetime(2003, 9, 25))
@@ -244,22 +240,6 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(parse("2003-09-25"),
                          datetime(2003, 9, 25))
 
-    def testDateWithDash2(self):
-        self.assertEqual(parse("2003-Sep-25"),
-                         datetime(2003, 9, 25))
-
-    def testDateWithDash3(self):
-        self.assertEqual(parse("25-Sep-2003"),
-                         datetime(2003, 9, 25))
-
-    def testDateWithDash4(self):
-        self.assertEqual(parse("25-Sep-2003"),
-                         datetime(2003, 9, 25))
-
-    def testDateWithDash5(self):
-        self.assertEqual(parse("Sep-25-2003"),
-                         datetime(2003, 9, 25))
-
     def testDateWithDash6(self):
         self.assertEqual(parse("09-25-2003"),
                          datetime(2003, 9, 25))
@@ -286,22 +266,6 @@ class ParserTest(unittest.TestCase):
 
     def testDateWithDot1(self):
         self.assertEqual(parse("2003.09.25"),
-                         datetime(2003, 9, 25))
-
-    def testDateWithDot2(self):
-        self.assertEqual(parse("2003.Sep.25"),
-                         datetime(2003, 9, 25))
-
-    def testDateWithDot3(self):
-        self.assertEqual(parse("25.Sep.2003"),
-                         datetime(2003, 9, 25))
-
-    def testDateWithDot4(self):
-        self.assertEqual(parse("25.Sep.2003"),
-                         datetime(2003, 9, 25))
-
-    def testDateWithDot5(self):
-        self.assertEqual(parse("Sep.25.2003"),
                          datetime(2003, 9, 25))
 
     def testDateWithDot6(self):
@@ -332,22 +296,6 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(parse("2003/09/25"),
                          datetime(2003, 9, 25))
 
-    def testDateWithSlash2(self):
-        self.assertEqual(parse("2003/Sep/25"),
-                         datetime(2003, 9, 25))
-
-    def testDateWithSlash3(self):
-        self.assertEqual(parse("25/Sep/2003"),
-                         datetime(2003, 9, 25))
-
-    def testDateWithSlash4(self):
-        self.assertEqual(parse("25/Sep/2003"),
-                         datetime(2003, 9, 25))
-
-    def testDateWithSlash5(self):
-        self.assertEqual(parse("Sep/25/2003"),
-                         datetime(2003, 9, 25))
-
     def testDateWithSlash6(self):
         self.assertEqual(parse("09/25/2003"),
                          datetime(2003, 9, 25))
@@ -374,22 +322,6 @@ class ParserTest(unittest.TestCase):
 
     def testDateWithSpace1(self):
         self.assertEqual(parse("2003 09 25"),
-                         datetime(2003, 9, 25))
-
-    def testDateWithSpace2(self):
-        self.assertEqual(parse("2003 Sep 25"),
-                         datetime(2003, 9, 25))
-
-    def testDateWithSpace3(self):
-        self.assertEqual(parse("25 Sep 2003"),
-                         datetime(2003, 9, 25))
-
-    def testDateWithSpace4(self):
-        self.assertEqual(parse("25 Sep 2003"),
-                         datetime(2003, 9, 25))
-
-    def testDateWithSpace5(self):
-        self.assertEqual(parse("Sep 25 2003"),
                          datetime(2003, 9, 25))
 
     def testDateWithSpace6(self):
@@ -422,10 +354,6 @@ class ParserTest(unittest.TestCase):
 
     def testStrangelyOrderedDate1(self):
         self.assertEqual(parse("03 25 Sep"),
-                         datetime(2003, 9, 25))
-
-    def testStrangelyOrderedDate2(self):
-        self.assertEqual(parse("2003 25 Sep"),
                          datetime(2003, 9, 25))
 
     def testStrangelyOrderedDate3(self):
