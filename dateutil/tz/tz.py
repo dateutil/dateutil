@@ -1287,6 +1287,13 @@ class tzical(object):
                         raise ValueError("invalid component end: "+value)
                 elif comptype:
                     if name == "DTSTART":
+                        # DTSTART in VTIMEZONE takes a subset of valid RRULE
+                        # values under RFC 5545.
+                        for parm in parms:
+                            if parm != 'VALUE=DATE-TIME':
+                                msg = ('Unsupported DTSTART param in ' +
+                                       'VTIMEZONE: ' + parm)
+                                raise ValueError(msg)
                         rrulelines.append(line)
                         founddtstart = True
                     elif name in ("RRULE", "RDATE", "EXRULE", "EXDATE"):
