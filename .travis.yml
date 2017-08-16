@@ -12,9 +12,7 @@ python:
   - "pypy3"
 
 matrix:
-  # pypy3 latest version is not playing nice.
   allow_failures:
-    - python: "pypy3"
     - python: "nightly"
 
 before_install:
