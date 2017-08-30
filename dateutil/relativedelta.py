@@ -248,7 +248,8 @@ class relativedelta(object):
         else:
             self._has_time = 0
 
-    def from_tenor(self, tenor_string):
+    @staticmethod
+    def from_tenor(tenor_string):
         '''
         Create a :class:`dateutil.relativedelta.relativedelta` instance from a simple tenor string.
         May raise various exceptions for bad formats.
