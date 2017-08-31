@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 import datetime
 import calendar
-import sys
 
 import operator
 from math import copysign
 
-from six import integer_types, reraise
+from six import integer_types
 from warnings import warn
 
 from ._common import weekday
@@ -247,46 +246,6 @@ class relativedelta(object):
             self._has_time = 1
         else:
             self._has_time = 0
-
-    @staticmethod
-    def from_tenor(tenor_string):
-        '''
-        Create a :class:`dateutil.relativedelta.relativedelta` instance from a simple tenor string.
-        May raise various exceptions for bad formats.
-
-        >>> relativedelta.from_tenor('1y')
-        relativedelta(years=1)
-        >>> relativedelta.from_tenor('-42m')
-        relativedelta(months=-42)
-        >>> relativedelta.from_tenor('1.2w')
-        relativedelta(weeks=1.2)
-        >>> relativedelta.from_tenor('1d')
-        relativedelta(days=1)
-
-        :param str tenor_string: a string specifying a date using two parts, the first is the amount, the second
-            designates the frequency.
-        :return: a new :class:`dateutil.relativedelta.relativedelta` instance if it can be parsed.
-        '''
-        tenor_string = tenor_string.upper()
-        last = tenor_string[-1]
-        e = ValueError('Bad tenor string supplied to relativedelta ' + repr(tenor_string))
-        amount = 0
-        try:
-            amount = float(tenor_string[:-1])
-        except Exception:
-            reraise(ValueError, e, sys.exc_info()[2])
-
-        if last == 'Y':
-            return relativedelta(years=amount)
-        elif last == 'M':
-            return relativedelta(months=amount)
-        elif last == 'W':
-            return relativedelta(weeks=amount)
-        elif last == 'D':
-            return relativedelta(days=amount)
-        else:
-            raise e
-
 
     @property
     def weeks(self):

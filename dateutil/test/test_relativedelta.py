@@ -583,11 +583,4 @@ class RelativeDeltaTest(WarningTestMixin, unittest.TestCase):
       except:
         self.fail("relativedelta() failed to hash!")
 
-    def testFromTenor(self):
-        self.assertEqual(relativedelta.from_tenor('10y'), relativedelta(years=10))
-        self.assertEqual(relativedelta.from_tenor('1m'), relativedelta(months=1))
-        self.assertEqual(relativedelta.from_tenor('-5.2w'), relativedelta(weeks=-5.2))
-        self.assertEqual(relativedelta.from_tenor('30d'), relativedelta(days=30))
-
-
 # vim:ts=4:sw=4:et
