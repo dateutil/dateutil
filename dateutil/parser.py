@@ -1523,6 +1523,12 @@ def parse_relativedelta(input, split_on_whitespace = False, token_mapping = None
 
     This function will raise ValueError and it should be caught for bad parse results.
 
+    >>>from dateutil.parser import parse_relativedelta
+    >>>parse_relativedelta('1y')
+    relativedelta(years=1)
+    >>>parse_relativedelta('1.2d')
+    relativedelta(days=1.2)
+
     :param str input:
         input string to parse
     :param bool split_on_whitespace:
