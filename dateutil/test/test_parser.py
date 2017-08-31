@@ -5,7 +5,8 @@ from datetime import datetime, timedelta
 import unittest
 
 from dateutil.tz import tzoffset
-from dateutil.parser import parse, parserinfo
+from dateutil.parser import parse, parserinfo, parse_relativedelta
+from dateutil.relativedelta import relativedelta
 
 from six import assertRaisesRegex, PY3
 from six.moves import StringIO
@@ -908,4 +909,43 @@ class ParserTest(unittest.TestCase):
         # when checking `i < len_l` and then accessing `l[i+1]`
         res = parse(dtstr, fuzzy=True)
         self.assertEqual(res, datetime(2017, 7, 17, 6, 15))
+
+    def _parse_relative_delta_helper(self, input, expected_output, upper_and_lower=True):
+        if not upper_and_lower:
+            self.assertEqual(parse_relativedelta(input), expected_output)
+        else:
+            self.assertEqual(parse_relativedelta(input.upper()), expected_output)
+            self.assertEqual(parse_relativedelta(input.lower()), expected_output)
+
+    def testParseRelativedeltaYears(self):
+        self._parse_relative_delta_helper('10y', relativedelta(years=10))
+
+    def testParseRelativedeltaMonths(self):
+        self._parse_relative_delta_helper('10m', relativedelta(months=10), False)
+
+    def testParseRelativedeltaWeeks(self):
+        self._parse_relative_delta_helper('10w', relativedelta(weeks=10))
+
+    def testParseRelativedeltaDays(self):
+        self._parse_relative_delta_helper('10d', relativedelta(days=10))
+
+    def testParseRelativedeltaHours(self):
+        self._parse_relative_delta_helper('10h', relativedelta(hours=10))
+
+    def testParseRelativedeltaMinutes(self):
+        self._parse_relative_delta_helper('10M', relativedelta(minutes=10), False)
+
+    def testParseRelativedeltaSeconds(self):
+        self._parse_relative_delta_helper('10s', relativedelta(seconds=10))
+
+    def testParseRelativedeltaFloat(self):
+        self._parse_relative_delta_helper('-1.2d', relativedelta(days=-1.2))
+
+    def testParseRelativedeltaToks(self):
+        self.assertEqual(
+            parse_relativedelta('-1.2d 5.7M 3m', True),
+            relativedelta(days=-1.2, minutes=5.7, months=3)
+        )
+
+
 

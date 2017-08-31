@@ -34,11 +34,12 @@ import datetime
 import re
 import string
 import time
+import sys
 
 from calendar import monthrange
 from io import StringIO
 
-from six import binary_type, integer_types, text_type
+from six import binary_type, integer_types, text_type, reraise
 
 from . import relativedelta
 from . import tz
@@ -1442,5 +1443,113 @@ def _build_tzinfo(tzinfos, tzname, tzoffset):
         raise ValueError("Offset must be tzinfo subclass, "
                          "tz string, or int offset.")
     return tzinfo
+
+class _RelativeDeltaParserInfo:
+
+    _DEFAULT_RELATIVE_DELTA_TOKEN_MAPPING = {
+        'Y' : 'years',
+        'y' : 'years',
+        'm' : 'months',
+        'w' : 'weeks',
+        'W' : 'weeks',
+        'd' : 'days',
+        'D' : 'days',
+        'H' : 'hours',
+        'h' : 'hours',
+        'M' : 'minutes',
+        'S' : 'seconds',
+        's' : 'seconds'
+    }
+
+    def __init__(self, split_on_whitespace=False, token_mapping=None):
+        self.split_on_whitespace = split_on_whitespace
+        if token_mapping is not None:
+            self.token_mapping = token_mapping
+        else:
+            self.token_mapping = _RelativeDeltaParserInfo._DEFAULT_RELATIVE_DELTA_TOKEN_MAPPING
+
+    def token_to_relativedelta_kwarg(self, tok):
+        return self.token_mapping.get(tok, None)
+
+
+class RelativeDeltaParser:
+    def __init__(self, info=None):
+        '''
+        Create a new relativedelta parser
+
+        :param info: the parser information to use
+        '''
+        self.info = info if info is not None else _RelativeDeltaParserInfo()
+
+    def parse(self, input):
+        '''
+        Parse the input string
+
+        :param str input: string to parse
+        :return: the relativedelta object
+        :rtype: relativedelta
+        :raises ValueError: on bad input
+        '''
+        # split string if necessary
+        toks = input.split() if self.info.split_on_whitespace else [input]
+        err_str = ': invalid relative delta string ' + repr(input)
+        def parse_one(tok):
+            # check index available
+            if len(tok) == 0:
+                raise ValueError('zero length token ' + err_str)
+            last = tok[-1]
+            # map token to keyword argument for relativedelta.__init__
+            mapped = self.info.token_to_relativedelta_kwarg(last)
+            if mapped is None:
+                # could not map to kwarg
+                raise ValueError('could not map token {!r} to keywork argument{}'.format(last, err_str))
+            # parse value
+            value = 0
+            try:
+                value = float(tok[:-1])
+            except:
+                reraise(
+                    ValueError,
+                    ValueError('could not parse floating point from {!r}{}'.format(tok[:-1], err_str)),
+                    sys.exc_info()[2]
+                )
+            return mapped, value
+
+        return relativedelta.relativedelta(**dict(map(parse_one, toks)))
+
+def parse_relativedelta(input, split_on_whitespace = False, token_mapping = None):
+    '''
+    Parse an input string into a relativedelta object
+
+    This function will raise ValueError and it should be caught for bad parse results.
+
+    :param str input:
+        input string to parse
+    :param bool split_on_whitespace:
+        True to split the input string on whitespace, this will slow down processing for many records.
+    :param token_mapping:
+         Optional - map the last character of a token onto the relativedelta.__init__ function parameters.
+         .. code-block:: python
+             {
+                'Y' : 'years',
+                'y' : 'years',
+                'm' : 'months',
+                'w' : 'weeks',
+                'W' : 'weeks',
+                'd' : 'days',
+                'D' : 'days',
+                'H' : 'hours',
+                'h' : 'hours',
+                'M' : 'minutes',
+                'S' : 'seconds',
+                's' : 'seconds'
+            }
+    :return: the resulting relativedelta object
+    :rtype: dateutil.relativedelta.relativedelta
+    :raises ValueError: on input that cannot be parsed
+    '''
+    info = _RelativeDeltaParserInfo(split_on_whitespace, token_mapping)
+    parser = RelativeDeltaParser(info)
+    return parser.parse(input)
 
 # vim:ts=4:sw=4:et
