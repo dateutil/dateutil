@@ -564,7 +564,7 @@ class parser(object):
                 >>> from dateutil.tz import gettz
                 >>> tzinfos = {"BRST": -7200, "CST": gettz("America/Chicago")}
                 >>> parse("2012-01-19 17:21:00 BRST", tzinfos=tzinfos)
-                datetime.datetime(2012, 1, 19, 17, 21, tzinfo=tzoffset(u'BRST', -10800))
+                datetime.datetime(2012, 1, 19, 17, 21, tzinfo=tzoffset(u'BRST', -7200))
                 >>> parse("2012-01-19 17:21:00 CST", tzinfos=tzinfos)
                 datetime.datetime(2012, 1, 19, 17, 21,
                                   tzinfo=tzfile('/usr/share/zoneinfo/America/Chicago'))
@@ -1019,7 +1019,7 @@ def parse(timestr, parserinfo=None, **kwargs):
                 >>> from dateutil.tz import gettz
                 >>> tzinfos = {"BRST": -7200, "CST": gettz("America/Chicago")}
                 >>> parse("2012-01-19 17:21:00 BRST", tzinfos=tzinfos)
-                datetime.datetime(2012, 1, 19, 17, 21, tzinfo=tzoffset(u'BRST', -10800))
+                datetime.datetime(2012, 1, 19, 17, 21, tzinfo=tzoffset(u'BRST', -7200))
                 >>> parse("2012-01-19 17:21:00 CST", tzinfos=tzinfos)
                 datetime.datetime(2012, 1, 19, 17, 21,
                                   tzinfo=tzfile('/usr/share/zoneinfo/America/Chicago'))
