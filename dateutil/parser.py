@@ -555,14 +555,14 @@ class parser(object):
             ``tzoffset``) and returning a time zone.
 
             The timezones to which the names are mapped can be an integer
-            offset from UTC in minutes or a :class:`tzinfo` object.
+            offset from UTC in seconds or a :class:`tzinfo` object.
 
             .. doctest::
                :options: +NORMALIZE_WHITESPACE
 
                 >>> from dateutil.parser import parse
                 >>> from dateutil.tz import gettz
-                >>> tzinfos = {"BRST": -10800, "CST": gettz("America/Chicago")}
+                >>> tzinfos = {"BRST": -7200, "CST": gettz("America/Chicago")}
                 >>> parse("2012-01-19 17:21:00 BRST", tzinfos=tzinfos)
                 datetime.datetime(2012, 1, 19, 17, 21, tzinfo=tzoffset(u'BRST', -10800))
                 >>> parse("2012-01-19 17:21:00 CST", tzinfos=tzinfos)
@@ -1010,14 +1010,14 @@ def parse(timestr, parserinfo=None, **kwargs):
             ``tzoffset``) and returning a time zone.
 
             The timezones to which the names are mapped can be an integer
-            offset from UTC in minutes or a :class:`tzinfo` object.
+            offset from UTC in seconds or a :class:`tzinfo` object.
 
             .. doctest::
                :options: +NORMALIZE_WHITESPACE
 
                 >>> from dateutil.parser import parse
                 >>> from dateutil.tz import gettz
-                >>> tzinfos = {"BRST": -10800, "CST": gettz("America/Chicago")}
+                >>> tzinfos = {"BRST": -7200, "CST": gettz("America/Chicago")}
                 >>> parse("2012-01-19 17:21:00 BRST", tzinfos=tzinfos)
                 datetime.datetime(2012, 1, 19, 17, 21, tzinfo=tzoffset(u'BRST', -10800))
                 >>> parse("2012-01-19 17:21:00 CST", tzinfos=tzinfos)
