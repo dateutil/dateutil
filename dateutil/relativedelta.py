@@ -249,7 +249,7 @@ class relativedelta(object):
 
     @property
     def weeks(self):
-        return self.days // 7
+        return int(self.days / 7.0)
 
     @weeks.setter
     def weeks(self, value):
