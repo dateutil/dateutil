@@ -249,8 +249,7 @@ class relativedelta(object):
 
     @property
     def weeks(self):
-        weeks = abs(self.days) // 7
-        return -weeks if self.days < 0 else weeks
+        return int(self.days / 7.0)
 
     @weeks.setter
     def weeks(self, value):
