@@ -578,9 +578,62 @@ class RelativeDeltaTest(WarningTestMixin, unittest.TestCase):
         self.assertEqual(expected, rd + td)
 
     def testHashable(self):
-      try:
-        {relativedelta(minute=1): 'test'}
-      except:
-        self.fail("relativedelta() failed to hash!")
+        try:
+            {relativedelta(minute=1): 'test'}
+        except:
+            self.fail("relativedelta() failed to hash!")
+
+
+class RelativeDeltaWeeksPropertyGetterTest(unittest.TestCase):
+    """Test the weeks property getter"""
+
+    def test_one_day(self):
+        rd = relativedelta(days=1)
+        self.assertEqual(rd.days, 1)
+        self.assertEqual(rd.weeks, 0)
+
+    def test_minus_one_day(self):
+        rd = relativedelta(days=-1)
+        self.assertEqual(rd.days, -1)
+        self.assertEqual(rd.weeks, 0)
+
+    def test_height_days(self):
+        rd = relativedelta(days=8)
+        self.assertEqual(rd.days, 8)
+        self.assertEqual(rd.weeks, 1)
+
+    def test_minus_height_days(self):
+        rd = relativedelta(days=-8)
+        self.assertEqual(rd.days, -8)
+        self.assertEqual(rd.weeks, -1)
+
+
+class RelativeDeltaWeeksPropertySetterTest(unittest.TestCase):
+    """Test the weeks setter which makes a "smart" update of the days attribute"""
+
+    def test_one_day_set_one_week(self):
+        rd = relativedelta(days=1)
+        rd.weeks = 1  # add 7 days
+        self.assertEqual(rd.days, 8)
+        self.assertEqual(rd.weeks, 1)
+
+    def test_minus_one_day_set_one_week(self):
+        rd = relativedelta(days=-1)
+        rd.weeks = 1  # add 7 days
+        self.assertEqual(rd.days, 6)
+        self.assertEqual(rd.weeks, 0)
+
+    def test_height_days_set_minus_one_week(self):
+        rd = relativedelta(days=8)
+        rd.weeks = -1  # change from 1 week, 1 day to -1 week, 1 day
+        self.assertEqual(rd.days, -6)
+        self.assertEqual(rd.weeks, 0)
+
+    def test_minus_height_days_set_minus_one_week(self):
+        rd = relativedelta(days=-8)
+        rd.weeks = -1  # does not change anything
+        self.assertEqual(rd.days, -8)
+        self.assertEqual(rd.weeks, -1)
+
 
 # vim:ts=4:sw=4:et
