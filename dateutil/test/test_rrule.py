@@ -26,6 +26,20 @@ class RRuleTest(WarningTestMixin, unittest.TestCase):
 
         self.assertEqual(list(rule), list(rrulestr_rrule))
 
+    def testStrAppendRRULEToken(self):
+        # `_rrulestr_reverse_test` does not check if the "RRULE:" prefix
+        # property is appended properly, so give it a dedicated test
+        self.assertEqual(str(rrule(YEARLY,
+                             count=5,
+                             dtstart=datetime(1997, 9, 2, 9, 0))),
+                         "DTSTART:19970902T090000\n"
+                         "RRULE:FREQ=YEARLY;COUNT=5")
+
+        rr_str = (
+          'DTSTART:19970105T083000\nRRULE:FREQ=YEARLY;INTERVAL=2'
+        )
+        self.assertEqual(str(rrulestr(rr_str)), rr_str)
+
     def testYearly(self):
         self.assertEqual(list(rrule(YEARLY,
                               count=3,
