@@ -95,7 +95,7 @@ class tzoffset(datetime.tzinfo):
 
     :param offset:
         The time zone offset in seconds, or (since version 2.6.0, represented
-        as a :py:class:`datetime.timedelta` object.
+        as a :py:class:`datetime.timedelta` object).
     """
     def __init__(self, name, offset):
         self._name = name
