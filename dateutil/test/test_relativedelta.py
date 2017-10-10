@@ -286,8 +286,8 @@ class RelativeDeltaTest(WarningTestMixin, unittest.TestCase):
         rd2 = relativedelta(days=1, hours=1.5, minutes=1, seconds=1)
 
         assert rd1.total_seconds() < rd2.total_seconds()
-        assert rd1 < rd2
-        assert not rd2 > rd1
+        assert rd1 > rd2
+        assert not rd2 < rd1
 
     def testInequalityTypeMismatch(self):
         # Different type
