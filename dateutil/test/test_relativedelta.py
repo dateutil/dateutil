@@ -256,6 +256,39 @@ class RelativeDeltaTest(WarningTestMixin, unittest.TestCase):
         self.assertEqual(d1, d2)
         self.assertNotEqual(d1, d3)
 
+    def test_timedeltalike(self):
+        d1 = relativedelta(years=1, months=1, days=1, leapdays=0, hours=1,
+                           minutes=1, seconds=1, microseconds=1)
+        assert not d1._is_timedeltalike
+
+        d2 = relativedelta(days=1, hours=1,
+                           minutes=1, seconds=1, microseconds=1)
+        assert d2._is_timedeltalike
+
+    def test_total_seconds(self):
+        d1 = relativedelta(years=1, months=1, days=1, leapdays=0, hours=1,
+                           minutes=1, seconds=1, microseconds=1)
+
+        self.assertRaises(ValueError, d1.total_seconds)
+
+    def test_inequality_tdlike_timedelta(self):
+        rd = relativedelta(days=1, hours=1,
+                           minutes=1, seconds=1, microseconds=1)
+        td = timedelta(days=1, hours=1, minutes=1, seconds=1)
+
+        assert rd.total_seconds() > td.total_seconds()
+        assert rd > td
+        assert not rd < td
+
+    def test_inequality_tdlike_relativedelta(self):
+        rd1 = relativedelta(days=1, hours=1,
+                           minutes=1, seconds=1, microseconds=1)
+        rd2 = relativedelta(days=1, hours=1.5, minutes=1, seconds=1)
+
+        assert rd1.total_seconds() < rd2.total_seconds()
+        assert rd1 < rd2
+        assert not rd2 > rd1
+
     def testInequalityTypeMismatch(self):
         # Different type
         self.assertFalse(relativedelta(year=1) == 19)

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import datetime
+from datetime import timedelta
 import calendar
 
 import operator
@@ -535,6 +536,24 @@ class relativedelta(object):
     def __ne__(self, other):
         return not self.__eq__(other)
 
+    def __lt__(self, other):
+        if self._is_timedeltalike:
+            if isinstance(other, relativedelta):
+                if other._is_timedeltalike:
+                    return self.total_seconds() < other.total_seconds()
+            elif isinstance(other, timedelta):
+                return self.total_seconds() < other.total_seconds()
+        return object.__lt__(self, other)
+
+    def __gt__(self, other):
+        if self._is_timedeltalike:
+            if isinstance(other, relativedelta):
+                if other._is_timedeltalike:
+                    return self.total_seconds() > other.total_seconds()
+            elif isinstance(other, timedelta):
+                return self.total_seconds() > other.total_seconds()
+        return object.__gt__(self, other)
+
     def __div__(self, other):
         try:
             reciprocal = 1 / float(other)
@@ -559,6 +578,33 @@ class relativedelta(object):
                 l.append("{attr}={value}".format(attr=attr, value=repr(value)))
         return "{classname}({attrs})".format(classname=self.__class__.__name__,
                                              attrs=", ".join(l))
+
+    @property
+    def _is_timedeltalike(self):
+        """Is this relativedelta object equivalent to a simpler timedelta
+        object?
+        """
+        return (self.years == self.months == 0 and
+                # No entries that cannot be unambigously converted to seconds
+                # No absolute entries
+                self.year is None and self.month is None and
+                self.day is None and self.hour is None and self.minute is None
+                and self.second is None and self.microsecond is None and
+                self.weekday is None and
+                # Note: We allow either None or 0 for leapdays
+                not self.leapdays)
+
+    def total_seconds(self):
+        """Equivalent to `datetime.timedelta.total_seconds` for values where
+        this behavior is well-defined.
+        """
+        if not self._is_timedeltalike:
+            raise ValueError('total_seconds is not well-defined.')
+        return (self.days * 24 * 3600 +
+                self.hours * 3600 +
+                self.minutes * 60 +
+                self.seconds +
+                float(self.microseconds) / 1e6)
 
 
 def _sign(x):
