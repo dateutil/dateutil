@@ -245,6 +245,20 @@ class RelativeDeltaTest(WarningTestMixin, unittest.TestCase):
         self.assertFalse(relativedelta(days=0))
         self.assertTrue(relativedelta(days=1))
 
+    def testAbsoluteValueNegative(self):
+        rd_base = relativedelta(years=-1, months=-5, days=-2, hours=-3,
+                                minutes=-5, seconds=-2, microseconds=-12)
+        rd_expected = relativedelta(years=1, months=5, days=2, hours=3,
+                                    minutes=5, seconds=2, microseconds=12)
+        self.assertEqual(abs(rd_base), rd_expected)
+
+    def testAbsoluteValuePositive(self):
+        rd_base = relativedelta(years=1, months=5, days=2, hours=3,
+                                minutes=5, seconds=2, microseconds=12)
+        rd_expected = rd_base
+
+        self.assertEqual(abs(rd_base), rd_expected)
+
     def testComparison(self):
         d1 = relativedelta(years=1, months=1, days=1, leapdays=0, hours=1,
                            minutes=1, seconds=1, microseconds=1)
