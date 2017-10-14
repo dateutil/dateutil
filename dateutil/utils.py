@@ -20,6 +20,26 @@ def today(tzinfo=None):
     return datetime.combine(dt.date(), time(0, tzinfo=tzinfo))
 
 
+def default_tzinfo(dt, tzinfo):
+    """
+    Sets the the ``tzinfo`` parameter on naive datetimes only
+
+    :param dt:
+        The datetime on which to replace the time zone
+
+    :param tzinfo:
+        The :py:class:`datetime.tzinfo` subclass instance to assign to
+        ``dt`` if (and only if) it is naive.
+
+    :return:
+        Returns an aware :py:class:`datetime.datetime`.
+    """
+    if dt.tzinfo is not None:
+        return dt
+    else:
+        return dt.replace(tzinfo=tzinfo)
+
+
 def within_delta(dt1, dt2, delta):
     """
     Useful for comparing two datetimes that may a negilible difference
