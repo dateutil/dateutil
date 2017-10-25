@@ -18,7 +18,9 @@ matrix:
 before_install:
   # Install codecov
   - if [[ $TRAVIS_PYTHON_VERSION == '3.2' ]]; then pip install coverage==3.7.1; fi
+  - if [[ $TRAVIS_PYTHON_VERSION < '3.0' ]]; then pip install mock; fi
   - pip install codecov
+  - pip install freezegun
 
 install:
   - pip install six
