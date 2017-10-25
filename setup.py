@@ -17,7 +17,7 @@ setup(name="python-dateutil",
       author="Paul Ganssle",
       author_email="dateutil@python.org",
       url="https://dateutil.readthedocs.io",
-      license="Simplified BSD",
+      license="BSD 3-Clause",
       long_description="""
 The dateutil module provides powerful extensions to the
 datetime module available in the Python standard library.
@@ -26,7 +26,7 @@ datetime module available in the Python standard library.
       package_data={"dateutil.zoneinfo": ["dateutil-zoneinfo.tar.gz"]},
       zip_safe=True,
       requires=["six"],
-      tests_require=["pytest"],
+      tests_require=["pytest", "freezegun"],
       install_requires=["six >=1.5"],  # XXX fix when packaging is sane again
       classifiers=[
           'Development Status :: 5 - Production/Stable',

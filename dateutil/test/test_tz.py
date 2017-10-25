@@ -1291,8 +1291,7 @@ class TZStrTest(unittest.TestCase, TzFoldMixin):
 
 
 class TZICalTest(unittest.TestCase, TzFoldMixin):
-
-    def gettz(self, tzname):
+    def _gettz_str_tuple(self, tzname):
         TZ_EST = (
             'BEGIN:VTIMEZONE',
             'TZID:US-Eastern',
@@ -1311,7 +1310,27 @@ class TZICalTest(unittest.TestCase, TzFoldMixin):
             'TZNAME:EDT',
             'END:DAYLIGHT',
             'END:VTIMEZONE'
-            )
+        )
+
+        TZ_PST = (
+            'BEGIN:VTIMEZONE',
+            'TZID:US-Pacific',
+            'BEGIN:STANDARD',
+            'DTSTART:19971029T020000',
+            'RRULE:FREQ=YEARLY;BYDAY=+1SU;BYMONTH=11',
+            'TZOFFSETFROM:-0700',
+            'TZOFFSETTO:-0800',
+            'TZNAME:PST',
+            'END:STANDARD',
+            'BEGIN:DAYLIGHT',
+            'DTSTART:19980301T020000',
+            'RRULE:FREQ=YEARLY;BYDAY=+2SU;BYMONTH=03',
+            'TZOFFSETFROM:-0800',
+            'TZOFFSETTO:-0700',
+            'TZNAME:PDT',
+            'END:DAYLIGHT',
+            'END:VTIMEZONE'
+        )
 
         TZ_AEST = (
             'BEGIN:VTIMEZONE',
@@ -1331,7 +1350,7 @@ class TZICalTest(unittest.TestCase, TzFoldMixin):
             'TZNAME:AEDT',
             'END:DAYLIGHT',
             'END:VTIMEZONE'
-            )
+        )
 
         TZ_LON = (
             'BEGIN:VTIMEZONE',
@@ -1351,14 +1370,37 @@ class TZICalTest(unittest.TestCase, TzFoldMixin):
             'TZNAME:BST',
             'END:DAYLIGHT',
             'END:VTIMEZONE'
-            )
+        )
 
         tzname_map = {'Australia/Sydney': TZ_AEST,
                       'America/Toronto': TZ_EST,
                       'America/New_York': TZ_EST,
+                      'America/Los_Angeles': TZ_PST,
                       'Europe/London': TZ_LON}
 
-        tzc = tz.tzical(StringIO('\n'.join(tzname_map[tzname]))).get()
+        return tzname_map[tzname]
+
+    def _gettz_str(self, tzname):
+        return '\n'.join(self._gettz_str_tuple(tzname))
+
+    def _tzstr_dtstart_with_params(self, tzname, param_str):
+        # Adds parameters to the DTSTART values of a given tzstr
+        tz_str_tuple = self._gettz_str_tuple(tzname)
+
+        out_tz = []
+        for line in tz_str_tuple:
+            if line.startswith('DTSTART'):
+                name, value = line.split(':', 1)
+                line = name + ';' + param_str + ':' + value
+
+            out_tz.append(line)
+
+        return '\n'.join(out_tz)
+
+    def gettz(self, tzname):
+        tz_str = self._gettz_str(tzname)
+
+        tzc = tz.tzical(StringIO(tz_str)).get()
 
         return tzc
 
@@ -1372,12 +1414,12 @@ class TZICalTest(unittest.TestCase, TzFoldMixin):
     # Test performance
     def _test_us_zone(self, tzc, func, values, start):
         if start:
-            dt1 = datetime(2003, 4, 6, 1, 59)
-            dt2 = datetime(2003, 4, 6, 2, 00)
+            dt1 = datetime(2003, 3, 9, 1, 59)
+            dt2 = datetime(2003, 3, 9, 2, 00)
             fold = [0, 0]
         else:
-            dt1 = datetime(2003, 10, 26, 0, 59)
-            dt2 = datetime(2003, 10, 26, 1, 00)
+            dt1 = datetime(2003, 11, 2, 0, 59)
+            dt2 = datetime(2003, 11, 2, 1, 00)
             fold = [0, 1]
 
         dts = (tz.enfold(dt.replace(tzinfo=tzc), fold=f)
@@ -1387,17 +1429,20 @@ class TZICalTest(unittest.TestCase, TzFoldMixin):
             self.assertEqual(func(dt), value)
 
     def _test_multi_zones(self, tzstrs, tzids, func, values, start):
-        tzic = tz.tzical(StringIO(''.join(tzstrs)))
+        tzic = tz.tzical(StringIO('\n'.join(tzstrs)))
         for tzid, vals in zip(tzids, values):
             tzc = tzic.get(tzid)
 
             self._test_us_zone(tzc, func, vals, start)
 
     def _prepare_EST(self):
-        return tz.tzical(StringIO(TZICAL_EST5EDT)).get()
+        tz_str = self._gettz_str('America/New_York')
+        return tz.tzical(StringIO(tz_str)).get()
 
-    def _testEST(self, start, test_type):
-        tzc = self._prepare_EST()
+    def _testEST(self, start, test_type, tzc=None):
+        if tzc is None:
+            tzc = self._prepare_EST()
+
         argdict = {
             'name':   (datetime.tzname, ('EST', 'EDT')),
             'offset': (datetime.utcoffset, (timedelta(hours=-5),
@@ -1431,8 +1476,22 @@ class TZICalTest(unittest.TestCase, TzFoldMixin):
     def testESTEndDST(self):
         self._testEST(start=False, test_type='dst')
 
+    def testESTValueDatetime(self):
+        # Violating one-test-per-test rule because we're not set up to do
+        # parameterized tests and the manual proliferation is getting a bit
+        # out of hand.
+        tz_str = self._tzstr_dtstart_with_params('America/New_York',
+                                                 'VALUE=DATE-TIME')
+
+        tzc = tz.tzical(StringIO(tz_str)).get()
+
+        for start in (True, False):
+            for test_type in ('name', 'offset', 'dst'):
+                self._testEST(start=start, test_type=test_type, tzc=tzc)
+
     def _testMultizone(self, start, test_type):
-        tzstrs = (TZICAL_EST5EDT, TZICAL_PST8PDT)
+        tzstrs = (self._gettz_str('America/New_York'),
+                  self._gettz_str('America/Los_Angeles'))
         tzids = ('US-Eastern', 'US-Pacific')
 
         argdict = {
@@ -1474,7 +1533,9 @@ class TZICalTest(unittest.TestCase, TzFoldMixin):
         self._testMultizone(start=False, test_type='dst')
 
     def testMultiZoneKeys(self):
-        tzic = tz.tzical(StringIO(''.join((TZICAL_EST5EDT, TZICAL_PST8PDT))))
+        est_str = self._gettz_str('America/New_York')
+        pst_str = self._gettz_str('America/Los_Angeles')
+        tzic = tz.tzical(StringIO('\n'.join((est_str, pst_str))))
 
         # Sort keys because they are in a random order, being dictionary keys
         keys = sorted(tzic.keys())
@@ -1491,6 +1552,25 @@ class TZICalTest(unittest.TestCase, TzFoldMixin):
 
         with self.assertRaises(ValueError):
             tzic.get()
+
+    def testDtstartDate(self):
+        tz_str = self._tzstr_dtstart_with_params('America/New_York',
+                                                 'VALUE=DATE')
+        with self.assertRaises(ValueError):
+            tz.tzical(StringIO(tz_str))
+
+    def testDtstartTzid(self):
+        tz_str = self._tzstr_dtstart_with_params('America/New_York',
+                                                 'TZID=UTC')
+        with self.assertRaises(ValueError):
+            tz.tzical(StringIO(tz_str))
+
+    def testDtstartBadParam(self):
+        tz_str = self._tzstr_dtstart_with_params('America/New_York',
+                                                 'FOO=BAR')
+        with self.assertRaises(ValueError):
+            tz.tzical(StringIO(tz_str))
+
 
     # Test Parsing
     def testGap(self):

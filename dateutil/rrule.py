@@ -730,7 +730,7 @@ class rrule(rrulebase):
                 parts.append(partfmt.format(name=name, vals=(','.join(str(v)
                                                              for v in value))))
 
-        output.append(';'.join(parts))
+        output.append('RRULE:' + ';'.join(parts))
         return '\n'.join(output)
 
     def replace(self, **kwargs):

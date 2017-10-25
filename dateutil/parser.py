@@ -559,16 +559,16 @@ class parser(object):
             ``tzoffset``) and returning a time zone.
 
             The timezones to which the names are mapped can be an integer
-            offset from UTC in minutes or a :class:`tzinfo` object.
+            offset from UTC in seconds or a :class:`tzinfo` object.
 
             .. doctest::
                :options: +NORMALIZE_WHITESPACE
 
                 >>> from dateutil.parser import parse
                 >>> from dateutil.tz import gettz
-                >>> tzinfos = {"BRST": -10800, "CST": gettz("America/Chicago")}
+                >>> tzinfos = {"BRST": -7200, "CST": gettz("America/Chicago")}
                 >>> parse("2012-01-19 17:21:00 BRST", tzinfos=tzinfos)
-                datetime.datetime(2012, 1, 19, 17, 21, tzinfo=tzoffset(u'BRST', -10800))
+                datetime.datetime(2012, 1, 19, 17, 21, tzinfo=tzoffset(u'BRST', -7200))
                 >>> parse("2012-01-19 17:21:00 CST", tzinfos=tzinfos)
                 datetime.datetime(2012, 1, 19, 17, 21,
                                   tzinfo=tzfile('/usr/share/zoneinfo/America/Chicago'))
@@ -634,7 +634,7 @@ class parser(object):
         if not ignoretz:
             if (isinstance(tzinfos, collections.Callable) or
                     tzinfos and res.tzname in tzinfos):
-                tzinfo = _build_tzinfo(tzinfos, res.tzname, res.tzoffset)
+                tzinfo = self._build_tzinfo(tzinfos, res.tzname, res.tzoffset)
                 ret = ret.replace(tzinfo=tzinfo)
             elif res.tzname and res.tzname in time.tzname:
                 ret = ret.replace(tzinfo=tz.tzlocal())
@@ -755,7 +755,7 @@ class parser(object):
                             # TODO: Check if res attributes already set.
                             res.hour = int(s[:2])
                             res.minute = int(s[2:4])
-                            res.second, res.microsecond = _parsems(s[4:])
+                            res.second, res.microsecond = self._parsems(s[4:])
 
                     elif len_li in (8, 12, 14):
                         # YYYYMMDD
@@ -771,23 +771,23 @@ class parser(object):
                             if len_li > 12:
                                 res.second = int(s[12:])
 
-                    elif _find_hms_idx(i, l, info, allow_jump=True) is not None:
+                    elif self._find_hms_idx(i, l, info, allow_jump=True) is not None:
                         # HH[ ]h or MM[ ]m or SS[.ss][ ]s
-                        hms_idx = _find_hms_idx(i, l, info, allow_jump=True)
-                        (i, hms) = _parse_hms(i, l, info, hms_idx)
+                        hms_idx = self._find_hms_idx(i, l, info, allow_jump=True)
+                        (i, hms) = self._parse_hms(i, l, info, hms_idx)
                         if hms is not None:
                             # TODO: checking that hour/minute/second are not
                             # already set?
-                            _assign_hms(res, value_repr, hms)
+                            self._assign_hms(res, value_repr, hms)
 
                     elif i + 2 < len_l and l[i + 1] == ':':
                         # HH:MM[:SS[.ss]]
                         res.hour = int(value)
                         value = float(l[i + 2])  # TODO: try/except for this?
-                        (res.minute, res.second) = _parse_min_sec(value)
+                        (res.minute, res.second) = self._parse_min_sec(value)
 
                         if i + 4 < len_l and l[i + 3] == ':':
-                            res.second, res.microsecond = _parsems(l[i + 4])
+                            res.second, res.microsecond = self._parsems(l[i + 4])
 
                             i += 2
 
@@ -827,7 +827,7 @@ class parser(object):
                         if i + 2 < len_l and info.ampm(l[i + 2]) is not None:
                             # 12 am
                             hour = int(value)
-                            res.hour = _adjust_ampm(hour, info.ampm(l[i + 2]))
+                            res.hour = self._adjust_ampm(hour, info.ampm(l[i + 2]))
                             i += 1
                         else:
                             # Year, month or day
@@ -837,7 +837,7 @@ class parser(object):
                     elif info.ampm(l[i + 1]) is not None:
                         # 12am
                         hour = int(value)
-                        res.hour = _adjust_ampm(hour, info.ampm(l[i + 1]))
+                        res.hour = self._adjust_ampm(hour, info.ampm(l[i + 1]))
                         i += 1
 
                     elif not fuzzy:
@@ -884,17 +884,17 @@ class parser(object):
                 # Check am/pm
                 elif info.ampm(l[i]) is not None:
                     value = info.ampm(l[i])
-                    val_is_ampm = _ampm_validity(res.hour, res.ampm, fuzzy)
+                    val_is_ampm = self._ampm_valid(res.hour, res.ampm, fuzzy)
 
                     if val_is_ampm:
-                        res.hour = _adjust_ampm(res.hour, value)
+                        res.hour = self._adjust_ampm(res.hour, value)
                         res.ampm = value
 
                     elif fuzzy:
                         skipped_idxs.append(i)
 
                 # Check for a timezone name
-                elif _could_be_tzname(res.hour, res.tzname, res.tzoffset, l[i]):
+                elif self._could_be_tzname(res.hour, res.tzname, res.tzoffset, l[i]):
                     res.tzname = l[i]
                     res.tzoffset = info.tzoffset(res.tzname)
 
@@ -971,10 +971,171 @@ class parser(object):
             return None, None
 
         if fuzzy_with_tokens:
-            skipped_tokens = _recombine_skipped(l, skipped_idxs)
+            skipped_tokens = self._recombine_skipped(l, skipped_idxs)
             return res, tuple(skipped_tokens)
         else:
             return res, None
+
+    def _find_hms_idx(self, idx, tokens, info, allow_jump):
+        len_l = len(tokens)
+
+        if idx+1 < len_l and info.hms(tokens[idx+1]) is not None:
+            # There is an "h", "m", or "s" label following this token.  We take
+            # assign the upcoming label to the current token.
+            # e.g. the "12" in 12h"
+            hms_idx = idx + 1
+
+        elif (allow_jump and idx+2 < len_l and tokens[idx+1] == ' ' and
+              info.hms(tokens[idx+2]) is not None):
+            # There is a space and then an "h", "m", or "s" label.
+            # e.g. the "12" in "12 h"
+            hms_idx = idx + 2
+
+        elif idx > 0 and info.hms(tokens[idx-1]) is not None:
+            # There is a "h", "m", or "s" preceeding this token.  Since neither
+            # of the previous cases was hit, there is no label following this
+            # token, so we use the previous label.
+            # e.g. the "04" in "12h04"
+            hms_idx = idx-1
+
+        elif (1 < idx == len_l-1 and tokens[idx-1] == ' ' and
+              info.hms(tokens[idx-2]) is not None):
+            # If we are looking at the final token, we allow for a
+            # backward-looking check to skip over a space.
+            # TODO: Are we sure this is the right condition here?
+            hms_idx = idx - 2
+
+        else:
+            hms_idx = None
+
+        return hms_idx
+
+    def _assign_hms(self, res, value_repr, hms):
+        value = float(value_repr)
+        if hms == 0:
+            # Hour
+            res.hour = int(value)
+            if value % 1:
+                res.minute = int(60*(value % 1))
+
+        elif hms == 1:
+            (res.minute, res.second) = self._parse_min_sec(value)
+
+        elif hms == 2:
+            (res.second, res.microsecond) = self._parsems(value_repr)
+
+    def _could_be_tzname(self, hour, tzname, tzoffset, token):
+        return (hour is not None and
+                tzname is None and
+                tzoffset is None and
+                len(token) <= 5 and
+                all(x in string.ascii_uppercase for x in token))
+
+    def _ampm_valid(self, hour, ampm, fuzzy):
+        """
+        For fuzzy parsing, 'a' or 'am' (both valid English words)
+        may erroneously trigger the AM/PM flag. Deal with that
+        here.
+        """
+        val_is_ampm = True
+
+        # If there's already an AM/PM flag, this one isn't one.
+        if fuzzy and ampm is not None:
+            val_is_ampm = False
+
+        # If AM/PM is found and hour is not, raise a ValueError
+        if hour is None:
+            if fuzzy:
+                val_is_ampm = False
+            else:
+                raise ValueError('No hour specified with AM or PM flag.')
+        elif not 0 <= hour <= 12:
+            # If AM/PM is found, it's a 12 hour clock, so raise
+            # an error for invalid range
+            if fuzzy:
+                val_is_ampm = False
+            else:
+                raise ValueError('Invalid hour specified for 12-hour clock.')
+
+        return val_is_ampm
+
+    def _adjust_ampm(self, hour, ampm):
+        if hour < 12 and ampm == 1:
+            hour += 12
+        elif hour == 12 and ampm == 0:
+            hour = 0
+        return hour
+
+    def _parse_min_sec(self, value):
+        # TODO: Every usage of this function sets res.second to the return
+        # value. Are there any cases where second will be returned as None and
+        # we *dont* want to set res.second = None?
+        minute = int(value)
+        second = None
+
+        sec_remainder = value % 1
+        if sec_remainder:
+            second = int(60 * sec_remainder)
+        return (minute, second)
+
+    def _parsems(self, value):
+        """Parse a I[.F] seconds value into (seconds, microseconds)."""
+        if "." not in value:
+            return int(value), 0
+        else:
+            i, f = value.split(".")
+            return int(i), int(f.ljust(6, "0")[:6])
+
+    def _parse_hms(self, idx, tokens, info, hms_idx):
+        # TODO: Is this going to admit a lot of false-positives for when we
+        # just happen to have digits and "h", "m" or "s" characters in non-date
+        # text?  I guess hex hashes won't have that problem, but there's plenty
+        # of random junk out there.
+        if hms_idx is None:
+            hms = None
+            new_idx = idx
+        elif hms_idx > idx:
+            hms = info.hms(tokens[hms_idx])
+            new_idx = hms_idx
+        else:
+            # Looking backwards, increment one.
+            hms = info.hms(tokens[hms_idx]) + 1
+            new_idx = idx
+
+        return (new_idx, hms)
+
+    def _recombine_skipped(self, tokens, skipped_idxs):
+        """
+        >>> tokens = ["foo", " ", "bar", " ", "19June2000", "baz"]
+        >>> skipped_idxs = [0, 1, 2, 5]
+        >>> _recombine_skipped(tokens, skipped_idxs)
+        ["foo bar", "baz"]
+        """
+        skipped_tokens = []
+        for i, idx in enumerate(sorted(skipped_idxs)):
+            if i > 0 and idx - 1 == skipped_idxs[i - 1]:
+                skipped_tokens[-1] = skipped_tokens[-1] + tokens[idx]
+            else:
+                skipped_tokens.append(tokens[idx])
+
+        return skipped_tokens
+
+    def _build_tzinfo(self, tzinfos, tzname, tzoffset):
+        if isinstance(tzinfos, collections.Callable):
+            tzdata = tzinfos(tzname, tzoffset)
+        else:
+            tzdata = tzinfos.get(tzname)
+
+        if isinstance(tzdata, datetime.tzinfo):
+            tzinfo = tzdata
+        elif isinstance(tzdata, text_type):
+            tzinfo = tz.tzstr(tzdata)
+        elif isinstance(tzdata, integer_types):
+            tzinfo = tz.tzoffset(tzname, tzdata)
+        else:
+            raise ValueError("Offset must be tzinfo subclass, "
+                             "tz string, or int offset.")
+        return tzinfo
 
 
 DEFAULTPARSER = parser()
@@ -1014,16 +1175,16 @@ def parse(timestr, parserinfo=None, **kwargs):
             ``tzoffset``) and returning a time zone.
 
             The timezones to which the names are mapped can be an integer
-            offset from UTC in minutes or a :class:`tzinfo` object.
+            offset from UTC in seconds or a :class:`tzinfo` object.
 
             .. doctest::
                :options: +NORMALIZE_WHITESPACE
 
                 >>> from dateutil.parser import parse
                 >>> from dateutil.tz import gettz
-                >>> tzinfos = {"BRST": -10800, "CST": gettz("America/Chicago")}
+                >>> tzinfos = {"BRST": -7200, "CST": gettz("America/Chicago")}
                 >>> parse("2012-01-19 17:21:00 BRST", tzinfos=tzinfos)
-                datetime.datetime(2012, 1, 19, 17, 21, tzinfo=tzoffset(u'BRST', -10800))
+                datetime.datetime(2012, 1, 19, 17, 21, tzinfo=tzoffset(u'BRST', -7200))
                 >>> parse("2012-01-19 17:21:00 CST", tzinfos=tzinfos)
                 datetime.datetime(2012, 1, 19, 17, 21,
                                   tzinfo=tzfile('/usr/share/zoneinfo/America/Chicago'))
@@ -1273,178 +1434,5 @@ class InvalidDateError(InvalidDatetimeError):
 
 class InvalidTimeError(InvalidDatetimeError):
     pass
-
-
-def _find_hms_idx(idx, tokens, info, allow_jump):
-    len_l = len(tokens)
-
-    if idx+1 < len_l and info.hms(tokens[idx+1]) is not None:
-        # There is an "h", "m", or "s" label following this token.  We take
-        # assign the upcoming label to the current token.
-        # e.g. the "12" in 12h"
-        hms_idx = idx + 1
-
-    elif (allow_jump and idx+2 < len_l and tokens[idx+1] == ' ' and
-          info.hms(tokens[idx+2]) is not None):
-        # There is a space and then an "h", "m", or "s" label.
-        # e.g. the "12" in "12 h"
-        hms_idx = idx + 2
-
-    elif idx > 0 and info.hms(tokens[idx-1]) is not None:
-        # There is a "h", "m", or "s" preceeding this token.  Since neither
-        # of the previous cases was hit, there is no label following this
-        # token, so we use the previous label.
-        # e.g. the "04" in "12h04"
-        hms_idx = idx-1
-
-    elif (1 < idx == len_l-1 and tokens[idx-1] == ' ' and
-          info.hms(tokens[idx-2]) is not None):
-        # If we are looking at the final token, we allow for a
-        # backward-looking check to skip over a space.
-        # TODO: Are we sure this is the right condition here?
-        hms_idx = idx - 2
-
-    else:
-        hms_idx = None
-
-    return hms_idx
-
-
-def _parse_hms(idx, tokens, info, hms_idx):
-    # TODO: Is this going to admit a lot of false-positives for when we
-    # just happen to have digits and "h", "m" or "s" characters in non-date
-    # text?  I guess hex hashes won't have that problem, but there's plenty
-    # of random junk out there.
-    if hms_idx is None:
-        hms = None
-        new_idx = idx
-    elif hms_idx > idx:
-        hms = info.hms(tokens[hms_idx])
-        new_idx = hms_idx
-    else:
-        # Looking backwards, increment one.
-        hms = info.hms(tokens[hms_idx]) + 1
-        new_idx = idx
-
-    return (new_idx, hms)
-
-
-def _assign_hms(res, value_repr, hms):
-    value = float(value_repr)
-    if hms == 0:
-        # Hour
-        res.hour = int(value)
-        if value % 1:
-            res.minute = int(60*(value % 1))
-
-    elif hms == 1:
-        (res.minute, res.second) = _parse_min_sec(value)
-
-    elif hms == 2:
-        (res.second, res.microsecond) = _parsems(value_repr)
-
-
-def _could_be_tzname(hour, tzname, tzoffset, token):
-    return (hour is not None and
-            tzname is None and
-            tzoffset is None and
-            len(token) <= 5 and
-            all(x in string.ascii_uppercase for x in token))
-
-
-def _ampm_validity(hour, ampm, fuzzy):
-    """
-    For fuzzy parsing, 'a' or 'am' (both valid English words)
-    may erroneously trigger the AM/PM flag. Deal with that
-    here.
-    """
-    val_is_ampm = True
-
-    # If there's already an AM/PM flag, this one isn't one.
-    if fuzzy and ampm is not None:
-        val_is_ampm = False
-
-    # If AM/PM is found and hour is not, raise a ValueError
-    if hour is None:
-        if fuzzy:
-            val_is_ampm = False
-        else:
-            raise ValueError('No hour specified with AM or PM flag.')
-    elif not 0 <= hour <= 12:
-        # If AM/PM is found, it's a 12 hour clock, so raise
-        # an error for invalid range
-        if fuzzy:
-            val_is_ampm = False
-        else:
-            raise ValueError('Invalid hour specified for 12-hour clock.')
-
-    return val_is_ampm
-
-
-def _adjust_ampm(hour, ampm):
-    if hour < 12 and ampm == 1:
-        hour += 12
-    elif hour == 12 and ampm == 0:
-        hour = 0
-    return hour
-
-
-def _parse_min_sec(value):
-    # TODO: Every usage of this function sets res.second to the return value.
-    # Are there any cases where second will be returned as None and we *dont*
-    # want to set res.second = None?
-    minute = int(value)
-    second = None
-
-    sec_remainder = value % 1
-    if sec_remainder:
-        second = int(60 * sec_remainder)
-    return (minute, second)
-
-
-def _parsems(value):
-    """Parse a I[.F] seconds value into (seconds, microseconds)."""
-    if "." not in value:
-        return int(value), 0
-    else:
-        i, f = value.split(".")
-        return int(i), int(f.ljust(6, "0")[:6])
-
-
-def _recombine_skipped(tokens, skipped_idxs):
-    """
-    >>> tokens = ["foo", " ", "bar", " ", "19June2000", "baz"]
-    >>> skipped_idxs = [0, 1, 2, 5]
-    >>> _recombine_skipped(tokens, skipped_idxs)
-    ["foo bar", "baz"]
-
-    """
-
-    skipped_tokens = []
-    for i, idx in enumerate(sorted(skipped_idxs)):
-        if i > 0 and idx - 1 == skipped_idxs[i - 1]:
-            skipped_tokens[-1] = skipped_tokens[-1] + tokens[idx]
-        else:
-            skipped_tokens.append(tokens[idx])
-
-    return skipped_tokens
-
-
-def _build_tzinfo(tzinfos, tzname, tzoffset):
-    if isinstance(tzinfos, collections.Callable):
-        tzdata = tzinfos(tzname, tzoffset)
-    else:
-        tzdata = tzinfos.get(tzname)
-
-    if isinstance(tzdata, datetime.tzinfo):
-        tzinfo = tzdata
-    elif isinstance(tzdata, text_type):
-        tzinfo = tz.tzstr(tzdata)
-    elif isinstance(tzdata, integer_types):
-        tzinfo = tz.tzoffset(tzname, tzdata)
-    else:
-        raise ValueError("Offset must be tzinfo subclass, "
-                         "tz string, or int offset.")
-    return tzinfo
 
 # vim:ts=4:sw=4:et

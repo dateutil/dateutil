@@ -249,7 +249,7 @@ class relativedelta(object):
 
     @property
     def weeks(self):
-        return self.days // 7
+        return int(self.days / 7.0)
 
     @weeks.setter
     def weeks(self, value):
@@ -421,6 +421,24 @@ class relativedelta(object):
                              microsecond=(self.microsecond if self.microsecond
                                           is not None else
                                           other.microsecond))
+
+    def __abs__(self):
+        return self.__class__(years=abs(self.years),
+                              months=abs(self.months),
+                              days=abs(self.days),
+                              hours=abs(self.hours),
+                              minutes=abs(self.minutes),
+                              seconds=abs(self.seconds),
+                              microseconds=abs(self.microseconds),
+                              leapdays=self.leapdays,
+                              year=self.year,
+                              month=self.month,
+                              day=self.day,
+                              weekday=self.weekday,
+                              hour=self.hour,
+                              minute=self.minute,
+                              second=self.second,
+                              microsecond=self.microsecond)
 
     def __neg__(self):
         return self.__class__(years=-self.years,
