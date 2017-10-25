@@ -19,6 +19,7 @@ Contents:
    relativedelta
    rrule
    tz
+   utils
    zoneinfo
    examples
 
