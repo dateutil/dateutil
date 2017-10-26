@@ -12,34 +12,34 @@ from six import assertRaisesRegex, PY3
 from six.moves import StringIO
 
 
-def test_Ybd_permutations():
-    # If we have a 4-digit year, a non-numeric month (abbreviated or not),
-    # and a day (1 or 2 digits), then there is no ambiguity as to which
-    # token is a year/month/day.  This holds regardless of what order the
-    # terms are in and for each of the separators below.
-    seps = ['-', ' ', '/', '.']
-    token_opts = [['%Y'], ['%b', '%B'], ['%d', '%-d']]
+class TestFormat(unittest.TestCase):
 
-    prods = itertools.product(*token_opts)
-    perms = [y for x in prods for y in itertools.permutations(x)]
-    unambig_fmts = [sep.join(perm) for sep in seps for perm in perms]
+    def test_ybd(self):
+        # If we have a 4-digit year, a non-numeric month (abbreviated or not),
+        # and a day (1 or 2 digits), then there is no ambiguity as to which
+        # token is a year/month/day.  This holds regardless of what order the
+        # terms are in and for each of the separators below.
 
-    for year in [2003]:
-        for month in [9]:
-            for day in [25]:
-                try:
-                    actual = datetime(year, month, day)
-                except ValueError:
-                    # e.g. Feb 30
-                    continue
+        seps = ['-', ' ', '/', '.']
+        token_opts = [['%Y'], ['%b', '%B'], ['%d', '%-d']]
+
+        prods = itertools.product(*token_opts)
+        perms = [y for x in prods for y in itertools.permutations(x)]
+        unambig_fmts = [sep.join(perm) for sep in seps for perm in perms]
+
+        for year in [2003]:
+            for month in [9]:
+                for day in [25]:
+                    try:
+                        actual = datetime(year, month, day)
+                    except ValueError:
+                        # e.g. Feb 30
+                        continue
 
                 for fmt in unambig_fmts:
-                    def test_ymd_fmt():
-                        dstr = actual.strftime(fmt)
-                        res = parse(dstr, default=datetime(year, month, day))
-                        assert res == actual
-
-                    yield test_ymd_fmt
+                    dstr = actual.strftime(fmt)
+                    res = parse(dstr, default=datetime(year, month, day))
+                    assert res == actual
 
 
 class ParserTest(unittest.TestCase):
