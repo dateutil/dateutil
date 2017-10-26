@@ -39,7 +39,7 @@ class TestFormat(unittest.TestCase):
                 for fmt in unambig_fmts:
                     dstr = actual.strftime(fmt)
                     res = parse(dstr, default=datetime(year, month, day))
-                    assert res == actual
+                    self.assertEqual(res, actual)
 
 
 class ParserTest(unittest.TestCase):
