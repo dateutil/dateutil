@@ -909,3 +909,8 @@ class ParserTest(unittest.TestCase):
         res = parse(dtstr, fuzzy=True)
         self.assertEqual(res, datetime(2017, 7, 17, 6, 15))
 
+    def test_dBY(self):
+        # See GH360
+        dtstr = '13NOV2017'
+        res = parse(dtstr)
+        self.assertEqual(res, datetime(2017, 11, 13))

@@ -398,6 +398,17 @@ class _ymd(list):
     def has_day(self):
         return self.dstridx is not None
 
+    def could_be_day(self, value):
+        if self.has_day:
+            return False
+        elif not self.has_month:
+            return 1 <= value <= 31
+        elif not self.has_year:
+            # Be permissive, assume leapyear
+            return 1 <= value <= monthrange(2000, self.month)[1]
+        else:
+            return 1 <= value <= monthrange(self.year, self.month)[1]
+
     @staticmethod
     def token_could_be_year(token, year):
         try:
@@ -715,8 +726,8 @@ class parser(object):
             while i < len_l:
 
                 # Check if it's a number
+                value_repr = l[i]
                 try:
-                    value_repr = l[i]
                     value = float(value_repr)
                 except ValueError:
                     value = None
@@ -830,11 +841,15 @@ class parser(object):
                             ymd.append(value)
                         i += 1
 
+
                     elif info.ampm(l[i + 1]) is not None:
                         # 12am
                         hour = int(value)
                         res.hour = self._adjust_ampm(hour, info.ampm(l[i + 1]))
                         i += 1
+
+                    elif ymd.could_be_day(value):
+                        ymd.append(value)
 
                     elif not fuzzy:
                         raise InvalidDatetimeError(timestr)
