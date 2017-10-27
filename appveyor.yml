@@ -20,8 +20,6 @@ install:
   - set pip_cmd=%PYTHON%/python.exe -m pip
 
   # Download scripts and dependencies
-  - ps: Start-FileDownload 'https://bootstrap.pypa.io/get-pip.py'
-  - "%PYTHON%/python.exe get-pip.py"
   - "%pip_cmd% install six"
   - "%pip_cmd% install coverage"
   - "%pip_cmd% install codecov"
