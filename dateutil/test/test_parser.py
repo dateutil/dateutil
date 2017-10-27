@@ -909,3 +909,8 @@ class ParserTest(unittest.TestCase):
         res = parse(dtstr, fuzzy=True)
         self.assertEqual(res, datetime(2017, 7, 17, 6, 15))
 
+    def test_validate_hour(self):
+        # See GH353
+        invalid = "201A-01-01T23:58:39.239769+03:00"
+        with self.assertRaises(ValueError):
+            parse(invalid)

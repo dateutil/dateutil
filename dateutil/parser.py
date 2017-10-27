@@ -830,7 +830,7 @@ class parser(object):
                             ymd.append(value)
                         i += 1
 
-                    elif info.ampm(l[i + 1]) is not None:
+                    elif info.ampm(l[i + 1]) is not None and (0 <= value < 24):
                         # 12am
                         hour = int(value)
                         res.hour = self._adjust_ampm(hour, info.ampm(l[i + 1]))
