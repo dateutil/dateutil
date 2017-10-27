@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import itertools
 from datetime import datetime, timedelta
 import unittest
 
@@ -9,6 +10,40 @@ from dateutil.parser import parse, parserinfo
 
 from six import assertRaisesRegex, PY3
 from six.moves import StringIO
+
+try:
+    datetime.now().strftime('%-d')
+    PLATFORM_HAS_DASH_D = True
+except ValueError:
+    PLATFORM_HAS_DASH_D = False
+
+
+class TestFormat(unittest.TestCase):
+
+    def test_ybd(self):
+        # If we have a 4-digit year, a non-numeric month (abbreviated or not),
+        # and a day (1 or 2 digits), then there is no ambiguity as to which
+        # token is a year/month/day.  This holds regardless of what order the
+        # terms are in and for each of the separators below.
+
+        seps = ['-', ' ', '/', '.']
+
+        year_tokens = ['%Y']
+        month_tokens = ['%b', '%B']
+        day_tokens = ['%d']
+        if PLATFORM_HAS_DASH_D:
+            day_tokens.append('%-d')
+
+        prods = itertools.product(year_tokens, month_tokens, day_tokens)
+        perms = [y for x in prods for y in itertools.permutations(x)]
+        unambig_fmts = [sep.join(perm) for sep in seps for perm in perms]
+
+        actual = datetime(2003, 9, 25)
+
+        for fmt in unambig_fmts:
+            dstr = actual.strftime(fmt)
+            res = parse(dstr)
+            self.assertEqual(res, actual)
 
 
 class ParserTest(unittest.TestCase):
@@ -155,10 +190,6 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(parse("Thu Sep 25 2003"),
                          datetime(2003, 9, 25))
 
-    def testDateCommandFormatStrip9(self):
-        self.assertEqual(parse("Sep 25 2003"),
-                         datetime(2003, 9, 25))
-
     def testDateCommandFormatStrip10(self):
         self.assertEqual(parse("Sep 2003", default=self.default),
                          datetime(2003, 9, 25))
@@ -244,22 +275,6 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(parse("2003-09-25"),
                          datetime(2003, 9, 25))
 
-    def testDateWithDash2(self):
-        self.assertEqual(parse("2003-Sep-25"),
-                         datetime(2003, 9, 25))
-
-    def testDateWithDash3(self):
-        self.assertEqual(parse("25-Sep-2003"),
-                         datetime(2003, 9, 25))
-
-    def testDateWithDash4(self):
-        self.assertEqual(parse("25-Sep-2003"),
-                         datetime(2003, 9, 25))
-
-    def testDateWithDash5(self):
-        self.assertEqual(parse("Sep-25-2003"),
-                         datetime(2003, 9, 25))
-
     def testDateWithDash6(self):
         self.assertEqual(parse("09-25-2003"),
                          datetime(2003, 9, 25))
@@ -286,22 +301,6 @@ class ParserTest(unittest.TestCase):
 
     def testDateWithDot1(self):
         self.assertEqual(parse("2003.09.25"),
-                         datetime(2003, 9, 25))
-
-    def testDateWithDot2(self):
-        self.assertEqual(parse("2003.Sep.25"),
-                         datetime(2003, 9, 25))
-
-    def testDateWithDot3(self):
-        self.assertEqual(parse("25.Sep.2003"),
-                         datetime(2003, 9, 25))
-
-    def testDateWithDot4(self):
-        self.assertEqual(parse("25.Sep.2003"),
-                         datetime(2003, 9, 25))
-
-    def testDateWithDot5(self):
-        self.assertEqual(parse("Sep.25.2003"),
                          datetime(2003, 9, 25))
 
     def testDateWithDot6(self):
@@ -332,22 +331,6 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(parse("2003/09/25"),
                          datetime(2003, 9, 25))
 
-    def testDateWithSlash2(self):
-        self.assertEqual(parse("2003/Sep/25"),
-                         datetime(2003, 9, 25))
-
-    def testDateWithSlash3(self):
-        self.assertEqual(parse("25/Sep/2003"),
-                         datetime(2003, 9, 25))
-
-    def testDateWithSlash4(self):
-        self.assertEqual(parse("25/Sep/2003"),
-                         datetime(2003, 9, 25))
-
-    def testDateWithSlash5(self):
-        self.assertEqual(parse("Sep/25/2003"),
-                         datetime(2003, 9, 25))
-
     def testDateWithSlash6(self):
         self.assertEqual(parse("09/25/2003"),
                          datetime(2003, 9, 25))
@@ -374,22 +357,6 @@ class ParserTest(unittest.TestCase):
 
     def testDateWithSpace1(self):
         self.assertEqual(parse("2003 09 25"),
-                         datetime(2003, 9, 25))
-
-    def testDateWithSpace2(self):
-        self.assertEqual(parse("2003 Sep 25"),
-                         datetime(2003, 9, 25))
-
-    def testDateWithSpace3(self):
-        self.assertEqual(parse("25 Sep 2003"),
-                         datetime(2003, 9, 25))
-
-    def testDateWithSpace4(self):
-        self.assertEqual(parse("25 Sep 2003"),
-                         datetime(2003, 9, 25))
-
-    def testDateWithSpace5(self):
-        self.assertEqual(parse("Sep 25 2003"),
                          datetime(2003, 9, 25))
 
     def testDateWithSpace6(self):
@@ -422,10 +389,6 @@ class ParserTest(unittest.TestCase):
 
     def testStrangelyOrderedDate1(self):
         self.assertEqual(parse("03 25 Sep"),
-                         datetime(2003, 9, 25))
-
-    def testStrangelyOrderedDate2(self):
-        self.assertEqual(parse("2003 25 Sep"),
                          datetime(2003, 9, 25))
 
     def testStrangelyOrderedDate3(self):
