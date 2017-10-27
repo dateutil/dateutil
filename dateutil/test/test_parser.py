@@ -11,6 +11,12 @@ from dateutil.parser import parse, parserinfo
 from six import assertRaisesRegex, PY3
 from six.moves import StringIO
 
+try:
+    datetime.now().strftime('%-d')
+    PLATFORM_HAS_DASH_D = True
+except ValueError:
+    PLATFORM_HAS_DASH_D = False
+
 
 class TestFormat(unittest.TestCase):
 
@@ -21,25 +27,23 @@ class TestFormat(unittest.TestCase):
         # terms are in and for each of the separators below.
 
         seps = ['-', ' ', '/', '.']
-        token_opts = [['%Y'], ['%b', '%B'], ['%d', '%-d']]
 
-        prods = itertools.product(*token_opts)
+        year_tokens = ['%Y']
+        month_tokens = ['%b', '%B']
+        day_tokens = ['%d']
+        if PLATFORM_HAS_DASH_D:
+            day_tokens.append('%-d')
+
+        prods = itertools.product(year_tokens, month_tokens, day_tokens)
         perms = [y for x in prods for y in itertools.permutations(x)]
         unambig_fmts = [sep.join(perm) for sep in seps for perm in perms]
 
-        for year in [2003]:
-            for month in [9]:
-                for day in [25]:
-                    try:
-                        actual = datetime(year, month, day)
-                    except ValueError:
-                        # e.g. Feb 30
-                        continue
+        actual = datetime(2003, 9, 25)
 
-                for fmt in unambig_fmts:
-                    dstr = actual.strftime(fmt)
-                    res = parse(dstr, default=datetime(year, month, day))
-                    self.assertEqual(res, actual)
+        for fmt in unambig_fmts:
+            dstr = actual.strftime(fmt)
+            res = parse(dstr)
+            self.assertEqual(res, actual)
 
 
 class ParserTest(unittest.TestCase):
