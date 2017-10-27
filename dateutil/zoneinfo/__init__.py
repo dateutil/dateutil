@@ -7,7 +7,7 @@ from pkgutil import get_data
 from io import BytesIO
 from contextlib import closing
 
-from dateutil.tz import tzfile
+from dateutil.tz import tzfile as _tzfile
 
 __all__ = ["get_zonefile_instance", "gettz", "gettz_db_metadata", "rebuild"]
 
@@ -15,7 +15,7 @@ ZONEFILENAME = "dateutil-zoneinfo.tar.gz"
 METADATA_FN = 'METADATA'
 
 
-class tzfile(tzfile):
+class tzfile(_tzfile):
     def __reduce__(self):
         return (gettz, (self._filename,))
 
