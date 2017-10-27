@@ -2,6 +2,11 @@
 __pycache__/
 *.py[cod]
 
+.coverage
+.cache/
+.hypothesis/
+prof/
+
 build/
 dist/
 *.egg-info/

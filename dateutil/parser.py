@@ -486,7 +486,11 @@ class _ymd(list):
         elif len_ymd == 3:
             # Three members
             if mstridx == 0:
-                month, day, year = self
+                if self[1] > 31:
+                    # Apr-2003-25
+                    month, year, day = self
+                else:
+                    month, day, year = self
             elif mstridx == 1:
                 if self[0] > 31 or (yearfirst and self[2] <= 31):
                     # 99-Jan-01
@@ -850,7 +854,7 @@ class parser(object):
                     ymd.append(value, 'M')
 
                     if i + 1 < len_l:
-                        if l[i + 1] in ('-', '/'):
+                        if l[i + 1] in ('-', '/'): # TODO: Allow "."?
                             # Jan-01[-99]
                             sep = l[i + 1]
                             ymd.append(l[i + 2])
