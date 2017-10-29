@@ -1,8 +1,6 @@
 #!/usr/bin/python
 from os.path import isfile
-import codecs
 import os
-import re
 
 from setuptools import setup
 

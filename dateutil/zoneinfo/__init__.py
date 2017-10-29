@@ -5,7 +5,6 @@ import json
 from tarfile import TarFile
 from pkgutil import get_data
 from io import BytesIO
-from contextlib import closing
 
 from dateutil.tz import tzfile as _tzfile
 
