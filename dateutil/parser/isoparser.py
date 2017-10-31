@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
 from dateutil import tz
 
 import re
@@ -18,13 +18,13 @@ class Isoparser(object):
     def isoparse(self, dt_str):
         dt_str = getattr(dt_str, 'read', lambda: dt_str)()
         try:
-            return self.isoparse_quick(dt_str)
-        except ValueError as e:
+            return self.isoparse_common(dt_str)
+        except ValueError:
             raise
 
     _ISO_LENGTHS = (4, 2, 2, 2, 2, 2)   # Lengths of ISO components
     _MICROSECOND_END_REGEX = re.compile('[-+Z]+')
-    def isoparse_quick(self, dt_str):
+    def isoparse_common(self, dt_str):
         """
         This handles the most common subset of ISO-8601 date times, with the
         following formats:
@@ -61,62 +61,114 @@ class Isoparser(object):
         - `±HHMM`
         - `±HH`
         """
-        len_str = len(dt_str)
+        # Parse the year first
+        components, pos = self._parse_isodate_common(dt_str)
+        if len(dt_str) > pos:
+            if dt_str[pos] == self._sep:
+                components += self._parse_isotime(dt_str[pos + 1:])
+            else:
+                raise ValueError('String contains unknown ISO components')
 
+        return datetime(*components)
+
+    def isoparse_uncommon(self, dt_str):
+        """
+        This handles the uncommon subset of ISO-8601 datetime formats, including
+
+        - ``--MM-DD``
+        - ``--MMDD``
+        - ``YYYY-Www``
+        - ``YYYYWww``
+        - ``YYYY-Www-D``
+        - ``YYYYWwwD``
+        - ``YYYY-DDD``
+        - ``YYYYDDD``
+        """
+
+        raise NotImplementedError
+
+    @classmethod
+    def parse_isotime(cls, timestr):
+        return time(*cls._parse_isotime(timestr))
+
+    @classmethod
+    def _parse_isodate_common(cls, dt_str):
+        len_str = len(dt_str)
+        components = [1, 1, 1]
+
+        pos = 0
         if len_str < 4:
             raise ValueError('ISO string too short')
 
-        # Parse the year first
-        components = [1, 1, 1, 0, 0, 0, 0, None]
+        # Year
+        components[0] = int(dt_str[0:4])
+        pos = 4
+        if pos >= len_str:
+            return components, pos
+
+        has_sep = dt_str[pos] == '-'
+        if has_sep:
+            pos += 1
+
+        # Month
+        components[1] = int(dt_str[pos:pos + 2])
+        pos += 2
+
+        if pos >= len_str:
+            return components, pos
+
+        if has_sep:
+            if dt_str[pos] != '-':
+                raise ValueError('Invalid separator in ISO string')
+            pos += 1
+
+        # Day
+        components[2] = int(dt_str[pos:pos + 2])
+        return components, pos + 2
+
+    @classmethod
+    def _parse_isotime(cls, timestr):
+        len_str = len(timestr)
+        components = [0, 0, 0, 0, None]
         pos = 0
         comp = -1
-        sep = '-'
-        has_sep = len_str > 4 and dt_str[4] == sep
 
-        while pos < len_str and comp <= 7:
+        has_sep = len_str >= 3 and timestr[2] == ':'
+
+        while pos < len_str and comp < 5:
             comp += 1
 
-            if comp == 3:
-                # After component 2 has been processed, check for the separators
-                if dt_str[pos] != self._sep:
-                    raise ValueError('Invalid separator in ISO string')
-
-                pos += 1
-                sep = ':'
-                has_sep = len_str > pos + 2 and dt_str[pos + 2] == sep
-
-            if has_sep and comp in {1, 2, 4, 5} and dt_str[pos] == sep:
-                pos += 1
-
-            if dt_str[pos] in '+-Z':
-                components[-1] = self.process_tzstr(dt_str[pos:])
+            if timestr[pos] in '-+Z':
+                components[-1] = cls.parse_tzstr(timestr[pos:])
                 pos = len_str
                 break
 
-            if comp <= 5:
-                # First 5 components just read an integer
-                components[comp], pos = self._read_int(dt_str, pos,
-                                                       self._ISO_LENGTHS[comp])
-                continue
+            if comp < 3:
+                # Hour, minute, second
+                components[comp] = int(timestr[pos:pos + 2])
+                pos += 2
+                if has_sep and pos < len_str and timestr[pos] == ':':
+                    pos += 1
 
-            if comp == 6:
-                # Parse the microseconds portion
-                if dt_str[pos] != '.':
+            if comp == 3:
+                # Microsecond
+                if timestr[pos] != '.':
                     continue
 
                 pos += 1
-                us_str = self._MICROSECOND_END_REGEX.split(dt_str[pos:pos+6], 1)[0]
+                us_str = cls._MICROSECOND_END_REGEX.split(timestr[pos:pos + 6],
+                                                          1)[0]
 
                 components[comp] = int(us_str) * 10**(6 - len(us_str))
                 pos += len(us_str)
 
         if pos < len_str:
-            raise ValueError('String contains unknown ISO components')
+            raise ValueError('Unused components in ISO string')
 
-        return datetime(*components)
+        return components
 
     @classmethod
-    def process_tzstr(cls, tzstr, zero_as_utc=True):
+    def parse_tzstr(cls, tzstr, zero_as_utc=True):
         if tzstr == 'Z':
             return tz.tzutc()
 
