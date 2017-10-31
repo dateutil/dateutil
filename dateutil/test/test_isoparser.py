@@ -9,7 +9,9 @@ UTC = tz.tzutc()
 def _generate_tzoffsets(limited):
     def _mkoffset(hmtuple, fmt):
         h, m = hmtuple
-        tzo = tz.tzoffset(None, timedelta(hours=h, minutes=m))
+        m_td = (-1 if h < 0 else 1) * m
+
+        tzo = tz.tzoffset(None, timedelta(hours=h, minutes=m_td))
         return tzo, fmt.format(h, m)
 
     out = []
@@ -20,7 +22,7 @@ def _generate_tzoffsets(limited):
 
         # Ones that have hours and minutes
         hm_out = [] + hm_out_h
-        hm_out += [(-12, -15), (11, 30), (10, 2), (5, 15), (-5, -30)]
+        hm_out += [(-12, 15), (11, 30), (10, 2), (5, 15), (-5, 30)]
     else:
         hm_out = [(-5, -0)]
 
@@ -119,3 +121,11 @@ def test_ymd_hms_micro(dt, date_fmt, time_fmt, tzoffset, precision):
     dt = dt.replace(microsecond=round(dt.microsecond, precision-6))
 
     _isoparse_date_and_time(dt, date_fmt, time_fmt, tzoffset, precision)
+
+@pytest.mark.parametrize('tzoffset', FULL_TZOFFSETS)
+def test_full_tzoffsets(tzoffset):
+    dt = datetime(2017, 11, 27, 6, 14, 30, 123456)
+    date_fmt = '%Y-%m-%d'
+    time_fmt = '%H:%M:%S.%f'
+
+    _isoparse_date_and_time(dt, date_fmt, time_fmt, tzoffset)
