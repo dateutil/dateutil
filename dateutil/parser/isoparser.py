@@ -13,6 +13,7 @@ import re
 
 __all__ = ["isoparse", "Isoparser"]
 
+
 class Isoparser(object):
     def __init__(self, sep='T', default_year=None):
         """
@@ -23,8 +24,9 @@ class Isoparser(object):
             The default year to be used as the basis for parsing the uncommon
             no-year date formats.
         """
-        if len(sep) != 1:
-            raise ValueError('Separator must be a single character')
+        if (len(sep) != 1 or ord(sep) >= 128 or sep in '0123456789'):
+            raise ValueError('Separator must be a single, non-numeric '
+                             'ASCII character')
 
         self._sep = sep
         if default_year is not None:
