@@ -1,5 +1,7 @@
+from datetime import datetime, timedelta, date, time
+import itertools as it
+
 from dateutil.tz import tz
-from datetime import datetime, timedelta
 from dateutil.parser import isoparse
 
 import pytest
@@ -129,3 +131,33 @@ def test_full_tzoffsets(tzoffset):
     time_fmt = '%H:%M:%S.%f'
 
     _isoparse_date_and_time(dt, date_fmt, time_fmt, tzoffset)
+
+
+##
+# Uncommon date formats
+TIME_ARGS = ('time_args',
+    ((None, time(0), None), ) + tuple(('%H:%M:%S.%f', _t, _tz)
+        for _t, _tz in it.product([time(0), time(9, 30), time(14, 47)],
+                                  TZOFFSETS)))
+
+@pytest.mark.parametrize('date_val', [date(1900, 12, 31),
+                                      date(1900, 4, 1),
+                                      date(1900, 2, 28)])
+@pytest.mark.parametrize('date_fmt', ('--%m%d', '--%m-%d'))
+@pytest.mark.parametrize(*TIME_ARGS)
+def test_noyear(date_val, date_fmt, time_args):
+    time_fmt, time_val, tzoffset = time_args
+
+    fmt = date_fmt
+    dt = datetime.combine(date_val, time_val)
+
+    if time_fmt is not None:
+        tzi, offset_str = tzoffset
+        fmt += 'T' + time_fmt
+        dt = dt.replace(tzinfo=tzi)
+    else:
+        offset_str = ''
+
+    dtstr = dt.strftime(fmt) + offset_str
+
+    assert isoparse(dtstr) == dt
