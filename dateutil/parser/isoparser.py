@@ -1,10 +1,17 @@
 # -*- coding: utf-8 -*-
+"""
+This module offers a parser for ISO-8601 strings
+
+It is intended to support all valid date, time and datetime formats per the
+ISO-8601 specification, with a stricter mode for the most common subset.
+"""
 from datetime import datetime, timedelta, time, date
 import calendar
 from dateutil import tz
 
 import re
 
+__all__ = ["isoparse", "Isoparser"]
 
 class Isoparser(object):
     def __init__(self, sep='T', default_year=None):
@@ -30,7 +37,7 @@ class Isoparser(object):
 
     def isoparse(self, dt_str, common_only=False):
         """
-        Parse an ISO-8601 datetime string into a :py:`datetime.datetime`.
+        Parse an ISO-8601 datetime string into a :class:`datetime.datetime`.
 
         An ISO-8601 datetime string consists of a date portion, followed
         optionally by a time portion - the date and time portions are separated
@@ -52,7 +59,7 @@ class Isoparser(object):
         - ``YYYY-Www-D`` or ``YYYYWwwD`` - ISO week and day
 
         The ISO week and day numbering follows the same logic as
-        :py:`datetime.date.isocalendar`.
+        :func:`datetime.date.isocalendar`.
 
         Supported time formats are:
 
@@ -88,11 +95,11 @@ class Isoparser(object):
             If true, parsing the uncommon formats will throw an error.
 
         :return:
-            Returns a :py:`datetime.datetime` representing the string.
+            Returns a :class:`datetime.datetime` representing the string.
             Unspecified components default to their lowest value, with the
             exception of year, which will use the value passed to the
             ``default_year`` parameter of the method's bound
-            :class:`dateutil.parser.isoparser.Isoparser` instance. If that
+            :class:`Isoparser` instance. If that
             would produce an invalid date (e.g. ``'--02-29'`` parsed with a
             non-leap-year default date), the default will be the last leap
             year to occur before the default year.
@@ -114,7 +121,7 @@ class Isoparser(object):
 
     def parse_isodate(self, datestr):
         """
-        Parse the date portion of an ISO strin.
+        Parse the date portion of an ISO string.
 
         :param datestr:
             The string portion of an ISO string, without a separator
