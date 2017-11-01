@@ -123,7 +123,7 @@ DATETIMES = [datetime(2017, 11, 27, 6, 14, 30, 123456)]
 @pytest.mark.parametrize('precision', list(range(3, 7)))
 def test_ymd_hms_micro(dt, date_fmt, time_fmt, tzoffset, precision):
     # Truncate the microseconds to the desired precision for the representation
-    dt = dt.replace(microsecond=round(dt.microsecond, precision-6))
+    dt = dt.replace(microsecond=int(round(dt.microsecond, precision-6)))
 
     _isoparse_date_and_time(dt, date_fmt, time_fmt, tzoffset, precision)
 
