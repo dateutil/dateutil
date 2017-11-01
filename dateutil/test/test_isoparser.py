@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
+
 from datetime import datetime, timedelta, date, time
 import itertools as it
 
@@ -177,3 +180,26 @@ def test_noyear_leap(year, expected):
 
     dt_actual = isoparser.isoparse(dtstr)
     assert dt_actual == dt_expected
+
+@pytest.mark.parametrize('isocal,dt_expected',[
+    ((2017, 10), datetime(2017, 3, 6)),
+    ((2020, 1), datetime(2019, 12, 30)),    # ISO year != Cal year
+    ((2004, 53), datetime(2004, 12, 27)),   # Only half the week is in 2014
+])
+def test_isoweek(isocal, dt_expected):
+    # TODO: Figure out how to parametrize this on formats, too
+    for fmt in ('{:04d}-W{:02d}', '{:04d}W{:02d}'):
+        dtstr = fmt.format(*isocal)
+        assert isoparse(dtstr) == dt_expected
+
+@pytest.mark.parametrize('isocal,dt_expected',[
+    ((2016, 13, 7), datetime(2016, 4, 3)),
+    ((2004, 53, 7), datetime(2005, 1, 2)),      # ISO year != Cal year
+    ((2009, 1, 2), datetime(2008, 12, 30)),     # ISO year < Cal year
+    ((2009, 53, 6), datetime(2010, 1, 2))       # ISO year > Cal year
+])
+def test_isoweek_day(isocal, dt_expected):
+    # TODO: Figure out how to parametrize this on formats, too
+    for fmt in ('{:04d}-W{:02d}-{:d}', '{:04d}W{:02d}{:d}'):
+        dtstr = fmt.format(*isocal)
+        assert isoparse(dtstr) == dt_expected
