@@ -206,6 +206,9 @@ class Isoparser(object):
             pos += 1
 
         # Month
+        if len_str - pos < 2:
+            raise ValueError('Invalid common month')
+
         components[1] = int(dt_str[pos:pos + 2])
         pos += 2
 
@@ -218,6 +221,8 @@ class Isoparser(object):
             pos += 1
 
         # Day
+        if len_str - pos < 2:
+            raise ValueError('Invalid common day')
         components[2] = int(dt_str[pos:pos + 2])
         return components, pos + 2
 
@@ -240,11 +245,11 @@ class Isoparser(object):
         # All other uncommon ISO formats start with the year
         year = int(dt_str[0:4])
 
-        pos = 4 + dt_str[4] == '-'   # Skip '-' if it's there
+        pos = 4 + (dt_str[4] == '-')   # Skip '-' if it's there
         if dt_str[pos] == 'W':
             # YYYY-?Www-?D?
             pos += 1
-            weekno = dt_str[pos:pos + 2]
+            weekno = int(dt_str[pos:pos + 2])
             pos += 2
 
             dayno = 1
@@ -255,7 +260,7 @@ class Isoparser(object):
                         raise ValueError('Inconsistent use of dash separator')
                     pos += 1
 
-                dayno = dt_str[pos]
+                dayno = int(dt_str[pos])
                 pos += 1
 
             base_date = self._calculate_weekdate(year, weekno, dayno)
@@ -264,11 +269,11 @@ class Isoparser(object):
             ordinal_day = int(dt_str[pos:pos + 3])
             pos += 3
 
-            if ordinal_day > 365 + calendar.isleap(year):
+            if ordinal_day < 1 or ordinal_day > (365 + calendar.isleap(year)):
                 raise ValueError('Invalid ordinal day' +
                                  ' {} for year {}'.format(ordinal_day, year))
 
-            base_date = date(year, 1, 1) + timedelta(days=ordinal_day)
+            base_date = date(year, 1, 1) + timedelta(days=ordinal_day - 1)
 
         components = [base_date.year, base_date.month, base_date.day]
         return components, pos
