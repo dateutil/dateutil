@@ -2,7 +2,7 @@ from datetime import datetime, timedelta, date, time
 import itertools as it
 
 from dateutil.tz import tz
-from dateutil.parser import isoparse
+from dateutil.parser import Isoparser, isoparse
 
 import pytest
 
@@ -140,9 +140,9 @@ TIME_ARGS = ('time_args',
         for _t, _tz in it.product([time(0), time(9, 30), time(14, 47)],
                                   TZOFFSETS)))
 
-@pytest.mark.parametrize('date_val', [date(1900, 12, 31),
-                                      date(1900, 4, 1),
-                                      date(1900, 2, 28)])
+@pytest.mark.parametrize('date_val', [date(2016, 12, 31),
+                                      date(2016, 4, 1),
+                                      date(2016, 2, 28)])
 @pytest.mark.parametrize('date_fmt', ('--%m%d', '--%m-%d'))
 @pytest.mark.parametrize(*TIME_ARGS)
 def test_noyear(date_val, date_fmt, time_args):
@@ -160,4 +160,20 @@ def test_noyear(date_val, date_fmt, time_args):
 
     dtstr = dt.strftime(fmt) + offset_str
 
-    assert isoparse(dtstr) == dt
+    dt_act = Isoparser(default_year=2016).isoparse(dtstr)
+    assert dt_act == dt
+
+@pytest.mark.parametrize('year,expected', [
+    (2017, 2016),
+    (2016, 2016),
+    (2003, 2000),
+    (2000, 2000),
+    (1903, 1896),
+    (1900, 1896)])
+def test_noyear_leap(year, expected):
+    dtstr = '--02-29'
+    dt_expected = datetime(expected, 2, 29)
+    isoparser = Isoparser(default_year=year)
+
+    dt_actual = isoparser.isoparse(dtstr)
+    assert dt_actual == dt_expected
