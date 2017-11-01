@@ -166,8 +166,8 @@ class Isoparser(object):
         if tzstr == 'Z':
             return tz.tzutc()
 
-        if 6 < len(tzstr) < 3:
-            raise ValueError('Time zone offset must be 1 or 3-6 characters')
+        if len(tzstr) not in {3, 5, 6}:
+            raise ValueError('Time zone offset must be 1, 3, 5 or 6 characters')
 
         if tzstr[0] == '-':
             mult = -1
@@ -185,6 +185,12 @@ class Isoparser(object):
         if zero_as_utc and hours == 0 and minutes == 0:
             return tz.tzutc()
         else:
+            if minutes > 59:
+                raise ValueError('Invalid minutes in time zone offset')
+
+            if hours > 23:
+                raise ValueError('Invalid hours in time zone offset')
+
             return tz.tzoffset(None, mult * timedelta(hours=hours,
                                                       minutes=minutes))
 
