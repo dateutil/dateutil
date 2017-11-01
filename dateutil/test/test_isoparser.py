@@ -203,3 +203,16 @@ def test_isoweek_day(isocal, dt_expected):
     for fmt in ('{:04d}-W{:02d}-{:d}', '{:04d}W{:02d}{:d}'):
         dtstr = fmt.format(*isocal)
         assert isoparse(dtstr) == dt_expected
+
+@pytest.mark.parametrize('isoord,dt_expected', [
+    ((2004, 1), datetime(2004, 1, 1)),
+    ((2016, 60), datetime(2016, 2, 29)),
+    ((2017, 60), datetime(2017, 3, 1)),
+    ((2016, 366), datetime(2016, 12, 31)),
+    ((2017, 365), datetime(2017, 12, 31))
+])
+def test_iso_ordinal(isoord, dt_expected):
+    for fmt in ('{:04d}-{:03d}', '{:04d}{:03d}'):
+        dtstr = fmt.format(*isoord)
+
+        assert isoparse(dtstr) == dt_expected
