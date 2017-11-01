@@ -269,3 +269,15 @@ def test_iso_raises_failing(isostr, exception):
     # and need to be fixed
     with pytest.raises(exception):
         isoparse(isostr)
+
+###
+# Test ISOParser constructor
+@pytest.mark.parametrize('year', [0, 10000])
+def test_isoparser_invalid_years(year):
+    with pytest.raises(ValueError):
+        Isoparser(default_year=year)
+
+@pytest.mark.parametrize('sep', ['  ', '9', '🍛'])
+def test_isoparser_invalid_sep(sep):
+    with pytest.raises(ValueError):
+        Isoparser(sep=sep)
