@@ -230,3 +230,42 @@ def test_iso_ordinal(isoord, dt_expected):
         dtstr = fmt.format(*isoord)
 
         assert isoparse(dtstr) == dt_expected
+
+
+###
+# Invalid ISO strings
+@pytest.mark.parametrize('isostr,exception', [
+    ('2012-0425', ValueError),                  # Inconsistent date separators
+    ('201204-25', ValueError),                  # Inconsistent date separators
+    ('20120425T0120:00', ValueError),           # Inconsistent time separators
+    ('20120425T012500-334', ValueError),        # Wrong microsecond separator
+    ('20120425C012500', ValueError),            # Wrong time separator
+    ('20120411T03:30+', ValueError),            # Time zone too short
+    ('20120411T03:30+1234567', ValueError),     # Time zone too long
+    ('20120411T03:30-25:40', ValueError),       # Time zone invalid
+    ('20120411T03:30+00:60', ValueError),       # Time zone invalid minutes
+    ('20120411T03:30+00:61', ValueError),       # Time zone invalid minutes
+    ('20120411T033030.123456012:00',            # No sign in time zone
+        ValueError),
+    ('2012-W00', ValueError),                   # Invalid ISO week
+    ('2012-W55', ValueError),                   # Invalid ISO week
+    ('2012-W01-0', ValueError),                 # Invalid ISO week day
+    ('2012-W01-8', ValueError),                 # Invalid ISO week day
+    ('2013-000', ValueError),                   # Invalid ordinal day
+    ('2013-366', ValueError),                   # Invalid ordinal day
+    ('2013366', ValueError),                    # Invalid ordinal day
+])
+def test_iso_raises(isostr, exception):
+    with pytest.raises(exception):
+        isoparse(isostr)
+
+
+@pytest.mark.xfail()
+@pytest.mark.parametrize('isostr,exception', [
+    ('20120425T01:2000', ValueError),           # Inconsistent time separators
+])
+def test_iso_raises_failing(isostr, exception):
+    # These are test cases where the current implementation is too lenient
+    # and need to be fixed
+    with pytest.raises(exception):
+        isoparse(isostr)
