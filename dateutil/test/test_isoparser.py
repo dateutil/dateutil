@@ -135,6 +135,20 @@ def test_full_tzoffsets(tzoffset):
 
     _isoparse_date_and_time(dt, date_fmt, time_fmt, tzoffset)
 
+@pytest.mark.parametrize('dt_str', [
+    '2014-04-11T00',
+    '2014-04-11T24',
+    '2014-04-11T00:00',
+    '2014-04-11T24:00',
+    '2014-04-11T00:00:00',
+    '2014-04-11T24:00:00',
+    '2014-04-11T00:00:00.000',
+    '2014-04-11T24:00:00.000',
+    '2014-04-11T00:00:00.000000',
+    '2014-04-11T24:00:00.000000']
+)
+def test_datetime_midnight(dt_str):
+    assert isoparse(dt_str) == datetime(2014, 4, 11, 0, 0, 0, 0)
 
 ##
 # Uncommon date formats
