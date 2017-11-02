@@ -239,16 +239,16 @@ class parserinfo(object):
     the language and acceptable values for each parameter.
 
     :param dayfirst:
-            Whether to interpret the first value in an ambiguous 3-integer date
-            (e.g. 01/05/09) as the day (``True``) or month (``False``). If
-            ``yearfirst`` is set to ``True``, this distinguishes between YDM
-            and YMD. Default is ``False``.
+        Whether to interpret the first value in an ambiguous 3-integer date
+        (e.g. 01/05/09) as the day (``True``) or month (``False``). If
+        ``yearfirst`` is set to ``True``, this distinguishes between YDM
+        and YMD. Default is ``False``.
 
     :param yearfirst:
-            Whether to interpret the first value in an ambiguous 3-integer date
-            (e.g. 01/05/09) as the year. If ``True``, the first number is taken
-            to be the year, otherwise the last number is taken to be the year.
-            Default is ``False``.
+        Whether to interpret the first value in an ambiguous 3-integer date
+        (e.g. 01/05/09) as the year. If ``True``, the first number is taken
+        to be the year, otherwise the last number is taken to be the year.
+        Default is ``False``.
     """
 
     # m from a.m/p.m, t from ISO T separator
@@ -1184,29 +1184,29 @@ def parse(timestr, parserinfo=None, **kwargs):
         :class:`datetime` object is returned.
 
     :param tzinfos:
-            Additional time zone names / aliases which may be present in the
-            string. This argument maps time zone names (and optionally offsets
-            from those time zones) to time zones. This parameter can be a
-            dictionary with timezone aliases mapping time zone names to time
-            zones or a function taking two parameters (``tzname`` and
-            ``tzoffset``) and returning a time zone.
+        Additional time zone names / aliases which may be present in the
+        string. This argument maps time zone names (and optionally offsets
+        from those time zones) to time zones. This parameter can be a
+        dictionary with timezone aliases mapping time zone names to time
+        zones or a function taking two parameters (``tzname`` and
+        ``tzoffset``) and returning a time zone.
 
-            The timezones to which the names are mapped can be an integer
-            offset from UTC in seconds or a :class:`tzinfo` object.
+        The timezones to which the names are mapped can be an integer
+        offset from UTC in seconds or a :class:`tzinfo` object.
 
-            .. doctest::
-               :options: +NORMALIZE_WHITESPACE
+        .. doctest::
+           :options: +NORMALIZE_WHITESPACE
 
-                >>> from dateutil.parser import parse
-                >>> from dateutil.tz import gettz
-                >>> tzinfos = {"BRST": -7200, "CST": gettz("America/Chicago")}
-                >>> parse("2012-01-19 17:21:00 BRST", tzinfos=tzinfos)
-                datetime.datetime(2012, 1, 19, 17, 21, tzinfo=tzoffset(u'BRST', -7200))
-                >>> parse("2012-01-19 17:21:00 CST", tzinfos=tzinfos)
-                datetime.datetime(2012, 1, 19, 17, 21,
-                                  tzinfo=tzfile('/usr/share/zoneinfo/America/Chicago'))
+            >>> from dateutil.parser import parse
+            >>> from dateutil.tz import gettz
+            >>> tzinfos = {"BRST": -7200, "CST": gettz("America/Chicago")}
+            >>> parse("2012-01-19 17:21:00 BRST", tzinfos=tzinfos)
+            datetime.datetime(2012, 1, 19, 17, 21, tzinfo=tzoffset(u'BRST', -7200))
+            >>> parse("2012-01-19 17:21:00 CST", tzinfos=tzinfos)
+            datetime.datetime(2012, 1, 19, 17, 21,
+                              tzinfo=tzfile('/usr/share/zoneinfo/America/Chicago'))
 
-            This parameter is ignored if ``ignoretz`` is set.
+        This parameter is ignored if ``ignoretz`` is set.
 
     :param dayfirst:
         Whether to interpret the first value in an ambiguous 3-integer date
