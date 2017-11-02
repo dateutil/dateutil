@@ -877,3 +877,10 @@ class ParserTest(unittest.TestCase):
         invalid = "201A-01-01T23:58:39.239769+03:00"
         with self.assertRaises(ValueError):
             parse(invalid)
+
+    def test_misleading_float(self):
+        # Avoid mis-identifying nan as a float
+        dtstr = 'nan 2000 Mar 1'
+        res = parse(dtstr, fuzzy=True)
+        self.assertEqual(res, datetime(2000, 3, 1))
+

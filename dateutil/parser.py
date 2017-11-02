@@ -42,6 +42,7 @@ from six import binary_type, integer_types, text_type
 
 from . import relativedelta
 from . import tz
+from .tokenization import Token, Window
 
 __all__ = ["parse", "parserinfo"]
 
@@ -717,16 +718,12 @@ class parser(object):
         i = 0
         try:
             while i < len_l:
+                value_repr = l[i]
 
                 # Check if it's a number
-                try:
-                    value_repr = l[i]
-                    value = float(value_repr)
-                except ValueError:
-                    value = None
-
-                if value is not None:
+                if Token.is_buoyant(l[i]):
                     # Token is a number
+                    value = float(l[i])
                     len_li = len(l[i])
 
                     if (len(ymd) == 3 and len_li in (2, 4) and
