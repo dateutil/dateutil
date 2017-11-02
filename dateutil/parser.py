@@ -982,7 +982,7 @@ class parser(object):
         elif not fuzzy:
             raise InvalidDatetimeError(timestr)
 
-    return idx
+        return idx
 
     def _find_hms_idx(self, idx, tokens, info, allow_jump):
         len_l = len(tokens)
