@@ -405,9 +405,12 @@ class _ymd(list):
             return 1 <= value <= 31
         elif not self.has_year:
             # Be permissive, assume leapyear
-            return 1 <= value <= monthrange(2000, self.month)[1]
+            month = self[self.mstridx]
+            return 1 <= value <= monthrange(2000, month)[1]
         else:
-            return 1 <= value <= monthrange(self.year, self.month)[1]
+            month = self[self.mstridx]
+            year = self[self.ystridx]
+            return 1 <= value <= monthrange(year, month)[1]
 
     @staticmethod
     def token_could_be_year(token, year):
@@ -840,7 +843,6 @@ class parser(object):
                             # Year, month or day
                             ymd.append(value)
                         i += 1
-
 
                     elif info.ampm(l[i + 1]) is not None:
                         # 12am

@@ -914,3 +914,9 @@ class ParserTest(unittest.TestCase):
         dtstr = '13NOV2017'
         res = parse(dtstr)
         self.assertEqual(res, datetime(2017, 11, 13))
+
+    def test_hmBY(self):
+        # See GH#483
+        dtstr = '02:17NOV2017'
+        res = parse(dtstr, default=self.default)
+        self.assertEqual(res, datetime(2017, 11, self.default.day, 2, 17))
