@@ -868,6 +868,8 @@ class parser(object):
         value = float(value_repr)
         len_li = len(value_repr)
 
+        len_l = len(tokens)
+
         if (len(ymd) == 3 and len_li in (2, 4) and
             res.hour is None and
             (idx + 1 >= len_l or
@@ -913,7 +915,7 @@ class parser(object):
         elif self._find_hms_idx(idx, tokens, info, allow_jump=True) is not None:
             # HH[ ]h or MM[ ]m or SS[.ss][ ]s
             hms_idx = self._find_hms_idx(idx, tokens, info, allow_jump=True)
-            (i, hms) = self._parse_hms(idx, tokens, info, hms_idx)
+            (idx, hms) = self._parse_hms(idx, tokens, info, hms_idx)
             if hms is not None:
                 # TODO: checking that hour/minute/second are not
                 # already set?
@@ -947,7 +949,7 @@ class parser(object):
                     if value is not None:
                         ymd.append(value, 'M')
                     else:
-                        raise InvalidDatetimeError(timestr)
+                        raise InvalidDatetimeError(ymd.tzstr)
 
                 if idx + 3 < len_l and tokens[idx + 3] == sep:
                     # We have three members
@@ -980,7 +982,7 @@ class parser(object):
             idx += 1
 
         elif not fuzzy:
-            raise InvalidDatetimeError(timestr)
+            raise InvalidDatetimeError(ymd.tzstr)
 
         return idx
 
