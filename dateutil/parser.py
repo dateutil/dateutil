@@ -500,7 +500,11 @@ class _ymd(list):
         elif len_ymd == 3:
             # Three members
             if mstridx == 0:
-                month, day, year = self
+                if self[1] > 31:
+                    # Apr-2003-25
+                    month, year, day = self
+                else:
+                    month, day, year = self
             elif mstridx == 1:
                 if self[0] > 31 or (yearfirst and self[2] <= 31):
                     # 99-Jan-01
@@ -844,7 +848,7 @@ class parser(object):
                             ymd.append(value)
                         i += 1
 
-                    elif info.ampm(l[i + 1]) is not None:
+                    elif info.ampm(l[i + 1]) is not None and (0 <= value < 24):
                         # 12am
                         hour = int(value)
                         res.hour = self._adjust_ampm(hour, info.ampm(l[i + 1]))

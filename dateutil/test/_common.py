@@ -1,6 +1,5 @@
 from __future__ import unicode_literals
 import os
-import datetime
 import time
 import subprocess
 import warnings
