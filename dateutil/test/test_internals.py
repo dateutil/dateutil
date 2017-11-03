@@ -7,6 +7,8 @@ The motivating case for these tests is #483, where we want to smoke-test
 code that may be difficult to reach through the standard API calls.
 """
 
+import unittest
+
 from dateutil.parser import _ymd
 
 
