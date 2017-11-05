@@ -24,7 +24,7 @@ datetime module available in the Python standard library.
       package_data={"dateutil.zoneinfo": ["dateutil-zoneinfo.tar.gz"]},
       zip_safe=True,
       requires=["six"],
-      tests_require=["freezegun"],
+      tests_require=["freezegun", "pytest"],
       install_requires=["six >=1.5"],  # XXX fix when packaging is sane again
       classifiers=[
           'Development Status :: 5 - Production/Stable',
