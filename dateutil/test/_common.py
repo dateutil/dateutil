@@ -75,7 +75,7 @@ class PicklableMixin(object):
 
         return nobj
 
-    def assertPicklable(self, obj, asfile=False,
+    def assertPicklable(self, obj, singleton=False, asfile=False,
                         dump_kwargs=None, load_kwargs=None):
         """
         Assert that an object can be pickled and unpickled. This assertion
@@ -87,7 +87,8 @@ class PicklableMixin(object):
         load_kwargs = load_kwargs or {}
 
         nobj = get_nobj(obj, dump_kwargs, load_kwargs)
-        self.assertIsNot(obj, nobj)
+        if not singleton:
+            self.assertIsNot(obj, nobj)
         self.assertEqual(obj, nobj)
 
 
