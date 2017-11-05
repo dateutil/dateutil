@@ -21,13 +21,14 @@ before_install:
   - if [[ $TRAVIS_PYTHON_VERSION < '3.0' ]]; then pip install mock; fi
   - pip install codecov
   - pip install freezegun
+  - pip install pytest
 
 install:
   - pip install six
   - ./ci_tools/retry.sh python updatezinfo.py
 
 script:
-  - coverage run --omit=setup.py,dateutil/test/* setup.py test
+  - coverage run --omit=setup.py,dateutil/test/* -m pytest -v
 
 after_success:
   - codecov
