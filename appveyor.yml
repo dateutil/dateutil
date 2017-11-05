@@ -32,6 +32,6 @@ install:
   # This environment variable tells the test suite it's OK to mess with the time zone.
   - set DATEUTIL_MAY_CHANGE_TZ=1
 test_script:
-  - "coverage run --omit=setup.py,dateutil/test/* -m pytest"
+  - "coverage run --omit=setup.py,dateutil/test/* -m pytest -v"
 after_test:
   - "codecov"

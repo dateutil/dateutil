@@ -28,7 +28,7 @@ install:
   - ./ci_tools/retry.sh python updatezinfo.py
 
 script:
-  - coverage run --omit=setup.py,dateutil/test/* -m pytest
+  - coverage run --omit=setup.py,dateutil/test/* -m pytest -v
 
 after_success:
   - codecov
