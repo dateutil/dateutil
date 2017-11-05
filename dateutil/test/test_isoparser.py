@@ -235,6 +235,7 @@ def test_iso_ordinal(isoord, dt_expected):
 ###
 # Invalid ISO strings
 @pytest.mark.parametrize('isostr,exception', [
+    ('201', ValueError),                        # ISO string too short
     ('2012-0425', ValueError),                  # Inconsistent date separators
     ('201204-25', ValueError),                  # Inconsistent date separators
     ('20120425T0120:00', ValueError),           # Inconsistent time separators

@@ -240,6 +240,9 @@ class Isoparser(object):
         return components, pos + 2
 
     def _parse_isodate_uncommon(self, dt_str):
+        if len(dt_str) < 4:
+            raise ValueError('ISO string too short')
+
         if dt_str[0:2] == '--':
             # --MM-DD or --MMDD
             month = int(dt_str[2:4])
