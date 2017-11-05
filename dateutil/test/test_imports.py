@@ -122,16 +122,16 @@ class ImportTZTest(unittest.TestCase):
         from dateutil.tz import gettz
         from dateutil.tz import tzwin
         from dateutil.tz import tzwinlocal
+        from dateutil.tz import UTC
 
         tz_all = ["tzutc", "tzoffset", "tzlocal", "tzfile", "tzrange",
-                  "tzstr", "tzical", "gettz"]
+                  "tzstr", "tzical", "gettz", "UTC"]
 
         tz_all += ["tzwin", "tzwinlocal"] if sys.platform.startswith("win") else []
         lvars = locals()
 
         for var in tz_all:
             self.assertIsNot(lvars[var], None)
-
 
 @unittest.skipUnless(sys.platform.startswith('win'), "Requires Windows")
 class ImportTZWinTest(unittest.TestCase):
