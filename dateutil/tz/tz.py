@@ -34,6 +34,13 @@ class tzutc(datetime.tzinfo):
     """
     This is a tzinfo object that represents the UTC time zone.
     """
+    __instance = None
+
+    def __new__(cls):
+        if tzutc.__instance is None:
+            tzutc.__instance = datetime.tzinfo.__new__(cls)
+        return tzutc.__instance
+
     def utcoffset(self, dt):
         return ZERO
 
