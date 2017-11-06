@@ -157,8 +157,8 @@ class Isoparser(object):
         components, pos = self._parse_isodate(datestr)
         return date(*components)
 
-    @_takes_ascii
     @classmethod
+    @_takes_ascii
     def parse_isotime(cls, timestr):
         """
         Parse the time portion of an ISO string.
@@ -171,8 +171,8 @@ class Isoparser(object):
         """
         return time(*cls._parse_isotime(timestr))
 
-    @_takes_ascii
     @classmethod
+    @_takes_ascii
     def parse_tzstr(cls, tzstr, zero_as_utc=True):
         """
         Parse a valid ISO time zone string.
