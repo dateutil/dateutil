@@ -17,6 +17,7 @@ try:
 except ValueError:
     PLATFORM_HAS_DASH_D = False
 
+import pytest
 
 class TestFormat(unittest.TestCase):
 
@@ -889,3 +890,14 @@ class ParserTest(unittest.TestCase):
         invalid = "201A-01-01T23:58:39.239769+03:00"
         with self.assertRaises(ValueError):
             parse(invalid)
+
+    @pytest.mark.xfail()
+    def test_somewhat_ambiguous_string(self):
+        # Ref: github issue #487
+        # The parser is choosing the wrong part for hour
+        # causing datetime to raise an exception.
+        dtstr = '1237 PM BRST Mon Oct 30 2017'
+        res = parse(dtstr, tzinfo=self.tzinfos)
+        self.assertEqual(res, datetime(2017, 10, 30, 12, 37,
+                         tzinfo=self.tzinfos))
+
