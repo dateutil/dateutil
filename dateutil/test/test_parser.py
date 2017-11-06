@@ -18,6 +18,7 @@ try:
 except ValueError:
     PLATFORM_HAS_DASH_D = False
 
+import pytest
 
 class TestFormat(unittest.TestCase):
 
