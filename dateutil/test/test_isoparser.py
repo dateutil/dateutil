@@ -233,6 +233,26 @@ def test_iso_ordinal(isoord, dt_expected):
 
 
 ###
+# Acceptance of bytes
+@pytest.mark.parametrize('isostr,dt', [
+    (b'2014', datetime(2014, 1, 1)),
+    (b'20140204', datetime(2014, 2, 4)),
+    (b'2014-02-04', datetime(2014, 2, 4)),
+    (b'2014-02-04T12', datetime(2014, 2, 4, 12)),
+    (b'2014-02-04T12:30', datetime(2014, 2, 4, 12, 30)),
+    (b'2014-02-04T12:30:15', datetime(2014, 2, 4, 12, 30, 15)),
+    (b'2014-02-04T12:30:15.224', datetime(2014, 2, 4, 12, 30, 15, 224000)),
+    (b'20140204T123015.224', datetime(2014, 2, 4, 12, 30, 15, 224000)),
+    (b'2014-02-04T12:30:15.224Z', datetime(2014, 2, 4, 12, 30, 15, 224000,
+                                           tz.tzutc())),
+    (b'2014-02-04T12:30:15.224+05:00',
+        datetime(2014, 2, 4, 12, 30, 15, 224000,
+                 tzinfo=tz.tzoffset(None, timedelta(hours=5))))])
+def test_bytes(isostr, dt):
+    assert isoparse(isostr) == dt
+
+
+###
 # Invalid ISO strings
 @pytest.mark.parametrize('isostr,exception', [
     ('201', ValueError),                        # ISO string too short
@@ -255,6 +275,7 @@ def test_iso_ordinal(isoord, dt_expected):
     ('2013-000', ValueError),                   # Invalid ordinal day
     ('2013-366', ValueError),                   # Invalid ordinal day
     ('2013366', ValueError),                    # Invalid ordinal day
+    ('2014-03-12Т12:30:14', ValueError)         # Cyrillic T
 ])
 def test_iso_raises(isostr, exception):
     with pytest.raises(exception):

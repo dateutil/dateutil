@@ -9,9 +9,32 @@ from datetime import datetime, timedelta, time, date
 import calendar
 from dateutil import tz
 
+from functools import wraps
+
 import re
+import six
 
 __all__ = ["isoparse", "Isoparser"]
+
+
+def _takes_ascii(f):
+    @wraps(f)
+    def func(self, str_in, *args, **kwargs):
+        # If it's a stream, read the whole thing
+        str_in = getattr(str_in, 'read', lambda: str_in)()
+
+        # If it's unicode, turn it into bytes, since ISO-8601 only covers ASCII
+        if isinstance(str_in, six.text_type):
+            # ASCII is the same in UTF-8
+            try:
+                str_in = str_in.encode('ascii')
+            except UnicodeEncodeError as e:
+                msg = 'ISO-8601 strings contain only ASCII characters'
+                six.raise_from(ValueError(msg), e)
+
+        return f(self, str_in, *args, **kwargs)
+
+    return func
 
 
 class Isoparser(object):
@@ -28,7 +51,7 @@ class Isoparser(object):
             raise ValueError('Separator must be a single, non-numeric '
                              'ASCII character')
 
-        self._sep = sep
+        self._sep = sep.encode('ascii')
         if default_year is not None:
             if not 1 <= default_year <= 9999:
                 raise ValueError('Year must be in [1, 9999]')
@@ -37,6 +60,7 @@ class Isoparser(object):
         else:
             self._default_year = datetime.now().year
 
+    @_takes_ascii
     def isoparse(self, dt_str, common_only=False):
         """
         Parse an ISO-8601 datetime string into a :class:`datetime.datetime`.
@@ -106,21 +130,20 @@ class Isoparser(object):
             non-leap-year default date), the default will be the last leap
             year to occur before the default year.
         """
-        dt_str = getattr(dt_str, 'read', lambda: dt_str)()
-
         if common_only:
             components, pos = self._parse_isodate_common(dt_str)
         else:
             components, pos = self._parse_isodate(dt_str)
 
         if len(dt_str) > pos:
-            if dt_str[pos] == self._sep:
+            if dt_str[pos:pos + 1] == self._sep:
                 components += self._parse_isotime(dt_str[pos + 1:])
             else:
                 raise ValueError('String contains unknown ISO components')
 
         return datetime(*components)
 
+    @_takes_ascii
     def parse_isodate(self, datestr):
         """
         Parse the date portion of an ISO string.
@@ -134,6 +157,7 @@ class Isoparser(object):
         components, pos = self._parse_isodate(datestr)
         return date(*components)
 
+    @_takes_ascii
     @classmethod
     def parse_isotime(cls, timestr):
         """
@@ -165,15 +189,15 @@ class Isoparser(object):
             :class:`dateutil.tz.tzutc` for ``Z`` and (if ``zero_as_utc`` is
             specified) offsets equivalent to UTC.
         """
-        if tzstr == 'Z':
+        if tzstr == b'Z':
             return tz.tzutc()
 
         if len(tzstr) not in {3, 5, 6}:
             raise ValueError('Time zone offset must be 1, 3, 5 or 6 characters')
 
-        if tzstr[0] == '-':
+        if tzstr[0:1] == b'-':
             mult = -1
-        elif tzstr[0] == '+':
+        elif tzstr[0:1] == b'+':
             mult = 1
         else:
             raise ValueError('Time zone offset requires sign')
@@ -182,7 +206,7 @@ class Isoparser(object):
         if len(tzstr) == 3:
             minutes = 0
         else:
-            minutes = int(tzstr[(4 if tzstr[3] == ':' else 3):])
+            minutes = int(tzstr[(4 if tzstr[3] == cls._TIME_SEP else 3):])
 
         if zero_as_utc and hours == 0 and minutes == 0:
             return tz.tzutc()
@@ -195,6 +219,12 @@ class Isoparser(object):
 
             return tz.tzoffset(None, mult * timedelta(hours=hours,
                                                       minutes=minutes))
+
+    # Constants
+    _MICROSECOND_END_REGEX = re.compile(b'[-+Z]+')
+    _DATE_SEP = ord(b'-')
+    _TIME_SEP = ord(b':')
+    _MICRO_SEP = ord(b'.')
 
     def _parse_isodate(self, dt_str):
         try:
@@ -216,7 +246,7 @@ class Isoparser(object):
         if pos >= len_str:
             return components, pos
 
-        has_sep = dt_str[pos] == '-'
+        has_sep = dt_str[pos] == self._DATE_SEP
         if has_sep:
             pos += 1
 
@@ -231,7 +261,7 @@ class Isoparser(object):
             return components, pos
 
         if has_sep:
-            if dt_str[pos] != '-':
+            if dt_str[pos] != self._DATE_SEP:
                 raise ValueError('Invalid separator in ISO string')
             pos += 1
 
@@ -245,10 +275,10 @@ class Isoparser(object):
         if len(dt_str) < 4:
             raise ValueError('ISO string too short')
 
-        if dt_str[0:2] == '--':
+        if dt_str[0:2] == b'--':
             # --MM-DD or --MMDD
             month = int(dt_str[2:4])
-            pos = 4 + (dt_str[4] == '-')
+            pos = 4 + (dt_str[4] == self._DATE_SEP)
             day = int(dt_str[pos:pos + 2])
             year = self._default_year
 
@@ -263,8 +293,8 @@ class Isoparser(object):
         # All other uncommon ISO formats start with the year
         year = int(dt_str[0:4])
 
-        pos = 4 + (dt_str[4] == '-')   # Skip '-' if it's there
-        if dt_str[pos] == 'W':
+        pos = 4 + (dt_str[4] == self._DATE_SEP)   # Skip '-' if it's there
+        if dt_str[pos] == ord(b'W'):
             # YYYY-?Www-?D?
             pos += 1
             weekno = int(dt_str[pos:pos + 2])
@@ -272,13 +302,13 @@ class Isoparser(object):
 
             dayno = 1
             if len(dt_str) > pos:
-                if dt_str[pos] == '-':
+                if dt_str[pos] == self._DATE_SEP:
                     # YYYY-W
-                    if dt_str[4] != '-':
+                    if dt_str[4] != self._DATE_SEP:
                         raise ValueError('Inconsistent use of dash separator')
                     pos += 1
 
-                dayno = int(dt_str[pos])
+                dayno = int(dt_str[pos:pos + 1])
                 pos += 1
 
             base_date = self._calculate_weekdate(year, weekno, dayno)
@@ -330,8 +360,6 @@ class Isoparser(object):
         week_offset = (week - 1) * 7 + (day - 1)
         return week_1 + timedelta(days=week_offset)
 
-    _MICROSECOND_END_REGEX = re.compile('[-+Z]+')
-
     @classmethod
     def _parse_isotime(cls, timestr):
         len_str = len(timestr)
@@ -339,12 +367,12 @@ class Isoparser(object):
         pos = 0
         comp = -1
 
-        has_sep = len_str >= 3 and timestr[2] == ':'
+        has_sep = len_str >= 3 and timestr[2] == cls._TIME_SEP
 
         while pos < len_str and comp < 5:
             comp += 1
 
-            if timestr[pos] in '-+Z':
+            if timestr[pos:pos + 1] in b'-+Z':
                 # Detect time zone boundary
                 components[-1] = cls.parse_tzstr(timestr[pos:])
                 pos = len_str
@@ -354,12 +382,12 @@ class Isoparser(object):
                 # Hour, minute, second
                 components[comp] = int(timestr[pos:pos + 2])
                 pos += 2
-                if has_sep and pos < len_str and timestr[pos] == ':':
+                if has_sep and pos < len_str and timestr[pos] == cls._TIME_SEP:
                     pos += 1
 
             if comp == 3:
                 # Microsecond
-                if timestr[pos] != '.':
+                if timestr[pos] != cls._MICRO_SEP:
                     continue
 
                 pos += 1
