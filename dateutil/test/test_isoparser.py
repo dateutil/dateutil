@@ -39,7 +39,9 @@ def _generate_tzoffsets(limited):
     out.append((None, ''))
 
     return out
+
 FULL_TZOFFSETS = _generate_tzoffsets(False)
+FULL_TZOFFSETS_AWARE = [x for x in FULL_TZOFFSETS if x[1]]
 TZOFFSETS = _generate_tzoffsets(True)
 
 DATES = [datetime(1996, 1, 1), datetime(2017, 1, 1)]
@@ -303,3 +305,24 @@ def test_isoparser_invalid_years(year):
 def test_isoparser_invalid_sep(sep):
     with pytest.raises(ValueError):
         Isoparser(sep=sep)
+
+
+###
+# Test parse_tzstr
+@pytest.mark.parametrize('tzoffset', FULL_TZOFFSETS)
+def test_parse_tzstr(tzoffset):
+    dt = datetime(2017, 11, 27, 6, 14, 30, 123456)
+    date_fmt = '%Y-%m-%d'
+    time_fmt = '%H:%M:%S.%f'
+
+    _isoparse_date_and_time(dt, date_fmt, time_fmt, tzoffset)
+
+
+@pytest.mark.parametrize('tzstr', [
+    '-00:00', '+00:00', '+00', '-00', '+0000', '-0000'
+])
+@pytest.mark.parametrize('zero_as_utc', [True, False])
+def test_parse_tzstr_zero_as_utc(tzstr, zero_as_utc):
+    tzi = Isoparser.parse_tzstr(tzstr, zero_as_utc=zero_as_utc)
+    assert tzi == tz.tzutc()
+    assert (type(tzi) == tz.tzutc) == zero_as_utc
