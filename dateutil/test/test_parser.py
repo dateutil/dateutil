@@ -17,6 +17,7 @@ try:
 except ValueError:
     PLATFORM_HAS_DASH_D = False
 
+import pytest
 
 class TestFormat(unittest.TestCase):
 
@@ -890,7 +891,7 @@ class ParserTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             parse(invalid)
 
-    @unittest.skip("Known failure")
+    @pytest.mark.xfail()
     def test_somewhat_ambiguous_string(self):
         # Ref: github issue #487
         # The parser is choosing the wrong part for hour
