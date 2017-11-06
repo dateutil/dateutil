@@ -171,6 +171,7 @@ class Isoparser(object):
         """
         return time(*cls._parse_isotime(timestr))
 
+    @_takes_ascii
     @classmethod
     def parse_tzstr(cls, tzstr, zero_as_utc=True):
         """
@@ -189,36 +190,7 @@ class Isoparser(object):
             :class:`dateutil.tz.tzutc` for ``Z`` and (if ``zero_as_utc`` is
             specified) offsets equivalent to UTC.
         """
-        if tzstr == b'Z':
-            return tz.tzutc()
-
-        if len(tzstr) not in {3, 5, 6}:
-            raise ValueError('Time zone offset must be 1, 3, 5 or 6 characters')
-
-        if tzstr[0:1] == b'-':
-            mult = -1
-        elif tzstr[0:1] == b'+':
-            mult = 1
-        else:
-            raise ValueError('Time zone offset requires sign')
-
-        hours = int(tzstr[1:3])
-        if len(tzstr) == 3:
-            minutes = 0
-        else:
-            minutes = int(tzstr[(4 if tzstr[3] == cls._TIME_SEP else 3):])
-
-        if zero_as_utc and hours == 0 and minutes == 0:
-            return tz.tzutc()
-        else:
-            if minutes > 59:
-                raise ValueError('Invalid minutes in time zone offset')
-
-            if hours > 23:
-                raise ValueError('Invalid hours in time zone offset')
-
-            return tz.tzoffset(None, mult * timedelta(hours=hours,
-                                                      minutes=minutes))
+        return cls._parse_tzstr(tzstr, zero_as_utc=zero_as_utc)
 
     # Constants
     _MICROSECOND_END_REGEX = re.compile(b'[-+Z]+')
@@ -374,7 +346,7 @@ class Isoparser(object):
 
             if timestr[pos:pos + 1] in b'-+Z':
                 # Detect time zone boundary
-                components[-1] = cls.parse_tzstr(timestr[pos:])
+                components[-1] = cls._parse_tzstr(timestr[pos:])
                 pos = len_str
                 break
 
@@ -407,6 +379,39 @@ class Isoparser(object):
             components[0] = 0
 
         return components
+
+    @classmethod
+    def _parse_tzstr(cls, tzstr, zero_as_utc=True):
+        if tzstr == b'Z':
+            return tz.tzutc()
+
+        if len(tzstr) not in {3, 5, 6}:
+            raise ValueError('Time zone offset must be 1, 3, 5 or 6 characters')
+
+        if tzstr[0:1] == b'-':
+            mult = -1
+        elif tzstr[0:1] == b'+':
+            mult = 1
+        else:
+            raise ValueError('Time zone offset requires sign')
+
+        hours = int(tzstr[1:3])
+        if len(tzstr) == 3:
+            minutes = 0
+        else:
+            minutes = int(tzstr[(4 if tzstr[3] == cls._TIME_SEP else 3):])
+
+        if zero_as_utc and hours == 0 and minutes == 0:
+            return tz.tzutc()
+        else:
+            if minutes > 59:
+                raise ValueError('Invalid minutes in time zone offset')
+
+            if hours > 23:
+                raise ValueError('Invalid hours in time zone offset')
+
+            return tz.tzoffset(None, mult * timedelta(hours=hours,
+                                                      minutes=minutes))
 
 
 DEFAULT_ISOPARSER = Isoparser()
