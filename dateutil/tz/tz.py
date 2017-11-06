@@ -958,7 +958,7 @@ class tzstr(tzrange):
     """
     def __init__(self, s, posix_offset=False):
         global parser
-        from dateutil import parser
+        from dateutil.parser import _parser as parser
 
         self._s = s
 
