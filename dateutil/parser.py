@@ -835,13 +835,13 @@ class parser(object):
 
                     res.tzoffset = signal * (hour_offset * 3600 + min_offset * 60)
 
-                    # TODO: Check if res.tzname is not None
                     # Look for a timezone name between parenthesis
                     if (i + 5 < len_l and
-                        info.jump(l[i + 2]) and l[i + 3] == '(' and
-                        l[i + 5] == ')' and
-                        3 <= len(l[i + 4]) <= 5 and
-                        all(x in string.ascii_uppercase for x in l[i + 4])):  # TODO: merge this with _could_be_tzname
+                            info.jump(l[i + 2]) and l[i + 3] == '(' and
+                            l[i + 5] == ')' and
+                            3 <= len(l[i + 4]) and
+                            self._could_be_tzname(res.hour, res.tzname,
+                                                  None, l[i + 4])):
                         # -0300 (BRST)
                         res.tzname = l[i + 4]
                         i += 4
