@@ -40,8 +40,8 @@ from io import StringIO
 
 from six import binary_type, integer_types, text_type
 
-from . import relativedelta
-from . import tz
+from .. import relativedelta
+from .. import tz
 
 __all__ = ["parse", "parserinfo"]
 
