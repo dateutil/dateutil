@@ -14,11 +14,14 @@ import sys
 import os
 import bisect
 
+import six
 from six import string_types
 from six.moves import _thread
 from ._common import tzname_in_python2, _tzinfo
 from ._common import tzrangebase, enfold
 from ._common import _validate_fromutc_inputs
+
+from ._factories import _TzSingleton
 
 try:
     from .win import tzwin, tzwinlocal
@@ -30,6 +33,7 @@ EPOCH = datetime.datetime.utcfromtimestamp(0)
 EPOCHORDINAL = EPOCH.toordinal()
 
 
+@six.add_metaclass(_TzSingleton)
 class tzutc(datetime.tzinfo):
     """
     This is a tzinfo object that represents the UTC time zone.
@@ -46,13 +50,6 @@ class tzutc(datetime.tzinfo):
             >>> tzutc() is UTC
             True
     """
-    __instance = None
-
-    def __new__(cls):
-        if tzutc.__instance is None:
-            tzutc.__instance = datetime.tzinfo.__new__(cls)
-        return tzutc.__instance
-
     def utcoffset(self, dt):
         return ZERO
 
@@ -108,10 +105,8 @@ class tzutc(datetime.tzinfo):
 class tzoffset(datetime.tzinfo):
     """
     A simple class for representing a fixed offset from UTC.
-
     :param name:
         The timezone name, to be returned when ``tzname()`` is called.
-
     :param offset:
         The time zone offset in seconds, or (since version 2.6.0, represented
         as a :py:class:`datetime.timedelta` object).
@@ -144,14 +139,10 @@ class tzoffset(datetime.tzinfo):
         """
         Whether or not the "wall time" of a given datetime is ambiguous in this
         zone.
-
         :param dt:
             A :py:class:`datetime.datetime`, naive or time zone aware.
-
-
         :return:
             Returns ``True`` if ambiguous, ``False`` otherwise.
-
         .. versionadded:: 2.6.0
         """
         return False
