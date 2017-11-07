@@ -20,8 +20,7 @@ install:
   - set pip_cmd=%PYTHON%/python.exe -m pip
 
   # Download scripts and dependencies
-  - "%pip_cmd% install six"
-  - "%pip_cmd% install coverage"
+  - "%pip_cmd% install -r test_requirements.txt"
   - "%pip_cmd% install codecov"
 
   # This frequently fails with network errors, so we'll retry it up to 5 times
@@ -30,6 +29,6 @@ install:
   # This environment variable tells the test suite it's OK to mess with the time zone.
   - set DATEUTIL_MAY_CHANGE_TZ=1
 test_script:
-  - "coverage run --omit=setup.py,dateutil/test/* setup.py test"
+  - "coverage run --omit=setup.py,dateutil/test/* -m pytest -v"
 after_test:
   - "codecov"

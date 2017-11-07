@@ -596,6 +596,12 @@ class TzWinFoldMixin(object):
 ###
 # Test Cases
 class TzUTCTest(unittest.TestCase):
+    def testSingleton(self):
+        UTC_0 = tz.tzutc()
+        UTC_1 = tz.tzutc()
+
+        self.assertIs(UTC_0, UTC_1)
+
     def testOffset(self):
         ct = datetime(2009, 4, 1, 12, 11, 13, tzinfo=tz.tzutc())
 
@@ -614,7 +620,6 @@ class TzUTCTest(unittest.TestCase):
         UTC0 = tz.tzutc()
         UTC1 = tz.tzutc()
 
-        self.assertIsNot(UTC0, UTC1)
         self.assertEqual(UTC0, UTC1)
 
     def testInequality(self):
@@ -1943,7 +1948,7 @@ class TzPickleTest(PicklableMixin, unittest.TestCase):
                                        asfile=self._asfile)
 
     def testPickleTzUTC(self):
-        self.assertPicklable(tz.tzutc())
+        self.assertPicklable(tz.tzutc(), singleton=True)
 
     def testPickleTzOffsetZero(self):
         self.assertPicklable(tz.tzoffset('UTC', 0))

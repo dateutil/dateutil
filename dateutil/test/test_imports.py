@@ -45,6 +45,14 @@ class ImportParserTest(unittest.TestCase):
         for var in (parse, parserinfo, parser):
             self.assertIsNot(var, None)
 
+    def testParserErrors(self):
+        from dateutil.parser import InvalidDateError
+        from dateutil.parser import InvalidTimeError
+        from dateutil.parser import InvalidDatetimeError
+
+        for var in (InvalidDateError, InvalidTimeError, InvalidDatetimeError):
+            assert issubclass(var, ValueError)
+
 
 class ImportRelativeDeltaTest(unittest.TestCase):
     """ Test that dateutil.relativedelta-related imports work properly """
@@ -114,16 +122,16 @@ class ImportTZTest(unittest.TestCase):
         from dateutil.tz import gettz
         from dateutil.tz import tzwin
         from dateutil.tz import tzwinlocal
+        from dateutil.tz import UTC
 
         tz_all = ["tzutc", "tzoffset", "tzlocal", "tzfile", "tzrange",
-                  "tzstr", "tzical", "gettz"]
+                  "tzstr", "tzical", "gettz", "UTC"]
 
         tz_all += ["tzwin", "tzwinlocal"] if sys.platform.startswith("win") else []
         lvars = locals()
 
         for var in tz_all:
             self.assertIsNot(lvars[var], None)
-
 
 @unittest.skipUnless(sys.platform.startswith('win'), "Requires Windows")
 class ImportTZWinTest(unittest.TestCase):

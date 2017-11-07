@@ -39,8 +39,8 @@ from io import StringIO
 
 from six import binary_type, integer_types, text_type
 
-from . import relativedelta
-from . import tz
+from .. import relativedelta
+from .. import tz
 
 __all__ = ["parse", "parserinfo"]
 
@@ -238,16 +238,16 @@ class parserinfo(object):
     the language and acceptable values for each parameter.
 
     :param dayfirst:
-            Whether to interpret the first value in an ambiguous 3-integer date
-            (e.g. 01/05/09) as the day (``True``) or month (``False``). If
-            ``yearfirst`` is set to ``True``, this distinguishes between YDM
-            and YMD. Default is ``False``.
+        Whether to interpret the first value in an ambiguous 3-integer date
+        (e.g. 01/05/09) as the day (``True``) or month (``False``). If
+        ``yearfirst`` is set to ``True``, this distinguishes between YDM
+        and YMD. Default is ``False``.
 
     :param yearfirst:
-            Whether to interpret the first value in an ambiguous 3-integer date
-            (e.g. 01/05/09) as the year. If ``True``, the first number is taken
-            to be the year, otherwise the last number is taken to be the year.
-            Default is ``False``.
+        Whether to interpret the first value in an ambiguous 3-integer date
+        (e.g. 01/05/09) as the year. If ``True``, the first number is taken
+        to be the year, otherwise the last number is taken to be the year.
+        Default is ``False``.
     """
 
     # m from a.m/p.m, t from ISO T separator
@@ -773,125 +773,8 @@ class parser(object):
                     value = None
 
                 if value is not None:
-                    # Token is a number
-                    len_li = len(l[i])
-
-                    if (len(ymd) == 3 and len_li in (2, 4) and
-                          res.hour is None and
-                          (i + 1 >= len_l or
-                          (l[i + 1] != ':' and
-                           info.hms(l[i + 1]) is None))):
-                        # 19990101T23[59]
-                        s = l[i]
-                        res.hour = int(s[:2])
-
-                        if len_li == 4:
-                            res.minute = int(s[2:])
-
-                    elif len_li == 6 or (len_li > 6 and l[i].find('.') == 6):
-                        # YYMMDD or HHMMSS[.ss]
-                        s = l[i]
-
-                        if not ymd and '.' not in l[i]:
-                            ymd.append(s[:2])
-                            ymd.append(s[2:4])
-                            ymd.append(s[4:])
-                        else:
-                            # 19990101T235959[.59]
-
-                            # TODO: Check if res attributes already set.
-                            res.hour = int(s[:2])
-                            res.minute = int(s[2:4])
-                            res.second, res.microsecond = self._parsems(s[4:])
-
-                    elif len_li in (8, 12, 14):
-                        # YYYYMMDD
-                        s = l[i]
-                        ymd.append(s[:4], 'Y')
-                        ymd.append(s[4:6])
-                        ymd.append(s[6:8])
-
-                        if len_li > 8:
-                            res.hour = int(s[8:10])
-                            res.minute = int(s[10:12])
-
-                            if len_li > 12:
-                                res.second = int(s[12:])
-
-                    elif self._find_hms_idx(i, l, info, allow_jump=True) is not None:
-                        # HH[ ]h or MM[ ]m or SS[.ss][ ]s
-                        hms_idx = self._find_hms_idx(i, l, info, allow_jump=True)
-                        (i, hms) = self._parse_hms(i, l, info, hms_idx)
-                        if hms is not None:
-                            # TODO: checking that hour/minute/second are not
-                            # already set?
-                            self._assign_hms(res, value_repr, hms)
-
-                    elif i + 2 < len_l and l[i + 1] == ':':
-                        # HH:MM[:SS[.ss]]
-                        res.hour = int(value)
-                        value = float(l[i + 2])  # TODO: try/except for this?
-                        (res.minute, res.second) = self._parse_min_sec(value)
-
-                        if i + 4 < len_l and l[i + 3] == ':':
-                            res.second, res.microsecond = self._parsems(l[i + 4])
-
-                            i += 2
-
-                        i += 2
-
-                    elif i + 1 < len_l and l[i + 1] in ('-', '/', '.'):
-                        sep = l[i + 1]
-                        ymd.append(value_repr)
-
-                        if i + 2 < len_l and not info.jump(l[i + 2]):
-                            if l[i + 2].isdigit():
-                                # 01-01[-01]
-                                ymd.append(l[i + 2])
-                            else:
-                                # 01-Jan[-01]
-                                value = info.month(l[i + 2])
-
-                                if value is not None:
-                                    ymd.append(value, 'M')
-                                else:
-                                    raise InvalidDatetimeError(timestr)
-
-                            if i + 3 < len_l and l[i + 3] == sep:
-                                # We have three members
-                                value = info.month(l[i + 4])
-
-                                if value is not None:
-                                    ymd.append(value, 'M')
-                                else:
-                                    ymd.append(l[i + 4])
-                                i += 2
-
-                            i += 1
-                        i += 1
-
-                    elif i + 1 >= len_l or info.jump(l[i + 1]):
-                        if i + 2 < len_l and info.ampm(l[i + 2]) is not None:
-                            # 12 am
-                            hour = int(value)
-                            res.hour = self._adjust_ampm(hour, info.ampm(l[i + 2]))
-                            i += 1
-                        else:
-                            # Year, month or day
-                            ymd.append(value)
-                        i += 1
-
-                    elif info.ampm(l[i + 1]) is not None and (0 <= value < 24):
-                        # 12am
-                        hour = int(value)
-                        res.hour = self._adjust_ampm(hour, info.ampm(l[i + 1]))
-                        i += 1
-
-                    elif ymd.could_be_day(value):
-                        ymd.append(value)
-
-                    elif not fuzzy:
-                        raise InvalidDatetimeError(timestr)
+                    # Numeric token
+                    i = self._parse_numeric_token(l, i, info, ymd, res, fuzzy)
 
                 # Check weekday
                 elif info.weekday(l[i]) is not None:
@@ -985,13 +868,13 @@ class parser(object):
 
                     res.tzoffset = signal * (hour_offset * 3600 + min_offset * 60)
 
-                    # TODO: Check if res.tzname is not None
                     # Look for a timezone name between parenthesis
                     if (i + 5 < len_l and
-                        info.jump(l[i + 2]) and l[i + 3] == '(' and
-                        l[i + 5] == ')' and
-                        3 <= len(l[i + 4]) <= 5 and
-                        all(x in string.ascii_uppercase for x in l[i + 4])):  # TODO: merge this with _could_be_tzname
+                            info.jump(l[i + 2]) and l[i + 3] == '(' and
+                            l[i + 5] == ')' and
+                            3 <= len(l[i + 4]) and
+                            self._could_be_tzname(res.hour, res.tzname,
+                                                  None, l[i + 4])):
                         # -0300 (BRST)
                         res.tzname = l[i + 4]
                         i += 4
@@ -1025,6 +908,133 @@ class parser(object):
             return res, tuple(skipped_tokens)
         else:
             return res, None
+
+    def _parse_numeric_token(self, tokens, idx, info, ymd, res, fuzzy):
+        # Token is a number
+        value_repr = tokens[idx]
+        value = float(value_repr)
+        len_li = len(value_repr)
+
+        len_l = len(tokens)
+
+        if (len(ymd) == 3 and len_li in (2, 4) and
+            res.hour is None and
+            (idx + 1 >= len_l or
+             (tokens[idx + 1] != ':' and
+              info.hms(tokens[idx + 1]) is None))):
+            # 19990101T23[59]
+            s = tokens[idx]
+            res.hour = int(s[:2])
+
+            if len_li == 4:
+                res.minute = int(s[2:])
+
+        elif len_li == 6 or (len_li > 6 and tokens[idx].find('.') == 6):
+            # YYMMDD or HHMMSS[.ss]
+            s = tokens[idx]
+
+            if not ymd and '.' not in tokens[idx]:
+                ymd.append(s[:2])
+                ymd.append(s[2:4])
+                ymd.append(s[4:])
+            else:
+                # 19990101T235959[.59]
+
+                # TODO: Check if res attributes already set.
+                res.hour = int(s[:2])
+                res.minute = int(s[2:4])
+                res.second, res.microsecond = self._parsems(s[4:])
+
+        elif len_li in (8, 12, 14):
+            # YYYYMMDD
+            s = tokens[idx]
+            ymd.append(s[:4], 'Y')
+            ymd.append(s[4:6])
+            ymd.append(s[6:8])
+
+            if len_li > 8:
+                res.hour = int(s[8:10])
+                res.minute = int(s[10:12])
+
+                if len_li > 12:
+                    res.second = int(s[12:])
+
+        elif self._find_hms_idx(idx, tokens, info, allow_jump=True) is not None:
+            # HH[ ]h or MM[ ]m or SS[.ss][ ]s
+            hms_idx = self._find_hms_idx(idx, tokens, info, allow_jump=True)
+            (idx, hms) = self._parse_hms(idx, tokens, info, hms_idx)
+            if hms is not None:
+                # TODO: checking that hour/minute/second are not
+                # already set?
+                self._assign_hms(res, value_repr, hms)
+
+        elif idx + 2 < len_l and tokens[idx + 1] == ':':
+            # HH:MM[:SS[.ss]]
+            res.hour = int(value)
+            value = float(tokens[idx + 2])  # TODO: try/except for this?
+            (res.minute, res.second) = self._parse_min_sec(value)
+
+            if idx + 4 < len_l and tokens[idx + 3] == ':':
+                res.second, res.microsecond = self._parsems(tokens[idx + 4])
+
+                idx += 2
+
+            idx += 2
+
+        elif idx + 1 < len_l and tokens[idx + 1] in ('-', '/', '.'):
+            sep = tokens[idx + 1]
+            ymd.append(value_repr)
+
+            if idx + 2 < len_l and not info.jump(tokens[idx + 2]):
+                if tokens[idx + 2].isdigit():
+                    # 01-01[-01]
+                    ymd.append(tokens[idx + 2])
+                else:
+                    # 01-Jan[-01]
+                    value = info.month(tokens[idx + 2])
+
+                    if value is not None:
+                        ymd.append(value, 'M')
+                    else:
+                        raise InvalidDatetimeError(ymd.tzstr)
+
+                if idx + 3 < len_l and tokens[idx + 3] == sep:
+                    # We have three members
+                    value = info.month(tokens[idx + 4])
+
+                    if value is not None:
+                        ymd.append(value, 'M')
+                    else:
+                        ymd.append(tokens[idx + 4])
+                    idx += 2
+
+                idx += 1
+            idx += 1
+
+        elif idx + 1 >= len_l or info.jump(tokens[idx + 1]):
+            if idx + 2 < len_l and info.ampm(tokens[idx + 2]) is not None:
+                # 12 am
+                hour = int(value)
+                res.hour = self._adjust_ampm(hour, info.ampm(tokens[idx + 2]))
+                idx += 1
+            else:
+                # Year, month or day
+                ymd.append(value)
+            idx += 1
+
+        elif info.ampm(tokens[idx + 1]) is not None and (0 <= value < 24):
+            # 12am
+            hour = int(value)
+            res.hour = self._adjust_ampm(hour, info.ampm(tokens[idx + 1]))
+            idx += 1
+
+        elif ymd.could_be_day(value):
+            ymd.append(value)
+
+        elif not fuzzy:
+            raise InvalidDatetimeError(ymd.tzstr)
+
+        return idx
 
     def _find_hms_idx(self, idx, tokens, info, allow_jump):
         len_l = len(tokens)
@@ -1200,29 +1210,29 @@ def parse(timestr, parserinfo=None, **kwargs):
         :class:`datetime` object is returned.
 
     :param tzinfos:
-            Additional time zone names / aliases which may be present in the
-            string. This argument maps time zone names (and optionally offsets
-            from those time zones) to time zones. This parameter can be a
-            dictionary with timezone aliases mapping time zone names to time
-            zones or a function taking two parameters (``tzname`` and
-            ``tzoffset``) and returning a time zone.
+        Additional time zone names / aliases which may be present in the
+        string. This argument maps time zone names (and optionally offsets
+        from those time zones) to time zones. This parameter can be a
+        dictionary with timezone aliases mapping time zone names to time
+        zones or a function taking two parameters (``tzname`` and
+        ``tzoffset``) and returning a time zone.
 
-            The timezones to which the names are mapped can be an integer
-            offset from UTC in seconds or a :class:`tzinfo` object.
+        The timezones to which the names are mapped can be an integer
+        offset from UTC in seconds or a :class:`tzinfo` object.
 
-            .. doctest::
-               :options: +NORMALIZE_WHITESPACE
+        .. doctest::
+           :options: +NORMALIZE_WHITESPACE
 
-                >>> from dateutil.parser import parse
-                >>> from dateutil.tz import gettz
-                >>> tzinfos = {"BRST": -7200, "CST": gettz("America/Chicago")}
-                >>> parse("2012-01-19 17:21:00 BRST", tzinfos=tzinfos)
-                datetime.datetime(2012, 1, 19, 17, 21, tzinfo=tzoffset(u'BRST', -7200))
-                >>> parse("2012-01-19 17:21:00 CST", tzinfos=tzinfos)
-                datetime.datetime(2012, 1, 19, 17, 21,
-                                  tzinfo=tzfile('/usr/share/zoneinfo/America/Chicago'))
+            >>> from dateutil.parser import parse
+            >>> from dateutil.tz import gettz
+            >>> tzinfos = {"BRST": -7200, "CST": gettz("America/Chicago")}
+            >>> parse("2012-01-19 17:21:00 BRST", tzinfos=tzinfos)
+            datetime.datetime(2012, 1, 19, 17, 21, tzinfo=tzoffset(u'BRST', -7200))
+            >>> parse("2012-01-19 17:21:00 CST", tzinfos=tzinfos)
+            datetime.datetime(2012, 1, 19, 17, 21,
+                              tzinfo=tzfile('/usr/share/zoneinfo/America/Chicago'))
 
-            This parameter is ignored if ``ignoretz`` is set.
+        This parameter is ignored if ``ignoretz`` is set.
 
     :param dayfirst:
         Whether to interpret the first value in an ambiguous 3-integer date

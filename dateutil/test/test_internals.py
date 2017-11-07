@@ -9,7 +9,7 @@ code that may be difficult to reach through the standard API calls.
 
 import unittest
 
-from dateutil.parser import _ymd
+from dateutil.parser._parser import _ymd
 
 
 class TestYMD(unittest.TestCase):
