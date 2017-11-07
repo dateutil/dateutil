@@ -194,9 +194,9 @@ class Isoparser(object):
 
     # Constants
     _MICROSECOND_END_REGEX = re.compile(b'[-+Z]+')
-    _DATE_SEP = ord(b'-')
-    _TIME_SEP = ord(b':')
-    _MICRO_SEP = ord(b'.')
+    _DATE_SEP = b'-'
+    _TIME_SEP = b':'
+    _MICRO_SEP = b'.'
 
     def _parse_isodate(self, dt_str):
         try:
@@ -218,7 +218,7 @@ class Isoparser(object):
         if pos >= len_str:
             return components, pos
 
-        has_sep = dt_str[pos] == self._DATE_SEP
+        has_sep = dt_str[pos:pos + 1] == self._DATE_SEP
         if has_sep:
             pos += 1
 
@@ -233,7 +233,7 @@ class Isoparser(object):
             return components, pos
 
         if has_sep:
-            if dt_str[pos] != self._DATE_SEP:
+            if dt_str[pos:pos + 1] != self._DATE_SEP:
                 raise ValueError('Invalid separator in ISO string')
             pos += 1
 
@@ -250,7 +250,7 @@ class Isoparser(object):
         if dt_str[0:2] == b'--':
             # --MM-DD or --MMDD
             month = int(dt_str[2:4])
-            pos = 4 + (dt_str[4] == self._DATE_SEP)
+            pos = 4 + (dt_str[4:5] == self._DATE_SEP)
             day = int(dt_str[pos:pos + 2])
             year = self._default_year
 
@@ -265,8 +265,8 @@ class Isoparser(object):
         # All other uncommon ISO formats start with the year
         year = int(dt_str[0:4])
 
-        pos = 4 + (dt_str[4] == self._DATE_SEP)   # Skip '-' if it's there
-        if dt_str[pos] == ord(b'W'):
+        pos = 4 + (dt_str[4:5] == self._DATE_SEP)   # Skip '-' if it's there
+        if dt_str[pos:pos + 1] == b'W':
             # YYYY-?Www-?D?
             pos += 1
             weekno = int(dt_str[pos:pos + 2])
@@ -274,9 +274,9 @@ class Isoparser(object):
 
             dayno = 1
             if len(dt_str) > pos:
-                if dt_str[pos] == self._DATE_SEP:
+                if dt_str[pos:pos + 1] == self._DATE_SEP:
                     # YYYY-W
-                    if dt_str[4] != self._DATE_SEP:
+                    if dt_str[4:5] != self._DATE_SEP:
                         raise ValueError('Inconsistent use of dash separator')
                     pos += 1
 
@@ -339,7 +339,7 @@ class Isoparser(object):
         pos = 0
         comp = -1
 
-        has_sep = len_str >= 3 and timestr[2] == cls._TIME_SEP
+        has_sep = len_str >= 3 and timestr[2:3] == cls._TIME_SEP
 
         while pos < len_str and comp < 5:
             comp += 1
@@ -354,12 +354,13 @@ class Isoparser(object):
                 # Hour, minute, second
                 components[comp] = int(timestr[pos:pos + 2])
                 pos += 2
-                if has_sep and pos < len_str and timestr[pos] == cls._TIME_SEP:
+                if (has_sep and pos < len_str and
+                        timestr[pos:pos + 1] == cls._TIME_SEP):
                     pos += 1
 
             if comp == 3:
                 # Microsecond
-                if timestr[pos] != cls._MICRO_SEP:
+                if timestr[pos:pos + 1] != cls._MICRO_SEP:
                     continue
 
                 pos += 1
@@ -399,7 +400,7 @@ class Isoparser(object):
         if len(tzstr) == 3:
             minutes = 0
         else:
-            minutes = int(tzstr[(4 if tzstr[3] == cls._TIME_SEP else 3):])
+            minutes = int(tzstr[(4 if tzstr[3:4] == cls._TIME_SEP else 3):])
 
         if zero_as_utc and hours == 0 and minutes == 0:
             return tz.tzutc()
@@ -410,8 +411,7 @@ class Isoparser(object):
             if hours > 23:
                 raise ValueError('Invalid hours in time zone offset')
 
-            return tz.tzoffset(None, mult * timedelta(hours=hours,
-                                                      minutes=minutes))
+            return tz.tzoffset(None, mult * (hours * 60 + minutes) * 60)
 
 
 DEFAULT_ISOPARSER = Isoparser()
