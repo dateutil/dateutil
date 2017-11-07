@@ -21,7 +21,7 @@ from ._common import tzname_in_python2, _tzinfo
 from ._common import tzrangebase, enfold
 from ._common import _validate_fromutc_inputs
 
-from ._factories import _TzSingleton
+from ._factories import _TzSingleton, _TzOffsetFactory
 
 try:
     from .win import tzwin, tzwinlocal
@@ -102,6 +102,7 @@ class tzutc(datetime.tzinfo):
     __reduce__ = object.__reduce__
 
 
+@six.add_metaclass(_TzOffsetFactory)
 class tzoffset(datetime.tzinfo):
     """
     A simple class for representing a fixed offset from UTC.
