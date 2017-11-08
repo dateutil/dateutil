@@ -19,6 +19,8 @@ from functools import partial
 
 IS_WIN = sys.platform.startswith('win')
 
+import pytest
+
 # dateutil imports
 from dateutil.relativedelta import relativedelta, SU
 from dateutil.parser import parse
@@ -746,6 +748,22 @@ class TzLocalTest(unittest.TestCase):
         tzl = tz.tzlocal()
 
         self.assertEqual(repr(tzl), 'tzlocal()')
+
+
+@pytest.mark.parametrize('args,kwargs', [
+    (('EST', -18000), {}),
+    (('EST', timedelta(hours=-5)), {}),
+    (('EST',), {'offset': -18000}),
+    (('EST',), {'offset': timedelta(hours=-5)}),
+    (tuple(), {'name': 'EST', 'offset': -18000})
+])
+def test_tzoffset_is(args, kwargs):
+    tz_ref = tz.tzoffset('EST', -18000)
+    assert tz.tzoffset(*args, **kwargs) is tz_ref
+
+
+def test_tzoffset_is_not():
+    assert tz.tzoffset('EDT', -14400) is not tz.tzoffset('EST', -18000)
 
 
 @unittest.skipIf(IS_WIN, "requires Unix")
@@ -1951,13 +1969,13 @@ class TzPickleTest(PicklableMixin, unittest.TestCase):
         self.assertPicklable(tz.tzutc(), singleton=True)
 
     def testPickleTzOffsetZero(self):
-        self.assertPicklable(tz.tzoffset('UTC', 0))
+        self.assertPicklable(tz.tzoffset('UTC', 0), singleton=True)
 
     def testPickleTzOffsetPos(self):
-        self.assertPicklable(tz.tzoffset('UTC+1', 3600))
+        self.assertPicklable(tz.tzoffset('UTC+1', 3600), singleton=True)
 
     def testPickleTzOffsetNeg(self):
-        self.assertPicklable(tz.tzoffset('UTC-1', -3600))
+        self.assertPicklable(tz.tzoffset('UTC-1', -3600), singleton=True)
 
     def testPickleTzLocal(self):
         self.assertPicklable(tz.tzlocal())
