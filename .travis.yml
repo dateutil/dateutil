@@ -16,17 +16,29 @@ matrix:
     - python: "nightly"
 
 before_install:
-  # Install codecov
+  # Install test dependencies
   - if [[ $TRAVIS_PYTHON_VERSION == '3.2' ]]; then pip install coverage==3.7.1; fi
   - if [[ $TRAVIS_PYTHON_VERSION < '3.0' ]]; then pip install mock; fi
+
   - pip install -r test_requirements.txt
   - pip install codecov
 
 install:
   - ./ci_tools/retry.sh python updatezinfo.py
 
+  - if pip freeze | grep dateutil; then pip uninstall -y python-dateutil; fi
+  
+  # Install the libraries
+  - pip install .
+
+before_script:
+  # Run the script from something other than the repo root
+  - mkdir build_test
+  - cp -pr dateutil/test build_test/test
+  - cd build_test
+
 script:
-  - coverage run --omit=setup.py,dateutil/test/* -m pytest -v
+  - coverage run -m pytest -v
 
 after_success:
   - codecov
