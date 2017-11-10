@@ -346,8 +346,11 @@ def __make_date_examples():
     dates_no_day = [
         date(1999, 12, 1),
         date(2016, 2, 1),
-        date(1000, 11, 1)
     ]
+
+    if six.PY3:
+        # strftime does not support dates before 1900 in Python 2
+        dates_no_day.append(date(1000, 11, 1))
 
     date_no_day_fmts = ('%Y%m', '%Y-%m')
 
