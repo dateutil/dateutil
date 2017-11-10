@@ -11,24 +11,32 @@ environment:
     - PYTHON: "C:/Python35-x64"
     - PYTHON: "C:/Python36"
     - PYTHON: "C:/Python36-x64"
+
 install:
   # Add PostgreSQL (zic), Python and scripts directory to current path
-  - set path=c:\Program Files\PostgreSQL\9.3\bin\;%PATH%
-  - set path=%PATH%;%PYTHON%;%PYTHON%/Scripts
-
-  # If this isn't done, I guess Appveyor will install to the Python2.7 version
-  - set pip_cmd=%PYTHON%/python.exe -m pip
+  - set PATH=%PYTHON%;%PYTHON%/Scripts;c:\Program Files\PostgreSQL\9.3\bin\;%PATH%
+  - python --version
 
   # Download scripts and dependencies
-  - "%pip_cmd% install -r test_requirements.txt"
-  - "%pip_cmd% install codecov"
+  - "pip install -r test_requirements.txt"
+  - "pip install codecov"
+  
+  # If any of our dependencies installed python-dateutil, drop it
+  - pip uninstall -y python-dateutil && exit 0
+  - pip install .
 
   # This frequently fails with network errors, so we'll retry it up to 5 times
   # with a 1 minute rate limit.
   - "ci_tools/retry.bat %PYTHON%/python.exe updatezinfo.py"
   # This environment variable tells the test suite it's OK to mess with the time zone.
   - set DATEUTIL_MAY_CHANGE_TZ=1
+before_test:
+  - mkdir build_test
+  - mkdir build_test\\test
+  # All these options seem to be the equivalent of cp -pr
+  - xcopy dateutil\\test build_test\\test /E /H /K /O /X 
+  - cd build_test
 test_script:
-  - "coverage run --omit=setup.py,dateutil/test/* -m pytest -v"
+  - "coverage run -m pytest -v"
 after_test:
   - "codecov"
