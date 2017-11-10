@@ -8,6 +8,7 @@ from dateutil.tz import tz
 from dateutil.parser import Isoparser, isoparse
 
 import pytest
+import six
 
 UTC = tz.tzutc()
 
@@ -326,3 +327,68 @@ def test_parse_tzstr_zero_as_utc(tzstr, zero_as_utc):
     tzi = Isoparser.parse_tzstr(tzstr, zero_as_utc=zero_as_utc)
     assert tzi == tz.tzutc()
     assert (type(tzi) == tz.tzutc) == zero_as_utc
+
+
+###
+# Test parse_isodate
+@pytest.mark.parametrize('date_val', [date(2016, 12, 31),
+                                      date(2016, 4, 1),
+                                      date(2016, 2, 28)])
+@pytest.mark.parametrize('date_fmt', ('--%m%d', '--%m-%d'))
+def test_noyear_date(date_val, date_fmt):
+    dtstr = date_val.strftime(date_fmt)
+
+    d_act = Isoparser(default_year=2016).parse_isodate(dtstr)
+    assert d_act == date_val
+
+
+def __make_date_examples():
+    dates_no_day = [
+        date(1999, 12, 1),
+        date(2016, 2, 1),
+        date(1000, 11, 1)
+    ]
+
+    date_no_day_fmts = ('%Y%m', '%Y-%m')
+
+    o = it.product(dates_no_day, date_no_day_fmts)
+
+    dates_w_day = [
+        date(1969, 12, 31),
+        date(1900, 1, 1),
+        date(2016, 2, 29),
+        date(2017, 11, 14)
+    ]
+
+    dates_w_day_fmts = ('%Y%m%d', '%Y-%m-%d')
+    o = it.chain(o, it.product(dates_w_day, dates_w_day_fmts))
+
+    return list(o)
+
+
+@pytest.mark.parametrize('d,dt_fmt', __make_date_examples())
+@pytest.mark.parametrize('as_bytes', [True, False])
+def test_parse_isodate(d, dt_fmt, as_bytes):
+    d_str = d.strftime(dt_fmt)
+
+    if isinstance(d_str, six.text_type) and as_bytes:
+        d_str = d_str.encode('ascii')
+    elif isinstance(d_str, six.binary_type) and not as_bytes:
+        d_str = d_str.decode('ascii')
+
+    iparser = Isoparser()
+    assert iparser.parse_isodate(d_str) == d
+
+
+@pytest.mark.parametrize('isostr,exception', [
+    ('243', ValueError),                        # ISO string too short
+    ('2014-0423', ValueError),                  # Inconsistent date separators
+    ('201404-23', ValueError),                  # Inconsistent date separators
+    ('2014日03月14', ValueError),                # Not ASCII
+    ('2013-02-29', ValueError),                 # Not a leap year
+    ('2014/12/03', ValueError),                 # Wrong separators
+    ('2014-04-19T', ValueError),                # Unknown components
+])
+def test_isodate_raises(isostr, exception):
+    with pytest.raises(exception):
+        Isoparser().parse_isodate(isostr)
