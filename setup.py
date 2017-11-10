@@ -2,12 +2,14 @@
 from os.path import isfile
 import os
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 from dateutil._version import VERSION
 
 if isfile("MANIFEST"):
     os.unlink("MANIFEST")
+
+PACKAGES = find_packages(where='.', exclude=['dateutil.test'])
 
 setup(name="python-dateutil",
       version=VERSION,
@@ -20,7 +22,7 @@ setup(name="python-dateutil",
 The dateutil module provides powerful extensions to the
 datetime module available in the Python standard library.
 """,
-      packages=["dateutil", "dateutil.zoneinfo", "dateutil.tz"],
+      packages=PACKAGES,
       package_data={"dateutil.zoneinfo": ["dateutil-zoneinfo.tar.gz"]},
       zip_safe=True,
       requires=["six"],
