@@ -897,6 +897,11 @@ class ParserTest(unittest.TestCase):
         res = parse(dstr)
         assert res.year == 2001, res
 
+    def test_pre_12_year_same_month(self):
+        # See GH PR #293
+        dtstr = '0003-03-04'
+        assert parse(dtstr) == datetime(3, 3, 4)
+
 
 class TestParseUnimplementedCases(object):
     @pytest.mark.xfail
