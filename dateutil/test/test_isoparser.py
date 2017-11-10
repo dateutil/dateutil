@@ -392,3 +392,95 @@ def test_parse_isodate(d, dt_fmt, as_bytes):
 def test_isodate_raises(isostr, exception):
     with pytest.raises(exception):
         Isoparser().parse_isodate(isostr)
+
+
+###
+# Test parse_isotime
+def __make_time_examples():
+    outputs = []
+
+    # HH
+    time_h = [time(0), time(8), time(22)]
+    time_h_fmts = ['%H']
+
+    outputs.append(it.product(time_h, time_h_fmts))
+
+    # HHMM / HH:MM
+    time_hm = [time(0, 0), time(0, 30), time(8, 47), time(16, 1)]
+    time_hm_fmts = ['%H%M', '%H:%M']
+
+    outputs.append(it.product(time_hm, time_hm_fmts))
+
+    # HHMMSS / HH:MM:SS
+    time_hms = [time(0, 0, 0), time(0, 15, 30),
+                time(8, 2, 16), time(12, 0), time(16, 2), time(20, 45)]
+
+    time_hms_fmts = ['%H%M%S', '%H:%M:%S']
+
+    outputs.append(it.product(time_hms, time_hms_fmts))
+
+    # HHMMSS.ffffff / HH:MM:SS.ffffff
+    time_hmsu = [time(0, 0, 0, 0), time(4, 15, 3, 247993),
+                 time(14, 21, 59, 948730),
+                 time(23, 59, 59, 999999)]
+
+    time_hmsu_fmts = ['%H%M%S.%f', '%H:%M:%S.%f']
+
+    outputs.append(it.product(time_hmsu, time_hmsu_fmts))
+
+    outputs = list(map(list, outputs))
+
+    # Time zones
+    ex_naive = list(it.chain.from_iterable(x[0:2] for x in outputs))
+    o = it.product(ex_naive, TZOFFSETS)    # ((time, fmt), (tzinfo, offsetstr))
+    o = ((t.replace(tzinfo=tzi), fmt + off_str)
+         for (t, fmt), (tzi, off_str) in o)
+
+    outputs.append(o)
+
+    return list(it.chain.from_iterable(outputs))
+
+
+@pytest.mark.parametrize('time_val,time_fmt', __make_time_examples())
+@pytest.mark.parametrize('as_bytes', [True, False])
+def test_isotime(time_val, time_fmt, as_bytes):
+    tstr = time_val.strftime(time_fmt)
+    if isinstance(time_val, six.text_type) and as_bytes:
+        tstr = tstr.encode('ascii')
+    elif isinstance(time_val, six.binary_type) and not as_bytes:
+        tstr = tstr.decode('ascii')
+
+    iparser = Isoparser()
+
+    assert iparser.parse_isotime(tstr) == time_val
+
+@pytest.mark.parametrize('isostr,exception', [
+    ('3', ValueError),                          # ISO string too short
+    ('14時30分15秒', ValueError),                # Not ASCII
+    ('14_30_15', ValueError),                   # Invalid separators
+    ('1430:15', ValueError),                    # Inconsistent separator use
+    ('14:30:15.3684000309', ValueError),        # Too much us precision
+    ('25', ValueError),                         # Invalid hours
+    ('25:15', ValueError),                      # Invalid hours
+    ('14:60', ValueError),                      # Invalid minutes
+    ('14:59:61', ValueError),                   # Invalid seconds
+    ('14:30:15.3446830500', ValueError),        # No sign in time zone
+    ('14:30:15+', ValueError),                  # Time zone too short
+    ('14:30:15+1234567', ValueError),           # Time zone invalid
+    ('14:59:59+25:00', ValueError),             # Invalid tz hours
+    ('14:59:59+12:62', ValueError),             # Invalid tz minutes
+])
+def test_isotime_raises(isostr, exception):
+    iparser = Isoparser()
+    with pytest.raises(exception):
+        iparser.parse_isotime(isostr)
+
+
+@pytest.mark.xfail()
+@pytest.mark.parametrize('isostr,exception', [
+    ('14:3015', ValueError),                    # Inconsistent separator use
+])
+def test_isotime_raises_xfail(isostr, exception):
+    iparser = Isoparser()
+    with pytest.raises(exception):
+        iparser.parse_isotime(isostr)
