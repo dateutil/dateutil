@@ -342,6 +342,9 @@ class Isoparser(object):
         pos = 0
         comp = -1
 
+        if len(timestr) < 2:
+            raise ValueError('ISO time too short')
+
         has_sep = len_str >= 3 and timestr[2:3] == cls._TIME_SEP
 
         while pos < len_str and comp < 5:
