@@ -21,6 +21,10 @@ dateutil - powerful extensions to datetime
     :target: https://pypi.python.org/pypi/python-dateutil/
     :alt: pypi version
 
+.. image:: https://badges.gitter.im/dateutil/dateutil.svg
+   :alt: Join the chat at https://gitter.im/dateutil/dateutil
+   :target: https://gitter.im/dateutil/dateutil?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
+
 
 The `dateutil` module provides powerful extensions to
 the standard `datetime` module, available in Python.
