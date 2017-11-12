@@ -17,7 +17,7 @@ matrix:
 
 before_install:
   # Install test dependencies
-  - pip install -r test_requirements.txt
+  - pip install -r requirements-dev.txt
   - pip install codecov
 
 install:
