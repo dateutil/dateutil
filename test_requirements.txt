@@ -1,4 +1,8 @@
 six
-pytest >= 2.0
+pytest >= 3.0 ; python_version != '3.2'
+pytest >= 2.0 ; python_version == '3.2'
 freezegun
-coverage
+coverage==3.7.1 ; python_version == '3.2'
+coverage ; python_version != '3.2'
+mock ; python_version < '3.0'
+
