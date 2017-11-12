@@ -1,4 +1,4 @@
 six
-pytest
+pytest >= 2.0
 freezegun
 coverage
