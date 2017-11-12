@@ -912,18 +912,6 @@ class ParserTest(unittest.TestCase):
 
 class TestParseUnimplementedCases(object):
     @pytest.mark.xfail
-    @pytest.mark.skipif(IS_WIN, reason='Windows does not use TZ var')
-    def test_tzlocal_in_gmt(self):
-        # GH #318
-        with TZEnvContext('GMT0BST,M3.5.0,M10.5.0'):
-            # This is an imaginary datetime in tz.tzlocal() but should still
-            # parse using the GMT-as-alias-for-UTC rule
-            dt = parse('2004-05-01T12:00 GMT')
-            dt_exp = datetime(2004, 5, 1, 12, tzinfo=tz.tzutc())
-
-            assert dt == dt_exp
-
-    @pytest.mark.xfail
     def test_somewhat_ambiguous_string(self):
         # Ref: github issue #487
         # The parser is choosing the wrong part for hour
@@ -1030,6 +1018,18 @@ def test_parse_unambiguous_nonexistent_local():
         dt = parse('2011-08-01T12:30 EST')
 
         assert dt.tzname() == 'EDT'
+        assert dt == dt_exp
+
+
+@pytest.mark.skipif(IS_WIN, reason='Windows does not use TZ var')
+def test_tzlocal_in_gmt():
+    # GH #318
+    with TZEnvContext('GMT0BST,M3.5.0,M10.5.0'):
+        # This is an imaginary datetime in tz.tzlocal() but should still
+        # parse using the GMT-as-alias-for-UTC rule
+        dt = parse('2004-05-01T12:00 GMT')
+        dt_exp = datetime(2004, 5, 1, 12, tzinfo=tz.tzutc())
+
         assert dt == dt_exp
 
 
