@@ -628,6 +628,12 @@ class parser(object):
                 ret = ret.replace(tzinfo=tzinfo)
             elif res.tzname and res.tzname in time.tzname:
                 ret = ret.replace(tzinfo=tz.tzlocal())
+
+                # Handle ambiguous local datetime
+                if ret.tzname() != res.tzname:
+                    new_ret = tz.enfold(ret, fold=1)
+                    if new_ret.tzname() == res.tzname:
+                        ret = new_ret
             elif res.tzoffset == 0:
                 ret = ret.replace(tzinfo=tz.tzutc())
             elif res.tzoffset:
