@@ -1,4 +1,0 @@
-six
-pytest
-freezegun
-coverage

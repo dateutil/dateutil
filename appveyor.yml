@@ -18,7 +18,7 @@ install:
   - python --version
 
   # Download scripts and dependencies
-  - "pip install -r test_requirements.txt"
+  - "pip install -r requirements-dev.txt"
   - "pip install codecov"
   
   # If any of our dependencies installed python-dateutil, drop it
