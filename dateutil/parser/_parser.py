@@ -632,6 +632,12 @@ class parser(object):
 
                 # Handle ambiguous local datetime
                 ret = self._assign_tzname(ret, res.tzname)
+
+                # This is mostly relevant for winter GMT zones parsed in the UK
+                if (ret.tzname() != res.tzname and
+                        res.tzname in self.info.UTCZONE):
+                    ret = ret.replace(tzinfo=tz.tzutc())
+
             elif res.tzoffset == 0:
                 ret = ret.replace(tzinfo=tz.tzutc())
             elif res.tzoffset:
