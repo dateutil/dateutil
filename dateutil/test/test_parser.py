@@ -1048,3 +1048,16 @@ def test_tzlocal_parse_fold():
         assert dt.replace(tzinfo=None) == dt_exp.replace(tzinfo=None)
         assert getattr(dt, 'fold') == getattr(dt_exp, 'fold')
         assert dt.astimezone(tz.tzutc()) == dt_exp.astimezone(tz.tzutc())
+
+
+def test_parse_tzinfos_fold():
+    NYC = tz.gettz('America/New_York')
+    tzinfos = {'EST': NYC, 'EDT': NYC}
+
+    dt_exp = tz.enfold(datetime(2011, 11, 6, 1, 30, tzinfo=NYC), fold=1)
+    dt = parse('2011-11-06T01:30 EST', tzinfos=tzinfos)
+
+    assert dt == dt_exp
+    assert dt.tzinfo is dt_exp.tzinfo
+    assert getattr(dt, 'fold') == getattr(dt_exp, 'fold')
+    assert dt.astimezone(tz.tzutc()) == dt_exp.astimezone(tz.tzutc())
