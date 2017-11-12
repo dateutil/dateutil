@@ -4,13 +4,21 @@ from __future__ import unicode_literals
 import itertools
 from datetime import datetime, timedelta
 import unittest
-import pytest
+import sys
 
+from dateutil import tz
 from dateutil.tz import tzoffset
 from dateutil.parser import parse, parserinfo
 
+from ._common import TZEnvContext
+
 from six import assertRaisesRegex, PY3
 from six.moves import StringIO
+
+import pytest
+
+# Platform info
+IS_WIN = sys.platform.startswith('win')
 
 try:
     datetime.now().strftime('%-d')
@@ -18,7 +26,6 @@ try:
 except ValueError:
     PLATFORM_HAS_DASH_D = False
 
-import pytest
 
 class TestFormat(unittest.TestCase):
 
@@ -905,6 +912,18 @@ class ParserTest(unittest.TestCase):
 
 class TestParseUnimplementedCases(object):
     @pytest.mark.xfail
+    @pytest.mark.skipif(IS_WIN, reason='Windows does not use TZ var')
+    def test_tzlocal_in_gmt(self):
+        # GH #318
+        with TZEnvContext('GMT0BST,M3.5.0,M10.5.0'):
+            # This is an imaginary datetime in tz.tzlocal() but should still
+            # parse using the GMT-as-alias-for-UTC rule
+            dt = parse('2004-05-01T12:00 GMT')
+            dt_exp = datetime(2004, 5, 1, 12, tzinfo=tz.tzutc())
+
+            assert dt == dt_exp
+
+    @pytest.mark.xfail
     def test_somewhat_ambiguous_string(self):
         # Ref: github issue #487
         # The parser is choosing the wrong part for hour
@@ -1000,3 +1019,20 @@ class TestParseUnimplementedCases(object):
         res = parse(dstr, fuzzy_with_tokens=True)
         expected = datetime(1994, 12, 1)
         assert res == expected
+
+
+@pytest.mark.skipif(IS_WIN, reason='Windows does not use TZ var')
+def test_tzlocal_parse_fold():
+    # One manifestion of GH #318
+    with TZEnvContext('EST+5EDT,M3.2.0/2,M11.1.0/2'):
+        dt_exp = datetime(2011, 11, 6, 1, 30, tzinfo=tz.tzlocal())
+        dt_exp = tz.enfold(dt_exp, fold=1)
+        dt = parse('2011-11-06T01:30 EST')
+
+        # Because this is ambiguous, kuntil `tz.tzlocal() is tz.tzlocal()`
+        # we'll just check the attributes we care about rather than
+        # dt == dt_exp
+        assert dt.tzname() == dt_exp.tzname()
+        assert dt.replace(tzinfo=None) == dt_exp.replace(tzinfo=None)
+        assert getattr(dt, 'fold') == getattr(dt_exp, 'fold')
+        assert dt.astimezone(tz.tzutc()) == dt_exp.astimezone(tz.tzutc())
