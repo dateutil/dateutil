@@ -423,12 +423,22 @@ class rrule(rrulebase):
         If given, it must be a boolean value specifying to enable or disable
         caching of results. If you will use the same rrule instance multiple
         times, enabling caching will improve the performance considerably.
+    :param skip:
+        If given, it must be a value representing the skip policy.
+        Can be either 'OMIT' (same as None), 'BACKWARD' or 'FORWARD'.
      """
+
+    # List taken from https://www.unicode.org/repos/cldr/tags/latest/common/bcp47/calendar.xml
+    VALID_RSCALES = {'GREGORIAN', 'GREGORY',
+                     'BUDDHIST', 'CHINESE', 'COPTIC', 'DANGI', 'ETHIOAA', 'ETHIOPIC',
+                     'HEBREW', 'INDIAN', 'ISLAMIC', 'JAPANESE', 'PERSIAN', 'ROC'}
+
     def __init__(self, freq, dtstart=None,
                  interval=1, wkst=None, count=None, until=None, bysetpos=None,
                  bymonth=None, bymonthday=None, byyearday=None, byeaster=None,
                  byweekno=None, byweekday=None,
                  byhour=None, byminute=None, bysecond=None,
+                 rscale=None, skip=None,
                  cache=False):
         super(rrule, self).__init__(cache)
         global easter
@@ -683,6 +693,32 @@ class rrule(rrulebase):
             self._bysecond = tuple(sorted(self._bysecond))
             self._original_rule['bysecond'] = self._bysecond
 
+        # rscale
+        if rscale is not None:
+            rscale = rscale.upper()
+            if rscale in self.VALID_RSCALES:
+                if rscale not in {'GREGORY', 'GREGORIAN'}:
+                    raise NotImplementedError('Non-gregorian calendar '
+                                              '{} not supported.'.format(rscale))
+            else:
+                raise ValueError('Invalid RSCALE component: {}'.format(rscale))
+            self._original_rule['rscale'] = rscale
+
+        # skip
+        if skip is not None:
+            skip = skip.upper()
+            if skip not in {'OMIT', 'BACKWARD', 'FORWARD'}:
+                raise ValueError('Invalid SKIP component: {}'.format(rscale))
+
+            self._skip = skip
+            self._original_rule['skip'] = skip
+
+            # ensure rscale is set
+            if 'rscale' not in self._original_rule:
+                self._original_rule['rscale'] = 'GREGORIAN'
+        else:
+            self._skip = 'OMIT'
+
         if self._freq >= HOURLY:
             self._timeset = None
         else:
@@ -702,6 +738,14 @@ class rrule(rrulebase):
         This is mostly compatible with RFC5545, except for the
         dateutil-specific extension BYEASTER.
         """
+
+        def _fmt(obj):
+            if isinstance(obj, (tuple, list)):
+                return ','.join(str(val) for val in obj)
+            elif isinstance(obj, str):
+                return obj
+            else:
+                return str(obj)
 
         output = []
         h, m, s = [None] * 3
@@ -749,11 +793,12 @@ class rrule(rrulebase):
                           ('BYHOUR', 'byhour'),
                           ('BYMINUTE', 'byminute'),
                           ('BYSECOND', 'bysecond'),
-                          ('BYEASTER', 'byeaster')]:
+                          ('BYEASTER', 'byeaster'),
+                          ('RSCALE', 'rscale'),
+                          ('SKIP', 'skip')]:
             value = original_rule.get(key)
             if value:
-                parts.append(partfmt.format(name=name, vals=(','.join(str(v)
-                                                             for v in value))))
+                parts.append(partfmt.format(name=name, vals=_fmt(value)))
 
         output.append('RRULE:' + ';'.join(parts))
         return '\n'.join(output)
@@ -767,7 +812,7 @@ class rrule(rrulebase):
                       "freq": self._freq,
                       "until": self._until,
                       "wkst": self._wkst,
-                      "cache": False if self._cache is None else True }
+                      "cache": False if self._cache is None else True}
         new_kwargs.update(self._original_rule)
         new_kwargs.update(kwargs)
         return rrule(**new_kwargs)
@@ -792,6 +837,7 @@ class rrule(rrulebase):
         byhour = self._byhour
         byminute = self._byminute
         bysecond = self._bysecond
+        startday = day
 
         ii = _iterinfo(self)
         ii.rebuild(year, month)
@@ -823,6 +869,27 @@ class rrule(rrulebase):
         total = 0
         count = self._count
         while True:
+            leap = False
+
+            # SKIP rule
+            if day > 28 and self._skip != 'OMIT':
+                daysinmonth = calendar.monthrange(year, month)[1]
+                if day > daysinmonth:
+                    if self._skip == 'BACKWARD':
+                        day = daysinmonth
+                        leap = True
+                    elif self._skip == 'FORWARD':
+                        day = 1
+                        month += 1
+                        if month == 13:
+                            month = 1
+                            year += 1
+                            if year > datetime.MAXYEAR:
+                                self._len = total
+                                return
+                        leap = True
+                    ii.rebuild(year, month)
+
             # Get dayset with the right frequency
             dayset, start, end = getdayset(year, month, day)
 
@@ -836,7 +903,8 @@ class rrule(rrulebase):
                     (byeaster and not ii.eastermask[i]) or
                     ((bymonthday or bynmonthday) and
                      ii.mdaymask[i] not in bymonthday and
-                     ii.nmdaymask[i] not in bynmonthday) or
+                     ii.nmdaymask[i] not in bynmonthday and
+                     (not leap or ii.mdaymask[i] != day)) or
                     (byyearday and
                      ((i < ii.yearlen and i+1 not in byyearday and
                        -ii.yearlen+i not in byyearday) or
@@ -895,6 +963,9 @@ class rrule(rrulebase):
 
                                 total += 1
                                 yield res
+
+            if leap:
+                day = startday
 
             # Handle frequency and interval
             fixday = False
@@ -1474,6 +1545,9 @@ class _rrulestr(object):
     def _handle_int_list(self, rrkwargs, name, value, **kwargs):
         rrkwargs[name.lower()] = [int(x) for x in value.split(',')]
 
+    def _handle_str(self, rrkwargs, name, value, **kwargs):
+        rrkwargs[name.lower()] = value
+
     _handle_INTERVAL = _handle_int
     _handle_COUNT = _handle_int
     _handle_BYSETPOS = _handle_int_list
@@ -1485,6 +1559,8 @@ class _rrulestr(object):
     _handle_BYHOUR = _handle_int_list
     _handle_BYMINUTE = _handle_int_list
     _handle_BYSECOND = _handle_int_list
+    _handle_RSCALE = _handle_str
+    _handle_SKIP = _handle_str
 
     def _handle_FREQ(self, rrkwargs, name, value, **kwargs):
         rrkwargs["freq"] = self._freq_map[value]
@@ -1555,6 +1631,8 @@ class _rrulestr(object):
                 raise ValueError("unknown parameter '%s'" % name)
             except (KeyError, ValueError):
                 raise ValueError("invalid '%s': %s" % (name, value))
+        if 'skip' in rrkwargs and 'rscale' not in rrkwargs:
+            raise ValueError("SKIP must have a RSCALE")
         return rrule(dtstart=dtstart, cache=cache, **rrkwargs)
 
     def _parse_rfc(self, s,

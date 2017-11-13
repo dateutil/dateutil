@@ -407,6 +407,36 @@ class RRuleTest(WarningTestMixin, unittest.TestCase):
                           datetime(1999, 3, 2, 9, 0),
                           datetime(2000, 9, 2, 9, 0)])
 
+    def testMonthlySkipOmit(self):
+        self.assertEqual(list(rrule(MONTHLY,
+                              count=4,
+                              dtstart=datetime(2014, 12, 31),
+                              skip='OMIT')),
+                         [datetime(2014, 12, 31, 0, 0),
+                          datetime(2015, 1, 31, 0, 0),
+                          datetime(2015, 3, 31, 0, 0),
+                          datetime(2015, 5, 31, 0, 0)])
+
+    def testMonthlySkipBackward(self):
+        self.assertEqual(list(rrule(MONTHLY,
+                              count=4,
+                              dtstart=datetime(2014, 12, 31),
+                              skip='BACKWARD')),
+                         [datetime(2014, 12, 31, 0, 0),
+                          datetime(2015, 1, 31, 0, 0),
+                          datetime(2015, 2, 28, 0, 0),
+                          datetime(2015, 3, 31, 0, 0)])
+
+    def testMonthlySkipForward(self):
+        self.assertEqual(list(rrule(MONTHLY,
+                              count=4,
+                              dtstart=datetime(2014, 12, 31),
+                              skip='FORWARD')),
+                         [datetime(2014, 12, 31, 0, 0),
+                          datetime(2015, 1, 31, 0, 0),
+                          datetime(2015, 3, 1, 0, 0),
+                          datetime(2015, 3, 31, 0, 0)])
+
     def testMonthlyByMonth(self):
         self.assertEqual(list(rrule(MONTHLY,
                               count=3,
@@ -2929,6 +2959,51 @@ class RRuleTest(WarningTestMixin, unittest.TestCase):
         self.assertEqual(list(rr), [datetime(1997, 9, 2, 0, 0, 0),
                                     datetime(1998, 9, 2, 0, 0, 0)])
 
+    def testStrSkipBackward(self):
+        rr = rrulestr("DTSTART:20141231T000000\n"
+                      "RRULE:FREQ=MONTHLY;COUNT=4;RSCALE=GREGORIAN;SKIP=OMIT")
+
+        self.assertEqual(list(rr),
+                         [datetime(2014, 12, 31, 0, 0),
+                          datetime(2015, 1, 31, 0, 0),
+                          datetime(2015, 3, 31, 0, 0),
+                          datetime(2015, 5, 31, 0, 0),])
+
+    def testStrSkipBackward(self):
+        rr = rrulestr("DTSTART:20141231T000000\n"
+                      "RRULE:FREQ=MONTHLY;COUNT=4;RSCALE=GREGORIAN;SKIP=BACKWARD")
+
+        self.assertEqual(list(rr),
+                         [datetime(2014, 12, 31, 0, 0),
+                          datetime(2015, 1, 31, 0, 0),
+                          datetime(2015, 2, 28, 0, 0),
+                          datetime(2015, 3, 31, 0, 0)])
+
+    def testStrSkipForward(self):
+        rr = rrulestr("DTSTART:20141231T000000\n"
+                      "RRULE:FREQ=MONTHLY;COUNT=4;RSCALE=GREGORIAN;SKIP=FORWARD")
+
+        self.assertEqual(list(rr),
+                         [datetime(2014, 12, 31, 0, 0),
+                          datetime(2015, 1, 31, 0, 0),
+                          datetime(2015, 3, 1, 0, 0),
+                          datetime(2015, 3, 31, 0, 0)])
+
+    def testStrInvalidSkip(self):
+        with self.assertRaises(ValueError):
+            list(rrulestr("DTSTART:20141231T000000\n"
+                          "RRULE:FREQ=MONTHLY;COUNT=4;SKIP=FORWARD"))
+
+    def testStrInvalidRscale(self):
+        with self.assertRaises(ValueError):
+            list(rrulestr("DTSTART:20141231T000000\n"
+                          "RRULE:FREQ=MONTHLY;COUNT=4;RSCALE=ABC"))
+
+    def testStrUnsupportedRscale(self):
+        with self.assertRaises(NotImplementedError):
+            list(rrulestr("DTSTART:20141231T000000\n"
+                          "RRULE:FREQ=MONTHLY;COUNT=4;RSCALE=HEBREW"))
+
     def testStrInvalidUntil(self):
         with self.assertRaises(ValueError):
             list(rrulestr("DTSTART:19970902T090000\n"
@@ -3438,6 +3513,27 @@ class RRuleTest(WarningTestMixin, unittest.TestCase):
                               byhour=(6, 18),
                               bysetpos=(3, -3),
                               dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrMonthlySkipOmit(self):
+        self._rrulestr_reverse_test(rrule(MONTHLY,
+                                          count=4,
+                                          dtstart=datetime(2014, 12, 31),
+                                          rscale='GREGORY',
+                                          skip='OMIT'))
+
+    def testToStrMonthlySkipBackward(self):
+        self._rrulestr_reverse_test(rrule(MONTHLY,
+                                          count=4,
+                                          dtstart=datetime(2014, 12, 31),
+                                          rscale='GREGORY',
+                                          skip='BACKWARD'))
+
+    def testToStrMonthlySkipForward(self):
+        self._rrulestr_reverse_test(rrule(MONTHLY,
+                                          count=4,
+                                          dtstart=datetime(2014, 12, 31),
+                                          rscale='GREGORY',
+                                          skip='FORWARD'))
 
     def testToStrWeekly(self):
         self._rrulestr_reverse_test(rrule(WEEKLY,
