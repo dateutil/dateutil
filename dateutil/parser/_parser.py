@@ -29,7 +29,6 @@ Additional resources about date/time string formats can be found below:
 """
 from __future__ import unicode_literals
 
-import collections
 import datetime
 import re
 import string
@@ -519,7 +518,72 @@ class _ymd(list):
         return year, month, day
 
 
+class ParseResult(_resultbase):
+    __slots__ = ["year", "month", "day", "weekday",
+                 "hour", "minute", "second", "microsecond",
+                 "tzname", "tzoffset", "ampm"]
+
+    def _build_naive(self, default):
+        repl = {}
+        for attr in ("year", "month", "day", "hour",
+                     "minute", "second", "microsecond"):
+            value = getattr(self, attr)
+            if value is not None:
+                repl[attr] = value
+
+        if 'day' not in repl:
+            # If the default day exceeds the last day of the month, fall back
+            # to the end of the month.
+            cyear = default.year if self.year is None else self.year
+            cmonth = default.month if self.month is None else self.month
+            cday = default.day if self.day is None else self.day
+
+            if cday > monthrange(cyear, cmonth)[1]:
+                repl['day'] = monthrange(cyear, cmonth)[1]
+
+        ret = default.replace(**repl)
+        return ret
+
+    def _build_tzaware(self, tzinfos, naive):
+        if callable(tzinfos) or (tzinfos and self.tzname in tzinfos):
+            tzinfo = self._build_tzinfo(tzinfos,
+                                        self.tzname, self.tzoffset)
+            aware = naive.replace(tzinfo=tzinfo)
+        elif self.tzname and self.tzname in time.tzname:
+            aware = naive.replace(tzinfo=tz.tzlocal())
+        elif self.tzoffset == 0:
+            aware = naive.replace(tzinfo=tz.tzutc())
+        elif self.tzoffset:
+            aware = naive.replace(tzinfo=tz.tzoffset(self.tzname,
+                                                     self.tzoffset))
+        else:
+            # TODO: Should we do something else in this case?
+            aware = naive
+        return aware
+
+    def _build_tzinfo(self, tzinfos, tzname, tzoffset):
+        if callable(tzinfos):
+            tzdata = tzinfos(tzname, tzoffset)
+        else:
+            tzdata = tzinfos.get(tzname)
+
+        if isinstance(tzdata, datetime.tzinfo):
+            tzinfo = tzdata
+        elif isinstance(tzdata, text_type):
+            tzinfo = tz.tzstr(tzdata)
+        elif isinstance(tzdata, integer_types):
+            tzinfo = tz.tzoffset(tzname, tzdata)
+        else:
+            raise ValueError("Offset must be tzinfo subclass, "
+                             "tz string, or int offset.")
+        return tzinfo
+
+
 class parser(object):
+    @property
+    def _res_class(self):
+        return ParseResult
+
     def __init__(self, info=None):
         self.info = info or parserinfo()
 
@@ -599,49 +663,18 @@ class parser(object):
         if len(res) == 0:
             raise ValueError("String does not contain a date:", timestr)
 
-        repl = {}
-        for attr in ("year", "month", "day", "hour",
-                     "minute", "second", "microsecond"):
-            value = getattr(res, attr)
-            if value is not None:
-                repl[attr] = value
-
-        if 'day' not in repl:
-            # If the default day exceeds the last day of the month, fall back
-            # to the end of the month.
-            cyear = default.year if res.year is None else res.year
-            cmonth = default.month if res.month is None else res.month
-            cday = default.day if res.day is None else res.day
-
-            if cday > monthrange(cyear, cmonth)[1]:
-                repl['day'] = monthrange(cyear, cmonth)[1]
-
-        ret = default.replace(**repl)
+        ret = res._build_naive(default)
 
         if res.weekday is not None and not res.day:
             ret = ret + relativedelta.relativedelta(weekday=res.weekday)
 
         if not ignoretz:
-            if (isinstance(tzinfos, collections.Callable) or
-                    tzinfos and res.tzname in tzinfos):
-                tzinfo = self._build_tzinfo(tzinfos, res.tzname, res.tzoffset)
-                ret = ret.replace(tzinfo=tzinfo)
-            elif res.tzname and res.tzname in time.tzname:
-                ret = ret.replace(tzinfo=tz.tzlocal())
-            elif res.tzoffset == 0:
-                ret = ret.replace(tzinfo=tz.tzutc())
-            elif res.tzoffset:
-                ret = ret.replace(tzinfo=tz.tzoffset(res.tzname, res.tzoffset))
+            ret = res._build_tzaware(tzinfos, ret)
 
         if kwargs.get('fuzzy_with_tokens', False):
             return ret, skipped_tokens
         else:
             return ret
-
-    class _result(_resultbase):
-        __slots__ = ["year", "month", "day", "weekday",
-                     "hour", "minute", "second", "microsecond",
-                     "tzname", "tzoffset", "ampm"]
 
     def _parse(self, timestr, dayfirst=None, yearfirst=None, fuzzy=False,
                fuzzy_with_tokens=False):
@@ -695,7 +728,7 @@ class parser(object):
         if yearfirst is None:
             yearfirst = info.yearfirst
 
-        res = self._result()
+        res = self._res_class()
         l = _timelex.split(timestr)         # Splits the timestr into tokens
 
         skipped_idxs = []
@@ -1122,23 +1155,6 @@ class parser(object):
                 skipped_tokens.append(tokens[idx])
 
         return skipped_tokens
-
-    def _build_tzinfo(self, tzinfos, tzname, tzoffset):
-        if isinstance(tzinfos, collections.Callable):
-            tzdata = tzinfos(tzname, tzoffset)
-        else:
-            tzdata = tzinfos.get(tzname)
-
-        if isinstance(tzdata, datetime.tzinfo):
-            tzinfo = tzdata
-        elif isinstance(tzdata, text_type):
-            tzinfo = tz.tzstr(tzdata)
-        elif isinstance(tzdata, integer_types):
-            tzinfo = tz.tzoffset(tzname, tzdata)
-        else:
-            raise ValueError("Offset must be tzinfo subclass, "
-                             "tz string, or int offset.")
-        return tzinfo
 
 
 DEFAULTPARSER = parser()
