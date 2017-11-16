@@ -42,6 +42,7 @@ before_test:
   - xcopy dateutil\\test build_test\\test /E /H /K /O /X 
   - cd build_test
 test_script:
-  - "coverage run -m pytest -v"
+  - "coverage run --source=dateutil -m pytest -v"
 after_test:
+  - "coverage report -m"
   - "codecov"
