@@ -36,7 +36,7 @@ before_script:
   - cd build_test
 
 script:
-  - COVERAGE_FILE=.coverage.main coverage run --source=dateutil,test -m pytest -v
+  - COVERAGE_FILE=.coverage.main coverage run --source=dateutil -m pytest -v
 
 after_success:
   - coverage combine
