@@ -1,4 +1,5 @@
 six
+py < 1.5 ; python_version == '3.3'
 pytest >= 3.0 ; python_version != '3.2'
 pytest >= 2.0 ; python_version == '3.2'
 freezegun
