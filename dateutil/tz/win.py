@@ -29,7 +29,8 @@ def _settzkeyname():
         winreg.OpenKey(handle, TZKEYNAMENT).Close()
         TZKEYNAME = TZKEYNAMENT
     except WindowsError:
-        TZKEYNAME = TZKEYNAME9X
+        # This will occur for Windows XP and earlier
+        TZKEYNAME = TZKEYNAME9X             # pragma: nocover
     handle.Close()
     return TZKEYNAME
 
