@@ -37,12 +37,13 @@ install:
   - set DATEUTIL_MAY_CHANGE_TZ=1
 before_test:
   - mkdir build_test
-  - mkdir build_test\\test
+  - mkdir build_test\\dateutil
+  - mkdir build_test\\dateutil\\test
   # All these options seem to be the equivalent of cp -pr
-  - xcopy dateutil\\test build_test\\test /E /H /K /O /X 
+  - xcopy dateutil\\test build_test\\dateutil\\test /E /H /K /O /X 
   - cd build_test
 test_script:
-  - "coverage run --source=dateutil -m pytest -v"
+  - "coverage run --source=dateutil,test -m pytest -v"
 after_test:
   - "coverage report -m"
   - "codecov"
