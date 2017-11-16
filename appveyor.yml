@@ -17,7 +17,12 @@ install:
   - set PATH=%PYTHON%;%PYTHON%/Scripts;c:\Program Files\PostgreSQL\9.3\bin\;%PATH%
   - python --version
 
+  # Not sure what the best way to get the Python minor version in a clear way
+  - set VERSION_CMD='python -c "import sys; print(\".\".join(map(str, sys.version_info[0:2])))"'
+  - for /f %%i in (%VERSION_CMD%) do set PYTHON_VERSION=%%i
+
   # Download scripts and dependencies
+  - if %PYTHON_VERSION%==3.3 pip install "py<1.5.0"
   - "pip install -r requirements-dev.txt"
   - "pip install codecov"
   
