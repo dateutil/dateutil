@@ -29,7 +29,6 @@ Additional resources about date/time string formats can be found below:
 """
 from __future__ import unicode_literals
 
-import collections
 import datetime
 import re
 import string
@@ -38,11 +37,9 @@ import time
 from calendar import monthrange
 from io import StringIO
 
-import six
-from six import binary_type, integer_types, text_type
+from six import binary_type, text_type
 
-from .. import relativedelta
-from .. import tz
+from ._construction import _resultbase, ParseState
 
 __all__ = ["parse", "parserinfo"]
 
@@ -210,28 +207,6 @@ class _timelex(object):
     def isspace(cls, nextchar):
         """ Whether the next character is whitespace """
         return nextchar.isspace()
-
-
-class _resultbase(object):
-
-    def __init__(self):
-        for attr in self.__slots__:
-            setattr(self, attr, None)
-
-    def _repr(self, classname):
-        l = []
-        for attr in self.__slots__:
-            value = getattr(self, attr)
-            if value is not None:
-                l.append("%s=%s" % (attr, repr(value)))
-        return "%s(%s)" % (classname, ", ".join(l))
-
-    def __len__(self):
-        return (sum(getattr(self, attr) is not None
-                    for attr in self.__slots__))
-
-    def __repr__(self):
-        return self._repr(self.__class__.__name__)
 
 
 class parserinfo(object):
@@ -522,6 +497,8 @@ class _ymd(list):
 
 
 class parser(object):
+    _result = ParseState  # this can be overridden by subclasses
+
     def __init__(self, info=None):
         self.info = info or parserinfo()
 
@@ -601,49 +578,12 @@ class parser(object):
         if len(res) == 0:
             raise ValueError("String does not contain a date:", timestr)
 
-        repl = {}
-        for attr in ("year", "month", "day", "hour",
-                     "minute", "second", "microsecond"):
-            value = getattr(res, attr)
-            if value is not None:
-                repl[attr] = value
-
-        if 'day' not in repl:
-            # If the default day exceeds the last day of the month, fall back
-            # to the end of the month.
-            cyear = default.year if res.year is None else res.year
-            cmonth = default.month if res.month is None else res.month
-            cday = default.day if res.day is None else res.day
-
-            if cday > monthrange(cyear, cmonth)[1]:
-                repl['day'] = monthrange(cyear, cmonth)[1]
-
-        ret = default.replace(**repl)
-
-        if res.weekday is not None and not res.day:
-            ret = ret + relativedelta.relativedelta(weekday=res.weekday)
-
-        if not ignoretz:
-            if (isinstance(tzinfos, collections.Callable) or
-                    tzinfos and res.tzname in tzinfos):
-                tzinfo = self._build_tzinfo(tzinfos, res.tzname, res.tzoffset)
-                ret = ret.replace(tzinfo=tzinfo)
-            elif res.tzname and res.tzname in time.tzname:
-                ret = ret.replace(tzinfo=tz.tzlocal())
-            elif res.tzoffset == 0:
-                ret = ret.replace(tzinfo=tz.tzutc())
-            elif res.tzoffset:
-                ret = ret.replace(tzinfo=tz.tzoffset(res.tzname, res.tzoffset))
+        ret = res._build_result(default, tzinfos, ignoretz)
 
         if kwargs.get('fuzzy_with_tokens', False):
             return ret, skipped_tokens
         else:
             return ret
-
-    class _result(_resultbase):
-        __slots__ = ["year", "month", "day", "weekday",
-                     "hour", "minute", "second", "microsecond",
-                     "tzname", "tzoffset", "ampm"]
 
     def _parse(self, timestr, dayfirst=None, yearfirst=None, fuzzy=False,
                fuzzy_with_tokens=False):
@@ -849,7 +789,7 @@ class parser(object):
             return None, None
 
         if fuzzy_with_tokens:
-            skipped_tokens = self._recombine_skipped(l, skipped_idxs)
+            skipped_tokens = res._recombine_skipped(l, skipped_idxs)
             return res, tuple(skipped_tokens)
         else:
             return res, None
@@ -1108,39 +1048,6 @@ class parser(object):
             new_idx = idx
 
         return (new_idx, hms)
-
-    def _recombine_skipped(self, tokens, skipped_idxs):
-        """
-        >>> tokens = ["foo", " ", "bar", " ", "19June2000", "baz"]
-        >>> skipped_idxs = [0, 1, 2, 5]
-        >>> _recombine_skipped(tokens, skipped_idxs)
-        ["foo bar", "baz"]
-        """
-        skipped_tokens = []
-        for i, idx in enumerate(sorted(skipped_idxs)):
-            if i > 0 and idx - 1 == skipped_idxs[i - 1]:
-                skipped_tokens[-1] = skipped_tokens[-1] + tokens[idx]
-            else:
-                skipped_tokens.append(tokens[idx])
-
-        return skipped_tokens
-
-    def _build_tzinfo(self, tzinfos, tzname, tzoffset):
-        if isinstance(tzinfos, collections.Callable):
-            tzdata = tzinfos(tzname, tzoffset)
-        else:
-            tzdata = tzinfos.get(tzname)
-
-        if isinstance(tzdata, datetime.tzinfo):
-            tzinfo = tzdata
-        elif isinstance(tzdata, text_type):
-            tzinfo = tz.tzstr(tzdata)
-        elif isinstance(tzdata, integer_types):
-            tzinfo = tz.tzoffset(tzname, tzdata)
-        else:
-            raise ValueError("Offset must be tzinfo subclass, "
-                             "tz string, or int offset.")
-        return tzinfo
 
 
 DEFAULTPARSER = parser()
