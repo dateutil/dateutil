@@ -628,8 +628,18 @@ class parser(object):
                     tzinfos and res.tzname in tzinfos):
                 tzinfo = self._build_tzinfo(tzinfos, res.tzname, res.tzoffset)
                 ret = ret.replace(tzinfo=tzinfo)
+                ret = self._assign_tzname(ret, res.tzname)
             elif res.tzname and res.tzname in time.tzname:
                 ret = ret.replace(tzinfo=tz.tzlocal())
+
+                # Handle ambiguous local datetime
+                ret = self._assign_tzname(ret, res.tzname)
+
+                # This is mostly relevant for winter GMT zones parsed in the UK
+                if (ret.tzname() != res.tzname and
+                        res.tzname in self.info.UTCZONE):
+                    ret = ret.replace(tzinfo=tz.tzutc())
+
             elif res.tzoffset == 0:
                 ret = ret.replace(tzinfo=tz.tzutc())
             elif res.tzoffset:
@@ -1141,6 +1151,14 @@ class parser(object):
             raise ValueError("Offset must be tzinfo subclass, "
                              "tz string, or int offset.")
         return tzinfo
+
+    def _assign_tzname(self, dt, tzname):
+        if dt.tzname() != tzname:
+            new_dt = tz.enfold(dt, fold=1)
+            if new_dt.tzname() == tzname:
+                return new_dt
+
+        return dt
 
 
 DEFAULTPARSER = parser()
