@@ -416,11 +416,13 @@ class _ymd(list):
         if hasattr(val, '__len__'):
             if val.isdigit() and len(val) > 2:
                 self.century_specified = True
-                assert label in [None, 'Y']
+                if label not in [None, 'Y']:  # pragma: no cover
+                    raise ValueError(label)
                 label = 'Y'
         elif val > 100:
             self.century_specified = True
-            assert label in [None, 'Y']
+            if label not in [None, 'Y']:  # pragma: no cover
+                raise ValueError(label)
             label = 'Y'
 
         super(self.__class__, self).append(int(val))
@@ -850,7 +852,7 @@ class parser(object):
             res.month = month
             res.day = day
 
-        except (IndexError, ValueError, AssertionError):
+        except (IndexError, ValueError):
             return None, None
 
         if not info.validate(res):
