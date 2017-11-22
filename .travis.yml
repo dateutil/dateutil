@@ -21,7 +21,7 @@ before_install:
   - pip install codecov
 
 install:
-  - ./ci_tools/retry.sh python updatezinfo.py
+  - COVERAGE_FILE=.coverage.rebuild coverage run --source=dateutil.zoneinfo updatezinfo.py
 
   - if pip freeze | grep dateutil; then pip uninstall -y python-dateutil; fi
   
@@ -30,14 +30,17 @@ install:
 
 before_script:
   # Run the script from something other than the repo root
-  - mkdir build_test
-  - cp -pr dateutil/test build_test/test
+  - mkdir -p build_test/dateutil
+  - cp -pr dateutil/test build_test/dateutil/test
+  - cp .coverage.rebuild build_test/.coverage.rebuild
   - cd build_test
 
 script:
-  - coverage run -m pytest -v
+  - COVERAGE_FILE=.coverage.main coverage run --source=dateutil -m pytest -v
 
 after_success:
+  - coverage combine
+  - coverage report -m
   - codecov
 
 sudo: false

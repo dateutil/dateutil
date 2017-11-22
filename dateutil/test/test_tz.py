@@ -29,9 +29,9 @@ from dateutil import zoneinfo
 
 try:
     from dateutil import tzwin
-except ImportError as e:
+except ImportError:
     if IS_WIN:
-        raise e
+        raise           # pragma: nocover
     else:
         pass
 

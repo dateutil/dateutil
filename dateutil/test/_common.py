@@ -25,13 +25,13 @@ class WarningTestMixin(object):
             rv = super(WarningTestMixin._AssertWarnsContext, self).__enter__(*args, **kwargs)
 
             if self._showwarning is not self._module.showwarning:
-                super_showwarning = self._module.showwarning
+                super_showwarning = self._module.showwarning    # pragma: nocover
             else:
                 super_showwarning = None
 
             def showwarning(*args, **kwargs):
                 if super_showwarning is not None:
-                    super_showwarning(*args, **kwargs)
+                    super_showwarning(*args, **kwargs)          # pragma: nocover
 
                 self._warning_log.append(warnings.WarningMessage(*args, **kwargs))
 
@@ -133,7 +133,7 @@ class TZContextBase(object):
 
     def __enter__(self):
         if not self.tz_change_allowed():
-            raise ValueError(self.tz_change_disallowed_message())
+            raise ValueError(self.tz_change_disallowed_message())   # pragma: nocover
 
         self._old_tz = self.get_current_tz()
         self.set_current_tz(self.tzval)
@@ -145,10 +145,10 @@ class TZContextBase(object):
         self._old_tz = None
 
     def get_current_tz(self):
-        raise NotImplementedError
+        raise NotImplementedError       # pragma: nocover
 
     def set_current_tz(self):
-        raise NotImplementedError
+        raise NotImplementedError       # pragma: nocover
 
 
 class TZEnvContext(TZContextBase):
@@ -208,13 +208,11 @@ class TZWinContext(TZContextBase):
 # Utility classes
 class NotAValueClass(object):
     """
-    A class analogous to NaN that has operations defined for any type.
+    A class analogous to NaN that has operations defined for any type, always
+    returning ``NotAValue``
     """
     def _op(self, other):
         return self             # Operation with NotAValue returns NotAValue
-
-    def _cmp(self, other):
-        return False
 
     __add__ = __radd__ = _op
     __sub__ = __rsub__ = _op

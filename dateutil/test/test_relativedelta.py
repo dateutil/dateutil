@@ -592,10 +592,7 @@ class RelativeDeltaTest(WarningTestMixin, unittest.TestCase):
         self.assertEqual(expected, rd + td)
 
     def testHashable(self):
-        try:
-            {relativedelta(minute=1): 'test'}
-        except:
-            self.fail("relativedelta() failed to hash!")
+        {relativedelta(minute=1): 'test'}
 
 
 class RelativeDeltaWeeksPropertyGetterTest(unittest.TestCase):
