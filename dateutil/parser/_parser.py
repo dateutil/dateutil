@@ -421,11 +421,13 @@ class _ymd(list):
         if hasattr(val, '__len__'):
             if val.isdigit() and len(val) > 2:
                 self.century_specified = True
-                assert label in [None, 'Y']
+                if label not in [None, 'Y']:  # pragma: no cover
+                    raise ValueError(label)
                 label = 'Y'
         elif val > 100:
             self.century_specified = True
-            assert label in [None, 'Y']
+            if label not in [None, 'Y']:  # pragma: no cover
+                raise ValueError(label)
             label = 'Y'
 
         super(self.__class__, self).append(int(val))
@@ -631,8 +633,18 @@ class parser(object):
                     tzinfos and res.tzname in tzinfos):
                 tzinfo = self._build_tzinfo(tzinfos, res.tzname, res.tzoffset)
                 ret = ret.replace(tzinfo=tzinfo)
+                ret = self._assign_tzname(ret, res.tzname)
             elif res.tzname and res.tzname in time.tzname:
                 ret = ret.replace(tzinfo=tz.tzlocal())
+
+                # Handle ambiguous local datetime
+                ret = self._assign_tzname(ret, res.tzname)
+
+                # This is mostly relevant for winter GMT zones parsed in the UK
+                if (ret.tzname() != res.tzname and
+                        res.tzname in self.info.UTCZONE):
+                    ret = ret.replace(tzinfo=tz.tzutc())
+
             elif res.tzoffset == 0:
                 ret = ret.replace(tzinfo=tz.tzutc())
             elif res.tzoffset:
@@ -845,7 +857,7 @@ class parser(object):
             res.month = month
             res.day = day
 
-        except (IndexError, ValueError, AssertionError):
+        except (IndexError, ValueError):
             return None, None
 
         if not info.validate(res):
@@ -1144,6 +1156,14 @@ class parser(object):
             raise ValueError("Offset must be tzinfo subclass, "
                              "tz string, or int offset.")
         return tzinfo
+
+    def _assign_tzname(self, dt, tzname):
+        if dt.tzname() != tzname:
+            new_dt = tz.enfold(dt, fold=1)
+            if new_dt.tzname() == tzname:
+                return new_dt
+
+        return dt
 
 
 DEFAULTPARSER = parser()
