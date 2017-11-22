@@ -55,13 +55,18 @@ class _timelex(object):
     _split_decimal = re.compile("([.,])")
 
     def __init__(self, instream):
-        if isinstance(instream, binary_type):
-            instream = instream.decode()
+        if six.PY2:
+            # In Python 2, we can't duck type properly because unicode has
+            # a 'decode' function, and we'd be double-decoding
+            if isinstance(instream, (binary_type, bytearray)):
+                instream = instream.decode()
+        else:
+            if getattr(instream, 'decode', None) is not None:
+                instream = instream.decode()
 
         if isinstance(instream, text_type):
             instream = StringIO(instream)
-
-        if getattr(instream, 'read', None) is None:
+        elif getattr(instream, 'read', None) is None:
             raise TypeError('Parser must be a string or character stream, not '
                             '{itype}'.format(itype=instream.__class__.__name__))
 
