@@ -18,11 +18,11 @@ While pull requests fixing bugs are accepted, they are *not* required - the bug 
 
 ### Feature requests
 
-If you would like to see a new feature in `dateutil`, it is probably best to start an issue for discussion. You are welcome to prepare a pull request to start, but if it's going to be a lot of work, it's probably best to start by opening an issue so that you can know.
+If you would like to see a new feature in `dateutil`, it is probably best to start an issue for discussion rather than taking the time to implement a feature which may or may not be appropriate for `dateutil`'s API. For minor features (ones where you don't have to put a lot of effort into the PR), a pull request is fine but still not necessary.
 
 ### Pull requests
 
-If you would like to fix something in `dateutil` -  improvements to documentation, bug fixes, feature implementations, fixes to the build system, etc - pull requests are welcome! Try to keep your coding to [PEP 8 style](https://www.python.org/dev/peps/pep-0008/), with the minor modification that the existing `dateutil` class naming style does not use the CapWords convention.
+If you would like to fix something in `dateutil` -  improvements to documentation, bug fixes, feature implementations, fixes to the build system, etc - pull requests are welcome! Where possible, try to keep your coding to [PEP 8 style](https://www.python.org/dev/peps/pep-0008/), with the minor modification that the existing `dateutil` class naming style does not use the CapWords convention, or where the existing style does not follow PEP 8.
 
 The most important thing to include in your pull request are *tests* - please write one or more tests to cover the behavior you intend your patch to improve. Ideally, tests would use only the public interface - try to get 100% difference coverage using only supported behavior of the API.
 
