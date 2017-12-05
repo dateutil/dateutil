@@ -160,9 +160,8 @@ class Isoparser(object):
                              'components: {}'.format(datestr))
         return date(*components)
 
-    @classmethod
     @_takes_ascii
-    def parse_isotime(cls, timestr):
+    def parse_isotime(self, timestr):
         """
         Parse the time portion of an ISO string.
 
@@ -172,11 +171,10 @@ class Isoparser(object):
         :return:
             Returns a :class:`datetime.time` object
         """
-        return time(*cls._parse_isotime(timestr))
+        return time(*self._parse_isotime(timestr))
 
-    @classmethod
     @_takes_ascii
-    def parse_tzstr(cls, tzstr, zero_as_utc=True):
+    def parse_tzstr(self, tzstr, zero_as_utc=True):
         """
         Parse a valid ISO time zone string.
 
@@ -193,7 +191,7 @@ class Isoparser(object):
             :class:`dateutil.tz.tzutc` for ``Z`` and (if ``zero_as_utc`` is
             specified) offsets equivalent to UTC.
         """
-        return cls._parse_tzstr(tzstr, zero_as_utc=zero_as_utc)
+        return self._parse_tzstr(tzstr, zero_as_utc=zero_as_utc)
 
     # Constants
     _MICROSECOND_END_REGEX = re.compile(b'[-+Z]+')
@@ -301,8 +299,7 @@ class Isoparser(object):
         components = [base_date.year, base_date.month, base_date.day]
         return components, pos
 
-    @classmethod
-    def _calculate_weekdate(cls, year, week, day):
+    def _calculate_weekdate(self, year, week, day):
         """
         Calculate the day of corresponding to the ISO year-week-day calendar.
 
@@ -335,8 +332,7 @@ class Isoparser(object):
         week_offset = (week - 1) * 7 + (day - 1)
         return week_1 + timedelta(days=week_offset)
 
-    @classmethod
-    def _parse_isotime(cls, timestr):
+    def _parse_isotime(self, timestr):
         len_str = len(timestr)
         components = [0, 0, 0, 0, None]
         pos = 0
@@ -345,14 +341,14 @@ class Isoparser(object):
         if len(timestr) < 2:
             raise ValueError('ISO time too short')
 
-        has_sep = len_str >= 3 and timestr[2:3] == cls._TIME_SEP
+        has_sep = len_str >= 3 and timestr[2:3] == self._TIME_SEP
 
         while pos < len_str and comp < 5:
             comp += 1
 
             if timestr[pos:pos + 1] in b'-+Z':
                 # Detect time zone boundary
-                components[-1] = cls._parse_tzstr(timestr[pos:])
+                components[-1] = self._parse_tzstr(timestr[pos:])
                 pos = len_str
                 break
 
@@ -361,17 +357,17 @@ class Isoparser(object):
                 components[comp] = int(timestr[pos:pos + 2])
                 pos += 2
                 if (has_sep and pos < len_str and
-                        timestr[pos:pos + 1] == cls._TIME_SEP):
+                        timestr[pos:pos + 1] == self._TIME_SEP):
                     pos += 1
 
             if comp == 3:
                 # Microsecond
-                if timestr[pos:pos + 1] != cls._MICRO_SEP:
+                if timestr[pos:pos + 1] != self._MICRO_SEP:
                     continue
 
                 pos += 1
-                us_str = cls._MICROSECOND_END_REGEX.split(timestr[pos:pos + 6],
-                                                          1)[0]
+                us_str = self._MICROSECOND_END_REGEX.split(timestr[pos:pos + 6],
+                                                           1)[0]
 
                 components[comp] = int(us_str) * 10**(6 - len(us_str))
                 pos += len(us_str)
@@ -387,8 +383,7 @@ class Isoparser(object):
 
         return components
 
-    @classmethod
-    def _parse_tzstr(cls, tzstr, zero_as_utc=True):
+    def _parse_tzstr(self, tzstr, zero_as_utc=True):
         if tzstr == b'Z':
             return tz.tzutc()
 
@@ -406,7 +401,7 @@ class Isoparser(object):
         if len(tzstr) == 3:
             minutes = 0
         else:
-            minutes = int(tzstr[(4 if tzstr[3:4] == cls._TIME_SEP else 3):])
+            minutes = int(tzstr[(4 if tzstr[3:4] == self._TIME_SEP else 3):])
 
         if zero_as_utc and hours == 0 and minutes == 0:
             return tz.tzutc()
