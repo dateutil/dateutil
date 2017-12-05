@@ -14,8 +14,10 @@ PACKAGES = find_packages(where='.', exclude=['dateutil.test'])
 setup(name="python-dateutil",
       version=VERSION,
       description="Extensions to the standard Python datetime module",
-      author="Paul Ganssle",
-      author_email="dateutil@python.org",
+      author="Gustavo Niemeyer",
+      author_email="gustavo@niemeyer.net",
+      maintainer="Paul Ganssle",
+      maintainer_email="dateutil@python.org",
       url="https://dateutil.readthedocs.io",
       license="BSD 3-Clause",
       long_description="""
