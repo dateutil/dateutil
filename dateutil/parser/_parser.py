@@ -613,6 +613,14 @@ class parser(object):
         if not ignoretz:
             ret = self._build_tzaware(ret, res, tzinfos)
 
+            elif not res.tzname and not res.tzoffset:
+                # i.e. no timezone information was found.
+                pass
+            else:
+                # tz-like string was parsed but we don't know what to do
+                # with it
+                raise ValueError(res.tzname)
+
         if kwargs.get('fuzzy_with_tokens', False):
             return ret, skipped_tokens
         else:
