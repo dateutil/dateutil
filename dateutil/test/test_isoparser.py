@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, date, time
 import itertools as it
 
 from dateutil.tz import tz
-from dateutil.parser import Isoparser, isoparse
+from dateutil.parser import isoparser, isoparse
 
 import pytest
 import six
@@ -180,7 +180,7 @@ def test_noyear(date_val, date_fmt, time_args):
 
     dtstr = dt.strftime(fmt) + offset_str
 
-    dt_act = Isoparser(default_year=2016).isoparse(dtstr)
+    dt_act = isoparser(default_year=2016).isoparse(dtstr)
     assert dt_act == dt
 
 @pytest.mark.parametrize('year,expected', [
@@ -193,9 +193,9 @@ def test_noyear(date_val, date_fmt, time_args):
 def test_noyear_leap(year, expected):
     dtstr = '--02-29'
     dt_expected = datetime(expected, 2, 29)
-    isoparser = Isoparser(default_year=year)
+    isop_inst = isoparser(default_year=year)
 
-    dt_actual = isoparser.isoparse(dtstr)
+    dt_actual = isop_inst.isoparse(dtstr)
     assert dt_actual == dt_expected
 
 @pytest.mark.parametrize('isocal,dt_expected',[
@@ -300,12 +300,12 @@ def test_iso_raises_failing(isostr, exception):
 @pytest.mark.parametrize('year', [0, 10000])
 def test_isoparser_invalid_years(year):
     with pytest.raises(ValueError):
-        Isoparser(default_year=year)
+        isoparser(default_year=year)
 
 @pytest.mark.parametrize('sep', ['  ', '9', '🍛'])
 def test_isoparser_invalid_sep(sep):
     with pytest.raises(ValueError):
-        Isoparser(sep=sep)
+        isoparser(sep=sep)
 
 
 ###
@@ -324,7 +324,7 @@ def test_parse_tzstr(tzoffset):
 ])
 @pytest.mark.parametrize('zero_as_utc', [True, False])
 def test_parse_tzstr_zero_as_utc(tzstr, zero_as_utc):
-    tzi = Isoparser().parse_tzstr(tzstr, zero_as_utc=zero_as_utc)
+    tzi = isoparser().parse_tzstr(tzstr, zero_as_utc=zero_as_utc)
     assert tzi == tz.tzutc()
     assert (type(tzi) == tz.tzutc) == zero_as_utc
 
@@ -338,7 +338,7 @@ def test_parse_tzstr_zero_as_utc(tzstr, zero_as_utc):
 def test_noyear_date(date_val, date_fmt):
     dtstr = date_val.strftime(date_fmt)
 
-    d_act = Isoparser(default_year=2016).parse_isodate(dtstr)
+    d_act = isoparser(default_year=2016).parse_isodate(dtstr)
     assert d_act == date_val
 
 
@@ -379,7 +379,7 @@ def test_parse_isodate(d, dt_fmt, as_bytes):
     elif isinstance(d_str, six.binary_type) and not as_bytes:
         d_str = d_str.decode('ascii')
 
-    iparser = Isoparser()
+    iparser = isoparser()
     assert iparser.parse_isodate(d_str) == d
 
 
@@ -394,7 +394,7 @@ def test_parse_isodate(d, dt_fmt, as_bytes):
 ])
 def test_isodate_raises(isostr, exception):
     with pytest.raises(exception):
-        Isoparser().parse_isodate(isostr)
+        isoparser().parse_isodate(isostr)
 
 
 ###
@@ -453,7 +453,7 @@ def test_isotime(time_val, time_fmt, as_bytes):
     elif isinstance(time_val, six.binary_type) and not as_bytes:
         tstr = tstr.decode('ascii')
 
-    iparser = Isoparser()
+    iparser = isoparser()
 
     assert iparser.parse_isotime(tstr) == time_val
 
@@ -474,7 +474,7 @@ def test_isotime(time_val, time_fmt, as_bytes):
     ('14:59:59+12:62', ValueError),             # Invalid tz minutes
 ])
 def test_isotime_raises(isostr, exception):
-    iparser = Isoparser()
+    iparser = isoparser()
     with pytest.raises(exception):
         iparser.parse_isotime(isostr)
 
@@ -484,6 +484,6 @@ def test_isotime_raises(isostr, exception):
     ('14:3015', ValueError),                    # Inconsistent separator use
 ])
 def test_isotime_raises_xfail(isostr, exception):
-    iparser = Isoparser()
+    iparser = isoparser()
     with pytest.raises(exception):
         iparser.parse_isotime(isostr)

@@ -14,7 +14,7 @@ from functools import wraps
 import re
 import six
 
-__all__ = ["isoparse", "Isoparser"]
+__all__ = ["isoparse", "isoparser"]
 
 
 def _takes_ascii(f):
@@ -37,7 +37,7 @@ def _takes_ascii(f):
     return func
 
 
-class Isoparser(object):
+class isoparser(object):
     def __init__(self, sep='T', default_year=None):
         """
         :param sep:
@@ -125,7 +125,7 @@ class Isoparser(object):
             Unspecified components default to their lowest value, with the
             exception of year, which will use the value passed to the
             ``default_year`` parameter of the method's bound
-            :class:`Isoparser` instance. If that
+            :class:`isoparser` instance. If that
             would produce an invalid date (e.g. ``'--02-29'`` parsed with a
             non-leap-year default date), the default will be the last leap
             year to occur before the default year.
@@ -178,7 +178,7 @@ class Isoparser(object):
         """
         Parse a valid ISO time zone string.
 
-        See :func:`Isoparser.isoparse` for details on supported formats.
+        See :func:`isoparser.isoparse` for details on supported formats.
 
         :param tzstr:
             A string representing an ISO time zone offset
@@ -415,5 +415,5 @@ class Isoparser(object):
             return tz.tzoffset(None, mult * (hours * 60 + minutes) * 60)
 
 
-DEFAULT_ISOPARSER = Isoparser()
+DEFAULT_ISOPARSER = isoparser()
 isoparse = DEFAULT_ISOPARSER.isoparse
