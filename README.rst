@@ -138,6 +138,13 @@ To easily test dateutil against all supported Python versions, you can use
 
 All github pull requests are automatically tested using travis and appveyor.
 
+=======
+License
+=======
+
+All contributions after December 1, 2017 released under dual license - either `Apache 2.0 License <https://www.apache.org/licenses/LICENSE-2.0>`_ or the `BSD 3-Clause License <https://opensource.org/licenses/BSD-3-Clause>`_. Contributions before December 1, 2017 - except those those explicitly relicensed - are released only under the BSD 3-Clause License.
 
 .. _6B49 ACBA DCF6 BD1C A206 67AB CD54 FCE3 D964 BEFB:
    https://pgp.mit.edu/pks/lookup?op=vindex&search=0xCD54FCE3D964BEFB
+
+    
