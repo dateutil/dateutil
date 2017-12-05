@@ -3,7 +3,7 @@
 This module offers a parser for ISO-8601 strings
 
 It is intended to support all valid date, time and datetime formats per the
-ISO-8601 specification, with a stricter mode for the most common subset.
+ISO-8601 specification.
 """
 from datetime import datetime, timedelta, time, date
 import calendar
@@ -61,7 +61,7 @@ class isoparser(object):
             self._default_year = datetime.now().year
 
     @_takes_ascii
-    def isoparse(self, dt_str, common_only=False):
+    def isoparse(self, dt_str):
         """
         Parse an ISO-8601 datetime string into a :class:`datetime.datetime`.
 
@@ -117,9 +117,6 @@ class isoparser(object):
         :param dt_str:
             A string or stream containing only an ISO-8601 datetime string
 
-        :param common_only:
-            If true, parsing the uncommon formats will throw an error.
-
         :return:
             Returns a :class:`datetime.datetime` representing the string.
             Unspecified components default to their lowest value, with the
@@ -130,10 +127,7 @@ class isoparser(object):
             non-leap-year default date), the default will be the last leap
             year to occur before the default year.
         """
-        if common_only:
-            components, pos = self._parse_isodate_common(dt_str)
-        else:
-            components, pos = self._parse_isodate(dt_str)
+        components, pos = self._parse_isodate(dt_str)
 
         if len(dt_str) > pos:
             if dt_str[pos:pos + 1] == self._sep:
