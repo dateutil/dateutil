@@ -2,7 +2,7 @@
 """
 The rrule module offers a small, complete, and very fast, implementation of
 the recurrence rules documented in the
-`iCalendar RFC <http://www.ietf.org/rfc/rfc2445.txt>`_,
+`iCalendar RFC <https://tools.ietf.org/html/rfc5545>`_,
 including support for caching of results.
 """
 import itertools
