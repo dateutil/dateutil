@@ -60,6 +60,7 @@ Apache 2.0 and BSD 3-clause. In the list below, anyone whose name is marked with
 - Thomas A Caswell <tcaswell@MASKED> (gh: @tacaswell)
 - Thomas Achtemichuk <tom@MASKED>
 - Thomas Kluyver <takowl@MASKED> (gh: @takluyver)
+- Tomasz Kluczkowski (gh: @Tomasz-Kluczkowski)
 - Tomi Pieviläinen <tomi.pievilainen@iki.fi>
 - Unrud <Unrud@MASKED> (gh: @unrud)
 - X O <xo@MASKED>
