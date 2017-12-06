@@ -38,6 +38,22 @@ class tzutc(datetime.tzinfo):
     """
     This is a tzinfo object that represents the UTC time zone.
 
+    **Examples:**
+
+    .. doctest::
+
+        >>> from datetime import *
+        >>> from dateutil.tz import *
+
+        >>> datetime.now()
+        datetime.datetime(2003, 9, 27, 9, 40, 1, 521290)
+
+        >>> datetime.now(tzutc())
+        datetime.datetime(2003, 9, 27, 12, 40, 12, 156379, tzinfo=tzutc())
+
+        >>> datetime.now(tzutc()).tzname()
+        'UTC'
+
     .. versionchanged:: 2.7.0
         ``tzutc()`` is now a singleton, so the result of ``tzutc()`` will
         always return the same object.
