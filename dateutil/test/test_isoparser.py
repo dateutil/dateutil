@@ -226,9 +226,11 @@ def test_bytes(isostr, dt):
     ('20120425T0120:00', ValueError),           # Inconsistent time separators
     ('20120425T012500-334', ValueError),        # Wrong microsecond separator
     ('20120425C012500', ValueError),            # Wrong time separator
+    ('2012-04-9', ValueError),                  # YYYY-MM-D not valid
     ('20120411T03:30+', ValueError),            # Time zone too short
     ('20120411T03:30+1234567', ValueError),     # Time zone too long
     ('20120411T03:30-25:40', ValueError),       # Time zone invalid
+    ('2012-1a', ValueError),                    # Invalid month
     ('20120411T03:30+00:60', ValueError),       # Time zone invalid minutes
     ('20120411T03:30+00:61', ValueError),       # Time zone invalid minutes
     ('20120411T033030.123456012:00',            # No sign in time zone
@@ -240,7 +242,11 @@ def test_bytes(isostr, dt):
     ('2013-000', ValueError),                   # Invalid ordinal day
     ('2013-366', ValueError),                   # Invalid ordinal day
     ('2013366', ValueError),                    # Invalid ordinal day
-    ('2014-03-12Т12:30:14', ValueError)         # Cyrillic T
+    ('2014-03-12Т12:30:14', ValueError),        # Cyrillic T
+    ('2014-04-21T24:00:01', ValueError),        # Invalid use of 24 for midnight
+    ('2014_W001-1', ValueError),                # Invalid separator
+    ('2014-W001_1', ValueError),                # Invalid separator
+
 ])
 def test_iso_raises(isostr, exception):
     with pytest.raises(exception):
@@ -296,6 +302,17 @@ def test_parse_tzstr_zero_as_utc(tzstr, zero_as_utc):
     assert tzi == tz.tzutc()
     assert (type(tzi) == tz.tzutc) == zero_as_utc
 
+
+@pytest.mark.parametrize('tzstr,exception', [
+    ('00:00', ValueError),     # No sign
+    ('05:00', ValueError),     # No sign
+    ('_00:00', ValueError),    # Invalid sign
+    ('+25:00', ValueError),    # Offset too large
+    ('00:0000', ValueError),   # String too long
+])
+def test_parse_tzstr_fails(tzstr,exception):
+    with pytest.raises(exception):
+        isoparse(tzstr)
 
 ###
 # Test parse_isodate
