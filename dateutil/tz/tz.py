@@ -1150,7 +1150,7 @@ class tzical(object):
         A file or stream in iCalendar format, which should be UTF-8 encoded
         with CRLF endings.
 
-    .. _`RFC 2445`: https://www.ietf.org/rfc/rfc2445.txt
+    .. _`RFC 2445`: https://tools.ietf.org/html/rfc5545
     """
     def __init__(self, fileobj):
         global rrule
