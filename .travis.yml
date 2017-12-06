@@ -2,7 +2,6 @@ language: python
 cache: pip
 python:
   - "2.7"
-  - "3.2"
   - "3.3"
   - "3.4"
   - "3.5"
@@ -12,32 +11,18 @@ python:
   - "pypy3"
 
 matrix:
+  fast_finish: true
   allow_failures:
     - python: "nightly"
 
-before_install:
-  # Install test dependencies
-  - pip install -r requirements-dev.txt
-  - pip install codecov
-
 install:
+  - pip install -U six && pip install -U tox
   - ./ci_tools/retry.sh python updatezinfo.py
 
-  - if pip freeze | grep dateutil; then pip uninstall -y python-dateutil; fi
-  
-  # Install the libraries
-  - pip install .
-
-before_script:
-  # Run the script from something other than the repo root
-  - mkdir build_test
-  - cp -pr dateutil/test build_test/test
-  - cd build_test
-
 script:
-  - coverage run -m pytest -v
+  - tox -e py
 
 after_success:
-  - codecov
+  - tox -e coverage,codecov
 
-sudo: false
+sudo: FALSE

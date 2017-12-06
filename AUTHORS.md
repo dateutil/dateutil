@@ -17,6 +17,7 @@ Apache 2.0 and BSD 3-clause. In the list below, anyone whose name is marked with
 - Alex Willmer <alex@MASKED> (gh: @moreati)
 - Alexander Brugh <alexander.brugh@MASKED> (gh: @abrugh)
 - Andrew Murray <radarhere@MASKED>
+- Bernat Gabor <bgabor8@bloomberg.net> (gh: @gaborbernat)
 - Brandon W Maister <quodlibetor@MASKED>
 - Brock Mendel <jbrockmendel@MASKED> (gh: @jbrockmendel) **R**
 - Carlos <carlosxl@MASKED>
