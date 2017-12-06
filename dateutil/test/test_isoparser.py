@@ -160,44 +160,6 @@ TIME_ARGS = ('time_args',
         for _t, _tz in it.product([time(0), time(9, 30), time(14, 47)],
                                   TZOFFSETS)))
 
-@pytest.mark.parametrize('date_val', [date(2016, 12, 31),
-                                      date(2016, 4, 1),
-                                      date(2016, 2, 28)])
-@pytest.mark.parametrize('date_fmt', ('--%m%d', '--%m-%d'))
-@pytest.mark.parametrize(*TIME_ARGS)
-def test_noyear(date_val, date_fmt, time_args):
-    time_fmt, time_val, tzoffset = time_args
-
-    fmt = date_fmt
-    dt = datetime.combine(date_val, time_val)
-
-    if time_fmt is not None:
-        tzi, offset_str = tzoffset
-        fmt += 'T' + time_fmt
-        dt = dt.replace(tzinfo=tzi)
-    else:
-        offset_str = ''
-
-    dtstr = dt.strftime(fmt) + offset_str
-
-    dt_act = isoparser(default_year=2016).isoparse(dtstr)
-    assert dt_act == dt
-
-@pytest.mark.parametrize('year,expected', [
-    (2017, 2016),
-    (2016, 2016),
-    (2003, 2000),
-    (2000, 2000),
-    (1903, 1896),
-    (1900, 1896)])
-def test_noyear_leap(year, expected):
-    dtstr = '--02-29'
-    dt_expected = datetime(expected, 2, 29)
-    isop_inst = isoparser(default_year=year)
-
-    dt_actual = isop_inst.isoparse(dtstr)
-    assert dt_actual == dt_expected
-
 @pytest.mark.parametrize('isocal,dt_expected',[
     ((2017, 10), datetime(2017, 3, 6)),
     ((2020, 1), datetime(2019, 12, 30)),    # ISO year != Cal year
@@ -295,13 +257,9 @@ def test_iso_raises_failing(isostr, exception):
     with pytest.raises(exception):
         isoparse(isostr)
 
+
 ###
 # Test ISOParser constructor
-@pytest.mark.parametrize('year', [0, 10000])
-def test_isoparser_invalid_years(year):
-    with pytest.raises(ValueError):
-        isoparser(default_year=year)
-
 @pytest.mark.parametrize('sep', ['  ', '9', '🍛'])
 def test_isoparser_invalid_sep(sep):
     with pytest.raises(ValueError):
@@ -331,17 +289,6 @@ def test_parse_tzstr_zero_as_utc(tzstr, zero_as_utc):
 
 ###
 # Test parse_isodate
-@pytest.mark.parametrize('date_val', [date(2016, 12, 31),
-                                      date(2016, 4, 1),
-                                      date(2016, 2, 28)])
-@pytest.mark.parametrize('date_fmt', ('--%m%d', '--%m-%d'))
-def test_noyear_date(date_val, date_fmt):
-    dtstr = date_val.strftime(date_fmt)
-
-    d_act = isoparser(default_year=2016).parse_isodate(dtstr)
-    assert d_act == date_val
-
-
 def __make_date_examples():
     dates_no_day = [
         date(1999, 12, 1),

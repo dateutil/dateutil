@@ -38,27 +38,16 @@ def _takes_ascii(f):
 
 
 class isoparser(object):
-    def __init__(self, sep='T', default_year=None):
+    def __init__(self, sep='T'):
         """
         :param sep:
             A single character that separates date and time portions
-
-        :param default_year:
-            The default year to be used as the basis for parsing the uncommon
-            no-year date formats.
         """
         if (len(sep) != 1 or ord(sep) >= 128 or sep in '0123456789'):
             raise ValueError('Separator must be a single, non-numeric '
                              'ASCII character')
 
         self._sep = sep.encode('ascii')
-        if default_year is not None:
-            if not 1 <= default_year <= 9999:
-                raise ValueError('Year must be in [1, 9999]')
-
-            self._default_year = default_year
-        else:
-            self._default_year = datetime.now().year
 
     @_takes_ascii
     def isoparse(self, dt_str):
@@ -80,7 +69,6 @@ class isoparser(object):
 
         Uncommon:
 
-        - ``--MM-DD`` or ``--MMDD`` - Year unspecified
         - ``YYYY-Www`` or ``YYYYWww`` - ISO week (day defaults to 0)
         - ``YYYY-Www-D`` or ``YYYYWwwD`` - ISO week and day
 
@@ -119,13 +107,7 @@ class isoparser(object):
 
         :return:
             Returns a :class:`datetime.datetime` representing the string.
-            Unspecified components default to their lowest value, with the
-            exception of year, which will use the value passed to the
-            ``default_year`` parameter of the method's bound
-            :class:`isoparser` instance. If that
-            would produce an invalid date (e.g. ``'--02-29'`` parsed with a
-            non-leap-year default date), the default will be the last leap
-            year to occur before the default year.
+            Unspecified components default to their lowest value.
         """
         components, pos = self._parse_isodate(dt_str)
 
@@ -242,22 +224,7 @@ class isoparser(object):
         if len(dt_str) < 4:
             raise ValueError('ISO string too short')
 
-        if dt_str[0:2] == b'--':
-            # --MM-DD or --MMDD
-            month = int(dt_str[2:4])
-            pos = 4 + (dt_str[4:5] == self._DATE_SEP)
-            day = int(dt_str[pos:pos + 2])
-            year = self._default_year
-
-            if month == 2 and day == 29:
-                # Calcualtes the latest leap year
-                year -= year % 4
-                if (year % 400) and not (year % 100):
-                    year -= 4
-
-            return [year, month, day], pos + 2
-
-        # All other uncommon ISO formats start with the year
+        # All ISO formats start with the year
         year = int(dt_str[0:4])
 
         pos = 4 + (dt_str[4:5] == self._DATE_SEP)   # Skip '-' if it's there
