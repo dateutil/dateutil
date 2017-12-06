@@ -6,6 +6,7 @@ most known formats to represent a date and/or time.
 This module attempts to be forgiving with regards to unlikely input formats,
 returning a datetime object even for dates which are ambiguous. If an element
 of a date/time stamp is omitted, the following rules are applied:
+
 - If AM or PM is left unspecified, a 24-hour clock is assumed, however, an hour
   on a 12-hour clock (``0 <= hour <= 12``) *must* be specified if AM or PM is
   specified.
