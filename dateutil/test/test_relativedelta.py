@@ -203,6 +203,31 @@ class RelativeDeltaTest(WarningTestMixin, unittest.TestCase):
         # For unsupported types that define their own comparators, etc.
         self.assertIs(relativedelta(days=1) + NotAValue, NotAValue)
 
+    def testAdditionFloatValue(self):
+        self.assertEqual(datetime(2000, 1, 1) + relativedelta(days=float(1)),
+                         datetime(2000, 1, 2))
+        self.assertEqual(datetime(2000, 1, 1) + relativedelta(months=float(1)),
+                         datetime(2000, 2, 1))
+        self.assertEqual(datetime(2000, 1, 1) + relativedelta(years=float(1)),
+                         datetime(2001, 1, 1))
+
+    def testAdditionFloatFractionals(self):
+        self.assertEqual(datetime(2000, 1, 1, 0) +
+                         relativedelta(days=float(0.5)),
+                         datetime(2000, 1, 1, 12))
+        self.assertEqual(datetime(2000, 1, 1, 0, 0) +
+                         relativedelta(hours=float(0.5)),
+                         datetime(2000, 1, 1, 0, 30))
+        self.assertEqual(datetime(2000, 1, 1, 0, 0, 0) +
+                         relativedelta(minutes=float(0.5)),
+                         datetime(2000, 1, 1, 0, 0, 30))
+        self.assertEqual(datetime(2000, 1, 1, 0, 0, 0, 0) +
+                         relativedelta(seconds=float(0.5)),
+                         datetime(2000, 1, 1, 0, 0, 0, 500000))
+        self.assertEqual(datetime(2000, 1, 1, 0, 0, 0, 0) +
+                         relativedelta(microseconds=float(500000.25)),
+                         datetime(2000, 1, 1, 0, 0, 0, 500000))
+
     def testSubtraction(self):
         self.assertEqual(relativedelta(days=10) -
                          relativedelta(years=1, months=2, days=3, hours=4,
