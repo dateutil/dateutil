@@ -2,15 +2,23 @@
 from os.path import isfile
 import os
 
+import setuptools
 from setuptools import setup, find_packages
 from setuptools.command.test import test as TestCommand
 
 from dateutil._version import VERSION
 
+from distutils.version import LooseVersion
+import warnings
+
 if isfile("MANIFEST"):
     os.unlink("MANIFEST")
 
 PACKAGES = find_packages(where='.', exclude=['dateutil.test'])
+
+if LooseVersion(setuptools.__version__) <= LooseVersion("24.3"):
+    warnings.warn("python_requires requires setuptools version > 24.3",
+                  UserWarning)
 
 
 class Unsupported(TestCommand):
@@ -33,6 +41,7 @@ The dateutil module provides powerful extensions to the
 datetime module available in the Python standard library.
 """,
       packages=PACKAGES,
+      python_requires=">=2.7, !=3.0.*, !=3.1.*",
       package_data={"dateutil.zoneinfo": ["dateutil-zoneinfo.tar.gz"]},
       zip_safe=True,
       requires=["six"],
