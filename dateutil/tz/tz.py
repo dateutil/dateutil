@@ -122,6 +122,7 @@ class tzutc(datetime.tzinfo):
 class tzoffset(datetime.tzinfo):
     """
     A simple class for representing a fixed offset from UTC.
+
     :param name:
         The timezone name, to be returned when ``tzname()`` is called.
     :param offset:
@@ -156,10 +157,12 @@ class tzoffset(datetime.tzinfo):
         """
         Whether or not the "wall time" of a given datetime is ambiguous in this
         zone.
+
         :param dt:
             A :py:class:`datetime.datetime`, naive or time zone aware.
         :return:
             Returns ``True`` if ambiguous, ``False`` otherwise.
+
         .. versionadded:: 2.6.0
         """
         return False

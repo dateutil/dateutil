@@ -10,10 +10,10 @@ relativedelta
 Examples
 --------
 
-    from datetime import *; from dateutil.relativedelta import *
-    import calendar
-    NOW = datetime(2003, 9, 17, 20, 54, 47, 282310)
-    TODAY = date(2003, 9, 17)
+    >>> from datetime import *; from dateutil.relativedelta import *
+    >>> import calendar
+    >>> NOW = datetime(2003, 9, 17, 20, 54, 47, 282310)
+    >>> TODAY = date(2003, 9, 17)
 
 Let's begin our trip::
 

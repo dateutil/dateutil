@@ -65,7 +65,7 @@ class isoparser(object):
 
         - ``YYYY``
         - ``YYYY-MM`` or ``YYYYMM``
-        - ``YYYY-MM-DD`` or `YYYYMMDD``
+        - ``YYYY-MM-DD`` or ``YYYYMMDD``
 
         Uncommon:
 
@@ -79,7 +79,7 @@ class isoparser(object):
 
         - ``hh``
         - ``hh:mm`` or ``hhmm``
-        - ``hh:mm:ss`` or `hhmmss``
+        - ``hh:mm:ss`` or ``hhmmss``
         - ``hh:mm:ss.sss`` or ``hh:mm:ss.ssssss`` (3-6 sub-second digits)
 
         Midnight is a special case for `hh`, as the standard supports both
