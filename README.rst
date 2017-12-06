@@ -138,7 +138,6 @@ To easily test dateutil against all supported Python versions, you can use
 
 All github pull requests are automatically tested using travis and appveyor.
 
-=======
 License
 =======
 
