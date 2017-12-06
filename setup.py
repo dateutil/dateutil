@@ -3,6 +3,7 @@ from os.path import isfile
 import os
 
 from setuptools import setup, find_packages
+from setuptools.command.test import test as TestCommand
 
 from dateutil._version import VERSION
 
@@ -10,6 +11,13 @@ if isfile("MANIFEST"):
     os.unlink("MANIFEST")
 
 PACKAGES = find_packages(where='.', exclude=['dateutil.test'])
+
+
+class Unsupported(TestCommand):
+    def run(self):
+        print("Running 'test' with setup.py is not supported. "
+              "Use 'pytest' or 'tox' to run the tests.")
+
 
 setup(name="python-dateutil",
       version=VERSION,
@@ -44,5 +52,8 @@ datetime module available in the Python standard library.
           'Programming Language :: Python :: 3.6',
           'Topic :: Software Development :: Libraries',
       ],
-      test_suite="dateutil.test"
+      test_suite="dateutil.test",
+      cmdclass={
+          "test": Unsupported
+      }
       )
