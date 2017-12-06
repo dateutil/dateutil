@@ -2363,7 +2363,7 @@ class RRuleTest(WarningTestMixin, unittest.TestCase):
 
     def testBadUntilCountRRule(self):
         """
-        See rfc-5545 4.3.10 - This checks for the deprecation warning, and will
+        See rfc-5545 3.3.10 - This checks for the deprecation warning, and will
         eventually check for an error.
         """
         with self.assertWarns(DeprecationWarning):

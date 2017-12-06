@@ -359,7 +359,7 @@ class rrule(rrulebase):
 
         .. note::
             As of version 2.5.0, the use of the ``until`` keyword together
-            with the ``count`` keyword is deprecated per RFC-5545 Sec. 4.3.10.
+            with the ``count`` keyword is deprecated per RFC-5545 Sec. 3.3.10.
     :param until:
         If given, this must be a datetime instance, that will specify the
         limit of the recurrence. The last recurrence in the rule is the greatest
@@ -368,7 +368,7 @@ class rrule(rrulebase):
 
         .. note::
             As of version 2.5.0, the use of the ``until`` keyword together
-            with the ``count`` keyword is deprecated per RFC-5545 Sec. 4.3.10.
+            with the ``count`` keyword is deprecated per RFC-5545 Sec. 3.3.10.
     :param bysetpos:
         If given, it must be either an integer, or a sequence of integers,
         positive or negative. Each given integer will specify an occurrence
