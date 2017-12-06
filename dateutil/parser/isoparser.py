@@ -226,7 +226,9 @@ class isoparser(object):
         # All ISO formats start with the year
         year = int(dt_str[0:4])
 
-        pos = 4 + (dt_str[4:5] == self._DATE_SEP)   # Skip '-' if it's there
+        has_sep = dt_str[4:5] == self._DATE_SEP
+
+        pos = 4 + has_sep       # Skip '-' if it's there
         if dt_str[pos:pos + 1] == b'W':
             # YYYY-?Www-?D?
             pos += 1
@@ -235,11 +237,10 @@ class isoparser(object):
 
             dayno = 1
             if len(dt_str) > pos:
-                if dt_str[pos:pos + 1] == self._DATE_SEP:
-                    # YYYY-W
-                    if dt_str[4:5] != self._DATE_SEP:
-                        raise ValueError('Inconsistent use of dash separator')
-                    pos += 1
+                if (dt_str[pos:pos + 1] == self._DATE_SEP) != has_sep:
+                    raise ValueError('Inconsistent use of dash separator')
+
+                pos += has_sep
 
                 dayno = int(dt_str[pos:pos + 1])
                 pos += 1
@@ -247,6 +248,9 @@ class isoparser(object):
             base_date = self._calculate_weekdate(year, weekno, dayno)
         else:
             # YYYYDDD or YYYY-DDD
+            if len(dt_str) - pos < 3:
+                raise ValueError('Invalid ordinal day')
+
             ordinal_day = int(dt_str[pos:pos + 3])
             pos += 3
 

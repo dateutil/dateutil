@@ -226,6 +226,7 @@ def test_bytes(isostr, dt):
     ('20120425T0120:00', ValueError),           # Inconsistent time separators
     ('20120425T012500-334', ValueError),        # Wrong microsecond separator
     ('20120425C012500', ValueError),            # Wrong time separator
+    ('2001-1', ValueError),                     # YYYY-M not valid
     ('2012-04-9', ValueError),                  # YYYY-MM-D not valid
     ('20120411T03:30+', ValueError),            # Time zone too short
     ('20120411T03:30+1234567', ValueError),     # Time zone too long
@@ -244,8 +245,9 @@ def test_bytes(isostr, dt):
     ('2013366', ValueError),                    # Invalid ordinal day
     ('2014-03-12Т12:30:14', ValueError),        # Cyrillic T
     ('2014-04-21T24:00:01', ValueError),        # Invalid use of 24 for midnight
-    ('2014_W001-1', ValueError),                # Invalid separator
-    ('2014-W001_1', ValueError),                # Invalid separator
+    ('2014_W01-1', ValueError),                 # Invalid separator
+    ('2014W01-1', ValueError),                  # Inconsistent use of dashes
+    ('2014-W011', ValueError),                  # Inconsistent use of dashes
 
 ])
 def test_iso_raises(isostr, exception):
@@ -310,9 +312,9 @@ def test_parse_tzstr_zero_as_utc(tzstr, zero_as_utc):
     ('+25:00', ValueError),    # Offset too large
     ('00:0000', ValueError),   # String too long
 ])
-def test_parse_tzstr_fails(tzstr,exception):
+def test_parse_tzstr_fails(tzstr, exception):
     with pytest.raises(exception):
-        isoparse(tzstr)
+        isoparser().parse_tzstr(tzstr)
 
 ###
 # Test parse_isodate
@@ -446,6 +448,7 @@ def test_isotime(time_val, time_fmt, as_bytes):
     ('14:30:15+1234567', ValueError),           # Time zone invalid
     ('14:59:59+25:00', ValueError),             # Invalid tz hours
     ('14:59:59+12:62', ValueError),             # Invalid tz minutes
+    ('14:59:30_344583', ValueError),            # Invalid microsecond separator
 ])
 def test_isotime_raises(isostr, exception):
     iparser = isoparser()
