@@ -6,8 +6,6 @@ import setuptools
 from setuptools import setup, find_packages
 from setuptools.command.test import test as TestCommand
 
-from dateutil._version import VERSION
-
 from distutils.version import LooseVersion
 import warnings
 
@@ -28,7 +26,9 @@ class Unsupported(TestCommand):
 
 
 setup(name="python-dateutil",
-      version=VERSION,
+      use_scm_version={
+          'write_to': 'dateutil/_version.py',
+      },
       description="Extensions to the standard Python datetime module",
       author="Gustavo Niemeyer",
       author_email="gustavo@niemeyer.net",
@@ -45,6 +45,7 @@ datetime module available in the Python standard library.
       package_data={"dateutil.zoneinfo": ["dateutil-zoneinfo.tar.gz"]},
       zip_safe=True,
       requires=["six"],
+      setup_requires=['setuptools_scm'],
       install_requires=["six >=1.5"],  # XXX fix when packaging is sane again
       classifiers=[
           'Development Status :: 5 - Production/Stable',
