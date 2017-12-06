@@ -3,6 +3,7 @@
 This document outlines the ways to contribute to `python-dateutil`. This is a fairly small, low-traffic project, so most of the contribution norms (coding style, acceptance criteria) have been developed ad hoc and this document will not be exhaustive. If you are interested in contributing code or documentation, please take a moment to at least review the license section to understand how your code will be licensed.
 
 ## Types of contribution
+
 ### Bug reports
 Bug reports are an important type of contribution - it's important to get feedback about how the library is failing, and there's no better way to do that than to hear about real-life failure cases. A good bug report will include:
 
@@ -31,3 +32,32 @@ The most important thing to include in your pull request are *tests* - please wr
 Starting December 1, 2017, all contributions will be assumed to be released under a dual license - the [Apache 2.0 License](https://www.apache.org/licenses/LICENSE-2.0) and the [3-Clause BSD License](https://opensource.org/licenses/BSD-3-Clause) unless otherwise specified in the pull request.
 
 All contributions before December 1, 2017 except those explicitly relicensed, are only under the 3-clause BSD license.
+
+## Building and releasing
+
+When you get the source, it does not contain the internal zoneinfo
+database. To get (and update) the database, run the updatezinfo.py script. Make sure
+that the zic command is in your path, and that you have network connectivity
+to get the latest timezone information from IANA, or from [our mirror of the
+IANA database](https://dateutil.github.io/tzdata/).
+
+Starting with version 2.4.1, all source and binary distributions will be signed
+by a PGP key that has, at the very least, been signed by the key which made the
+previous release. A table of release signing keys can be found below:
+
+Releases | Signing key fingerprint
+-------- | ---------------------------------------------------
+2.4.1-   | [6B49 ACBA DCF6 BD1C A206 67AB CD54 FCE3 D964 BEFB]
+
+[6B49 ACBA DCF6 BD1C A206 67AB CD54 FCE3 D964 BEFB]: https://pgp.mit.edu/pks/lookup?op=vindex&search=0xCD54FCE3D964BEFB
+
+## Testing
+
+dateutil has a comprehensive test suite, which can be run simply by running
+`python -m pytest` in the project root. Note that if you don't have the internal
+zoneinfo database, some tests will fail. Apart from that, all tests should pass.
+
+To easily test dateutil against all supported Python versions, you can use
+[tox](https://tox.readthedocs.io/en/latest/).
+
+All GitHub pull requests are automatically tested using travis and appveyor.
