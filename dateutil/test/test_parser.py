@@ -1016,6 +1016,14 @@ class TestParseUnimplementedCases(object):
         expected = datetime(1994, 12, 1)
         assert res == expected
 
+    @pytest.mark.xfail
+    def test_unambiguous_YYYYMM(self):
+        # 171206 can be parsed as YYMMDD. However, 201712 cannot be parsed
+        # as instance of YYMMDD and parser could fallback to YYYYMM format.
+        dstr = "201712"
+        res = parse(dstr)
+        expected = datetime(2017, 12, 1)
+        assert res == expected
 
 @pytest.mark.skipif(IS_WIN, reason='Windows does not use TZ var')
 def test_parse_unambiguous_nonexistent_local():
