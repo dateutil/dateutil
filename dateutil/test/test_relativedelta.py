@@ -225,8 +225,8 @@ class RelativeDeltaTest(WarningTestMixin, unittest.TestCase):
                          relativedelta(seconds=float(0.5)),
                          datetime(2000, 1, 1, 0, 0, 0, 500000))
         self.assertEqual(datetime(2000, 1, 1, 0, 0, 0, 0) +
-                         relativedelta(microseconds=float(500000.5)),
-                         datetime(2000, 1, 1, 0, 0, 0, 500001))
+                         relativedelta(microseconds=float(500000.25)),
+                         datetime(2000, 1, 1, 0, 0, 0, 500000))
 
     def testSubtraction(self):
         self.assertEqual(relativedelta(days=10) -
