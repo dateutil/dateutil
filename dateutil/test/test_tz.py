@@ -2283,8 +2283,7 @@ class imaginaryDateTest(unittest.TestCase):
         self.assertEqual(dt,datetime(1995, 1, 2, 2, 30, tzinfo=timezone))
         
     def testMonroviaForward(self):
-        #import pdb; pdb.set_trace()
         timezone = tz.gettz('Africa/Monrovia')
-        dt = datetime(1972, 1, 7, 0, 30, 0, tzinfo=timezone)
+        dt = datetime(1972, 1, 7, hour = 0, minute = 30, second = 0, tzinfo=timezone)
         dt = tz.resolve_imaginary(dt)
-        self.assertEqual(dt,datetime(1972, 1, 7, 1, 14, 30, tzinfo=timezone))
+        self.assertEqual(dt,datetime(1972, 1, 7, hour = 1, minute =  14,  second = 30, tzinfo=timezone))
