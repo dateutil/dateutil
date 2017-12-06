@@ -28,6 +28,7 @@ Apache 2.0 and BSD 3-clause. In the list below, anyone whose name is marked with
 - David Lehrian <david@MASKED>
 - Dominik Kozaczko <dominik@MASKED>
 - Elvis Pranskevichus <el@MASKED>
+- Florian Rathgeber (gh: @kynan)
 - Gabriel Poesia <gabriel.poesia@MASKED>
 - Gustavo Niemeyer <gustavo@niemeyer.net> (gh: @niemeyer)
 - Holger Joukl <holger.joukl@MASKED> (gh: @hjoukl)
