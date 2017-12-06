@@ -8,7 +8,7 @@ import sys
 
 from dateutil import tz
 from dateutil.tz import tzoffset
-from dateutil.parser import parse, parserinfo
+from dateutil.parser import parse, parserinfo, parser
 
 from ._common import TZEnvContext
 
@@ -916,6 +916,14 @@ class ParserTest(unittest.TestCase):
         # See GH PR #293
         dtstr = '0003-03-04'
         assert parse(dtstr) == datetime(3, 3, 4)
+
+    def test_QBCD(self):
+        with self.assertRaises(ValueError):
+            parse('19-9-42-14QBCD', fuzzy=False, ignore_bad_tzname=False)
+
+    def test_QBCD_legacy(self):
+        dt = parse('19-9-42-14QBCD', fuzzy=False)
+        assert dt == datetime(2042, 9, 19, 14)
 
 
 class TestParseUnimplementedCases(object):

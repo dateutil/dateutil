@@ -13,6 +13,7 @@ Apache 2.0 and BSD 3-clause. In the list below, anyone whose name is marked with
 - Adrien Cossa <cossa@MASKED>
 - Alec Nikolas Reiter <alecreiter@MASKED>
 - Alec Reiter <areiter@MASKED>
+- Alex Chamberlain (gh: @alexchamberlain)
 - Alex Verdyan <verdyan@MASKED>
 - Alex Willmer <alex@MASKED> (gh: @moreati)
 - Alexander Brugh <alexander.brugh@MASKED> (gh: @abrugh)
@@ -20,6 +21,7 @@ Apache 2.0 and BSD 3-clause. In the list below, anyone whose name is marked with
 - Brandon W Maister <quodlibetor@MASKED>
 - Brock Mendel <jbrockmendel@MASKED> (gh: @jbrockmendel) **R**
 - Carlos <carlosxl@MASKED>
+- Chanun Chirattikanon gh:chanunc
 - Christopher Corley <cscorley@MASKED>
 - Claudio Canepa <ccanepacc@MASKED>
 - Daniel Lepage <dplepage@MASKED>
