@@ -51,6 +51,26 @@ Releases | Signing key fingerprint
 
 [6B49 ACBA DCF6 BD1C A206 67AB CD54 FCE3 D964 BEFB]: https://pgp.mit.edu/pks/lookup?op=vindex&search=0xCD54FCE3D964BEFB
 
+## Development Setup
+
+Install the the dependencies for running the test suite using `pip` or `conda`.
+
+### pip
+
+Run the following commands to create a [virtual environment](https://virtualenv.pypa.io) with all dependencies installed:
+
+    python -m virtualenv .venv       # Create virtual environment in .venv directory
+    . .venv/bin/activate             # Activate the virtual environment
+    pip install -r requirements.txt  # Install the dependencies
+
+### conda
+
+Run the following commands to create a [conda environment](https://conda.io) with all dependencies installed:
+
+    conda create -n dateutil python=3.6  # Create a conda environment using Python 3.6
+    source activate dateutil             # Activate the conda environment
+    pip install -r requirements.txt  # Install the dependencies
+
 ## Testing
 
 dateutil has a comprehensive test suite, which can be run simply by running
