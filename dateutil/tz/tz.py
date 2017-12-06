@@ -1549,6 +1549,24 @@ def datetime_ambiguous(dt, tz=None):
     return not (same_offset and same_dst)
 
 
+def resolve_imaginary(dt):
+    """
+    Given an imaginary datetime in a time zone, correct to exist time by moving time forward.
+    :param dt:
+        A :class:`datetime.datetime`
+    :return:
+        Returns a :class:`datetime.datetime` which is the corrected time.
+    """
+    if dt.tzinfo is not None and not datetime_exists(dt):
+
+        curr_offset = (dt + datetime.timedelta(hours=24)).utcoffset()
+        old_offset = (dt - datetime.timedelta(hours=24)).utcoffset()
+
+        dt += curr_offset - old_offset
+
+    return dt
+
+
 def _datetime_to_timestamp(dt):
     """
     Convert a :class:`datetime.datetime` object to an epoch timestamp in seconds
@@ -1572,3 +1590,4 @@ class _ContextWrapper(object):
         pass
 
 # vim:ts=4:sw=4:et
+

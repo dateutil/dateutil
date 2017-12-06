@@ -2402,3 +2402,75 @@ class EnfoldTest(unittest.TestCase):
 
         # Before Python 3.6, dt.fold won't exist if fold is 0.
         self.assertEqual(getattr(dt, 'fold', 0), 0)
+
+
+class ImaginaryDateTest(unittest.TestCase):
+    def testCanberraForward(self):
+        tzi = tz.gettz('Australia/Canberra')
+        dt = datetime(2018, 10, 7, 2, 30, tzinfo=tzi)
+        dt_act = tz.resolve_imaginary(dt)
+        dt_exp = datetime(2018, 10, 7, 3, 30, tzinfo=tzi)
+        self.assertEqual(dt_act, dt_exp)
+
+    def testLondonForward(self):
+        tzi = tz.gettz('Europe/London')
+        dt = datetime(2018, 3, 25, 1, 30, tzinfo=tzi)
+        dt_act = tz.resolve_imaginary(dt)
+        dt_exp = datetime(2018, 3, 25, 2, 30, tzinfo=tzi)
+        self.assertEqual(dt_act, dt_exp)
+
+    def testKeivForward(self):
+        tzi = tz.gettz('Europe/Kiev')
+        dt = datetime(2018, 3, 25, 3, 30, tzinfo=tzi)
+        dt_act = tz.resolve_imaginary(dt)
+        dt_exp = datetime(2018, 3, 25, 4, 30, tzinfo=tzi)
+        self.assertEqual(dt_act, dt_exp)
+
+    def testNew_YorkAmbiguous(self):
+        # Tests that resolve_imaginary has no effect on ambiguous datetimes
+        tzi = tz.gettz('America/New_York')
+        dt = datetime(2017, 11, 5, 1, 30, tzinfo=tzi)
+        dtnew = tz.resolve_imaginary(dt)
+        self.assertIs(dt, dtnew)
+
+    def testSydneyAmbiguous(self):
+        # Tests that resolve_imaginary has no effect on ambiguous datetimes
+        tzi = tz.gettz('Australia/Sydney')
+        dt = datetime(2017, 4, 2, 2, 30, tzinfo=tzi)
+        dtnew = tz.resolve_imaginary(dt)
+        self.assertIs(dt, dtnew)
+
+    def testNew_YorkExisting(self):
+        # Tests that resolve_imaginary has no effect on normal datetimes
+        tzi = tz.gettz('America/New_York')
+        dt = datetime(1986, 7, 5, 1, 00, tzinfo=tzi)
+        dtnew = tz.resolve_imaginary(dt)
+        self.assertIs(dt, dtnew)
+
+    def testSydneyExisting(self):
+        # Tests that resolve_imaginary has no effect on normal datetimes
+        tzi = tz.gettz('Australia/Sydney')
+        dt = datetime(2018, 6, 2, 12, 0, tzinfo=tzi)
+        dtnew = tz.resolve_imaginary(dt)
+        self.assertIs(dt, dtnew)
+
+    def testLondonExisting(self):
+        # Tests that resolve_imaginary has no effect on normal datetimes
+        tzi = tz.gettz('Europe/London')
+        dt = datetime(2001, 1, 1, 1, 00, tzinfo=tzi)
+        dtnew = tz.resolve_imaginary(dt)
+        self.assertIs(dt, dtnew)
+
+    def testKiritimatiForward(self):
+        tzi = tz.gettz('Pacific/Kiritimati')
+        dt = datetime(1995, 1, 1, 2, 30, tzinfo=tzi)
+        dt_act = tz.resolve_imaginary(dt)
+        dt_exp = datetime(1995, 1, 2, 2, 30, tzinfo=tzi)
+        self.assertEqual(dt_act, dt_exp)
+
+    def testMonroviaForward(self):
+        tzi = tz.gettz('Africa/Monrovia')
+        dt = datetime(1972, 1, 7, hour=0, minute=30, second=0, tzinfo=tzi)
+        dt_act = tz.resolve_imaginary(dt)
+        dt_exp = datetime(1972, 1, 7, hour=1, minute=14, second=30, tzinfo=tzi)
+        self.assertEqual(dt_act, dt_exp)
