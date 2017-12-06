@@ -2,5 +2,11 @@
 parser
 ======
 .. automodule:: dateutil.parser
-   :members:
-   :undoc-members:
+
+   .. automethod:: dateutil.parser.parse
+
+   .. autoclass:: dateutil.parser.parserinfo
+      :members:
+      :undoc-members:
+
+   .. automethod:: dateutil.parser.isoparse
