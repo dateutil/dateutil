@@ -12,3 +12,6 @@ docs/_build/
 
 # Timezone information
 tzdata*.tar.gz
+
+.idea
+.cache

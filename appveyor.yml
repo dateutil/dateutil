@@ -1,48 +1,38 @@
 build: false
 environment:
   matrix:
-    - PYTHON: "C:/Python27"
-    - PYTHON: "C:/Python27-x64"
-    - PYTHON: "C:/Python33"
-    - PYTHON: "C:/Python33-x64"
-    - PYTHON: "C:/Python34"
-    - PYTHON: "C:/Python34-x64"
-    - PYTHON: "C:/Python35"
-    - PYTHON: "C:/Python35-x64"
-    - PYTHON: "C:/Python36"
-    - PYTHON: "C:/Python36-x64"
+    - PYTHON_VERSION: 27
+    - PYTHON_VERSION: 33
+    - PYTHON_VERSION: 34
+    - PYTHON_VERSION: 35
+    - PYTHON_VERSION: 36
+platform:
+  - x86
+  - x64
+
+matrix:
+  fast_finish: true
 
 install:
+  # set env variables
+  - set TOXENV=py%PYTHON_VERSION%
+  - if %PLATFORM% == "X64" (set PYTHON_PATH=C:\Python%PYTHON_VERSION%-x64) ELSE (set PYTHON_PATH=C:\Python%PYTHON_VERSION%)
+
   # Add PostgreSQL (zic), Python and scripts directory to current path
-  - set PATH=%PYTHON%;%PYTHON%/Scripts;c:\Program Files\PostgreSQL\9.3\bin\;%PATH%
-  - python --version
-
-  # Not sure what the best way to get the Python minor version in a clear way
-  - set VERSION_CMD='python -c "import sys; print(\".\".join(map(str, sys.version_info[0:2])))"'
-  - for /f %%i in (%VERSION_CMD%) do set PYTHON_VERSION=%%i
-
-  # Download scripts and dependencies
-  - if %PYTHON_VERSION%==3.3 pip install "py<1.5.0"
-  - "pip install -r requirements-dev.txt"
-  - "pip install codecov"
-  
-  # If any of our dependencies installed python-dateutil, drop it
-  - pip uninstall -y python-dateutil && exit 0
-  - pip install .
+  - set PATH=%PYTHON_PATH%;c:\Program Files\PostgreSQL\9.3\bin\;%PATH%
+  - set PYTHON=%PYTHON_PATH%/python.exe
+  - "%PYTHON% -c \"import sys; print(sys.executable, sys.version)\""
 
   # This frequently fails with network errors, so we'll retry it up to 5 times
   # with a 1 minute rate limit.
-  - "ci_tools/retry.bat %PYTHON%/python.exe updatezinfo.py"
+  - "%PYTHON% -m pip install six"
+  - "ci_tools/retry.bat %PYTHON% updatezinfo.py"
   # This environment variable tells the test suite it's OK to mess with the time zone.
   - set DATEUTIL_MAY_CHANGE_TZ=1
-before_test:
-  - mkdir build_test
-  - mkdir build_test\\test
-  # All these options seem to be the equivalent of cp -pr
-  - xcopy dateutil\\test build_test\\test /E /H /K /O /X 
-  - cd build_test
+  - C:\Python36\python -m pip install -U tox
+
 test_script:
-  - "coverage run --source=dateutil -m pytest -v"
+  - C:\Python36\scripts\tox
+
 after_test:
-  - "coverage report -m"
-  - "codecov"
+  - C:\Python36\scripts\tox -e coverage,codecov
