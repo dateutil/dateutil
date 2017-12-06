@@ -572,7 +572,7 @@ class parser(object):
 
             This parameter is ignored if ``ignoretz`` is set.
 
-        :param **kwargs:
+        :param \\*\\*kwargs:
             Keyword arguments as passed to ``_parse()``.
 
         :return:
