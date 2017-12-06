@@ -1144,13 +1144,13 @@ class _tzicalvtz(_tzinfo):
 class tzical(object):
     """
     This object is designed to parse an iCalendar-style ``VTIMEZONE`` structure
-    as set out in `RFC 2445`_ Section 4.6.5 into one or more `tzinfo` objects.
+    as set out in `RFC 5545`_ Section 4.6.5 into one or more `tzinfo` objects.
 
     :param `fileobj`:
         A file or stream in iCalendar format, which should be UTF-8 encoded
         with CRLF endings.
 
-    .. _`RFC 2445`: https://www.ietf.org/rfc/rfc2445.txt
+    .. _`RFC 5545`: https://tools.ietf.org/html/rfc5545
     """
     def __init__(self, fileobj):
         global rrule

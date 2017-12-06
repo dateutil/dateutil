@@ -359,7 +359,7 @@ class rrule(rrulebase):
 
         .. note::
             As of version 2.5.0, the use of the ``until`` keyword together
-            with the ``count`` keyword is deprecated per RFC-2445 Sec. 4.3.10.
+            with the ``count`` keyword is deprecated per RFC-5545 Sec. 4.3.10.
     :param until:
         If given, this must be a datetime instance, that will specify the
         limit of the recurrence. The last recurrence in the rule is the greatest
@@ -368,7 +368,7 @@ class rrule(rrulebase):
 
         .. note::
             As of version 2.5.0, the use of the ``until`` keyword together
-            with the ``count`` keyword is deprecated per RFC-2445 Sec. 4.3.10.
+            with the ``count`` keyword is deprecated per RFC-5545 Sec. 4.3.10.
     :param bysetpos:
         If given, it must be either an integer, or a sequence of integers,
         positive or negative. Each given integer will specify an occurrence
@@ -447,7 +447,7 @@ class rrule(rrulebase):
         self._until = until
 
         if count is not None and until:
-            warn("Using both 'count' and 'until' is inconsistent with RFC 2445"
+            warn("Using both 'count' and 'until' is inconsistent with RFC 5545"
                  " and has been deprecated in dateutil. Future versions will "
                  "raise an error.", DeprecationWarning)
 
@@ -674,7 +674,7 @@ class rrule(rrulebase):
     def __str__(self):
         """
         Output a string that would generate this RRULE if passed to rrulestr.
-        This is mostly compatible with RFC2445, except for the
+        This is mostly compatible with RFC5545, except for the
         dateutil-specific extension BYEASTER.
         """
 
@@ -699,7 +699,7 @@ class rrule(rrulebase):
 
         if self._original_rule.get('byweekday') is not None:
             # The str() method on weekday objects doesn't generate
-            # RFC2445-compliant strings, so we should modify that.
+            # RFC5545-compliant strings, so we should modify that.
             original_rule = dict(self._original_rule)
             wday_strings = []
             for wday in original_rule['byweekday']:
