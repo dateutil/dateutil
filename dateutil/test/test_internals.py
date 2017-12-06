@@ -12,9 +12,21 @@ import sys
 
 import pytest
 
-from dateutil.parser._parser import _ymd
+from dateutil.parser._parser import _ymd, parser
 
 IS_PY32 = sys.version_info[0:2] == (3, 2)
+
+
+class TestParserPrivate(object):
+    def test_single_character_tzname(self):
+        # See GH#540
+        dstr = '5:50 A.M. on June 13, 1990'
+        res = parser()._parse(dstr)[0]
+        assert res.tzname is None
+
+        dstr = 'Jan 29, 1945 14:45 AM I going to see you there?'
+        res = parser()._parse(dstr, fuzzy=True)[0]
+        assert res.tzname is None
 
 
 class TestYMD(unittest.TestCase):

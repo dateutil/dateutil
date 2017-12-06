@@ -1045,6 +1045,9 @@ class parser(object):
             (res.second, res.microsecond) = self._parsems(value_repr)
 
     def _could_be_tzname(self, hour, tzname, tzoffset, token):
+        if len(token) <= 1 and token != 'Z':
+            # see GH#540
+            return False
         return (hour is not None and
                 tzname is None and
                 tzoffset is None and
