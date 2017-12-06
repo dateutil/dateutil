@@ -531,7 +531,8 @@ class parser(object):
         self.info = info or parserinfo()
 
     def parse(self, timestr, default=None,
-              ignoretz=False, tzinfos=None, **kwargs):
+              ignoretz=False, tzinfos=None, 
+              ignore_bad_tzname=True, **kwargs):
         """
         Parse the date/time string into a :class:`datetime.datetime` object.
 
@@ -644,7 +645,8 @@ class parser(object):
                 if (ret.tzname() != res.tzname and
                         res.tzname in self.info.UTCZONE):
                     ret = ret.replace(tzinfo=tz.tzutc())
-
+            elif res.tzname and not ignore_bad_tzname:
+                raise ValueError('Unknown tzname: {}'.format(res.tzname))
             elif res.tzoffset == 0:
                 ret = ret.replace(tzinfo=tz.tzutc())
             elif res.tzoffset:
