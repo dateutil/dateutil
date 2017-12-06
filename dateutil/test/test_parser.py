@@ -921,6 +921,10 @@ class ParserTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             parse('19-9-42-14QBCD', fuzzy=False, ignore_bad_tzname=False)
 
+    def test_QBCD_legacy(self):
+        dt = parse('19-9-42-14QBCD', fuzzy=False)
+        assert dt == datetime(2042, 9, 19, 14)
+
 
 class TestParseUnimplementedCases(object):
     @pytest.mark.xfail
