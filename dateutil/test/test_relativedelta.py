@@ -211,6 +211,7 @@ class RelativeDeltaTest(WarningTestMixin, unittest.TestCase):
         self.assertEqual(datetime(2000, 1, 1) + relativedelta(years=float(1)),
                          datetime(2001, 1, 1))
 
+    def testAdditionFloatFractionals(self):
         self.assertEqual(datetime(2000, 1, 1, 0) +
                          relativedelta(days=float(0.5)),
                          datetime(2000, 1, 1, 12))
