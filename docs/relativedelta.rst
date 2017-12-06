@@ -8,7 +8,7 @@ relativedelta
 .. testsetup:: relativedelta
 
 Examples
-----------------------
+--------
 
     from datetime import *; from dateutil.relativedelta import *
     import calendar
