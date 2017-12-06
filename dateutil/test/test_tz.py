@@ -2262,3 +2262,29 @@ class EnfoldTest(unittest.TestCase):
 
         # Before Python 3.6, dt.fold won't exist if fold is 0.
         self.assertEqual(getattr(dt, 'fold', 0), 0)
+
+class imaginaryDateTest(unittest.TestCase):
+    def testCanberraForward(self):
+        timezone = tz.gettz('Australia/Canberra')
+        dt = datetime(2018, 10, 7, 2, 30, tzinfo=timezone)
+        dt = tz.resolve_imaginary(dt)
+        self.assertEqual(dt,datetime(2018, 10, 7, 3, 30, tzinfo=timezone))
+        
+    def testSydneyBack(self):
+        timezone = tz.gettz('Australia/Sydney')
+        dt = datetime(2018, 4, 1, 3, 30, tzinfo=timezone)
+        dtnew = tz.resolve_imaginary(dt)
+        self.assertEqual(dt,dtnew)
+        
+    def testKiritimatiForward(self):
+        timezone = tz.gettz('Pacific/Kiritimati')
+        dt = datetime(1995, 1, 1, 2, 30, tzinfo=timezone)
+        dt = tz.resolve_imaginary(dt)
+        self.assertEqual(dt,datetime(1995, 1, 2, 2, 30, tzinfo=timezone))
+        
+    def testMonroviaForward(self):
+        #import pdb; pdb.set_trace()
+        timezone = tz.gettz('Africa/Monrovia')
+        dt = datetime(1972, 1, 7, 0, 30, 0, tzinfo=timezone)
+        dt = tz.resolve_imaginary(dt)
+        self.assertEqual(dt,datetime(1972, 1, 7, 1, 14, 30, tzinfo=timezone))

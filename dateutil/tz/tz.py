@@ -1531,4 +1531,21 @@ class _ContextWrapper(object):
     def __exit__(*args, **kwargs):
         pass
 
+def resolve_imaginary(dt):
+    import pdb;pdb.set_trace()
+    if dt.tzinfo is not None and not datetime_exists(dt):
+        # You need to shift this by the difference between the current offset
+        # and the previous one. Historically, there has never been a time zone
+        # shift of more than 24 hours, nor has there been two changes to a time
+        # zone within 24 hours, so if we take the "wall time" - 24 hours, we
+        # should be OK, barring any insane time zone behavior in the future.
+        curr_offset = (dt + datetime.timedelta(hours=24)).utcoffset()
+        old_offset = (dt - datetime.timedelta(hours=24)).utcoffset()
+
+        dt += curr_offset - old_offset
+        
+
+    return dt
+
 # vim:ts=4:sw=4:et
+
