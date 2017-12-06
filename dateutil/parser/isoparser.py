@@ -29,7 +29,7 @@ def _takes_ascii(f):
             try:
                 str_in = str_in.encode('ascii')
             except UnicodeEncodeError as e:
-                msg = 'ISO-8601 strings contain only ASCII characters'
+                msg = 'ISO-8601 strings should contain only ASCII characters'
                 six.raise_from(ValueError(msg), e)
 
         return f(self, str_in, *args, **kwargs)
@@ -185,7 +185,6 @@ class isoparser(object):
         len_str = len(dt_str)
         components = [1, 1, 1]
 
-        pos = 0
         if len_str < 4:
             raise ValueError('ISO string too short')
 
