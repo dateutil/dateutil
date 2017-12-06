@@ -31,6 +31,7 @@ Apache 2.0 and BSD 3-clause. In the list below, anyone whose name is marked with
 - Holger Joukl <holger.joukl@MASKED> (gh: @hjoukl)
 - Igor <mrigor83@MASKED>
 - Ionuț Ciocîrlan <jdxlark@MASKED>
+- Jake Chorley (gh: @jakec-github)
 - Jan Studený <jendas1@MASKED>
 - Jitesh <jitesh@MASKED>
 - Jon Dufresne <jon.dufresne@MASKED> (gh: @jdufresne) **R**
@@ -53,6 +54,7 @@ Apache 2.0 and BSD 3-clause. In the list below, anyone whose name is marked with
 - Roy Williams <rwilliams@MASKED>
 - Savraj <savraj@MASKED>
 - Sergey Vishnikin <armicron@MASKED>
+- Stefan Bonchev
 - Thierry Bastian <thierryb@MASKED>
 - Thomas A Caswell <tcaswell@MASKED> (gh: @tacaswell)
 - Thomas Achtemichuk <tom@MASKED>
