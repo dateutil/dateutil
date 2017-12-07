@@ -42,6 +42,8 @@ from io import StringIO
 import six
 from six import binary_type, integer_types, text_type
 
+from decimal import Decimal
+
 from .. import relativedelta
 from .. import tz
 
@@ -873,7 +875,7 @@ class parser(object):
     def _parse_numeric_token(self, tokens, idx, info, ymd, res, fuzzy):
         # Token is a number
         value_repr = tokens[idx]
-        value = float(value_repr)
+        value = Decimal(value_repr)
         len_li = len(value_repr)
 
         len_l = len(tokens)
@@ -932,7 +934,7 @@ class parser(object):
         elif idx + 2 < len_l and tokens[idx + 1] == ':':
             # HH:MM[:SS[.ss]]
             res.hour = int(value)
-            value = float(tokens[idx + 2])  # TODO: try/except for this?
+            value = Decimal(tokens[idx + 2])  # TODO: try/except for this?
             (res.minute, res.second) = self._parse_min_sec(value)
 
             if idx + 4 < len_l and tokens[idx + 3] == ':':
@@ -1032,7 +1034,9 @@ class parser(object):
         return hms_idx
 
     def _assign_hms(self, res, value_repr, hms):
-        value = float(value_repr)
+        # See GH issue #427, fixing float rounding
+        value = Decimal(value_repr)
+
         if hms == 0:
             # Hour
             res.hour = int(value)
