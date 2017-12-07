@@ -1,26 +1,43 @@
 dateutil - powerful extensions to datetime
 ==========================================
 
-.. image:: https://img.shields.io/pypi/v/python-dateutil.svg?style=flat-square
+|pypi| |support| |licence| 
+
+|gitter| |readthedocs|
+
+|travis| |appveyor| |coverage|
+
+.. |pypi| image:: https://img.shields.io/pypi/v/python-dateutil.svg?style=flat-square
     :target: https://pypi.org/project/python-dateutil/
     :alt: pypi version
 
-.. image:: https://img.shields.io/travis/dateutil/dateutil/master.svg?style=flat-square
+.. |support| image:: https://img.shields.io/pypi/pyversions/python-dateutil.svg?style=flat-square
+    :target: https://pypi.python.org/pypi/python-dateutil/
+    :alt: supported Python version
+
+.. |travis| image:: https://img.shields.io/travis/dateutil/dateutil/master.svg?style=flat-square&label=Travis%20Build
     :target: https://travis-ci.org/dateutil/dateutil
     :alt: travis build status
 
-.. image:: https://img.shields.io/appveyor/ci/dateutil/dateutil/master.svg?style=flat-square
+.. |appveyor| image:: https://img.shields.io/appveyor/ci/dateutil/dateutil/master.svg?style=flat-square&logo=appveyor
     :target: https://ci.appveyor.com/project/dateutil/dateutil
     :alt: appveyor build status
 
-.. image:: https://codecov.io/github/dateutil/dateutil/coverage.svg?branch=master
+.. |coverage| image:: https://codecov.io/github/dateutil/dateutil/coverage.svg?branch=master
     :target: https://codecov.io/github/dateutil/dateutil?branch=master
     :alt: Code coverage
 
-.. image:: https://badges.gitter.im/dateutil/dateutil.svg
+.. |gitter| image:: https://badges.gitter.im/dateutil/dateutil.svg
    :alt: Join the chat at https://gitter.im/dateutil/dateutil
    :target: https://gitter.im/dateutil/dateutil
 
+.. |licence| image:: https://img.shields.io/pypi/l/python-dateutil.svg?style=flat-square
+    :target: https://pypi.python.org/pypi/python-dateutil/
+    :alt: licence
+
+.. |readthedocs| image:: https://img.shields.io/readthedocs/dateutil/latest.svg?style=flat-square&label=Read%20the%20Docs
+   :alt: Read the documentation at https://dateutil.readthedocs.io/en/latest/
+   :target: https://dateutil.readthedocs.io/en/latest/
 
 The `dateutil` module provides powerful extensions to
 the standard `datetime` module, available in Python.
@@ -140,3 +157,4 @@ All contributions after December 1, 2017 released under dual license - either `A
 
 .. _6B49 ACBA DCF6 BD1C A206 67AB CD54 FCE3 D964 BEFB:
    https://pgp.mit.edu/pks/lookup?op=vindex&search=0xCD54FCE3D964BEFB
+
