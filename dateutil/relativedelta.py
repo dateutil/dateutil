@@ -19,7 +19,7 @@ class relativedelta(object):
     """
     The relativedelta type is based on the specification of the excellent
     work done by M.-A. Lemburg in his
-    `mx.DateTime <http://www.egenix.com/files/python/mxDateTime.html>`_ extension.
+    `mx.DateTime <https://www.egenix.com/products/python/mxBase/mxDateTime/>`_ extension.
     However, notice that this type does *NOT* implement the same algorithm as
     his work. Do *NOT* expect it to behave like mx.DateTime's counterpart.
 

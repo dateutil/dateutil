@@ -8,7 +8,7 @@ from io import BytesIO
 
 from dateutil.tz import tzfile as _tzfile
 
-__all__ = ["get_zonefile_instance", "gettz", "gettz_db_metadata", "rebuild"]
+__all__ = ["get_zonefile_instance", "gettz", "gettz_db_metadata"]
 
 ZONEFILENAME = "dateutil-zoneinfo.tar.gz"
 METADATA_FN = 'METADATA'

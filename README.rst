@@ -32,7 +32,7 @@ dateutil is available on PyPI
 https://pypi.python.org/pypi/python-dateutil/
 
 The documentation is hosted at:
-https://dateutil.readthedocs.io/
+https://dateutil.readthedocs.io/en/stable/
 
 Code
 ====
