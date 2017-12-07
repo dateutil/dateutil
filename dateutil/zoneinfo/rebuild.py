@@ -12,7 +12,7 @@ from dateutil.zoneinfo import METADATA_FN, ZONEFILENAME
 def rebuild(filename, tag=None, format="gz", zonegroups=[], metadata=None):
     """Rebuild the internal timezone info in dateutil/zoneinfo/zoneinfo*tar*
 
-    filename is the timezone tarball from ftp.iana.org/tz.
+    filename is the timezone tarball from ``ftp.iana.org/tz``.
 
     """
     tmpdir = tempfile.mkdtemp()

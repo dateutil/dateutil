@@ -6,6 +6,7 @@ most known formats to represent a date and/or time.
 This module attempts to be forgiving with regards to unlikely input formats,
 returning a datetime object even for dates which are ambiguous. If an element
 of a date/time stamp is omitted, the following rules are applied:
+
 - If AM or PM is left unspecified, a 24-hour clock is assumed, however, an hour
   on a 12-hour clock (``0 <= hour <= 12``) *must* be specified if AM or PM is
   specified.
@@ -21,7 +22,7 @@ Additional resources about date/time string formats can be found below:
 - `A summary of the international standard date and time notation
   <http://www.cl.cam.ac.uk/~mgk25/iso-time.html>`_
 - `W3C Date and Time Formats <http://www.w3.org/TR/NOTE-datetime>`_
-- `Time Formats (Planetary Rings Node) <http://pds-rings.seti.org/tools/time_formats.html>`_
+- `Time Formats (Planetary Rings Node) <https://pds-rings.seti.org:443/tools/time_formats.html>`_
 - `CPAN ParseDate module
   <http://search.cpan.org/~muir/Time-modules-2013.0912/lib/Time/ParseDate.pm>`_
 - `Java SimpleDateFormat Class
@@ -40,6 +41,8 @@ from io import StringIO
 
 import six
 from six import binary_type, integer_types, text_type
+
+from decimal import Decimal
 
 from .. import relativedelta
 from .. import tz
@@ -572,7 +575,7 @@ class parser(object):
 
             This parameter is ignored if ``ignoretz`` is set.
 
-        :param **kwargs:
+        :param \\*\\*kwargs:
             Keyword arguments as passed to ``_parse()``.
 
         :return:
@@ -833,7 +836,7 @@ class parser(object):
     def _parse_numeric_token(self, tokens, idx, info, ymd, res, fuzzy):
         # Token is a number
         value_repr = tokens[idx]
-        value = float(value_repr)
+        value = Decimal(value_repr)
         len_li = len(value_repr)
 
         len_l = len(tokens)
@@ -892,7 +895,7 @@ class parser(object):
         elif idx + 2 < len_l and tokens[idx + 1] == ':':
             # HH:MM[:SS[.ss]]
             res.hour = int(value)
-            value = float(tokens[idx + 2])  # TODO: try/except for this?
+            value = Decimal(tokens[idx + 2])  # TODO: try/except for this?
             (res.minute, res.second) = self._parse_min_sec(value)
 
             if idx + 4 < len_l and tokens[idx + 3] == ':':
@@ -992,7 +995,9 @@ class parser(object):
         return hms_idx
 
     def _assign_hms(self, res, value_repr, hms):
-        value = float(value_repr)
+        # See GH issue #427, fixing float rounding
+        value = Decimal(value_repr)
+
         if hms == 0:
             # Hour
             res.hour = int(value)

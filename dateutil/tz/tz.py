@@ -38,6 +38,22 @@ class tzutc(datetime.tzinfo):
     """
     This is a tzinfo object that represents the UTC time zone.
 
+    **Examples:**
+
+    .. doctest::
+
+        >>> from datetime import *
+        >>> from dateutil.tz import *
+
+        >>> datetime.now()
+        datetime.datetime(2003, 9, 27, 9, 40, 1, 521290)
+
+        >>> datetime.now(tzutc())
+        datetime.datetime(2003, 9, 27, 12, 40, 12, 156379, tzinfo=tzutc())
+
+        >>> datetime.now(tzutc()).tzname()
+        'UTC'
+
     .. versionchanged:: 2.7.0
         ``tzutc()`` is now a singleton, so the result of ``tzutc()`` will
         always return the same object.
@@ -106,6 +122,7 @@ class tzutc(datetime.tzinfo):
 class tzoffset(datetime.tzinfo):
     """
     A simple class for representing a fixed offset from UTC.
+
     :param name:
         The timezone name, to be returned when ``tzname()`` is called.
     :param offset:
@@ -140,10 +157,12 @@ class tzoffset(datetime.tzinfo):
         """
         Whether or not the "wall time" of a given datetime is ambiguous in this
         zone.
+
         :param dt:
             A :py:class:`datetime.datetime`, naive or time zone aware.
         :return:
             Returns ``True`` if ambiguous, ``False`` otherwise.
+
         .. versionadded:: 2.6.0
         """
         return False
@@ -1144,13 +1163,13 @@ class _tzicalvtz(_tzinfo):
 class tzical(object):
     """
     This object is designed to parse an iCalendar-style ``VTIMEZONE`` structure
-    as set out in `RFC 2445`_ Section 4.6.5 into one or more `tzinfo` objects.
+    as set out in `RFC 5545`_ Section 4.6.5 into one or more `tzinfo` objects.
 
     :param `fileobj`:
         A file or stream in iCalendar format, which should be UTF-8 encoded
         with CRLF endings.
 
-    .. _`RFC 2445`: https://www.ietf.org/rfc/rfc2445.txt
+    .. _`RFC 5545`: https://tools.ietf.org/html/rfc5545
     """
     def __init__(self, fileobj):
         global rrule

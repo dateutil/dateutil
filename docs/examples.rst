@@ -873,7 +873,7 @@ But when an `rruleset` is needed, it is automatically used.
 
 
 parse examples
------------
+--------------
 The following code will prepare the environment:
 
 .. doctest:: tz
@@ -1274,7 +1274,7 @@ in the year of 2003.
 
 Here is the example mentioned in the
 
-[http://www.python.org/doc/current/lib/module-time.html time module documentation].
+[https://docs.python.org/3/library/time.html time module documentation].
 
 .. testsetup:: tzstr
 
@@ -1362,7 +1362,7 @@ DST is 1h in the given example) instead of the DST time. That's how
 the `tzinfo` subtypes should deal with the extra hour that happens
 when going back to the standard time. Check
 
-[http://www.python.org/doc/current/lib/datetime-tzinfo.html tzinfo documentation]
+[https://docs.python.org/3/library/datetime.html#datetime.tzinfo tzinfo documentation]
 
 for more information.
 

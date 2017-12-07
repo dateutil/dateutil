@@ -1016,6 +1016,14 @@ class TestParseUnimplementedCases(object):
         expected = datetime(1994, 12, 1)
         assert res == expected
 
+    @pytest.mark.xfail
+    def test_unambiguous_YYYYMM(self):
+        # 171206 can be parsed as YYMMDD. However, 201712 cannot be parsed
+        # as instance of YYMMDD and parser could fallback to YYYYMM format.
+        dstr = "201712"
+        res = parse(dstr)
+        expected = datetime(2017, 12, 1)
+        assert res == expected
 
 @pytest.mark.skipif(IS_WIN, reason='Windows does not use TZ var')
 def test_parse_unambiguous_nonexistent_local():
@@ -1069,3 +1077,13 @@ def test_parse_tzinfos_fold():
     assert dt.tzinfo is dt_exp.tzinfo
     assert getattr(dt, 'fold') == getattr(dt_exp, 'fold')
     assert dt.astimezone(tz.tzutc()) == dt_exp.astimezone(tz.tzutc())
+
+
+@pytest.mark.parametrize('dtstr,dt', [
+    ('5.6h', datetime(2003, 9, 25, 5, 36)),
+    ('5.6m', datetime(2003, 9, 25, 0, 5, 36)),
+    # '5.6s' never had a rounding problem, test added for completeness
+    ('5.6s', datetime(2003, 9, 25, 0, 0, 5, 600000))
+])
+def test_rounding_floatlike_strings(dtstr, dt):
+    assert parse(dtstr, default=datetime(2003, 9, 25)) == dt
