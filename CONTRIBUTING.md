@@ -41,16 +41,6 @@ that the zic command is in your path, and that you have network connectivity
 to get the latest timezone information from IANA, or from [our mirror of the
 IANA database](https://dateutil.github.io/tzdata/).
 
-Starting with version 2.4.1, all source and binary distributions will be signed
-by a PGP key that has, at the very least, been signed by the key which made the
-previous release. A table of release signing keys can be found below:
-
-Releases | Signing key fingerprint
--------- | ---------------------------------------------------
-2.4.1-   | [6B49 ACBA DCF6 BD1C A206 67AB CD54 FCE3 D964 BEFB]
-
-[6B49 ACBA DCF6 BD1C A206 67AB CD54 FCE3 D964 BEFB]: https://pgp.mit.edu/pks/lookup?op=vindex&search=0xCD54FCE3D964BEFB
-
 ## Development Setup
 
 Install the the dependencies for running the test suite using `pip` or `conda`.
@@ -67,9 +57,10 @@ Run the following commands to create a [virtual environment](https://virtualenv.
 
 Run the following commands to create a [conda environment](https://conda.io) with all dependencies installed:
 
-    conda create -n dateutil python=3.6  # Create a conda environment using Python 3.6
-    source activate dateutil             # Activate the conda environment
-    pip install -r requirements.txt  # Install the dependencies
+    conda create -n dateutil                # Create a conda environment
+    # conda create -n dateutil python=3.6   # or specify a version
+    source activate dateutil                # Activate the conda environment
+    pip install -r requirements.txt         # Install the dependencies
 
 ## Testing
 
