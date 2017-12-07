@@ -598,7 +598,7 @@ class parser(object):
             default = datetime.datetime.now().replace(hour=0, minute=0,
                                                       second=0, microsecond=0)
 
-        res, skipped_tokens = self._parse(timestr, **kwargs)
+        res, skipped_tokens = self._parse(timestr, tzinfos=tzinfos, **kwargs)
 
         if res is None:
             raise ValueError("Unknown string format:", timestr)
@@ -661,7 +661,7 @@ class parser(object):
                      "tzname", "tzoffset", "ampm"]
 
     def _parse(self, timestr, dayfirst=None, yearfirst=None, fuzzy=False,
-               fuzzy_with_tokens=False):
+               fuzzy_with_tokens=False, tzinfos=None):
         """
         Private method which performs the heavy lifting of parsing, called from
         ``parse()``, which passes on its ``kwargs`` to this function.
@@ -787,7 +787,8 @@ class parser(object):
                         skipped_idxs.append(i)
 
                 # Check for a timezone name
-                elif self._could_be_tzname(res.hour, res.tzname, res.tzoffset, l[i]):
+                elif self._could_be_tzname(res.hour, res.tzname, res.tzoffset,
+                                           l[i], tzinfos):
                     res.tzname = l[i]
                     res.tzoffset = info.tzoffset(res.tzname)
 
@@ -834,7 +835,7 @@ class parser(object):
                             l[i + 5] == ')' and
                             3 <= len(l[i + 4]) and
                             self._could_be_tzname(res.hour, res.tzname,
-                                                  None, l[i + 4])):
+                                                  None, l[i + 4], tzinfos)):
                         # -0300 (BRST)
                         res.tzname = l[i + 4]
                         i += 4
@@ -1044,15 +1045,26 @@ class parser(object):
         elif hms == 2:
             (res.second, res.microsecond) = self._parsems(value_repr)
 
-    def _could_be_tzname(self, hour, tzname, tzoffset, token):
-        if len(token) <= 1 and token != 'Z':
-            # see GH#540
-            return False
-        return (hour is not None and
-                tzname is None and
-                tzoffset is None and
-                len(token) <= 5 and
-                all(x in string.ascii_uppercase for x in token))
+    def _could_be_tzname(self, hour, tzname, tzoffset, token, tzinfos):
+        if tzinfos is None:
+            if len(token) <= 1 and token != 'Z':
+                # see GH#540
+                return False
+            return (hour is not None and
+                    tzname is None and
+                    tzoffset is None and
+                    len(token) <= 5 and
+                    all(x in string.ascii_uppercase for x in token))
+        elif isinstance(tzinfos, collections.Callable):
+            # We can't validate at this point so we let it through and validate
+            # when constructing the final return value
+            return True
+        else:
+            return token in tzinfos or (hour is not None and
+                    tzname is None and
+                    tzoffset is None and
+                    len(token) <= 5 and
+                    all(x in string.ascii_uppercase for x in token))
 
     def _ampm_valid(self, hour, ampm, fuzzy):
         """
