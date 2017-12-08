@@ -228,6 +228,7 @@ def test_bytes(isostr, dt):
     ('20120425C012500', ValueError),            # Wrong time separator
     ('2001-1', ValueError),                     # YYYY-M not valid
     ('2012-04-9', ValueError),                  # YYYY-MM-D not valid
+    ('2012-04', ValueError),                    # YYYY-MM not valid
     ('20120411T03:30+', ValueError),            # Time zone too short
     ('20120411T03:30+1234567', ValueError),     # Time zone too long
     ('20120411T03:30-25:40', ValueError),       # Time zone invalid

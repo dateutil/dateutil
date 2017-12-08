@@ -206,7 +206,7 @@ class isoparser(object):
         pos += 2
 
         if pos >= len_str:
-            return components, pos
+            raise ValueError('YYYYMM or YYYY-MM is an invalid ISO 8601 format')
 
         if has_sep:
             if dt_str[pos:pos + 1] != self._DATE_SEP:
