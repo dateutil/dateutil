@@ -16,5 +16,9 @@ docs/_build/
 # Timezone information
 tzdata*.tar.gz
 
+# asv results and artifacts
+asv_bench/env/
+asv_bench/results/
+
 .idea
 .cache
