@@ -1,10 +1,6 @@
 build: false
 environment:
   matrix:
-    - PLATFORM : x86
-      PYTHON_VERSION: 27
-    - PLATFORM : x86
-      PYTHON_VERSION: 36
     - PLATFORM : x64
       PYTHON_VERSION: 27
     - PLATFORM : x64
@@ -14,6 +10,10 @@ environment:
     - PLATFORM : x64
       PYTHON_VERSION: 35
     - PLATFORM : x64
+      PYTHON_VERSION: 36
+    - PLATFORM : x86
+      PYTHON_VERSION: 27
+    - PLATFORM : x86
       PYTHON_VERSION: 36
 
 matrix:
