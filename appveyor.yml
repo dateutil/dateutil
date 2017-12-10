@@ -12,6 +12,13 @@ platform:
 
 matrix:
   fast_finish: true
+  exclude:
+    - platform: x86
+    PYTHON_VERSION: 33
+    - platform: x86
+    PYTHON_VERSION: 34
+    - platform: x86
+    PYTHON_VERSION: 35
 
 install:
   # set env variables
