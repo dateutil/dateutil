@@ -38,6 +38,7 @@ Apache 2.0 and BSD 3-clause. In the list below, anyone whose name is marked with
 - Jitesh <jitesh@MASKED>
 - Jon Dufresne <jon.dufresne@MASKED> (gh: @jdufresne) **R**
 - Jonas Neubert <jonas@MASKED>
+- Kirit Thadaka <kirit.thadaka@gmail.com> (gh: @kirit93)
 - Kubilay Kocak <koobs@MASKED>
 - Laszlo Kiss Kollar <kiss.kollar.laszlo@MASKED> (gh: @lkollar)
 - Mario Corchero <mcorcherojim@MASKED> (gh: @mariocj89) **R**
