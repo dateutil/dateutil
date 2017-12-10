@@ -54,9 +54,8 @@ def test_year_only(dt):
 
 DATES += [datetime(2000, 2, 1), datetime(2017, 4, 1)]
 @pytest.mark.parametrize('dt', tuple(DATES))
-@pytest.mark.parametrize('fmt',
-    ['%Y%m', '%Y-%m'])
-def test_year_month(dt, fmt):
+def test_year_month(dt):
+    fmt   = '%Y-%m'
     dtstr = dt.strftime(fmt)
 
     assert isoparse(dtstr) == dt
@@ -228,6 +227,7 @@ def test_bytes(isostr, dt):
     ('20120425C012500', ValueError),            # Wrong time separator
     ('2001-1', ValueError),                     # YYYY-M not valid
     ('2012-04-9', ValueError),                  # YYYY-MM-D not valid
+    ('201204', ValueError),                     # YYYYMM not valid
     ('20120411T03:30+', ValueError),            # Time zone too short
     ('20120411T03:30+1234567', ValueError),     # Time zone too long
     ('20120411T03:30-25:40', ValueError),       # Time zone invalid
@@ -322,16 +322,15 @@ def test_parse_tzstr_fails(tzstr, exception):
 def __make_date_examples():
     dates_no_day = [
         date(1999, 12, 1),
-        date(2016, 2, 1),
+        date(2016, 2, 1)
     ]
 
     if six.PY3:
         # strftime does not support dates before 1900 in Python 2
         dates_no_day.append(date(1000, 11, 1))
 
-    date_no_day_fmts = ('%Y%m', '%Y-%m')
-
-    o = it.product(dates_no_day, date_no_day_fmts)
+    # Only one supported format for dates with no day
+    o = zip(dates_no_day, it.repeat('%Y-%m'))
 
     dates_w_day = [
         date(1969, 12, 31),
@@ -350,7 +349,6 @@ def __make_date_examples():
 @pytest.mark.parametrize('as_bytes', [True, False])
 def test_parse_isodate(d, dt_fmt, as_bytes):
     d_str = d.strftime(dt_fmt)
-
     if isinstance(d_str, six.text_type) and as_bytes:
         d_str = d_str.encode('ascii')
     elif isinstance(d_str, six.binary_type) and not as_bytes:
@@ -460,6 +458,7 @@ def test_isotime_raises(isostr, exception):
 @pytest.mark.xfail()
 @pytest.mark.parametrize('isostr,exception', [
     ('14:3015', ValueError),                    # Inconsistent separator use
+    ('201202', ValueError)                      # Invalid ISO format
 ])
 def test_isotime_raises_xfail(isostr, exception):
     iparser = isoparser()

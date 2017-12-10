@@ -206,7 +206,10 @@ class isoparser(object):
         pos += 2
 
         if pos >= len_str:
-            return components, pos
+            if has_sep:
+                return components, pos
+            else:
+                raise ValueError('Invalid ISO format')
 
         if has_sep:
             if dt_str[pos:pos + 1] != self._DATE_SEP:
