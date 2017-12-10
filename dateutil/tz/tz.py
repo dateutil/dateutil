@@ -993,7 +993,7 @@ class tzstr(tzrange):
         self._s = s
 
         res = parser._parsetz(s)
-        if res is None:
+        if res is None or res.unused_tokens:
             raise ValueError("unknown string format")
 
         # Here we break the compatibility with the TZ variable handling.

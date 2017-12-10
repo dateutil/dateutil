@@ -622,7 +622,7 @@ class parser(object):
     class _result(_resultbase):
         __slots__ = ["year", "month", "day", "weekday",
                      "hour", "minute", "second", "microsecond",
-                     "tzname", "tzoffset", "ampm"]
+                     "tzname", "tzoffset", "ampm","unused_tokens"]
 
     def _parse(self, timestr, dayfirst=None, yearfirst=None, fuzzy=False,
                fuzzy_with_tokens=False):
@@ -1314,6 +1314,7 @@ class _tzparser(object):
     def parse(self, tzstr):
         res = self._result()
         l = _timelex.split(tzstr)
+        used_tokens = [False] * len(l)
         try:
 
             len_l = len(l)
@@ -1329,9 +1330,13 @@ class _tzparser(object):
                     if not res.stdabbr:
                         offattr = "stdoffset"
                         res.stdabbr = "".join(l[i:j])
+                        for ii in range(j):
+                            used_tokens[ii] = True
                     else:
                         offattr = "dstoffset"
                         res.dstabbr = "".join(l[i:j])
+                        for ii in range(j):
+                            used_tokens[ii] = True
                     i = j
                     if (i < len_l and (l[i] in ('+', '-') or l[i][0] in
                                        "0123456789")):
@@ -1339,6 +1344,7 @@ class _tzparser(object):
                             # Yes, that's right.  See the TZ variable
                             # documentation.
                             signal = (1, -1)[l[i] == '+']
+                            used_tokens[i] = True
                             i += 1
                         else:
                             signal = -1
@@ -1352,6 +1358,7 @@ class _tzparser(object):
                             setattr(res, offattr,
                                     (int(l[i]) * 3600 +
                                      int(l[i + 2]) * 60) * signal)
+                            used_tokens[i] = True
                             i += 2
                         elif len_li <= 2:
                             # -[0]3
@@ -1359,11 +1366,13 @@ class _tzparser(object):
                                     int(l[i][:2]) * 3600 * signal)
                         else:
                             return None
+                        used_tokens[i] = True
                         i += 1
                     if res.dstabbr:
                         break
                 else:
                     break
+
 
             if i < len_l:
                 for j in range(i, len_l):
@@ -1385,21 +1394,26 @@ class _tzparser(object):
                     i += 2
                     if l[i] == '-':
                         value = int(l[i + 1]) * -1
+                        used_tokens[i] = True
                         i += 1
                     else:
                         value = int(l[i])
+                    used_tokens[i] = True
                     i += 2
                     if value:
                         x.week = value
                         x.weekday = (int(l[i]) - 1) % 7
                     else:
                         x.day = int(l[i])
+                    used_tokens[i] = True
                     i += 2
                     x.time = int(l[i])
+                    used_tokens[i] = True
                     i += 2
                 if i < len_l:
                     if l[i] in ('-', '+'):
                         signal = (-1, 1)[l[i] == "+"]
+                        used_tokens[i] = True
                         i += 1
                     else:
                         signal = 1
@@ -1411,29 +1425,37 @@ class _tzparser(object):
                 for x in (res.start, res.end):
                     if l[i] == 'J':
                         # non-leap year day (1 based)
+                        used_tokens[i] = True
                         i += 1
                         x.jyday = int(l[i])
                     elif l[i] == 'M':
                         # month[-.]week[-.]weekday
+                        used_tokens[i] = True
                         i += 1
                         x.month = int(l[i])
+                        used_tokens[i] = True
                         i += 1
                         assert l[i] in ('-', '.')
+                        used_tokens[i] = True
                         i += 1
                         x.week = int(l[i])
                         if x.week == 5:
                             x.week = -1
+                        used_tokens[i] = True
                         i += 1
                         assert l[i] in ('-', '.')
+                        used_tokens[i] = True
                         i += 1
                         x.weekday = (int(l[i]) - 1) % 7
                     else:
                         # year day (zero based)
                         x.yday = int(l[i]) + 1
 
+                    used_tokens[i] = True
                     i += 1
 
                     if i < len_l and l[i] == '/':
+                        used_tokens[i] = True
                         i += 1
                         # start time
                         len_li = len(l[i])
@@ -1444,8 +1466,10 @@ class _tzparser(object):
                         elif i + 1 < len_l and l[i + 1] == ':':
                             # -03:00
                             x.time = int(l[i]) * 3600 + int(l[i + 2]) * 60
+                            used_tokens[i] = True
                             i += 2
                             if i + 1 < len_l and l[i + 1] == ':':
+                                used_tokens[i] = True
                                 i += 2
                                 x.time += int(l[i])
                         elif len_li <= 2:
@@ -1453,6 +1477,7 @@ class _tzparser(object):
                             x.time = (int(l[i][:2]) * 3600)
                         else:
                             return None
+                        used_tokens[i] = True
                         i += 1
 
                     assert i == len_l or l[i] == ','
@@ -1464,6 +1489,7 @@ class _tzparser(object):
         except (IndexError, ValueError, AssertionError):
             return None
 
+        res.unused_tokens = not {token for token,is_used in zip(l,used_tokens) if not is_used}.issubset({",",":"})
         return res
 
 
