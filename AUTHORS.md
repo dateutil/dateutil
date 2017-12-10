@@ -6,6 +6,8 @@ Prior to 2017-12-01, the library was licensed solely under the BSD 3-clause
 license, all contributions on or after 2017-12-01 are dual-licensed between
 Apache 2.0 and BSD 3-clause. In the list below, anyone whose name is marked with
 **R** has agreed to re-license their previously submitted code under Apache 2.0.
+Anyone whose name is marked with a **D** has only made contributions since the
+switch, and thus all their contributions are dual-licensed.
 
 ## Contributors (alphabetical order)
 
@@ -13,12 +15,12 @@ Apache 2.0 and BSD 3-clause. In the list below, anyone whose name is marked with
 - Adrien Cossa <cossa@MASKED>
 - Alec Nikolas Reiter <alecreiter@MASKED>
 - Alec Reiter <areiter@MASKED>
-- Alex Chamberlain (gh: @alexchamberlain)
+- Alex Chamberlain (gh: @alexchamberlain) **D**
 - Alex Verdyan <verdyan@MASKED>
 - Alex Willmer <alex@MASKED> (gh: @moreati)
 - Alexander Brugh <alexander.brugh@MASKED> (gh: @abrugh)
 - Andrew Murray <radarhere@MASKED>
-- Bernat Gabor <bgabor8@bloomberg.net> (gh: @gaborbernat)
+- Bernat Gabor <bgabor8@bloomberg.net> (gh: @gaborbernat) **D**
 - Brandon W Maister <quodlibetor@MASKED>
 - Brock Mendel <jbrockmendel@MASKED> (gh: @jbrockmendel) **R**
 - Carlos <carlosxl@MASKED>
@@ -33,16 +35,16 @@ Apache 2.0 and BSD 3-clause. In the list below, anyone whose name is marked with
 - Holger Joukl <holger.joukl@MASKED> (gh: @hjoukl)
 - Igor <mrigor83@MASKED>
 - Ionuț Ciocîrlan <jdxlark@MASKED>
-- Jake Chorley (gh: @jakec-github)
+- Jake Chorley (gh: @jakec-github) **D**
 - Jan Studený <jendas1@MASKED>
 - Jitesh <jitesh@MASKED>
 - Jon Dufresne <jon.dufresne@MASKED> (gh: @jdufresne) **R**
 - Jonas Neubert <jonas@MASKED>
-- Kirit Thadaka <kirit.thadaka@gmail.com> (gh: @kirit93)
+- Kirit Thadaka <kirit.thadaka@gmail.com> (gh: @kirit93) **D**
 - Kubilay Kocak <koobs@MASKED>
-- Laszlo Kiss Kollar <kiss.kollar.laszlo@MASKED> (gh: @lkollar)
+- Laszlo Kiss Kollar <kiss.kollar.laszlo@MASKED> (gh: @lkollar) **D**
 - Mario Corchero <mcorcherojim@MASKED> (gh: @mariocj89) **R**
-- Mateusz Dziedzic (gh: @m-dz)
+- Mateusz Dziedzic (gh: @m-dz) **D**
 - Matthew Schinckel <matt@MASKED>
 - Max Shenfield <shenfieldmax@MASKED>
 - Maxime Lorant <maxime.lorant@MASKED>
@@ -58,17 +60,17 @@ Apache 2.0 and BSD 3-clause. In the list below, anyone whose name is marked with
 - Roy Williams <rwilliams@MASKED>
 - Savraj <savraj@MASKED>
 - Sergey Vishnikin <armicron@MASKED>
-- Stefan Bonchev
+- Stefan Bonchev **D**
 - Thierry Bastian <thierryb@MASKED>
 - Thomas A Caswell <tcaswell@MASKED> (gh: @tacaswell)
 - Thomas Achtemichuk <tom@MASKED>
 - Thomas Kluyver <takowl@MASKED> (gh: @takluyver)
-- Tomasz Kluczkowski (gh: @Tomasz-Kluczkowski)
+- Tomasz Kluczkowski (gh: @Tomasz-Kluczkowski) **D**
 - Tomi Pieviläinen <tomi.pievilainen@iki.fi>
 - Unrud <Unrud@MASKED> (gh: @unrud)
 - X O <xo@MASKED>
 - Yaron de Leeuw <me@jarondl.net> (gh: @jarondl)
-- Yoney <alper_yoney@hotmail.com>
+- Yoney <alper_yoney@hotmail.com> **D**
 - Zbigniew Jędrzejewski-Szmek <zbyszek@MASKED>
 - bachmann <bachmann.matt@MASKED>
 - bjv <brandon.vanvaerenbergh@MASKED> (@bjamesvERT)
