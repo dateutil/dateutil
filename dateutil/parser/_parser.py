@@ -609,49 +609,10 @@ class parser(object):
         if len(res) == 0:
             raise ValueError("String does not contain a date:", timestr)
 
-        repl = {}
-        for attr in ("year", "month", "day", "hour",
-                     "minute", "second", "microsecond"):
-            value = getattr(res, attr)
-            if value is not None:
-                repl[attr] = value
-
-        if 'day' not in repl:
-            # If the default day exceeds the last day of the month, fall back
-            # to the end of the month.
-            cyear = default.year if res.year is None else res.year
-            cmonth = default.month if res.month is None else res.month
-            cday = default.day if res.day is None else res.day
-
-            if cday > monthrange(cyear, cmonth)[1]:
-                repl['day'] = monthrange(cyear, cmonth)[1]
-
-        ret = default.replace(**repl)
-
-        if res.weekday is not None and not res.day:
-            ret = ret + relativedelta.relativedelta(weekday=res.weekday)
+        ret = self._build_naive(res, default)
 
         if not ignoretz:
-            if (isinstance(tzinfos, collections.Callable) or
-                    tzinfos and res.tzname in tzinfos):
-                tzinfo = self._build_tzinfo(tzinfos, res.tzname, res.tzoffset)
-                ret = ret.replace(tzinfo=tzinfo)
-                ret = self._assign_tzname(ret, res.tzname)
-            elif res.tzname and res.tzname in time.tzname:
-                ret = ret.replace(tzinfo=tz.tzlocal())
-
-                # Handle ambiguous local datetime
-                ret = self._assign_tzname(ret, res.tzname)
-
-                # This is mostly relevant for winter GMT zones parsed in the UK
-                if (ret.tzname() != res.tzname and
-                        res.tzname in self.info.UTCZONE):
-                    ret = ret.replace(tzinfo=tz.tzutc())
-
-            elif res.tzoffset == 0:
-                ret = ret.replace(tzinfo=tz.tzutc())
-            elif res.tzoffset:
-                ret = ret.replace(tzinfo=tz.tzoffset(res.tzname, res.tzoffset))
+            ret = self._build_tzaware(ret, res, tzinfos)
 
         if kwargs.get('fuzzy_with_tokens', False):
             return ret, skipped_tokens
@@ -1161,6 +1122,62 @@ class parser(object):
             raise ValueError("Offset must be tzinfo subclass, "
                              "tz string, or int offset.")
         return tzinfo
+
+    def _build_tzaware(self, naive, res, tzinfos):
+        if (isinstance(tzinfos, collections.Callable) or
+                (tzinfos and res.tzname in tzinfos)):
+            tzinfo = self._build_tzinfo(tzinfos, res.tzname, res.tzoffset)
+            aware = naive.replace(tzinfo=tzinfo)
+            aware = self._assign_tzname(aware, res.tzname)
+
+        elif res.tzname and res.tzname in time.tzname:
+            aware = naive.replace(tzinfo=tz.tzlocal())
+
+            # Handle ambiguous local datetime
+            aware = self._assign_tzname(aware, res.tzname)
+
+            # This is mostly relevant for winter GMT zones parsed in the UK
+            if (aware.tzname() != res.tzname and
+                    res.tzname in self.info.UTCZONE):
+                aware = aware.replace(tzinfo=tz.tzutc())
+
+        elif res.tzoffset == 0:
+            aware = naive.replace(tzinfo=tz.tzutc())
+
+        elif res.tzoffset:
+            aware = naive.replace(tzinfo=tz.tzoffset(res.tzname, res.tzoffset))
+
+        else:
+            # TODO: this is really only the right thing to do if no tz
+            # information was found.
+            aware = naive
+
+        return aware
+
+    def _build_naive(self, res, default):
+        repl = {}
+        for attr in ("year", "month", "day", "hour",
+                     "minute", "second", "microsecond"):
+            value = getattr(res, attr)
+            if value is not None:
+                repl[attr] = value
+
+        if 'day' not in repl:
+            # If the default day exceeds the last day of the month, fall back
+            # to the end of the month.
+            cyear = default.year if res.year is None else res.year
+            cmonth = default.month if res.month is None else res.month
+            cday = default.day if res.day is None else res.day
+
+            if cday > monthrange(cyear, cmonth)[1]:
+                repl['day'] = monthrange(cyear, cmonth)[1]
+
+        naive = default.replace(**repl)
+
+        if res.weekday is not None and not res.day:
+            naive = naive + relativedelta.relativedelta(weekday=res.weekday)
+
+        return naive
 
     def _assign_tzname(self, dt, tzname):
         if dt.tzname() != tzname:
