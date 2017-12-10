@@ -57,7 +57,7 @@ class _timelex(object):
     # Fractional seconds are sometimes split by a comma
     _split_decimal = re.compile("([.,])")
 
-    def __init__(self, instream):
+    def __init__(self, instream, join_numeric_separated_by_comma=True):
         if six.PY2:
             # In Python 2, we can't duck type properly because unicode has
             # a 'decode' function, and we'd be double-decoding
@@ -77,6 +77,7 @@ class _timelex(object):
         self.charstack = []
         self.tokenstack = []
         self.eof = False
+        self.join_numeric_separated_by_comma = join_numeric_separated_by_comma
 
     def get_token(self):
         """
@@ -144,7 +145,9 @@ class _timelex(object):
                 # numbers until we find something that doesn't fit.
                 if self.isnum(nextchar):
                     token += nextchar
-                elif nextchar == '.':
+                elif nextchar == '.' or \
+                        (self.join_numeric_separated_by_comma
+                         and (nextchar == ',' and len(token) >= 2)):
                     token += nextchar
                     state = '0.'
                 else:
@@ -201,8 +204,8 @@ class _timelex(object):
         return self.__next__()  # Python 2.x support
 
     @classmethod
-    def split(cls, s):
-        return list(cls(s))
+    def split(cls, s, join_numeric_separated_by_comma=True):
+        return list(cls(s,join_numeric_separated_by_comma))
 
     @classmethod
     def isword(cls, nextchar):
@@ -1313,7 +1316,7 @@ class _tzparser(object):
 
     def parse(self, tzstr):
         res = self._result()
-        l = _timelex.split(tzstr)
+        l = _timelex.split(tzstr, join_numeric_separated_by_comma=False)
         used_tokens = [False] * len(l)
         try:
 
