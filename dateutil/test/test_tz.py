@@ -1154,9 +1154,15 @@ class TZStrTest(unittest.TestCase, TzFoldMixin):
         tz.tzstr("IST-2IDT,M3.4.4/26,M10.5.0")
         tz.tzstr("WGT3WGST,M3.5.0/2,M10.5.0/1")
 
+        # Different offset
+        tz.tzstr("WGT3000WGST,M3.5.0/02:00,M10.5.0/01:00")
+        tz.tzstr("WGT30:00WGST,M3.5.0/02:00,M10.5.0/01:00")
+
+        # Different time formats
+        tz.tzstr("WGT3WGST,M3.5.0/02:00,M10.5.0/01:00")
+        tz.tzstr("WGT3WGST,M3.5.0/02:00,M10.5.0/01:00")
+
     def test_invalid_GNU_time_zones(self):
-        with pytest.raises(ValueError):
-            tz.tzstr("EST5EDT,4,1,0,7200,10,-1,0,7200,3600")
         with pytest.raises(ValueError):
             tz.tzstr("hdfiughdfuig,dfughdfuigpu87ñ::")
         with pytest.raises(ValueError):
@@ -1169,6 +1175,22 @@ class TZStrTest(unittest.TestCase, TzFoldMixin):
             tz.tzstr("IST-2IDT,M3.4.-1/26,M10.5.0")
         with pytest.raises(ValueError):
             tz.tzstr("IST-2IDT,M3,2000,1/26,M10,5,0")
+
+    def test_valid_default_format(self):
+        tz.tzstr("EST5EDT,5,4,0,7200,11,3,0,7200")
+        tz.tzstr("EST5EDT,5,-4,0,7200,11,3,0,7200")
+        tz.tzstr("EST5EDT,5,4,0,7200,11,-3,0,7200")
+        tz.tzstr("EST5EDT,5,4,0,7200,11,-3,0,7200,3600")
+        tz.tzstr("EST5EDT,5,4,0,7200,11,-3,0,7200,3600")
+        tz.tzstr("EST5EDT,5,4,0,7200,11,-3,0,7200,-3600")
+        tz.tzstr("EST5EDT,5,4,0,7200,11,-3,0,7200,+3600")
+
+    def test_internal_timedeltas(self):
+        self.assertNotEqual(tz.tzstr("EST5EDT,5,4,0,7200,11,-3,0,7200")._start_delta,
+                            tz.tzstr("EST5EDT,4,1,0,7200,10,-1,0,7200")._start_delta)
+
+        self.assertNotEqual(tz.tzstr("EST5EDT,5,4,0,7200,11,-3,0,7200")._end_delta,
+                            tz.tzstr("EST5EDT,4,1,0,7200,10,-1,0,7200")._end_delta)
 
     def testStrStart1(self):
         self.assertEqual(datetime(2003, 4, 6, 1, 59,
@@ -1185,14 +1207,14 @@ class TZStrTest(unittest.TestCase, TzFoldMixin):
         self.assertEqual(end.tzname(), "EST")
 
     def testStrStart2(self):
-        s = "EST5EDT,M4.1.0,M10.5.7"
+        s = "EST5EDT,4,0,6,7200,10,0,26,7200,3600"
         self.assertEqual(datetime(2003, 4, 6, 1, 59,
                                   tzinfo=tz.tzstr(s)).tzname(), "EST")
         self.assertEqual(datetime(2003, 4, 6, 2, 00,
                                   tzinfo=tz.tzstr(s)).tzname(), "EDT")
 
     def testStrEnd2(self):
-        s = "EST5EDT,M4.1.0,M10.5.7"
+        s = "EST5EDT,4,0,6,7200,10,0,26,7200,3600"
         self.assertEqual(datetime(2003, 10, 26, 0, 59,
                                   tzinfo=tz.tzstr(s)).tzname(), "EDT")
 
@@ -1201,14 +1223,14 @@ class TZStrTest(unittest.TestCase, TzFoldMixin):
         self.assertEqual(end.tzname(), "EST")
 
     def testStrStart3(self):
-        s = "EST5EDT,M4.1.0,M10.5.7"
+        s = "EST5EDT,4,1,0,7200,10,-1,0,7200,3600"
         self.assertEqual(datetime(2003, 4, 6, 1, 59,
                                   tzinfo=tz.tzstr(s)).tzname(), "EST")
         self.assertEqual(datetime(2003, 4, 6, 2, 00,
                                   tzinfo=tz.tzstr(s)).tzname(), "EDT")
 
     def testStrEnd3(self):
-        s = "EST5EDT,M4.1.0,M10.5.7"
+        s = "EST5EDT,4,1,0,7200,10,-1,0,7200,3600"
         self.assertEqual(datetime(2003, 10, 26, 0, 59,
                                   tzinfo=tz.tzstr(s)).tzname(), "EDT")
 
@@ -1232,14 +1254,14 @@ class TZStrTest(unittest.TestCase, TzFoldMixin):
         self.assertEqual(end.tzname(), "EST")
 
     def testStrStart5(self):
-        s = "EST5EDT,M4.1.0,M10.5.7"
+        s = "EST5EDT4,95/02:00:00,298/02:00"
         self.assertEqual(datetime(2003, 4, 6, 1, 59,
                                   tzinfo=tz.tzstr(s)).tzname(), "EST")
         self.assertEqual(datetime(2003, 4, 6, 2, 00,
                                   tzinfo=tz.tzstr(s)).tzname(), "EDT")
 
     def testStrEnd5(self):
-        s = "EST5EDT,M4.1.0,M10.5.7"
+        s = "EST5EDT4,95/02:00:00,298/02"
         self.assertEqual(datetime(2003, 10, 26, 0, 59,
                                   tzinfo=tz.tzstr(s)).tzname(), "EDT")
         end = tz.enfold(datetime(2003, 10, 26, 1, 00,
@@ -1277,7 +1299,7 @@ class TZStrTest(unittest.TestCase, TzFoldMixin):
     def testStrCmp2(self):
         # TODO: This is parsing the default arguments.
         self.assertEqual(tz.tzstr("EST5EDT"),
-                         tz.tzstr("EST5EDT,M4.1.0,M10.5.7"))
+                         tz.tzstr("EST5EDT,4,1,0,7200,10,-1,0,7200,3600"))
 
     def testStrInequality(self):
         TZS1 = tz.tzstr('EST5EDT4')

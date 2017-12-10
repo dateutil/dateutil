@@ -144,7 +144,7 @@ class _timelex(object):
                 # numbers until we find something that doesn't fit.
                 if self.isnum(nextchar):
                     token += nextchar
-                elif nextchar == '.' or (nextchar == ',' and len(token) >= 2):
+                elif nextchar == '.':
                     token += nextchar
                     state = '0.'
                 else:
@@ -1387,10 +1387,11 @@ class _tzparser(object):
                 pass
             elif (8 <= l.count(',') <= 9 and
                   not [y for x in l[i:] if x != ','
-                       for y in x if y not in "0123456789"]):
+                       for y in x if y not in "0123456789+-"]):
                 # GMT0BST,3,0,30,3600,10,0,26,7200[,3600]
                 for x in (res.start, res.end):
                     x.month = int(l[i])
+                    used_tokens[i] = True
                     i += 2
                     if l[i] == '-':
                         value = int(l[i + 1]) * -1
@@ -1417,6 +1418,7 @@ class _tzparser(object):
                         i += 1
                     else:
                         signal = 1
+                    used_tokens[i] = True
                     res.dstoffset = (res.stdoffset + int(l[i])) * signal
             elif (l.count(',') == 2 and l[i:].count('/') <= 2 and
                   not [y for x in l[i:] if x not in (',', '/', 'J', 'M',
