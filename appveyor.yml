@@ -7,12 +7,19 @@ environment:
     - PYTHON_VERSION: 35
     - PYTHON_VERSION: 36
 platform:
-  - x86
   - x64
+  - x86
 
 matrix:
   fast_finish: true
-
+  exclude:
+    - platform: x86
+      PYTHON_VERSION: 33
+    - platform: x86
+      PYTHON_VERSION: 34
+    - platform: x86
+      PYTHON_VERSION: 35
+    
 install:
   # set env variables
   - set TOXENV=py%PYTHON_VERSION%
