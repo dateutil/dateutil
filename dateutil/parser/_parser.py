@@ -324,17 +324,19 @@ class parserinfo(object):
         return name.lower() in self._jump
 
     def weekday(self, name):
-        try:
-            return self._weekdays[name.lower()]
-        except KeyError:
-            pass
+        if len(name) >= min(len(n) for n in self._weekdays.keys()):
+            try:
+                return self._weekdays[name.lower()]
+            except KeyError:
+                pass
         return None
 
     def month(self, name):
-        try:
-            return self._months[name.lower()] + 1
-        except KeyError:
-            pass
+        if len(name) >= min(len(n) for n in self._months.keys()):
+            try:
+                return self._months[name.lower()] + 1
+            except KeyError:
+                pass
         return None
 
     def hms(self, name):
