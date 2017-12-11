@@ -1,24 +1,25 @@
 build: false
 environment:
   matrix:
-    - PLATFORM : x64
-      PYTHON_VERSION: 27
-    - PLATFORM : x64
-      PYTHON_VERSION: 33
-    - PLATFORM : x64
-      PYTHON_VERSION: 34
-    - PLATFORM : x64
-      PYTHON_VERSION: 35
-    - PLATFORM : x64
-      PYTHON_VERSION: 36
-    - PLATFORM : x86
-      PYTHON_VERSION: 27
-    - PLATFORM : x86
-      PYTHON_VERSION: 36
+    - PYTHON_VERSION: 27
+    - PYTHON_VERSION: 33
+    - PYTHON_VERSION: 34
+    - PYTHON_VERSION: 35
+    - PYTHON_VERSION: 36
+platform:
+  - x64
+  - x86
 
 matrix:
   fast_finish: true
-
+  exclude:
+    - platform: x86
+      PYTHON_VERSION: 33
+    - platform: x86
+      PYTHON_VERSION: 34
+    - platform: x86
+      PYTHON_VERSION: 35
+    
 install:
   # set env variables
   - set TOXENV=py%PYTHON_VERSION%
