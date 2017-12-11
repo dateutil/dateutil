@@ -94,9 +94,7 @@
     // with results. If the commit is `null`, regression detection is
     // skipped for the matching benchmark.
     //
-    "regressions_first_commits": {
-        ".*": "v0.20.0"
-    },
+    "regressions_first_commits": {},
     "regression_thresholds": {
         ".*": 0.05
     }
