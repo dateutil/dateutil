@@ -5,6 +5,7 @@ from dateutil.parser._parser import parse, parser, _timelex
 iterations = 10 ** 5
 # Note: `iterations` is _not_ a keyword internal to asv config
 
+
 class Parsing(object):
 
     def time_parse_iso(self):
