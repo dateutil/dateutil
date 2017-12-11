@@ -2,6 +2,6 @@ six==1.11.0
 pytest >= 3.0; python_version != '3.3'
 pytest==3.3.1; python_version == '3.3'
 pytest-cov >= 2.0.0
-freezegun
+freezegun==0.3.9
 coverage
 mock ; python_version < '3.0'
