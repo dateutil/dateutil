@@ -3,6 +3,7 @@
 This document outlines the ways to contribute to `python-dateutil`. This is a fairly small, low-traffic project, so most of the contribution norms (coding style, acceptance criteria) have been developed ad hoc and this document will not be exhaustive. If you are interested in contributing code or documentation, please take a moment to at least review the license section to understand how your code will be licensed.
 
 ## Types of contribution
+
 ### Bug reports
 Bug reports are an important type of contribution - it's important to get feedback about how the library is failing, and there's no better way to do that than to hear about real-life failure cases. A good bug report will include:
 
@@ -31,3 +32,43 @@ The most important thing to include in your pull request are *tests* - please wr
 Starting December 1, 2017, all contributions will be assumed to be released under a dual license - the [Apache 2.0 License](https://www.apache.org/licenses/LICENSE-2.0) and the [3-Clause BSD License](https://opensource.org/licenses/BSD-3-Clause) unless otherwise specified in the pull request.
 
 All contributions before December 1, 2017 except those explicitly relicensed, are only under the 3-clause BSD license.
+
+## Building and releasing
+
+When you get the source, it does not contain the internal zoneinfo
+database. To get (and update) the database, run the updatezinfo.py script. Make sure
+that the zic command is in your path, and that you have network connectivity
+to get the latest timezone information from IANA, or from [our mirror of the
+IANA database](https://dateutil.github.io/tzdata/).
+
+## Development Setup
+
+Install the the dependencies for running the test suite using `pip` or `conda`.
+
+### pip
+
+Run the following commands to create a [virtual environment](https://virtualenv.pypa.io) with all dependencies installed:
+
+    python -m virtualenv .venv       # Create virtual environment in .venv directory
+    . .venv/bin/activate             # Activate the virtual environment
+    pip install -r requirements.txt  # Install the dependencies
+
+### conda
+
+Run the following commands to create a [conda environment](https://conda.io) with all dependencies installed:
+
+    conda create -n dateutil                # Create a conda environment
+    # conda create -n dateutil python=3.6   # or specify a version
+    source activate dateutil                # Activate the conda environment
+    pip install -r requirements.txt         # Install the dependencies
+
+## Testing
+
+dateutil has a comprehensive test suite, which can be run simply by running
+`python -m pytest` in the project root. Note that if you don't have the internal
+zoneinfo database, some tests will fail. Apart from that, all tests should pass.
+
+To easily test dateutil against all supported Python versions, you can use
+[tox](https://tox.readthedocs.io/en/latest/).
+
+All GitHub pull requests are automatically tested using travis and appveyor.
