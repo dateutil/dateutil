@@ -574,8 +574,9 @@ class ParserTest(unittest.TestCase):
 
     def testFuzzyIgnoreAMPM(self):
         s1 = "Jan 29, 1945 14:45 AM I going to see you there?"
-
-        self.assertEqual(parse(s1, fuzzy=True), datetime(1945, 1, 29, 14, 45))
+        with pytest.warns(UserWarning, match="identified but not understood"):
+            res = parse(s1, fuzzy=True)
+        self.assertEqual(res, datetime(1945, 1, 29, 14, 45))
 
     def testExtraSpace(self):
         self.assertEqual(parse("  July   4 ,  1976   12:01:02   am  "),
@@ -683,8 +684,10 @@ class ParserTest(unittest.TestCase):
                          datetime(2003, 9, 25, 12, 8))
 
     def testRandomFormat26(self):
-        self.assertEqual(parse("5:50 A.M. on June 13, 1990"),
-                         datetime(1990, 6, 13, 5, 50))
+        with pytest.warns(UserWarning, match="identified but not understood"):
+            res = parse("5:50 A.M. on June 13, 1990")
+
+        self.assertEqual(res, datetime(1990, 6, 13, 5, 50))
 
     def testRandomFormat27(self):
         self.assertEqual(parse("3rd of May 2001"), datetime(2001, 5, 3))
