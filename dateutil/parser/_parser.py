@@ -1315,7 +1315,7 @@ class _tzparser(object):
 
     def parse(self, tzstr):
         res = self._result()
-        l = [x for x in re.split(r'([,:.]|[a-zA-Z]+|[0-9]+)',tzstr) if x]
+        l = re.split(r'([,:.]|[a-zA-Z]+|[0-9]+)',tzstr)
         used_idxs = list()
         try:
 
