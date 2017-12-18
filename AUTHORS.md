@@ -20,6 +20,7 @@ Apache 2.0 and BSD 3-clause. In the list below, anyone whose name is marked with
 - Brandon W Maister <quodlibetor@MASKED>
 - Brock Mendel <jbrockmendel@MASKED> (gh: @jbrockmendel) **R**
 - Carlos <carlosxl@MASKED>
+- Cheuk Ting Ho <cheukting.ho@MASKED>
 - Christopher Corley <cscorley@MASKED>
 - Claudio Canepa <ccanepacc@MASKED>
 - Daniel Lepage <dplepage@MASKED>
@@ -61,6 +62,7 @@ Apache 2.0 and BSD 3-clause. In the list below, anyone whose name is marked with
 - Unrud <Unrud@MASKED> (gh: @unrud)
 - X O <xo@MASKED>
 - Yaron de Leeuw <me@jarondl.net> (gh: @jarondl)
+- Yoney <alper_yoney@hotmail.com>
 - Zbigniew Jędrzejewski-Szmek <zbyszek@MASKED>
 - bachmann <bachmann.matt@MASKED>
 - bjv <brandon.vanvaerenbergh@MASKED> (@bjamesvERT)
