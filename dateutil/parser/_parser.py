@@ -1420,7 +1420,7 @@ class _tzparser(object):
                     else:
                         signal = 1
                     used_idxs.append(i)
-                    res.dstoffset = (res.stdoffset + int(l[i])) * signal
+                    res.dstoffset = (res.stdoffset + int(l[i]) * signal)
             elif (l.count(',') == 2 and l[i:].count('/') <= 2 and
                   not [y for x in l[i:] if x not in (',', '/', 'J', 'M',
                                                      '.', '-', ':')
