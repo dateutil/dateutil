@@ -30,6 +30,7 @@ switch, and thus all their contributions are dual-licensed.
 - David Lehrian <david@MASKED>
 - Dominik Kozaczko <dominik@MASKED>
 - Elvis Pranskevichus <el@MASKED>
+- Florian Rathgeber (gh: @kynan)
 - Gabriel Poesia <gabriel.poesia@MASKED>
 - Gustavo Niemeyer <gustavo@niemeyer.net> (gh: @niemeyer)
 - Holger Joukl <holger.joukl@MASKED> (gh: @hjoukl)
