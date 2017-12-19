@@ -710,6 +710,7 @@ class TzOffsetTest(unittest.TestCase):
         self.assertFalse(tz.datetime_ambiguous(dt))
 
 
+@pytest.mark.tzlocal
 class TzLocalTest(unittest.TestCase):
     def testEquality(self):
         tz1 = tz.tzlocal()
@@ -731,12 +732,15 @@ class TzLocalTest(unittest.TestCase):
 
     def testInequalityInvalid(self):
         tzl = tz.tzlocal()
-        UTC = tz.tzutc()
 
         self.assertTrue(tzl != 1)
-        self.assertTrue(tzl != tz.tzutc())
         self.assertFalse(tzl == 1)
-        self.assertFalse(tzl == UTC)
+
+        # TODO: Use some sort of universal local mocking so that it's clear
+        # that we're expecting tzlocal to *not* be Pacific/Kiritimati
+        LINT = tz.gettz('Pacific/Kiritimati')
+        self.assertTrue(tzl != LINT)
+        self.assertFalse(tzl == LINT)
 
     def testInequalityUnsupported(self):
         tzl = tz.tzlocal()
@@ -766,9 +770,10 @@ def test_tzoffset_is_not():
     assert tz.tzoffset('EDT', -14400) is not tz.tzoffset('EST', -18000)
 
 
+@pytest.mark.tzlocal
 @unittest.skipIf(IS_WIN, "requires Unix")
 @unittest.skipUnless(TZEnvContext.tz_change_allowed(),
-                         TZEnvContext.tz_change_disallowed_message())
+                     TZEnvContext.tz_change_disallowed_message())
 class TzLocalNixTest(unittest.TestCase, TzFoldMixin):
     # This is a set of tests for `tzlocal()` on *nix systems
 
@@ -867,6 +872,70 @@ class TzLocalNixTest(unittest.TestCase, TzFoldMixin):
         with TZEnvContext(self.TZ_EST):
             self.assertIs(dt_time(13, 20, tzinfo=tz.tzlocal()).dst(),
                           None)
+
+    def testUTCEquality(self):
+        with TZEnvContext(self.UTC):
+            assert tz.tzlocal() == tz.tzutc()
+
+
+# TODO: Maybe a better hack than this?
+def mark_tzlocal_nix(f):
+    marks = [
+        pytest.mark.tzlocal,
+        pytest.mark.skipif(IS_WIN, reason='requires Unix'),
+        pytest.mark.skipif(not TZEnvContext.tz_change_allowed,
+                           reason=TZEnvContext.tz_change_disallowed_message())
+    ]
+
+    for mark in reversed(marks):
+        f = mark(f)
+
+    return f
+
+
+@mark_tzlocal_nix
+@pytest.mark.parametrize('tzvar', ['UTC', 'GMT0', 'UTC0'])
+def test_tzlocal_utc_equal(tzvar):
+    with TZEnvContext(tzvar):
+        assert tz.tzlocal() == tz.UTC
+
+
+@mark_tzlocal_nix
+@pytest.mark.parametrize('tzvar', [
+    'Europe/London', 'America/New_York',
+    'GMT0BST', 'EST5EDT'])
+def test_tzlocal_utc_unequal(tzvar):
+    with TZEnvContext(tzvar):
+        assert tz.tzlocal() != tz.UTC
+
+
+@mark_tzlocal_nix
+@pytest.mark.parametrize('tzvar, tzoff', [
+    ('EST5', tz.tzoffset('EST', -18000)),
+    ('GMT', tz.tzoffset('GMT', 0)),
+    ('YAKT-9', tz.tzoffset('YAKT', timedelta(hours=9))),
+    ('JST-9', tz.tzoffset('JST', timedelta(hours=9))),
+])
+def test_tzlocal_offset_equal(tzvar, tzoff):
+    with TZEnvContext(tzvar):
+        # Including both to test both __eq__ and __ne__
+        assert tz.tzlocal() == tzoff
+        assert not (tz.tzlocal() != tzoff)
+
+
+@mark_tzlocal_nix
+@pytest.mark.parametrize('tzvar, tzoff', [
+    ('EST5EDT', tz.tzoffset('EST', -18000)),
+    ('GMT0BST', tz.tzoffset('GMT', 0)),
+    ('EST5', tz.tzoffset('EST', -14400)),
+    ('YAKT-9', tz.tzoffset('JST', timedelta(hours=9))),
+    ('JST-9', tz.tzoffset('YAKT', timedelta(hours=9))),
+])
+def test_tzlocal_offset_unequal(tzvar, tzoff):
+    with TZEnvContext(tzvar):
+        # Including both to test both __eq__ and __ne__
+        assert tz.tzlocal() != tzoff
+        assert not (tz.tzlocal() == tzoff)
 
 
 class GettzTest(unittest.TestCase, TzFoldMixin):
@@ -1710,7 +1779,6 @@ class TZICalTest(unittest.TestCase, TzFoldMixin):
         with self.assertRaises(ValueError):
             tz.tzical(StringIO(tz_str))
 
-
     # Test Parsing
     def testGap(self):
         tzic = tz.tzical(StringIO('\n'.join((TZICAL_EST5EDT, TZICAL_PST8PDT))))
@@ -2093,6 +2161,7 @@ class TzPickleTest(PicklableMixin, unittest.TestCase):
     def testPickleTzOffsetNeg(self):
         self.assertPicklable(tz.tzoffset('UTC-1', -3600), singleton=True)
 
+    @pytest.mark.tzlocal
     def testPickleTzLocal(self):
         self.assertPicklable(tz.tzlocal())
 
