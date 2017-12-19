@@ -877,11 +877,20 @@ class TzLocalNixTest(unittest.TestCase, TzFoldMixin):
         with TZEnvContext(self.UTC):
             assert tz.tzlocal() == tz.tzutc()
 
+
 # TODO: Maybe a better hack than this?
-mark_tzlocal_nix = pytest.mark.tzlocal(
-    pytest.mark.skipif(IS_WIN, reason='requires Unix')(
-    pytest.mark.skipif(not TZEnvContext.tz_change_allowed,
-                       reason=TZEnvContext.tz_change_disallowed_message())))
+def mark_tzlocal_nix(f):
+    marks = [
+        pytest.mark.tzlocal,
+        pytest.mark.skipif(IS_WIN, reason='requires Unix'),
+        pytest.mark.skipif(not TZEnvContext.tz_change_allowed,
+                           reason=TZEnvContext.tz_change_disallowed_message())
+    ]
+
+    for mark in reversed(marks):
+        f = mark(f)
+
+    return f
 
 
 @mark_tzlocal_nix
@@ -1653,7 +1662,6 @@ class TZICalTest(unittest.TestCase, TzFoldMixin):
                                                  'FOO=BAR')
         with self.assertRaises(ValueError):
             tz.tzical(StringIO(tz_str))
-
 
     # Test Parsing
     def testGap(self):
