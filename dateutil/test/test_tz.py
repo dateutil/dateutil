@@ -22,7 +22,7 @@ IS_WIN = sys.platform.startswith('win')
 import pytest
 
 # dateutil imports
-from dateutil.relativedelta import relativedelta, SU
+from dateutil.relativedelta import relativedelta, SU, TH
 from dateutil.parser import parse
 from dateutil import tz as tz
 from dateutil import zoneinfo
@@ -1126,6 +1126,7 @@ class TZRangeTest(unittest.TestCase, TzFoldMixin):
         self.assertFalse(TZR != ComparesEqual)
 
 
+@pytest.mark.tzstr
 class TZStrTest(unittest.TestCase, TzFoldMixin):
     # POSIX string indicating change to summer time on the 2nd Sunday in March
     # at 2AM, and ending the 1st Sunday in November at 2AM. (valid >= 2007)
@@ -1146,6 +1147,14 @@ class TZStrTest(unittest.TestCase, TzFoldMixin):
 
         return tz.tzstr(tzname_map[tzname])
 
+
+    def test_internal_timedeltas(self):
+        self.assertNotEqual(tz.tzstr("EST5EDT,5,4,0,7200,11,-3,0,7200")._start_delta,
+                            tz.tzstr("EST5EDT,4,1,0,7200,10,-1,0,7200")._start_delta)
+
+        self.assertNotEqual(tz.tzstr("EST5EDT,5,4,0,7200,11,-3,0,7200")._end_delta,
+                            tz.tzstr("EST5EDT,4,1,0,7200,10,-1,0,7200")._end_delta)
+
     def testStrStart1(self):
         self.assertEqual(datetime(2003, 4, 6, 1, 59,
                                   tzinfo=tz.tzstr("EST5EDT")).tzname(), "EST")
@@ -1157,7 +1166,7 @@ class TZStrTest(unittest.TestCase, TzFoldMixin):
                                   tzinfo=tz.tzstr("EST5EDT")).tzname(), "EDT")
 
         end = tz.enfold(datetime(2003, 10, 26, 1, 00,
-                                  tzinfo=tz.tzstr("EST5EDT")), fold=1)
+                                 tzinfo=tz.tzstr("EST5EDT")), fold=1)
         self.assertEqual(end.tzname(), "EST")
 
     def testStrStart2(self):
@@ -1173,7 +1182,7 @@ class TZStrTest(unittest.TestCase, TzFoldMixin):
                                   tzinfo=tz.tzstr(s)).tzname(), "EDT")
 
         end = tz.enfold(datetime(2003, 10, 26, 1, 00,
-                                  tzinfo=tz.tzstr(s)), fold=1)
+                                 tzinfo=tz.tzstr(s)), fold=1)
         self.assertEqual(end.tzname(), "EST")
 
     def testStrStart3(self):
@@ -1189,7 +1198,7 @@ class TZStrTest(unittest.TestCase, TzFoldMixin):
                                   tzinfo=tz.tzstr(s)).tzname(), "EDT")
 
         end = tz.enfold(datetime(2003, 10, 26, 1, 00,
-                                  tzinfo=tz.tzstr(s)), fold=1)
+                                 tzinfo=tz.tzstr(s)), fold=1)
         self.assertEqual(end.tzname(), "EST")
 
     def testStrStart4(self):
@@ -1219,7 +1228,7 @@ class TZStrTest(unittest.TestCase, TzFoldMixin):
         self.assertEqual(datetime(2003, 10, 26, 0, 59,
                                   tzinfo=tz.tzstr(s)).tzname(), "EDT")
         end = tz.enfold(datetime(2003, 10, 26, 1, 00,
-                                  tzinfo=tz.tzstr(s)), fold=1)
+                                 tzinfo=tz.tzstr(s)), fold=1)
         self.assertEqual(end.tzname(), "EST")
 
     def testStrStart6(self):
@@ -1311,6 +1320,113 @@ class TZStrTest(unittest.TestCase, TzFoldMixin):
     def testTzStrFailure(self):
         with self.assertRaises(ValueError):
             tz.tzstr('InvalidString;439999')
+
+
+@pytest.mark.tzstr
+@pytest.mark.parametrize('tz_str,expected', [
+    # From https://www.gnu.org/software/libc/manual/html_node/TZ-Variable.html
+    ('', tz.tzrange(None)),     # TODO: Should change this so tz.tzrange('') works
+    ('EST+5EDT,M3.2.0/2,M11.1.0/12',
+     tz.tzrange('EST', -18000, 'EDT', -14400,
+        start=relativedelta(month=3, day=1, weekday=SU(2), hours=2),
+        end=relativedelta(month=11, day=1, weekday=SU(1), hours=11))),
+    ('WART4WARST,J1/0,J365/25',  # This is DST all year, Western Argentina Summer Time
+     tz.tzrange('WART', timedelta(hours=-4), 'WARST',
+        start=relativedelta(month=1, day=1, hours=0),
+        end=relativedelta(month=12, day=31, days=1))),
+    ('IST-2IDT,M3.4.4/26,M10.5.0',      # Israel Standard / Daylight Time
+     tz.tzrange('IST', timedelta(hours=2), 'IDT',
+        start=relativedelta(month=3, day=1, weekday=TH(4), days=1, hours=2),
+        end=relativedelta(month=10, day=31, weekday=SU(-1), hours=1))),
+    ('WGT3WGST,M3.5.0/2,M10.5.0/1',
+     tz.tzrange('WGT', timedelta(hours=-3), 'WGST',
+        start=relativedelta(month=3, day=31, weekday=SU(-1), hours=2),
+        end=relativedelta(month=10, day=31, weekday=SU(-1), hours=0))),
+
+    # Different offset specifications
+    ('WGT0300WGST',
+     tz.tzrange('WGT', timedelta(hours=-3), 'WGST')),
+    ('WGT03:00WGST',
+     tz.tzrange('WGT', timedelta(hours=-3), 'WGST')),
+    ('AEST-1100AEDT',
+     tz.tzrange('AEST', timedelta(hours=11), 'AEDT')),
+    ('AEST-11:00AEDT',
+     tz.tzrange('AEST', timedelta(hours=11), 'AEDT')),
+
+    # Different time formats
+    ('EST5EDT,M3.2.0/4:00,M11.1.0/3:00',
+     tz.tzrange('EST', timedelta(hours=-5), 'EDT',
+        start=relativedelta(month=3, day=1, weekday=SU(2), hours=4),
+        end=relativedelta(month=11, day=1, weekday=SU(1), hours=2))),
+    ('EST5EDT,M3.2.0/04:00,M11.1.0/03:00',
+     tz.tzrange('EST', timedelta(hours=-5), 'EDT',
+        start=relativedelta(month=3, day=1, weekday=SU(2), hours=4),
+        end=relativedelta(month=11, day=1, weekday=SU(1), hours=2))),
+    ('EST5EDT,M3.2.0/0400,M11.1.0/0300',
+     tz.tzrange('EST', timedelta(hours=-5), 'EDT',
+        start=relativedelta(month=3, day=1, weekday=SU(2), hours=4),
+        end=relativedelta(month=11, day=1, weekday=SU(1), hours=2))),
+])
+def test_valid_GNU_tzstr(tz_str, expected):
+    tzi = tz.tzstr(tz_str)
+
+    assert tzi == expected
+
+
+@pytest.mark.tzstr
+@pytest.mark.parametrize('tz_str, expected', [
+    ('EST5EDT,5,4,0,7200,11,3,0,7200',
+     tz.tzrange('EST', timedelta(hours=-5), 'EDT',
+        start=relativedelta(month=5, day=1, weekday=SU(+4), hours=+2),
+        end=relativedelta(month=11, day=1, weekday=SU(+3), hours=+1))),
+    ('EST5EDT,5,-4,0,7200,11,3,0,7200',
+     tz.tzrange('EST', timedelta(hours=-5), 'EDT',
+        start=relativedelta(hours=+2, month=5, day=31, weekday=SU(-4)),
+        end=relativedelta(hours=+1, month=11, day=1, weekday=SU(+3)))),
+    ('EST5EDT,5,4,0,7200,11,-3,0,7200',
+     tz.tzrange('EST', timedelta(hours=-5), 'EDT',
+        start=relativedelta(hours=+2, month=5, day=1, weekday=SU(+4)),
+        end=relativedelta(hours=+1, month=11, day=31, weekday=SU(-3)))),
+    ('EST5EDT,5,4,0,7200,11,-3,0,7200,3600',
+     tz.tzrange('EST', timedelta(hours=-5), 'EDT',
+        start=relativedelta(hours=+2, month=5, day=1, weekday=SU(+4)),
+        end=relativedelta(hours=+1, month=11, day=31, weekday=SU(-3)))),
+    ('EST5EDT,5,4,0,7200,11,-3,0,7200,3600',
+     tz.tzrange('EST', timedelta(hours=-5), 'EDT',
+        start=relativedelta(hours=+2, month=5, day=1, weekday=SU(+4)),
+        end=relativedelta(hours=+1, month=11, day=31, weekday=SU(-3)))),
+    ('EST5EDT,5,4,0,7200,11,-3,0,7200,-3600',
+     tz.tzrange('EST', timedelta(hours=-5), 'EDT', timedelta(hours=-6),
+        start=relativedelta(hours=+2, month=5, day=1, weekday=SU(+4)),
+        end=relativedelta(hours=+3, month=11, day=31, weekday=SU(-3)))),
+    ('EST5EDT,5,4,0,7200,11,-3,0,7200,+7200',
+     tz.tzrange('EST', timedelta(hours=-5), 'EDT', timedelta(hours=-3),
+        start=relativedelta(hours=+2, month=5, day=1, weekday=SU(+4)),
+        end=relativedelta(hours=0, month=11, day=31, weekday=SU(-3)))),
+    ('EST5EDT,5,4,0,7200,11,-3,0,7200,+3600',
+     tz.tzrange('EST', timedelta(hours=-5), 'EDT',
+        start=relativedelta(hours=+2, month=5, day=1, weekday=SU(+4)),
+        end=relativedelta(hours=+1, month=11, day=31, weekday=SU(-3)))),
+])
+def test_valid_default_format(tz_str, expected):
+    # This tests the "default" format that is used widely in the tests and
+    # examples. It is unclear where this format originated from.
+    tzi = tz.tzstr(tz_str)
+    assert tzi == expected
+
+
+@pytest.mark.tzstr
+@pytest.mark.parametrize('tz_str', [
+    'hdfiughdfuig,dfughdfuigpu87ñ::',
+    ',dfughdfuigpu87ñ::',
+    '-1:WART4WARST,J1,J365/25',
+    'WART4WARST,J1,J365/-25',
+    'IST-2IDT,M3.4.-1/26,M10.5.0',
+    'IST-2IDT,M3,2000,1/26,M10,5,0'
+])
+def test_invalid_GNU_tzstr(tz_str):
+    with pytest.raises(ValueError):
+        tz.tzstr(tz_str)
 
 
 class TZICalTest(unittest.TestCase, TzFoldMixin):
