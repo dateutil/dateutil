@@ -295,6 +295,10 @@ class tzlocal(_tzinfo):
             return (not self._hasdst and
                     self._tznames[0] in {'UTC', 'GMT'} and
                     self._std_offset == ZERO)
+        elif isinstance(other, tzoffset):
+            return (not self._hasdst and
+                    self._tznames[0] == other._name and
+                    self._std_offset == other._offset)
         else:
             return NotImplemented
 

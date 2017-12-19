@@ -877,12 +877,21 @@ class TzLocalNixTest(unittest.TestCase, TzFoldMixin):
         with TZEnvContext(self.UTC):
             assert tz.tzlocal() == tz.tzutc()
 
+# TODO: Maybe a better hack than this?
+mark_tzlocal_nix = pytest.mark.tzlocal(
+    pytest.mark.skipif(IS_WIN, reason='requires Unix')(
+    pytest.mark.skipif(not TZEnvContext.tz_change_allowed,
+                       reason=TZEnvContext.tz_change_disallowed_message())))
 
-# TODO: Consolidate these "skipIfs" or something...
-@pytest.mark.tzlocal
-@pytest.mark.skipif(IS_WIN, reason="requires Unix")
-@pytest.mark.skipif(not TZEnvContext.tz_change_allowed(),
-                    reason=TZEnvContext.tz_change_disallowed_message())
+
+@mark_tzlocal_nix
+@pytest.mark.parametrize('tzvar', ['UTC', 'GMT0', 'UTC0'])
+def test_tzlocal_utc_equal(tzvar):
+    with TZEnvContext(tzvar):
+        assert tz.tzlocal() == tz.UTC
+
+
+@mark_tzlocal_nix
 @pytest.mark.parametrize('tzvar', [
     'Europe/London', 'America/New_York',
     'GMT0BST', 'EST5EDT'])
@@ -891,14 +900,33 @@ def test_tzlocal_utc_unequal(tzvar):
         assert tz.tzlocal() != tz.UTC
 
 
-@pytest.mark.tzlocal
-@pytest.mark.skipif(IS_WIN, reason="requires Unix")
-@pytest.mark.skipif(not TZEnvContext.tz_change_allowed(),
-                    reason=TZEnvContext.tz_change_disallowed_message())
-@pytest.mark.parametrize('tzvar', ['UTC', 'GMT0', 'UTC0'])
-def test_tzlocal_utc_equal(tzvar):
+@mark_tzlocal_nix
+@pytest.mark.parametrize('tzvar, tzoff', [
+    ('EST5', tz.tzoffset('EST', -18000)),
+    ('GMT', tz.tzoffset('GMT', 0)),
+    ('YAKT-9', tz.tzoffset('YAKT', timedelta(hours=9))),
+    ('JST-9', tz.tzoffset('JST', timedelta(hours=9))),
+])
+def test_tzlocal_offset_equal(tzvar, tzoff):
     with TZEnvContext(tzvar):
-        assert tz.tzlocal() == tz.UTC
+        # Including both to test both __eq__ and __ne__
+        assert tz.tzlocal() == tzoff
+        assert not (tz.tzlocal() != tzoff)
+
+
+@mark_tzlocal_nix
+@pytest.mark.parametrize('tzvar, tzoff', [
+    ('EST5EDT', tz.tzoffset('EST', -18000)),
+    ('GMT0BST', tz.tzoffset('GMT', 0)),
+    ('EST5', tz.tzoffset('EST', -14400)),
+    ('YAKT-9', tz.tzoffset('JST', timedelta(hours=9))),
+    ('JST-9', tz.tzoffset('YAKT', timedelta(hours=9))),
+])
+def test_tzlocal_offset_unequal(tzvar, tzoff):
+    with TZEnvContext(tzvar):
+        # Including both to test both __eq__ and __ne__
+        assert tz.tzlocal() != tzoff
+        assert not (tz.tzlocal() == tzoff)
 
 
 class GettzTest(unittest.TestCase, TzFoldMixin):
