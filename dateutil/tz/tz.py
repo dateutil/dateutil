@@ -201,6 +201,7 @@ class tzlocal(_tzinfo):
 
         self._dst_saved = self._dst_offset - self._std_offset
         self._hasdst = bool(self._dst_saved)
+        self._tznames = tuple(time.tzname)
 
     def utcoffset(self, dt):
         if dt is None and self._hasdst:
@@ -222,7 +223,7 @@ class tzlocal(_tzinfo):
 
     @tzname_in_python2
     def tzname(self, dt):
-        return time.tzname[self._isdst(dt)]
+        return self._tznames[self._isdst(dt)]
 
     def is_ambiguous(self, dt):
         """
@@ -287,11 +288,15 @@ class tzlocal(_tzinfo):
         return dstval
 
     def __eq__(self, other):
-        if not isinstance(other, tzlocal):
+        if isinstance(other, tzlocal):
+            return (self._std_offset == other._std_offset and
+                    self._dst_offset == other._dst_offset)
+        elif isinstance(other, tzutc):
+            return (not self._hasdst and
+                    self._tznames[0] in {'UTC', 'GMT'} and
+                    self._std_offset == ZERO)
+        else:
             return NotImplemented
-
-        return (self._std_offset == other._std_offset and
-                self._dst_offset == other._dst_offset)
 
     __hash__ = None
 
