@@ -1413,7 +1413,7 @@ def gettz(name=None):
             tz = tzlocal()
     else:
         if name.startswith(":"):
-            name = name[:-1]
+            name = name[1:]
         if os.path.isabs(name):
             if os.path.isfile(name):
                 tz = tzfile(name)

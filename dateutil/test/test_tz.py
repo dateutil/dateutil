@@ -910,6 +910,12 @@ def test_tzlocal_utc_unequal(tzvar):
 
 
 @mark_tzlocal_nix
+def test_tzlocal_local_time_trim_colon():
+    with TZEnvContext(':/etc/localtime'):
+        assert tz.gettz() is not None
+
+
+@mark_tzlocal_nix
 @pytest.mark.parametrize('tzvar, tzoff', [
     ('EST5', tz.tzoffset('EST', -18000)),
     ('GMT', tz.tzoffset('GMT', 0)),
