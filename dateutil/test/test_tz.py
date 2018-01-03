@@ -151,10 +151,19 @@ END:DAYLIGHT
 END:VTIMEZONE
 """
 
+EST_TUPLE = ('EST', timedelta(hours=-5), timedelta(hours=0))
+EDT_TUPLE = ('EDT', timedelta(hours=-4), timedelta(hours=1))
+
+
+###
+# Helper functions
+def get_timezone_tuple(dt):
+    """Retrieve a (tzname, utcoffset, dst) tuple for a given DST"""
+    return dt.tzname(), dt.utcoffset(), dt.dst()
+
+
 ###
 # Mix-ins
-
-
 class context_passthrough(object):
     def __init__(*args, **kwargs):
         pass
@@ -1222,106 +1231,6 @@ class TZStrTest(unittest.TestCase, TzFoldMixin):
 
         return tz.tzstr(tzname_map[tzname])
 
-
-    def test_internal_timedeltas(self):
-        self.assertNotEqual(tz.tzstr("EST5EDT,5,4,0,7200,11,-3,0,7200")._start_delta,
-                            tz.tzstr("EST5EDT,4,1,0,7200,10,-1,0,7200")._start_delta)
-
-        self.assertNotEqual(tz.tzstr("EST5EDT,5,4,0,7200,11,-3,0,7200")._end_delta,
-                            tz.tzstr("EST5EDT,4,1,0,7200,10,-1,0,7200")._end_delta)
-
-    def testStrStart1(self):
-        self.assertEqual(datetime(2003, 4, 6, 1, 59,
-                                  tzinfo=tz.tzstr("EST5EDT")).tzname(), "EST")
-        self.assertEqual(datetime(2003, 4, 6, 2, 00,
-                                  tzinfo=tz.tzstr("EST5EDT")).tzname(), "EDT")
-
-    def testStrEnd1(self):
-        self.assertEqual(datetime(2003, 10, 26, 0, 59,
-                                  tzinfo=tz.tzstr("EST5EDT")).tzname(), "EDT")
-
-        end = tz.enfold(datetime(2003, 10, 26, 1, 00,
-                                 tzinfo=tz.tzstr("EST5EDT")), fold=1)
-        self.assertEqual(end.tzname(), "EST")
-
-    def testStrStart2(self):
-        s = "EST5EDT,4,0,6,7200,10,0,26,7200,3600"
-        self.assertEqual(datetime(2003, 4, 6, 1, 59,
-                                  tzinfo=tz.tzstr(s)).tzname(), "EST")
-        self.assertEqual(datetime(2003, 4, 6, 2, 00,
-                                  tzinfo=tz.tzstr(s)).tzname(), "EDT")
-
-    def testStrEnd2(self):
-        s = "EST5EDT,4,0,6,7200,10,0,26,7200,3600"
-        self.assertEqual(datetime(2003, 10, 26, 0, 59,
-                                  tzinfo=tz.tzstr(s)).tzname(), "EDT")
-
-        end = tz.enfold(datetime(2003, 10, 26, 1, 00,
-                                 tzinfo=tz.tzstr(s)), fold=1)
-        self.assertEqual(end.tzname(), "EST")
-
-    def testStrStart3(self):
-        s = "EST5EDT,4,1,0,7200,10,-1,0,7200,3600"
-        self.assertEqual(datetime(2003, 4, 6, 1, 59,
-                                  tzinfo=tz.tzstr(s)).tzname(), "EST")
-        self.assertEqual(datetime(2003, 4, 6, 2, 00,
-                                  tzinfo=tz.tzstr(s)).tzname(), "EDT")
-
-    def testStrEnd3(self):
-        s = "EST5EDT,4,1,0,7200,10,-1,0,7200,3600"
-        self.assertEqual(datetime(2003, 10, 26, 0, 59,
-                                  tzinfo=tz.tzstr(s)).tzname(), "EDT")
-
-        end = tz.enfold(datetime(2003, 10, 26, 1, 00,
-                                 tzinfo=tz.tzstr(s)), fold=1)
-        self.assertEqual(end.tzname(), "EST")
-
-    def testStrStart4(self):
-        s = "EST5EDT4,M4.1.0/02:00:00,M10-5-0/02:00"
-        self.assertEqual(datetime(2003, 4, 6, 1, 59,
-                                  tzinfo=tz.tzstr(s)).tzname(), "EST")
-        self.assertEqual(datetime(2003, 4, 6, 2, 00,
-                                  tzinfo=tz.tzstr(s)).tzname(), "EDT")
-
-    def testStrEnd4(self):
-        s = "EST5EDT4,M4.1.0/02:00:00,M10-5-0/02:00"
-        self.assertEqual(datetime(2003, 10, 26, 0, 59,
-                                  tzinfo=tz.tzstr(s)).tzname(), "EDT")
-        end = tz.enfold(datetime(2003, 10, 26, 1, 00, tzinfo=tz.tzstr(s)),
-                        fold=1)
-        self.assertEqual(end.tzname(), "EST")
-
-    def testStrStart5(self):
-        s = "EST5EDT4,95/02:00:00,298/02:00"
-        self.assertEqual(datetime(2003, 4, 6, 1, 59,
-                                  tzinfo=tz.tzstr(s)).tzname(), "EST")
-        self.assertEqual(datetime(2003, 4, 6, 2, 00,
-                                  tzinfo=tz.tzstr(s)).tzname(), "EDT")
-
-    def testStrEnd5(self):
-        s = "EST5EDT4,95/02:00:00,298/02"
-        self.assertEqual(datetime(2003, 10, 26, 0, 59,
-                                  tzinfo=tz.tzstr(s)).tzname(), "EDT")
-        end = tz.enfold(datetime(2003, 10, 26, 1, 00,
-                                 tzinfo=tz.tzstr(s)), fold=1)
-        self.assertEqual(end.tzname(), "EST")
-
-    def testStrStart6(self):
-        s = "EST5EDT4,J96/02:00:00,J299/02:00"
-        self.assertEqual(datetime(2003, 4, 6, 1, 59,
-                                  tzinfo=tz.tzstr(s)).tzname(), "EST")
-        self.assertEqual(datetime(2003, 4, 6, 2, 00,
-                                  tzinfo=tz.tzstr(s)).tzname(), "EDT")
-
-    def testStrEnd6(self):
-        s = "EST5EDT4,J96/02:00:00,J299/02"
-        self.assertEqual(datetime(2003, 10, 26, 0, 59,
-                                  tzinfo=tz.tzstr(s)).tzname(), "EDT")
-
-        end = tz.enfold(datetime(2003, 10, 26, 1, 00,
-                                 tzinfo=tz.tzstr(s)), fold=1)
-        self.assertEqual(end.tzname(), "EST")
-
     def testStrStr(self):
         # Test that tz.tzstr() won't throw an error if given a str instead
         # of a unicode literal.
@@ -1329,15 +1238,6 @@ class TZStrTest(unittest.TestCase, TzFoldMixin):
                                   tzinfo=tz.tzstr(str("EST5EDT"))).tzname(), "EST")
         self.assertEqual(datetime(2003, 4, 6, 2, 00,
                                   tzinfo=tz.tzstr(str("EST5EDT"))).tzname(), "EDT")
-
-    def testStrCmp1(self):
-        self.assertEqual(tz.tzstr("EST5EDT"),
-                         tz.tzstr("EST5EDT4,M4.1.0/02:00:00,M10-5-0/02:00"))
-
-    def testStrCmp2(self):
-        # TODO: This is parsing the default arguments.
-        self.assertEqual(tz.tzstr("EST5EDT"),
-                         tz.tzstr("EST5EDT,4,1,0,7200,10,-1,0,7200,3600"))
 
     def testStrInequality(self):
         TZS1 = tz.tzstr('EST5EDT4')
@@ -1483,10 +1383,12 @@ def test_valid_GNU_tzstr(tz_str, expected):
         start=relativedelta(hours=+2, month=5, day=1, weekday=SU(+4)),
         end=relativedelta(hours=+1, month=11, day=31, weekday=SU(-3)))),
 ])
-def test_valid_default_format(tz_str, expected):
-    # This tests the "default" format that is used widely in the tests and
-    # examples. It is unclear where this format originated from.
-    tzi = tz.tzstr(tz_str)
+def test_valid_dateutil_format(tz_str, expected):
+    # This tests the dateutil-specific format that is used widely in the tests
+    # and examples. It is unclear where this format originated from.
+    with pytest.warns(tz.DeprecatedTzFormatWarning):
+        tzi = tz.tzstr(tz_str)
+   
     assert tzi == expected
 
 
@@ -1503,6 +1405,53 @@ def test_invalid_GNU_tzstr(tz_str):
     with pytest.raises(ValueError):
         tz.tzstr(tz_str)
 
+
+# Different representations of the same default rule set
+DEFAULT_TZSTR_RULES_EQUIV_2003 = [
+    'EST5EDT',
+    'EST5EDT4,M4.1.0/02:00:00,M10-5-0/02:00',
+    'EST5EDT4,95/02:00:00,298/02:00',
+    'EST5EDT4,J96/02:00:00,J299/02:00',
+    'EST5EDT4,J96/02:00:00,J299/02'
+]
+
+
+@pytest.mark.tzstr
+@pytest.mark.parametrize('tz_str', DEFAULT_TZSTR_RULES_EQUIV_2003)
+def test_tzstr_default_start(tz_str):
+    tzi = tz.tzstr(tz_str)
+    dt_std = datetime(2003, 4, 6, 1, 59, tzinfo=tzi)
+    dt_dst = datetime(2003, 4, 6, 2, 00, tzinfo=tzi)
+
+    assert get_timezone_tuple(dt_std) == EST_TUPLE
+    assert get_timezone_tuple(dt_dst) == EDT_TUPLE
+
+
+@pytest.mark.tzstr
+@pytest.mark.parametrize('tz_str', DEFAULT_TZSTR_RULES_EQUIV_2003)
+def test_tzstr_default_end(tz_str):
+    tzi = tz.tzstr(tz_str)
+    dt_dst = datetime(2003, 10, 26, 0, 59, tzinfo=tzi)
+    dt_dst_ambig = datetime(2003, 10, 26, 1, 00, tzinfo=tzi)
+    dt_std_ambig = tz.enfold(dt_dst_ambig, fold=1)
+    dt_std = datetime(2003, 10, 26, 2, 00, tzinfo=tzi)
+
+    assert get_timezone_tuple(dt_dst) == EDT_TUPLE
+    assert get_timezone_tuple(dt_dst_ambig) == EDT_TUPLE
+    assert get_timezone_tuple(dt_std_ambig) == EST_TUPLE
+    assert get_timezone_tuple(dt_std) == EST_TUPLE
+
+
+@pytest.mark.tzstr
+@pytest.mark.parametrize('tzstr_1', ['EST5EDT',
+                                     'EST5EDT4,M4.1.0/02:00:00,M10-5-0/02:00'])
+@pytest.mark.parametrize('tzstr_2', ['EST5EDT',
+                                     'EST5EDT4,M4.1.0/02:00:00,M10-5-0/02:00'])
+def test_tzstr_default_cmp(tzstr_1, tzstr_2):
+    tz1 = tz.tzstr(tzstr_1)
+    tz2 = tz.tzstr(tzstr_2)
+
+    assert tz1 == tz2
 
 class TZICalTest(unittest.TestCase, TzFoldMixin):
     def _gettz_str_tuple(self, tzname):
