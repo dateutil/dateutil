@@ -2404,6 +2404,7 @@ class EnfoldTest(unittest.TestCase):
         self.assertEqual(getattr(dt, 'fold', 0), 0)
 
 
+@pytest.mark.tz_resolve_imaginary
 class ImaginaryDateTest(unittest.TestCase):
     def testCanberraForward(self):
         tzi = tz.gettz('Australia/Canberra')
@@ -2426,51 +2427,67 @@ class ImaginaryDateTest(unittest.TestCase):
         dt_exp = datetime(2018, 3, 25, 4, 30, tzinfo=tzi)
         self.assertEqual(dt_act, dt_exp)
 
-    def testNew_YorkAmbiguous(self):
-        # Tests that resolve_imaginary has no effect on ambiguous datetimes
-        tzi = tz.gettz('America/New_York')
-        dt = datetime(2017, 11, 5, 1, 30, tzinfo=tzi)
-        dtnew = tz.resolve_imaginary(dt)
-        self.assertIs(dt, dtnew)
 
-    def testSydneyAmbiguous(self):
-        # Tests that resolve_imaginary has no effect on ambiguous datetimes
-        tzi = tz.gettz('Australia/Sydney')
-        dt = datetime(2017, 4, 2, 2, 30, tzinfo=tzi)
-        dtnew = tz.resolve_imaginary(dt)
-        self.assertIs(dt, dtnew)
+@pytest.mark.tz_resolve_imaginary
+@pytest.mark.parametrize('dt', [
+    datetime(2017, 11, 5, 1, 30, tzinfo=tz.gettz('America/New_York')),
+    datetime(2018, 10, 28, 1, 30, tzinfo=tz.gettz('Europe/London')),
+    datetime(2017, 4, 2, 2, 30, tzinfo=tz.gettz('Australia/Sydney')),
+])
+def test_resolve_imaginary_ambiguous(dt):
+    assert tz.resolve_imaginary(dt) is dt
 
-    def testNew_YorkExisting(self):
-        # Tests that resolve_imaginary has no effect on normal datetimes
-        tzi = tz.gettz('America/New_York')
-        dt = datetime(1986, 7, 5, 1, 00, tzinfo=tzi)
-        dtnew = tz.resolve_imaginary(dt)
-        self.assertIs(dt, dtnew)
+    dt_f = tz.enfold(dt)
+    assert dt is not dt_f
+    assert tz.resolve_imaginary(dt_f) is dt_f
 
-    def testSydneyExisting(self):
-        # Tests that resolve_imaginary has no effect on normal datetimes
-        tzi = tz.gettz('Australia/Sydney')
-        dt = datetime(2018, 6, 2, 12, 0, tzinfo=tzi)
-        dtnew = tz.resolve_imaginary(dt)
-        self.assertIs(dt, dtnew)
 
-    def testLondonExisting(self):
-        # Tests that resolve_imaginary has no effect on normal datetimes
-        tzi = tz.gettz('Europe/London')
-        dt = datetime(2001, 1, 1, 1, 00, tzinfo=tzi)
-        dtnew = tz.resolve_imaginary(dt)
-        self.assertIs(dt, dtnew)
+@pytest.mark.tz_resolve_imaginary
+@pytest.mark.parametrize('dt', [
+    datetime(2017, 6, 2, 12, 30, tzinfo=tz.gettz('America/New_York')),
+    datetime(2018, 4, 2, 9, 30, tzinfo=tz.gettz('Europe/London')),
+    datetime(2017, 2, 2, 16, 30, tzinfo=tz.gettz('Australia/Sydney')),
+    datetime(2017, 12, 2, 12, 30, tzinfo=tz.gettz('America/New_York')),
+    datetime(2018, 12, 2, 9, 30, tzinfo=tz.gettz('Europe/London')),
+    datetime(2017, 6, 2, 16, 30, tzinfo=tz.gettz('Australia/Sydney')),
+    datetime(2025, 9, 25, 1, 17, tzinfo=tz.tzutc()),
+    datetime(2025, 9, 25, 1, 17, tzinfo=tz.tzoffset('EST', -18000)),
+    datetime(2019, 3, 4, tzinfo=None)
+])
+def test_resolve_imaginary_existing(dt):
+    assert tz.resolve_imaginary(dt) is dt
 
-    def testKiritimatiForward(self):
-        tzi = tz.gettz('Pacific/Kiritimati')
-        dt = datetime(1995, 1, 1, 2, 30, tzinfo=tzi)
-        dt_act = tz.resolve_imaginary(dt)
-        dt_exp = datetime(1995, 1, 2, 2, 30, tzinfo=tzi)
-        self.assertEqual(dt_act, dt_exp)
 
-    def testMonroviaForward(self):
-        tzi = tz.gettz('Africa/Monrovia')
-        dt = datetime(1972, 1, 7, hour=0, minute=30, second=0, tzinfo=tzi)
-        dt_act = tz.resolve_imaginary(dt)
-        dt_exp = datetime(1972, 1, 7, hour=1, minute=14, second=30, tzinfo=tzi)
-        self.assertEqual(dt_act, dt_exp)
+@pytest.mark.tz_resolve_imaginary
+@pytest.mark.parametrize('tzi, dt, dt_exp', [
+    (tz.gettz('Europe/London'),
+     datetime(2018, 3, 25, 1, 30), datetime(2018, 3, 25, 2, 30)),
+    (tz.gettz('America/New_York'),
+     datetime(2017, 3, 12, 2, 30), datetime(2017, 3, 12, 3, 30)),
+    (tz.gettz('Australia/Sydney'),
+     datetime(2014, 10, 5, 2, 0), datetime(2014, 10, 5, 3, 0)),
+    (tz.gettz('Pacific/Kiritimati'),
+     datetime(1995, 1, 1, 12, 30), datetime(1995, 1, 2, 12, 30)),
+])
+def test_resolve_imaginary(tzi, dt, dt_exp):
+    dt = dt.replace(tzinfo=tzi)
+    dt_exp = dt_exp.replace(tzinfo=tzi)
+
+    dt_r = tz.resolve_imaginary(dt)
+    assert dt_r == dt_exp
+    assert dt_r.tzname() == dt_exp.tzname()
+    assert dt_r.utcoffset() == dt_exp.utcoffset()
+
+
+@pytest.mark.xfail
+@pytest.mark.tz_resolve_imaginary
+def test_resolve_imaginary_monrovia():
+    # See GH #582 - When that is resolved, move this into test_resolve_imaginary
+    tzi = tz.gettz('Africa/Monrovia')
+    dt = datetime(1972, 1, 7, hour=0, minute=30, second=0, tzinfo=tzi)
+    dt_exp = datetime(1972, 1, 7, hour=1, minute=14, second=30, tzinfo=tzi)
+
+    dt_r = tz.resolve_imaginary(dt)
+    assert dt_r == dt_exp
+    assert dt_r.tzname() == dt_exp.tzname()
+    assert dt_r.utcoffset() == dt_exp.utcoffset()
