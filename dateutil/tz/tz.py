@@ -992,6 +992,18 @@ class tzstr(tzrange):
         ``UTC+3`` as being 3 hours *behind* UTC rather than ahead, per the
         POSIX standard.
 
+    .. caution::
+
+        Prior to version 2.7.0, this function also supported time zones
+        in the format:
+
+            * ``EST5EDT,4,0,6,7200,10,0,26,7200,3600``
+            * ``EST5EDT,4,1,0,7200,10,-1,0,7200,3600``
+
+        This format is non-standard and has been deprecated; this function
+        will raise a :class:`DeprecatedTZFormatWarning` until
+        support is removed in a future version.
+
     .. _`GNU C Library: TZ Variable`:
         https://www.gnu.org/software/libc/manual/html_node/TZ-Variable.html
     """
