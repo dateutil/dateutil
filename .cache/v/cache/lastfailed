@@ -1,0 +1,6 @@
+{
+  "dateutil/test/test_tz.py::TzWinTest::testTzResNameFromString": true,
+  "dateutil/test/test_tz.py::TzWinTest::testTzwinName": true,
+  "dateutil/test/test_tz.py::imaginaryDateTest::testMonroviaForward": true,
+  "dateutil/test/test_utils.py": true
+}

@@ -1559,4 +1559,15 @@ class _ContextWrapper(object):
     def __exit__(*args, **kwargs):
         pass
 
+def resolve_imaginary(dt):
+    if dt.tzinfo is not None and not datetime_exists(dt):
+
+        curr_offset = (dt + datetime.timedelta(hours=24)).utcoffset()
+        old_offset = (dt - datetime.timedelta(hours=24)).utcoffset()
+
+        dt += curr_offset - old_offset
+        
+    return dt
+
 # vim:ts=4:sw=4:et
+
