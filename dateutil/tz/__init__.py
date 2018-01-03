@@ -8,7 +8,7 @@ UTC = tzutc()
 __all__ = ["tzutc", "tzoffset", "tzlocal", "tzfile", "tzrange",
            "tzstr", "tzical", "tzwin", "tzwinlocal", "gettz",
            "enfold", "datetime_ambiguous", "datetime_exists",
-           "UTC", "DeprecatedTzFormatWarning"]
+           "resolve_imaginary", "UTC", "DeprecatedTzFormatWarning"]
 
 
 class DeprecatedTzFormatWarning(Warning):
