@@ -1487,6 +1487,8 @@ def datetime_exists(dt, tz=None):
 
     :return:
         Returns a boolean value whether or not the "wall time" exists in ``tz``.
+
+    ..versionadded:: 2.7.0
     """
     if tz is None:
         if dt.tzinfo is None:
@@ -1551,11 +1553,38 @@ def datetime_ambiguous(dt, tz=None):
 
 def resolve_imaginary(dt):
     """
-    Given an imaginary datetime in a time zone, correct to exist time by moving time forward.
+    Given a datetime that may be imaginary, return an existing datetime.
+
+    This function assumes that an imaginary datetime represents what the
+    wall time would be in a zone had the offset transition not occurred, so
+    it will always fall forward by the transition's change in offset.
+
+    ..doctest::
+        >>> from dateutil import tz
+        >>> from datetime import datetime
+        >>> NYC = tz.gettz('America/New_York')
+        >>> print(tz.resolve_imaginary(datetime(2017, 3, 12, 2, 30, tzinfo=NYC)))
+        2017-03-12 03:30:00-04:00
+
+        >>> KIR = tz.gettz('Pacific/Kiritimati')
+        >>> print(tz.resolve_imaginary(datetime(1995, 1, 1, 12, 30, tzinfo=KIR)))
+        1995-01-02 12:30:00+14:00
+
+    As a note, :func:`datetime.astimezone` is guaranteed to produce a valid,
+    existing datetime, so a round-trip to and from UTC is sufficient to get
+    an extant datetime, however, this generally "falls back" to an earlier time
+    rather than falling forward to the STD side (though no guarantees are made
+    about this behavior).
+
     :param dt:
-        A :class:`datetime.datetime`
+        A :class:`datetime.datetime` which may or may not exist.
+
     :return:
-        Returns a :class:`datetime.datetime` which is the corrected time.
+        Returns an existing :class:`datetime.datetime`. If ``dt`` was not
+        imaginary, the datetime returned is guaranteed to be the same object
+        passed to the function.
+
+    ..versionadded:: 2.7.0
     """
     if dt.tzinfo is not None and not datetime_exists(dt):
 
@@ -1590,4 +1619,3 @@ class _ContextWrapper(object):
         pass
 
 # vim:ts=4:sw=4:et
-
