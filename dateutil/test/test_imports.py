@@ -123,9 +123,13 @@ class ImportTZTest(unittest.TestCase):
         from dateutil.tz import tzwin
         from dateutil.tz import tzwinlocal
         from dateutil.tz import UTC
+        from dateutil.tz import datetime_ambiguous
+        from dateutil.tz import datetime_exists
+        from dateutil.tz import resolve_imaginary
 
         tz_all = ["tzutc", "tzoffset", "tzlocal", "tzfile", "tzrange",
-                  "tzstr", "tzical", "gettz", "UTC"]
+                  "tzstr", "tzical", "gettz", "datetime_ambiguous",
+                  "datetime_exists", "resolve_imaginary", "UTC"]
 
         tz_all += ["tzwin", "tzwinlocal"] if sys.platform.startswith("win") else []
         lvars = locals()
