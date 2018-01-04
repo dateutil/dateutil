@@ -1254,8 +1254,6 @@ tzstr examples
 Here are examples of the recognized formats:
 
   * `EST5EDT`
-  * `EST5EDT,4,0,6,7200,10,0,26,7200,3600`
-  * `EST5EDT,4,1,0,7200,10,-1,0,7200,3600`
   * `EST5EDT4,M4.1.0/02:00:00,M10-5-0/02:00`
   * `EST5EDT4,95/02:00:00,298/02:00`
   * `EST5EDT4,J96/02:00:00,J299/02:00`
@@ -1313,7 +1311,7 @@ Are these really equivalent?
 
 .. doctest:: tzstr
 
-    >>> tzstr('EST5EDT') == tzstr('EST5EDT,4,1,0,7200,10,-1,0,7200,3600')
+    >>> tzstr('EST5EDT') == tzstr('EST5EDT,M4.1.0,M10.5.0')
     True
 
 
@@ -1328,7 +1326,7 @@ Check the daylight limit.
     'EDT'
     >>> datetime(2003, 10, 26, 0, 59, tzinfo=tz).tzname()
     'EDT'
-    >>> datetime(2003, 10, 26, 1, 00, tzinfo=tz).tzname()
+    >>> datetime(2003, 10, 26, 2, 00, tzinfo=tz).tzname()
     'EST'
 
 

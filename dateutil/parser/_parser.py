@@ -44,7 +44,7 @@ from six import binary_type, integer_types, text_type
 
 from decimal import Decimal
 
-import re
+from warnings import warn
 
 from .. import relativedelta
 from .. import tz
@@ -1419,6 +1419,14 @@ class _tzparser(object):
                         signal = 1
                     used_idxs.append(i)
                     res.dstoffset = (res.stdoffset + int(l[i]) * signal)
+
+                # This was a made-up format that is not in normal use
+                warn(('Parsed time zone "%s"' % tzstr) +
+                     'is in a non-standard dateutil-specific format, which ' +
+                     'is now deprecated; support for parsing this format ' +
+                     'will be removed in future versions. It is recommended ' +
+                     'that you switch to a standard format like the GNU ' +
+                     'TZ variable format.', tz.DeprecatedTzFormatWarning)
             elif (l.count(',') == 2 and l[i:].count('/') <= 2 and
                   not [y for x in l[i:] if x not in (',', '/', 'J', 'M',
                                                      '.', '-', ':')
