@@ -387,8 +387,8 @@ class tzfile(_tzinfo):
         ``fileobj``'s ``name`` attribute or to ``repr(fileobj)``.
 
     See `Sources for Time Zone and Daylight Saving Time Data
-    <http://www.twinsun.com/tz/tz-link.htm>`_ for more information. Time zone
-    files can be compiled from the `IANA Time Zone database files
+    <https://data.iana.org/time-zones/tz-link.html>`_ for more information. Time
+    zone files can be compiled from the `IANA Time Zone database files
     <https://www.iana.org/time-zones>`_ with the `zic time zone compiler
     <https://www.freebsd.org/cgi/man.cgi?query=zic&sektion=8>`_
     """
