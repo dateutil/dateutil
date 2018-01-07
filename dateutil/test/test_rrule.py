@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 from ._common import WarningTestMixin
 
-from datetime import datetime, date
+from datetime import datetime, date, tzinfo, timedelta
 import unittest
 from six import PY3
 
@@ -4438,6 +4438,26 @@ class RRuleTest(WarningTestMixin, unittest.TestCase):
                                   bymonthday=long(5),
                                   byweekno=long(2),
                                   dtstart=datetime(1997, 9, 2, 9, 0)))
+
+    def testToStrTimezone(self):
+        ZERO = timedelta(0)
+
+        class UTC(tzinfo):
+            """UTC"""
+
+            def utcoffset(self, dt):
+                return ZERO
+
+            def tzname(self, dt):
+                return "UTC"
+
+            def dst(self, dt):
+                return ZERO
+
+        utc = UTC()
+
+        rule = rrule(YEARLY, count=3, dtstart=datetime(1997, 9, 2, 9, 0, tzinfo=utc))
+        self._rrulestr_reverse_test(rule)
 
     def testReplaceIfSet(self):
         rr = rrule(YEARLY,
