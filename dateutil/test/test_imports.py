@@ -45,14 +45,6 @@ class ImportParserTest(unittest.TestCase):
         for var in (parse, parserinfo, parser):
             self.assertIsNot(var, None)
 
-    def testParserErrors(self):
-        from dateutil.parser import InvalidDateError
-        from dateutil.parser import InvalidTimeError
-        from dateutil.parser import InvalidDatetimeError
-
-        for var in (InvalidDateError, InvalidTimeError, InvalidDatetimeError):
-            assert issubclass(var, ValueError)
-
 
 class ImportRelativeDeltaTest(unittest.TestCase):
     """ Test that dateutil.relativedelta-related imports work properly """
