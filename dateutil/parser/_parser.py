@@ -788,7 +788,7 @@ class parser(object):
                         hour_offset = int(l[i + 1][:2])
                         min_offset = 0
                     else:
-                        raise InvalidDatetimeError(timestr)
+                        raise ValueError(timestr)
 
                     res.tzoffset = signal * (hour_offset * 3600 + min_offset * 60)
 
@@ -807,7 +807,7 @@ class parser(object):
 
                 # Check jumps
                 elif not (info.jump(l[i]) or fuzzy):
-                    raise InvalidDatetimeError(timestr)
+                    raise ValueError(timestr)
 
                 else:
                     skipped_idxs.append(i)
@@ -920,7 +920,7 @@ class parser(object):
                     if value is not None:
                         ymd.append(value, 'M')
                     else:
-                        raise InvalidDatetimeError()
+                        raise ValueError()
 
                 if idx + 3 < len_l and tokens[idx + 3] == sep:
                     # We have three members
@@ -956,7 +956,7 @@ class parser(object):
             ymd.append(value)
 
         elif not fuzzy:
-            raise InvalidDatetimeError()
+            raise ValueError()
 
         return idx
 
@@ -1508,17 +1508,5 @@ DEFAULTTZPARSER = _tzparser()
 
 def _parsetz(tzstr):
     return DEFAULTTZPARSER.parse(tzstr)
-
-
-class InvalidDatetimeError(ValueError):
-    pass
-
-
-class InvalidDateError(InvalidDatetimeError):
-    pass
-
-
-class InvalidTimeError(InvalidDatetimeError):
-    pass
 
 # vim:ts=4:sw=4:et
