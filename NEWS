@@ -239,7 +239,7 @@ Version 2.4.2
   stamps, triggering inappropriate errors. gh #56 (lp: 1428895), gh pr #63.
 - Missing function "setcachesize" removed from zoneinfo __all__ list by @ryanss,
   fixing an issue with wildcard imports of dateutil.zoneinfo. (gh pr #66).
-- (PyPi only) Fix an issue with source distributions not including the test
+- (PyPI only) Fix an issue with source distributions not including the test
   suite.
 
 
