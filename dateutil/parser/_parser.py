@@ -30,7 +30,6 @@ Additional resources about date/time string formats can be found below:
 """
 from __future__ import unicode_literals
 
-import collections
 import datetime
 import re
 import string
@@ -1107,7 +1106,7 @@ class parser(object):
         return skipped_tokens
 
     def _build_tzinfo(self, tzinfos, tzname, tzoffset):
-        if isinstance(tzinfos, collections.Callable):
+        if callable(tzinfos):
             tzdata = tzinfos(tzname, tzoffset)
         else:
             tzdata = tzinfos.get(tzname)
@@ -1124,8 +1123,7 @@ class parser(object):
         return tzinfo
 
     def _build_tzaware(self, naive, res, tzinfos):
-        if (isinstance(tzinfos, collections.Callable) or
-                (tzinfos and res.tzname in tzinfos)):
+        if (callable(tzinfos) or (tzinfos and res.tzname in tzinfos)):
             tzinfo = self._build_tzinfo(tzinfos, res.tzname, res.tzoffset)
             aware = naive.replace(tzinfo=tzinfo)
             aware = self._assign_tzname(aware, res.tzname)
