@@ -20,6 +20,7 @@ from six.moves import _thread, range
 import heapq
 
 from ._common import weekday as weekdaybase
+from . import tz
 
 # For warning about deprecation of until and count
 from warnings import warn
@@ -1565,6 +1566,13 @@ class _rrulestr(object):
                     value_found = False
                     valid_values = {"VALUE=DATE-TIME", "VALUE=DATE"}
                     for parm in parms:
+                        if parm.startswith("TZID="):
+                            tzid = parm.split('TZID=')[-1]
+                            if tzinfos is None:
+                                tzinfos = {}
+                            tzinfos['TZID'] = tz.gettz(tzid)
+                            value = value+'TZID'
+                            continue
                         if parm not in valid_values:
                             raise ValueError("unsupported DTSTART parm: "+parm)
                         else:
