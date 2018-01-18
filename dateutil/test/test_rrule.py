@@ -6,6 +6,7 @@ from datetime import datetime, date
 import unittest
 from six import PY3
 
+from dateutil import tz
 from dateutil.rrule import (
     rrule, rruleset, rrulestr,
     YEARLY, MONTHLY, WEEKLY, DAILY,
@@ -2668,6 +2669,15 @@ class RRuleTest(WarningTestMixin, unittest.TestCase):
                          [datetime(1997, 9, 2, 9, 0),
                           datetime(1998, 9, 2, 9, 0),
                           datetime(1999, 9, 2, 9, 0)])
+
+    def testStrWithTZID(self):
+        self.assertEqual(list(rrulestr(
+                              "DTSTART;TZID=America/New_York:19970902T090000\n"
+                              "RRULE:FREQ=YEARLY;COUNT=3\n"
+                              )),
+                         [datetime(1997, 9, 2, 9, 0, tzinfo=tz.gettz('America/New_York')),
+                          datetime(1998, 9, 2, 9, 0, tzinfo=tz.gettz('America/New_York')),
+                          datetime(1999, 9, 2, 9, 0, tzinfo=tz.gettz('America/New_York'))])
 
     def testStrType(self):
         self.assertEqual(isinstance(rrulestr(

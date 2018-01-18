@@ -20,6 +20,7 @@ from six.moves import _thread, range
 import heapq
 
 from ._common import weekday as weekdaybase
+from . import tz
 
 # For warning about deprecation of until and count
 from warnings import warn
@@ -1563,8 +1564,14 @@ class _rrulestr(object):
                     # RFC 5445 3.8.2.4: The VALUE parameter is optional, but
                     # may be found only once.
                     value_found = False
+                    TZID = None
                     valid_values = {"VALUE=DATE-TIME", "VALUE=DATE"}
                     for parm in parms:
+                        if parm.startswith("TZID="):
+                            tzkey = parm.split('TZID=')[-1]
+                            tzlookup = tzinfos.get if tzinfos else tz.gettz
+                            TZID = tzlookup(tzkey)
+                            continue
                         if parm not in valid_values:
                             raise ValueError("unsupported DTSTART parm: "+parm)
                         else:
@@ -1577,6 +1584,11 @@ class _rrulestr(object):
                         from dateutil import parser
                     dtstart = parser.parse(value, ignoretz=ignoretz,
                                            tzinfos=tzinfos)
+                    if TZID is not None:
+                        if dtstart.tzinfo is None:
+                            dtstart = dtstart.replace(tzinfo=TZID)
+                        else:
+                            raise ValueError('DTSTART specifies multiple timezones')
                 else:
                     raise ValueError("unsupported property: "+name)
             if (forceset or len(rrulevals) > 1 or rdatevals
