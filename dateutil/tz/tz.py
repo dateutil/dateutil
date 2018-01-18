@@ -32,6 +32,34 @@ ZERO = datetime.timedelta(0)
 EPOCH = datetime.datetime.utcfromtimestamp(0)
 EPOCHORDINAL = EPOCH.toordinal()
 
+# Configure time zone paths
+if sys.platform != "win32":
+    TZFILES = [
+        "/etc/localtime",
+        "localtime",
+    ]
+
+    TZPATHS = [
+        "/usr/share/zoneinfo",
+        "/usr/lib/zoneinfo",
+        "/usr/share/lib/zoneinfo",
+        "/etc/zoneinfo",
+    ]
+
+else:
+    TZFILES = []
+    TZPATHS = []
+
+# _tzpaths is added at build time in systems that override these
+try:
+    from . import _tzpaths
+except ImportError:
+    pass
+else:
+    TZFILES = getattr(_tzpaths, 'TZFILES', TZFILES)
+    TZPATHS = getattr(_tzpaths, 'TZPATHS', TZPATHS)
+    del _tzpaths
+
 
 @six.add_metaclass(_TzSingleton)
 class tzutc(datetime.tzinfo):
@@ -1388,16 +1416,6 @@ class tzical(object):
         return "%s(%s)" % (self.__class__.__name__, repr(self._s))
 
 
-if sys.platform != "win32":
-    TZFILES = ["/etc/localtime", "localtime"]
-    TZPATHS = ["/usr/share/zoneinfo",
-               "/usr/lib/zoneinfo",
-               "/usr/share/lib/zoneinfo",
-               "/etc/zoneinfo"]
-else:
-    TZFILES = []
-    TZPATHS = []
-
 def __get_gettz():
     tzlocal_classes = (tzlocal,)
     if tzwinlocal is not None:
@@ -1504,8 +1522,10 @@ def __get_gettz():
 
     return GettzFunc()
 
+
 gettz = __get_gettz()
 del __get_gettz
+
 
 def datetime_exists(dt, tz=None):
     """
