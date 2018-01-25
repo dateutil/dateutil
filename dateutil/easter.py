@@ -45,7 +45,7 @@ def easter(year, method=EASTER_WESTERN):
 
     and
 
-    `The Calendar FAQ: Easter <http://www.tondering.dk/claus/cal/easter.php>`_
+    `The Calendar FAQ: Easter <https://www.tondering.dk/claus/cal/easter.php>`_
 
     """
 
