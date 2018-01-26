@@ -8,6 +8,7 @@ including support for caching of results.
 import itertools
 import datetime
 import calendar
+import re
 import sys
 
 try:
@@ -1502,6 +1503,11 @@ class _rrulestr(object):
         if compatible:
             forceset = True
             unfold = True
+
+        TZID_NAMES = dict(map(
+            lambda x: (x.upper(), x),
+            re.findall('TZID=(?P<name>[^:]+):', s)
+        ))
         s = s.upper()
         if not s.strip():
             raise ValueError("empty string")
@@ -1568,8 +1574,16 @@ class _rrulestr(object):
                     valid_values = {"VALUE=DATE-TIME", "VALUE=DATE"}
                     for parm in parms:
                         if parm.startswith("TZID="):
-                            tzkey = parm.split('TZID=')[-1]
-                            tzlookup = tzinfos.get if tzinfos else tz.gettz
+                            try:
+                                tzkey = TZID_NAMES[parm.split('TZID=')[-1]]
+                            except KeyError:
+                                continue
+                            if callable(tzinfos):
+                                tzlookup = tzinfos
+                            elif isinstance(tzinfos, dict):
+                                tzlookup = tzinfos.get
+                            else:
+                                tzlookup = tz.gettz
                             TZID = tzlookup(tzkey)
                             continue
                         if parm not in valid_values:
