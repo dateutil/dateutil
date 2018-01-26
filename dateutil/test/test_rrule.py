@@ -2679,6 +2679,10 @@ class RRuleTest(WarningTestMixin, unittest.TestCase):
                           datetime(1998, 9, 2, 9, 0, tzinfo=tz.gettz('America/New_York')),
                           datetime(1999, 9, 2, 9, 0, tzinfo=tz.gettz('America/New_York'))])
 
+    def testStrWithConflictingTZID(self):
+        with self.assertRaises(ValueError):
+            rrulestr("DTSTART;TZID=America/New_York:19970902T090000Z\nRRULE:FREQ=YEARLY;COUNT=3\n")
+
     def testStrType(self):
         self.assertEqual(isinstance(rrulestr(
                               "DTSTART:19970902T090000\n"
