@@ -2,6 +2,8 @@
 import warnings
 import json
 
+import six
+
 from tarfile import TarFile
 from pkgutil import get_data
 from io import BytesIO
@@ -13,7 +15,6 @@ __all__ = ["get_zonefile_instance", "gettz", "gettz_db_metadata"]
 ZONEFILENAME = "dateutil-zoneinfo.tar.gz"
 METADATA_FN = 'METADATA'
 
-
 class tzfile(_tzfile):
     def __reduce__(self):
         return (gettz, (self._filename,))
@@ -21,10 +22,16 @@ class tzfile(_tzfile):
 
 def getzoneinfofile_stream():
     try:
-        return BytesIO(get_data(__name__, ZONEFILENAME))
-    except IOError as e:  # TODO  switch to FileNotFoundError?
-        warnings.warn("I/O error({0}): {1}".format(e.errno, e.strerror))
+        zonefile_data = get_data(__name__, ZONEFILENAME)
+    except (IOError, OSError) as e:
+        msg = ('Could not access zoneinfo tarball - this is not distributed ' +
+               'by all dateutil packagers. ' +
+               'I/O Error(%d): %s' % (e.errno, e.strerror))
+
+        warnings.warn(msg, ZoneInfoTarballMissingWarning)
         return None
+
+    return BytesIO(zonefile_data)
 
 
 class ZoneInfoFile(object):
@@ -96,14 +103,35 @@ def get_zonefile_instance(new_instance=False):
     if new_instance:
         zif = None
     else:
-        zif = getattr(get_zonefile_instance, '_cached_instance', None)
+        zif = get_zonefile_instance._cache.get(ZONEFILENAME, None)
 
     if zif is None:
-        zif = ZoneInfoFile(getzoneinfofile_stream())
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter('always', ZoneInfoTarballMissingWarning)
+            zif_stream = getzoneinfofile_stream()
 
-        get_zonefile_instance._cached_instance = zif
+            if w:
+                for wval in w:
+                    if not issubclass(wval.category,
+                                      ZoneInfoTarballMissingWarning):
+                        continue
+
+                    get_zonefile_instance._warnings_cache[ZONEFILENAME] = wval
+                    break
+
+        zif = ZoneInfoFile(zif_stream)
+
+        get_zonefile_instance._cache[ZONEFILENAME] = zif
+
+    if not zif.zones:
+        wval = get_zonefile_instance._warnings_cache.get(ZONEFILENAME, None)
+        if wval:
+            warnings.warn(wval)
 
     return zif
+
+get_zonefile_instance._cache = {}
+get_zonefile_instance._warnings_cache = {}
 
 
 def gettz(name):
@@ -165,3 +193,7 @@ def gettz_db_metadata():
     if len(_CLASS_ZONE_INSTANCE) == 0:
         _CLASS_ZONE_INSTANCE.append(ZoneInfoFile(getzoneinfofile_stream()))
     return _CLASS_ZONE_INSTANCE[0].metadata
+
+
+class ZoneInfoTarballMissingWarning(UserWarning):
+    """Warning raised when trying to explicitly access a missing zoneinfo"""

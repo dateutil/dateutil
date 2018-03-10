@@ -13,6 +13,7 @@ import time
 import sys
 import os
 import bisect
+import warnings
 
 import six
 from six import string_types
@@ -1501,8 +1502,10 @@ def __get_gettz():
                                 tz = None
 
                         if not tz:
-                            from dateutil.zoneinfo import get_zonefile_instance
-                            tz = get_zonefile_instance().get(name)
+                            with warnings.catch_warnings():
+                                warnings.simplefilter('ignore',
+                                    zoneinfo.ZoneInfoTarballMissingWarning)
+                                tz = zoneinfo.get_zonefile_instance().get(name)
 
                         if not tz:
                             for c in name:

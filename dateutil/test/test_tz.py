@@ -11,6 +11,7 @@ from datetime import tzinfo
 from six import BytesIO, StringIO
 import unittest
 
+import os
 import sys
 import base64
 import copy
@@ -18,6 +19,7 @@ import copy
 from functools import partial
 
 IS_WIN = sys.platform.startswith('win')
+NO_ZONEINFO_TARBALL = os.environ.get('NO_ZONEINFO_TARBALL', False)
 
 import pytest
 
@@ -1048,6 +1050,8 @@ def test_gettz_cache_clear():
     assert NYC1 is not NYC2
 
 
+@pytest.mark.zoneinfo
+@pytest.skipif(NO_ZONEINFO_TARBALL)
 class ZoneInfoGettzTest(GettzTest, WarningTestMixin):
     def gettz(self, name):
         zoneinfo_file = zoneinfo.get_zonefile_instance()
@@ -2218,6 +2222,8 @@ class TzPickleTest(PicklableMixin, unittest.TestCase):
     def testPickleTzGettz(self):
         self.assertPicklable(tz.gettz('America/New_York'))
 
+    @pytest.mark.zoneinfo
+    @pytest.skipif(NO_ZONEINFO_TARBALL)
     def testPickleZoneFileGettz(self):
         zoneinfo_file = zoneinfo.get_zonefile_instance()
         tzi = zoneinfo_file.get('America/New_York')
