@@ -57,7 +57,8 @@ class isoparser(object):
         An ISO-8601 datetime string consists of a date portion, followed
         optionally by a time portion - the date and time portions are separated
         by a single character separator, which is ``T`` in the official
-        standard.
+        standard. Incomplete date formats (such as ``YYYY-MM``) may *not* be
+        combined with a time portion.
 
         Supported date formats are:
 
@@ -108,6 +109,16 @@ class isoparser(object):
         :return:
             Returns a :class:`datetime.datetime` representing the string.
             Unspecified components default to their lowest value.
+
+        .. warning::
+
+            As of version 2.7.0, the strictness of the parser should not be
+            considered a stable part of the contract. Any valid ISO-8601 string
+            that parses correctly with the default settings will continue to
+            parse correctly in future versions, but invalid strings that
+            currently fail (e.g. ``2017-01-01T00:00+00:00:00``) are not
+            guaranteed to continue failing in future versions if they encode
+            a valid date.
         """
         components, pos = self._parse_isodate(dt_str)
 
