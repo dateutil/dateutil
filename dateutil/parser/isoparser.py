@@ -38,16 +38,21 @@ def _takes_ascii(f):
 
 
 class isoparser(object):
-    def __init__(self, sep='T'):
+    def __init__(self, sep=None):
         """
         :param sep:
-            A single character that separates date and time portions
+            A single character that separates date and time portions. If
+            ``None``, the parser will accept any single character.
+            For strict ISO-8601 adherence, pass ``'T'``.
         """
-        if (len(sep) != 1 or ord(sep) >= 128 or sep in '0123456789'):
-            raise ValueError('Separator must be a single, non-numeric '
-                             'ASCII character')
+        if sep is not None:
+            if (len(sep) != 1 or ord(sep) >= 128 or sep in '0123456789'):
+                raise ValueError('Separator must be a single, non-numeric ' +
+                                 'ASCII character')
 
-        self._sep = sep.encode('ascii')
+            sep = sep.encode('ascii')
+
+        self._sep = sep
 
     @_takes_ascii
     def isoparse(self, dt_str):
@@ -123,7 +128,7 @@ class isoparser(object):
         components, pos = self._parse_isodate(dt_str)
 
         if len(dt_str) > pos:
-            if dt_str[pos:pos + 1] == self._sep:
+            if self._sep is None or dt_str[pos:pos + 1] == self._sep:
                 components += self._parse_isotime(dt_str[pos + 1:])
             else:
                 raise ValueError('String contains unknown ISO components')
