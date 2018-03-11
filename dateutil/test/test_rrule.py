@@ -2671,17 +2671,68 @@ class RRuleTest(WarningTestMixin, unittest.TestCase):
                           datetime(1999, 9, 2, 9, 0)])
 
     def testStrWithTZID(self):
+        NYC = tz.gettz('America/New_York')
         self.assertEqual(list(rrulestr(
                               "DTSTART;TZID=America/New_York:19970902T090000\n"
                               "RRULE:FREQ=YEARLY;COUNT=3\n"
                               )),
-                         [datetime(1997, 9, 2, 9, 0, tzinfo=tz.gettz('America/New_York')),
-                          datetime(1998, 9, 2, 9, 0, tzinfo=tz.gettz('America/New_York')),
-                          datetime(1999, 9, 2, 9, 0, tzinfo=tz.gettz('America/New_York'))])
+                         [datetime(1997, 9, 2, 9, 0, tzinfo=NYC),
+                          datetime(1998, 9, 2, 9, 0, tzinfo=NYC),
+                          datetime(1999, 9, 2, 9, 0, tzinfo=NYC)])
+
+    def testStrWithTZIDMapping(self):
+        rrstr = ("DTSTART;TZID=Eastern:19970902T090000\n" +
+                 "RRULE:FREQ=YEARLY;COUNT=3")
+
+        NYC = tz.gettz('America/New_York')
+        rr = rrulestr(rrstr, tzids={'Eastern': NYC})
+        exp = [datetime(1997, 9, 2, 9, 0, tzinfo=NYC),
+               datetime(1998, 9, 2, 9, 0, tzinfo=NYC),
+               datetime(1999, 9, 2, 9, 0, tzinfo=NYC)]
+
+        self.assertEqual(list(rr), exp)
+
+    def testStrWithTZIDCallable(self):
+        rrstr = ('DTSTART;TZID=UTC+04:19970902T090000\n' +
+                 'RRULE:FREQ=YEARLY;COUNT=3')
+
+        TZ = tz.tzstr('UTC+04')
+        def parse_tzstr(tzstr):
+            if tzstr is None:
+                raise ValueError('Invalid tzstr')
+
+            return tz.tzstr(tzstr)
+
+        rr = rrulestr(rrstr, tzids=parse_tzstr)
+
+        exp = [datetime(1997, 9, 2, 9, 0, tzinfo=TZ),
+               datetime(1998, 9, 2, 9, 0, tzinfo=TZ),
+               datetime(1999, 9, 2, 9, 0, tzinfo=TZ),]
+
+        self.assertEqual(list(rr), exp)
+
+    def testStrWithTZIDCallableFailure(self):
+        rrstr = ('DTSTART;TZID=America/New_York:19970902T090000\n' +
+                 'RRULE:FREQ=YEARLY;COUNT=3')
+
+        class TzInfoError(Exception):
+            pass
+
+        def tzinfos(tzstr):
+            if tzstr == 'America/New_York':
+                raise TzInfoError('Invalid!')
+            return None
+
+        with self.assertRaises(TzInfoError):
+            rrulestr(rrstr, tzids=tzinfos)
 
     def testStrWithConflictingTZID(self):
+        # RFC 5545 Section 3.3.5, FORM #2: DATE WITH UTC TIME
+        # https://tools.ietf.org/html/rfc5545#section-3.3.5
+        # The "TZID" property parameter MUST NOT be applied to DATE-TIME
         with self.assertRaises(ValueError):
-            rrulestr("DTSTART;TZID=America/New_York:19970902T090000Z\nRRULE:FREQ=YEARLY;COUNT=3\n")
+            rrulestr("DTSTART;TZID=America/New_York:19970902T090000Z\n"+
+                     "RRULE:FREQ=YEARLY;COUNT=3\n")
 
     def testStrType(self):
         self.assertEqual(isinstance(rrulestr(

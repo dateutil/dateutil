@@ -21,7 +21,6 @@ from six.moves import _thread, range
 import heapq
 
 from ._common import weekday as weekdaybase
-from . import tz
 
 # For warning about deprecation of until and count
 from warnings import warn
@@ -1498,6 +1497,7 @@ class _rrulestr(object):
                    forceset=False,
                    compatible=False,
                    ignoretz=False,
+                   tzids=None,
                    tzinfos=None):
         global parser
         if compatible:
@@ -1578,12 +1578,19 @@ class _rrulestr(object):
                                 tzkey = TZID_NAMES[parm.split('TZID=')[-1]]
                             except KeyError:
                                 continue
-                            if callable(tzinfos):
-                                tzlookup = tzinfos
-                            elif isinstance(tzinfos, dict):
-                                tzlookup = tzinfos.get
-                            else:
+                            if tzids is None:
+                                from . import tz
                                 tzlookup = tz.gettz
+                            elif callable(tzids):
+                                tzlookup = tzids
+                            else:
+                                tzlookup = getattr(tzids, 'get', None)
+                                if tzlookup is None:
+                                    msg = ('tzids must be a callable, ' +
+                                           'mapping, or None, ' +
+                                           'not %s' % tzids)
+                                    raise ValueError(msg)
+
                             TZID = tzlookup(tzkey)
                             continue
                         if parm not in valid_values:
