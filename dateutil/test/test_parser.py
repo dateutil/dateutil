@@ -9,6 +9,7 @@ import sys
 from dateutil import tz
 from dateutil.tz import tzoffset
 from dateutil.parser import parse, parserinfo
+from dateutil.parser import UnknownTimezoneWarning
 
 from ._common import TZEnvContext
 
@@ -574,7 +575,7 @@ class ParserTest(unittest.TestCase):
 
     def testFuzzyIgnoreAMPM(self):
         s1 = "Jan 29, 1945 14:45 AM I going to see you there?"
-        with pytest.warns(UserWarning, match="identified but not understood"):
+        with pytest.warns(UnknownTimezoneWarning):
             res = parse(s1, fuzzy=True)
         self.assertEqual(res, datetime(1945, 1, 29, 14, 45))
 
@@ -684,7 +685,7 @@ class ParserTest(unittest.TestCase):
                          datetime(2003, 9, 25, 12, 8))
 
     def testRandomFormat26(self):
-        with pytest.warns(UserWarning, match="identified but not understood"):
+        with pytest.warns(UnknownTimezoneWarning):
             res = parse("5:50 A.M. on June 13, 1990")
 
         self.assertEqual(res, datetime(1990, 6, 13, 5, 50))

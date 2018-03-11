@@ -1157,7 +1157,8 @@ class parser(object):
                           "Pass `tzinfos` argument in order to correctly "
                           "return a timezone-aware datetime.  In a future "
                           "version, this raise an "
-                          "exception.".format(tzname=res.tzname))
+                          "exception.".format(tzname=res.tzname),
+                          category=UnknownTimezoneWarning)
             aware = naive
 
         return aware
@@ -1517,4 +1518,6 @@ DEFAULTTZPARSER = _tzparser()
 def _parsetz(tzstr):
     return DEFAULTTZPARSER.parse(tzstr)
 
+class UnknownTimezoneWarning(RuntimeWarning):
+    """Raised when the parser finds a timezone it cannot parse into a tzinfo"""
 # vim:ts=4:sw=4:et
