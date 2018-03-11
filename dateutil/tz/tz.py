@@ -22,7 +22,7 @@ from ._common import tzrangebase, enfold
 from ._common import _validate_fromutc_inputs
 
 from ._factories import _TzSingleton, _TzOffsetFactory
-
+from ._factories import _TzStrFactory
 try:
     from .win import tzwin, tzwinlocal
 except ImportError:
@@ -966,6 +966,7 @@ class tzrange(tzrangebase):
         return self._dst_base_offset_
 
 
+@six.add_metaclass(_TzStrFactory)
 class tzstr(tzrange):
     """
     ``tzstr`` objects are time zone objects specified by a time-zone string as
@@ -1397,80 +1398,114 @@ else:
     TZFILES = []
     TZPATHS = []
 
+def __get_gettz():
+    tzlocal_classes = (tzlocal,)
+    if tzwinlocal is not None:
+        tzlocal_classes += (tzwinlocal,)
 
-def gettz(name=None):
-    tz = None
-    if not name:
-        try:
-            name = os.environ["TZ"]
-        except KeyError:
-            pass
-    if name is None or name == ":":
-        for filepath in TZFILES:
-            if not os.path.isabs(filepath):
-                filename = filepath
-                for path in TZPATHS:
-                    filepath = os.path.join(path, filename)
+    class GettzFunc(object):
+        def __init__(self):
+
+            self.__instances = {}
+            self._cache_lock = _thread.allocate_lock()
+
+        def __call__(self, name=None):
+            with self._cache_lock:
+                rv = self.__instances.get(name, None)
+
+                if rv is None:
+                    rv = self.nocache(name=name)
+                    if not (name is None or isinstance(rv, tzlocal_classes)):
+                        # tzlocal is slightly more complicated than the other
+                        # time zone providers because it depends on environment
+                        # at construction time, so don't cache that.
+                        self.__instances[name] = rv
+
+            return rv
+
+        def cache_clear(self):
+            with self._cache_lock:
+                self.__instances = {}
+
+        @staticmethod
+        def nocache(name=None):
+            """A non-cached version of gettz"""
+            tz = None
+            if not name:
+                try:
+                    name = os.environ["TZ"]
+                except KeyError:
+                    pass
+            if name is None or name == ":":
+                for filepath in TZFILES:
+                    if not os.path.isabs(filepath):
+                        filename = filepath
+                        for path in TZPATHS:
+                            filepath = os.path.join(path, filename)
+                            if os.path.isfile(filepath):
+                                break
+                        else:
+                            continue
                     if os.path.isfile(filepath):
-                        break
-                else:
-                    continue
-            if os.path.isfile(filepath):
-                try:
-                    tz = tzfile(filepath)
-                    break
-                except (IOError, OSError, ValueError):
-                    pass
-        else:
-            tz = tzlocal()
-    else:
-        if name.startswith(":"):
-            name = name[1:]
-        if os.path.isabs(name):
-            if os.path.isfile(name):
-                tz = tzfile(name)
-            else:
-                tz = None
-        else:
-            for path in TZPATHS:
-                filepath = os.path.join(path, name)
-                if not os.path.isfile(filepath):
-                    filepath = filepath.replace(' ', '_')
-                    if not os.path.isfile(filepath):
-                        continue
-                try:
-                    tz = tzfile(filepath)
-                    break
-                except (IOError, OSError, ValueError):
-                    pass
-            else:
-                tz = None
-                if tzwin is not None:
-                    try:
-                        tz = tzwin(name)
-                    except WindowsError:
-                        tz = None
-
-                if not tz:
-                    from dateutil.zoneinfo import get_zonefile_instance
-                    tz = get_zonefile_instance().get(name)
-
-                if not tz:
-                    for c in name:
-                        # name must have at least one offset to be a tzstr
-                        if c in "0123456789":
-                            try:
-                                tz = tzstr(name)
-                            except ValueError:
-                                pass
+                        try:
+                            tz = tzfile(filepath)
                             break
+                        except (IOError, OSError, ValueError):
+                            pass
+                else:
+                    tz = tzlocal()
+            else:
+                if name.startswith(":"):
+                    name = name[1:]
+                if os.path.isabs(name):
+                    if os.path.isfile(name):
+                        tz = tzfile(name)
                     else:
-                        if name in ("GMT", "UTC"):
-                            tz = tzutc()
-                        elif name in time.tzname:
-                            tz = tzlocal()
-    return tz
+                        tz = None
+                else:
+                    for path in TZPATHS:
+                        filepath = os.path.join(path, name)
+                        if not os.path.isfile(filepath):
+                            filepath = filepath.replace(' ', '_')
+                            if not os.path.isfile(filepath):
+                                continue
+                        try:
+                            tz = tzfile(filepath)
+                            break
+                        except (IOError, OSError, ValueError):
+                            pass
+                    else:
+                        tz = None
+                        if tzwin is not None:
+                            try:
+                                tz = tzwin(name)
+                            except WindowsError:
+                                tz = None
 
+                        if not tz:
+                            from dateutil.zoneinfo import get_zonefile_instance
+                            tz = get_zonefile_instance().get(name)
+
+                        if not tz:
+                            for c in name:
+                                # name must have at least one offset to be a tzstr
+                                if c in "0123456789":
+                                    try:
+                                        tz = tzstr(name)
+                                    except ValueError:
+                                        pass
+                                    break
+                            else:
+                                if name in ("GMT", "UTC"):
+                                    tz = tzutc()
+                                elif name in time.tzname:
+                                    tz = tzlocal()
+            return tz
+
+    return GettzFunc()
+
+gettz = __get_gettz()
+del __get_gettz
 
 def datetime_exists(dt, tz=None):
     """

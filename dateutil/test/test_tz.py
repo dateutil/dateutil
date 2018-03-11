@@ -664,6 +664,7 @@ class TzUTCTest(unittest.TestCase):
         self.assertFalse(tz.datetime_ambiguous(dt))
 
 
+@pytest.mark.tzoffset
 class TzOffsetTest(unittest.TestCase):
     def testTimedeltaOffset(self):
         est = tz.tzoffset('EST', timedelta(hours=-5))
@@ -718,6 +719,30 @@ class TzOffsetTest(unittest.TestCase):
 
         self.assertFalse(tz.datetime_ambiguous(dt))
 
+    def testTzOffsetInstance(self):
+        tz1 = tz.tzoffset.instance('EST', timedelta(hours=-5))
+        tz2 = tz.tzoffset.instance('EST', timedelta(hours=-5))
+
+        assert tz1 is not tz2
+
+    def testTzOffsetSingletonDifferent(self):
+        tz1 = tz.tzoffset('EST', timedelta(hours=-5))
+        tz2 = tz.tzoffset('EST', -18000)
+
+        assert tz1 is tz2
+
+@pytest.mark.tzoffset
+@pytest.mark.parametrize('args', [
+    ('UTC', 0),
+    ('EST', -18000),
+    ('EST', timedelta(hours=-5)),
+    (None, timedelta(hours=3)),
+])
+def test_tzoffset_singleton(args):
+    tz1 = tz.tzoffset(*args)
+    tz2 = tz.tzoffset(*args)
+
+    assert tz1 is tz2
 
 @pytest.mark.tzlocal
 class TzLocalTest(unittest.TestCase):
@@ -953,6 +978,7 @@ def test_tzlocal_offset_unequal(tzvar, tzoff):
         assert not (tz.tzlocal() == tzoff)
 
 
+@pytest.mark.gettz
 class GettzTest(unittest.TestCase, TzFoldMixin):
     gettz = staticmethod(tz.gettz)
 
@@ -998,6 +1024,28 @@ class GettzTest(unittest.TestCase, TzFoldMixin):
         self.assertEqual(t_west.tzname(), 'WEST')
         self.assertEqual(t_west.utcoffset(), timedelta(hours=1))
         self.assertEqual(t_west.dst(), timedelta(hours=1))
+
+    def testGettzCacheTzFile(self):
+        NYC1 = tz.gettz('America/New_York')
+        NYC2 = tz.gettz('America/New_York')
+
+        assert NYC1 is NYC2
+
+    def testGettzCacheTzLocal(self):
+        local1 = tz.gettz()
+        local2 = tz.gettz()
+
+        assert local1 is not local2
+
+@pytest.mark.gettz
+@pytest.mark.xfail(IS_WIN, reason='zoneinfo separately cached')
+def test_gettz_cache_clear():
+    NYC1 = tz.gettz('America/New_York')
+    tz.gettz.cache_clear()
+
+    NYC2 = tz.gettz('America/New_York')
+
+    assert NYC1 is not NYC2
 
 
 class ZoneInfoGettzTest(GettzTest, WarningTestMixin):
@@ -1296,6 +1344,36 @@ class TZStrTest(unittest.TestCase, TzFoldMixin):
         with self.assertRaises(ValueError):
             tz.tzstr('InvalidString;439999')
 
+    def testTzStrSingleton(self):
+        tz1 = tz.tzstr('EST5EDT')
+        tz2 = tz.tzstr('CST4CST')
+        tz3 = tz.tzstr('EST5EDT')
+
+        self.assertIsNot(tz1, tz2)
+        self.assertIs(tz1, tz3)
+
+    def testTzStrSingletonPosix(self):
+        tz_t1 = tz.tzstr('GMT+3', posix_offset=True)
+        tz_f1 = tz.tzstr('GMT+3', posix_offset=False)
+
+        tz_t2 = tz.tzstr('GMT+3', posix_offset=True)
+        tz_f2 = tz.tzstr('GMT+3', posix_offset=False)
+
+        self.assertIs(tz_t1, tz_t2)
+        self.assertIsNot(tz_t1, tz_f1)
+
+        self.assertIs(tz_f1, tz_f2)
+
+    def testTzStrInstance(self):
+        tz1 = tz.tzstr('EST5EDT')
+        tz2 = tz.tzstr.instance('EST5EDT')
+        tz3 = tz.tzstr.instance('EST5EDT')
+
+        assert tz1 is not tz2
+        assert tz2 is not tz3
+
+        # Ensure that these still are all the same zone
+        assert tz1 == tz2 == tz3
 
 @pytest.mark.tzstr
 @pytest.mark.parametrize('tz_str,expected', [
@@ -1387,8 +1465,8 @@ def test_valid_dateutil_format(tz_str, expected):
     # This tests the dateutil-specific format that is used widely in the tests
     # and examples. It is unclear where this format originated from.
     with pytest.warns(tz.DeprecatedTzFormatWarning):
-        tzi = tz.tzstr(tz_str)
-   
+        tzi = tz.tzstr.instance(tz_str)
+
     assert tzi == expected
 
 
