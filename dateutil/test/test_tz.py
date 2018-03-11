@@ -664,6 +664,7 @@ class TzUTCTest(unittest.TestCase):
         self.assertFalse(tz.datetime_ambiguous(dt))
 
 
+@pytest.mark.tzoffset
 class TzOffsetTest(unittest.TestCase):
     def testTimedeltaOffset(self):
         est = tz.tzoffset('EST', timedelta(hours=-5))
@@ -718,6 +719,30 @@ class TzOffsetTest(unittest.TestCase):
 
         self.assertFalse(tz.datetime_ambiguous(dt))
 
+    def testTzOffsetInstance(self):
+        tz1 = tz.tzoffset.instance('EST', timedelta(hours=-5))
+        tz2 = tz.tzoffset.instance('EST', timedelta(hours=-5))
+
+        assert tz1 is not tz2
+
+    def testTzOffsetSingletonDifferent(self):
+        tz1 = tz.tzoffset('EST', timedelta(hours=-5))
+        tz2 = tz.tzoffset('EST', -18000)
+
+        assert tz1 is tz2
+
+@pytest.mark.tzoffset
+@pytest.mark.parametrize('args', [
+    ('UTC', 0),
+    ('EST', -18000),
+    ('EST', timedelta(hours=-5)),
+    (None, timedelta(hours=3)),
+])
+def test_tzoffset_singleton(args):
+    tz1 = tz.tzoffset(*args)
+    tz2 = tz.tzoffset(*args)
+
+    assert tz1 is tz2
 
 @pytest.mark.tzlocal
 class TzLocalTest(unittest.TestCase):
@@ -1339,6 +1364,17 @@ class TZStrTest(unittest.TestCase, TzFoldMixin):
 
         self.assertIs(tz_f1, tz_f2)
 
+    def testTzStrInstance(self):
+        tz1 = tz.tzstr('EST5EDT')
+        tz2 = tz.tzstr.instance('EST5EDT')
+        tz3 = tz.tzstr.instance('EST5EDT')
+
+        assert tz1 is not tz2
+        assert tz2 is not tz3
+
+        # Ensure that these still are all the same zone
+        assert tz1 == tz2 == tz3
+
 @pytest.mark.tzstr
 @pytest.mark.parametrize('tz_str,expected', [
     # From https://www.gnu.org/software/libc/manual/html_node/TZ-Variable.html
@@ -1429,7 +1465,7 @@ def test_valid_dateutil_format(tz_str, expected):
     # This tests the dateutil-specific format that is used widely in the tests
     # and examples. It is unclear where this format originated from.
     with pytest.warns(tz.DeprecatedTzFormatWarning):
-        tzi = tz.tzstr(tz_str)
+        tzi = tz.tzstr.instance(tz_str)
 
     assert tzi == expected
 
