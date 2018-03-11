@@ -1,6 +1,5 @@
 six
-pytest >= 3.0; python_version != '3.3'
-pytest <  3.3; python_version == '3.3'
+pytest >= 3.0
 pytest-cov >= 2.0.0
 freezegun
 coverage

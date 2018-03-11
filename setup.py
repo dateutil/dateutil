@@ -41,7 +41,7 @@ The dateutil module provides powerful extensions to the
 datetime module available in the Python standard library.
 """,
       packages=PACKAGES,
-      python_requires=">=2.7, !=3.0.*, !=3.1.*",
+      python_requires=">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
       package_data={"dateutil.zoneinfo": ["dateutil-zoneinfo.tar.gz"]},
       zip_safe=True,
       requires=["six"],
@@ -55,8 +55,6 @@ datetime module available in the Python standard library.
           'Programming Language :: Python :: 2',
           'Programming Language :: Python :: 2.7',
           'Programming Language :: Python :: 3',
-          'Programming Language :: Python :: 3.2',
-          'Programming Language :: Python :: 3.3',
           'Programming Language :: Python :: 3.4',
           'Programming Language :: Python :: 3.5',
           'Programming Language :: Python :: 3.6',

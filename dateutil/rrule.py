@@ -14,6 +14,7 @@ import sys
 try:
     from math import gcd
 except ImportError:
+    # Python < 3.5
     from fractions import gcd
 
 from six import advance_iterator, integer_types

@@ -1,6 +1,6 @@
 UNRELEASED
 ----------
-- **Dropped support for Python 2.6.**
+- **Dropped support for end of life Python 2.6, 3.2, and 3.3.**
 
 Version 2.6.1
 -------------
