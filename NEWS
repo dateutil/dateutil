@@ -1,6 +1,150 @@
-UNRELEASED
+Version 2.7.0
 ----------
-- **Dropped support for Python 2.6.**
+- Dropped support for Python 2.6 (gh pr #362 by @jdufresne)
+- Dropped support for Python 3.2 (gh pr #626)
+- Updated zoneinfo file to 2018c (gh pr #616)
+- Changed licensing scheme so all new contributions are dual licensed under
+  Apache 2.0 and BSD. (gh pr #542, issue #496)
+- Added __all__ variable to the root package. Reported by @tebriel
+  (gh issue #406), fixed by @mariocj89 (gh pr #494)
+- Added python_requires to setup.py so that pip will distribute the right
+  version of dateutil. Fixed by @jakec-github (gh issue #537, pr #552)
+- Added the utils submodule, for miscellaneous utilities.
+- Added within_delta function to utils - added by @justanr (gh issue #432,
+  gh pr #437)
+- Added today function to utils (gh pr #474)
+- Added default_tzinfo function to utils (gh pr #475), solving an issue
+  reported by @nealmcb (gh issue #94)
+- Added dedicated ISO 8601 parsing function isoparse (gh issue #424).
+  Initial implementation by @pganssle in gh pr #489 and #622, with a
+  pre-release fix by @kirit93 (gh issue #546, gh pr #573). 
+- Moved parser module into parser/_parser.py and officially deprecated the use
+  of several private functions and classes from that module. (gh pr #501, #515)
+- Tweaked parser error message to include rejected string format, added by
+  @pbiering (gh pr #300)
+- Add support for parsing bytesarray, reported by @uckelman (gh issue #417) and
+  fixed by @uckelman and @pganssle (gh pr #514)
+- Started raising a warning when the parser finds a timezone string that it
+  cannot construct a tzinfo instance for (rather than succeeding with no
+  indication of an error). Reported and fixed by @jbrockmendel (gh pr #540)
+- Dropped the use of assert in the parser. Fixed by @jbrockmendel (gh pr #502)
+- Fixed to assertion logic in parser to support dates like '2015-15-May',
+  reported and fixed by @jbrockmendel (gh pr #409)
+- Fixed IndexError in parser on dates with trailing colons, reported and fixed
+  by @jbrockmendel (gh pr #420)
+- Fixed bug where hours were not validated, leading to improper parse. Reported
+  by @heappro (gh pr #353), fixed by @jbrockmendel (gh pr #482)
+- Fixed problem parsing strings in %b-%Y-%d format. Reported and fixed by
+  @jbrockmendel (gh pr #481)
+- Fixed problem parsing strings in the %d%B%y format. Reported by @asishm
+  (gh issue #360), fixed by @jbrockmendel (gh pr #483)
+- Fixed problem parsing certain unambiguous strings when year <99 (gh pr #510).
+  Reported by @alexwlchan (gh issue #293).
+- Fixed issue with parsing an unambiguous string representation of an ambiguous
+  datetime such that if possible the correct value for fold is set. Fixes
+  issue reported by @JordonPhillips and @pganssle (gh issue #318, #320,
+  gh pr #517)
+- Fixed issue with improper rounding of fractional components. Reported by
+  @dddmello (gh issue #427), fixed by @m-dz (gh pr #570)
+- Performance improvement to parser from removing certain min() calls. Reported
+  and fixed by @jbrockmendel (gh pr #589)
+- Significantly refactored parser code by @jbrockmendel (gh prs #419, #436,
+  #490, #498, #539) and @pganssle (gh prs #435, #468)
+- Implementated of __hash__ for relativedelta and weekday, reported and fixed
+  by @mrigor (gh pr #389) 
+- Implemented __abs__ for relativedelta. Reported by @binnisb and @pferreir
+  (gh issue #350, pr #472)
+- Fixed relativedelta.weeks property getter and setter to work for both
+  negative and positive values. Reported and fixed by @souliane (gh issue #459,
+  pr #460)
+- Fixed issue where passing whole number floats to the months or years
+  arguments of the relativedelta constructor would lead to errors during
+  addition. Reported by @arouanet (gh pr #411), fixed by @lkollar (gh pr #553)
+- Added a pre-built tz.UTC object representing UTC (gh pr #497)
+- Added a cache to tz.gettz so that by default it will return the same object
+  for identical inputs. This will change the semantics of certain operations
+  between datetimes constructed with tzinfo=tz.gettz(...). (gh pr #628)
+- Changed the behavior of tz.tzutc to return a singleton (gh pr #497, #504)
+- Changed the behavior of tz.tzoffset to return the same object when passed the
+  same inputs, with a corresponding performance improvement (gh pr #504)
+- Changed the behavior of tz.tzstr to return the same object when passed the
+  same inputs. (gh pr #628)
+- Added .instance alternate constructors for tz.tzoffset and tz.tzstr, to
+  allow the construction of a new instance if desired. (gh pr #628)
+- Added the tz.gettz.nocache function to allow explicit retrieval of a new
+  instance of the relevant tzinfo. (gh pr #628)
+- Expand definition of tz.tzlocal equality so that the local zone is allow
+  equality with tzoffset and tzutc. (gh pr #598)
+- Deprecated the idiosyncratic tzstr format mentioned in several examples but
+  evidently designed exclusively for dateutil, and very likely not used by
+  any current users. (gh issue #595, gh pr #606)
+- Added the tz.resolve_imaginary function, which generates a real date from
+  an imaginary one, if necessary. Implemented by @Cheukting (gh issue #339,
+  gh pr #607)
+- Fixed issue where the tz.tzstr constructor would erroneously succeed if
+  passed an invalid value for tzstr. Fixed by @pablogsal (gh issue #259,
+  gh pr #581)
+- Fixed issue with tz.gettz for TZ variables that start with a colon. Reported
+  and fixed by @lapointexavier (gh pr #601)
+- Added a lock to tz.tzical's cache. Reported and fixed by @Unrud (gh pr #430) 
+- Fixed an issue with fold support on certain Python 3 implementations that
+  used the pre-3.6 pure Python implementation of datetime.replace, most
+  notably pypy3 (gh pr #446).
+- Added support for VALUE=DATE-TIME for DTSTART in rrulestr. Reported by @potuz
+  (gh issue #401) and fixed by @Unrud (gh pr #429)
+- Started enforcing that within VTIMEZONE, the VALUE parameter can only be
+  omitted or DATE-TIME, per RFC 5545. Reported by @Unrud (gh pr #439)
+- Added support for TZID parameter for DTSTART in rrulestr. Reported and
+  fixed by @ryanpetrello (gh issue #614, gh pr #624)
+- Added 'RRULE:' prefix to rrule strings generated by rrule.__str__, in
+  compliance with the RFC. Reported by @AndrewPashkin (gh issue #86), fixed by
+  @jarondl and @mlorant (gh pr #450)
+- Switched to setuptools_scm for version management, automatically calculating
+  a version number from the git metadata. Reported by @jreback (gh issue #511),
+  implemented by @Sulley38 (gh pr #564)
+- Switched setup.py to use find_packages, and started testing against pip
+  installed versions of dateutil in CI. Fixed issue with parser import
+  discovered by @jreback in pandas-dev/pandas#18141. (gh issue #507, pr #509)
+- Switched test suite to using pytest (gh pr #495)
+- Switched CI over to use tox. Fixed by @gaborbernat (gh pr #549)
+- Added a test-only dependency on freezegun. (gh pr #474)
+- Reduced number of CI builds on Appveyor. Fixed by @kirit93 (gh issue #529,
+  gh pr #579)
+- Made xfails strict by default, so that an xpass is a failure. (gh pr #567)
+- Added a documentation generation stage to tox and CI. (gh pr #568)
+- Added an explicit warning when running python setup.py explaining how to run
+  the test suites with pytest. Fixed by @lkollar. (gh issue #544, gh pr #548)
+- Added requirements-dev.txt for test dependency management (gh pr #499, #516)
+- Fixed code coverage metrics to account for Windows builds (gh pr #526)
+- Fixed code coverage metrics to NOT count xfails. Fixed by @gaborbernat
+  (gh issue #519, gh pr #563)
+- Style improvement to zoneinfo.tzfile that was confusing to static type
+  checkers. Reported and fixed by @quodlibetor (gh pr #485)
+- Several unused imports were removed by @jdufresne. (gh pr #486)
+- Switched isinstance(*, collections.Callable) to callable, which is available
+  on all supported Python versions. Implemented by @jdufresne (gh pr #612)
+- Added CONTRIBUTING.md (gh pr #533)
+- Added AUTHORS.md (gh pr #542)
+- Corrected setup.py metadata to reflect author vs. maintainer, (gh issue #477,
+  gh pr #538)
+- Corrected README to reflect that tests are now run in pytest. Reported and
+  fixed by @m-dz (gh issue #556, gh pr #557)
+- Updated all references to RFC 2445 (iCalendar) to point to RFC 5545. Fixed
+  by @mariocj89 (gh issue #543, gh pr #555)
+- Corrected parse documentation to reflect proper integer offset units,
+  reported and fixed by @abrugh (gh pr #458)
+- Fixed dangling parenthesis in tzoffset documentation (gh pr #461)
+- Started including the license file in wheels. Reported and fixed by
+  @jdufresne (gh pr #476)
+- Indendation fixes to parser docstring by @jbrockmendel (gh pr #492)
+- Moved many examples from the "examples" documentation into their appropriate
+  module documentation pages. Fixed by @Tomasz-Kluczkowski and @jakec-github
+  (gh pr #558, #561)
+- Fixed documentation so that the parser.isoparse documentation displays.
+  Fixed by @alexchamberlain (gh issue #545, gh pr #560)
+- Refactored build and release sections and added setup instructions to
+  CONTRIBUTING. Reported and fixed by @kynan (gh pr #562)
+- Cleaned up various dead links in the documentation. (gh pr #602, #608, #618)
 
 Version 2.6.1
 -------------
