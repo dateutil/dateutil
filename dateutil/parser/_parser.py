@@ -34,6 +34,7 @@ import datetime
 import re
 import string
 import time
+import warnings
 
 from calendar import monthrange
 from io import StringIO
@@ -1145,9 +1146,19 @@ class parser(object):
         elif res.tzoffset:
             aware = naive.replace(tzinfo=tz.tzoffset(res.tzname, res.tzoffset))
 
-        else:
-            # TODO: this is really only the right thing to do if no tz
-            # information was found.
+        elif not res.tzname and not res.tzoffset:
+            # i.e. no timezone information was found.
+            aware = naive
+
+        elif res.tzname:
+            # tz-like string was parsed but we don't know what to do
+            # with it
+            warnings.warn("tzname {tzname} identified but not understood.  "
+                          "Pass `tzinfos` argument in order to correctly "
+                          "return a timezone-aware datetime.  In a future "
+                          "version, this raise an "
+                          "exception.".format(tzname=res.tzname),
+                          category=UnknownTimezoneWarning)
             aware = naive
 
         return aware
@@ -1507,4 +1518,6 @@ DEFAULTTZPARSER = _tzparser()
 def _parsetz(tzstr):
     return DEFAULTTZPARSER.parse(tzstr)
 
+class UnknownTimezoneWarning(RuntimeWarning):
+    """Raised when the parser finds a timezone it cannot parse into a tzinfo"""
 # vim:ts=4:sw=4:et
