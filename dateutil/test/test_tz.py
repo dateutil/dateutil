@@ -953,6 +953,7 @@ def test_tzlocal_offset_unequal(tzvar, tzoff):
         assert not (tz.tzlocal() == tzoff)
 
 
+@pytest.mark.gettz
 class GettzTest(unittest.TestCase, TzFoldMixin):
     gettz = staticmethod(tz.gettz)
 
@@ -998,6 +999,28 @@ class GettzTest(unittest.TestCase, TzFoldMixin):
         self.assertEqual(t_west.tzname(), 'WEST')
         self.assertEqual(t_west.utcoffset(), timedelta(hours=1))
         self.assertEqual(t_west.dst(), timedelta(hours=1))
+
+    def testGettzCacheTzFile(self):
+        NYC1 = tz.gettz('America/New_York')
+        NYC2 = tz.gettz('America/New_York')
+
+        assert NYC1 is NYC2
+
+    def testGettzCacheTzLocal(self):
+        local1 = tz.gettz()
+        local2 = tz.gettz()
+
+        assert local1 is not local2
+
+@pytest.mark.gettz
+@pytest.mark.xfail(IS_WIN, reason='zoneinfo separately cached')
+def test_gettz_cache_clear():
+    NYC1 = tz.gettz('America/New_York')
+    tz.gettz.cache_clear()
+
+    NYC2 = tz.gettz('America/New_York')
+
+    assert NYC1 is not NYC2
 
 
 class ZoneInfoGettzTest(GettzTest, WarningTestMixin):
