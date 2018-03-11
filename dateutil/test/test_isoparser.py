@@ -152,6 +152,15 @@ def test_full_tzoffsets(tzoffset):
 def test_datetime_midnight(dt_str):
     assert isoparse(dt_str) == datetime(2014, 4, 11, 0, 0, 0, 0)
 
+@pytest.mark.parametrize('datestr', [
+    '2014-01-01',
+    '20140101',
+])
+@pytest.mark.parametrize('sep', [' ', 'a', 'T', '_', '-'])
+def test_isoparse_sep_none(datestr, sep):
+    isostr = datestr + sep + '14:33:09'
+    assert isoparse(isostr) == datetime(2014, 1, 1, 14, 33, 9)
+
 ##
 # Uncommon date formats
 TIME_ARGS = ('time_args',
@@ -224,7 +233,6 @@ def test_bytes(isostr, dt):
     ('201204-25', ValueError),                  # Inconsistent date separators
     ('20120425T0120:00', ValueError),           # Inconsistent time separators
     ('20120425T012500-334', ValueError),        # Wrong microsecond separator
-    ('20120425C012500', ValueError),            # Wrong time separator
     ('2001-1', ValueError),                     # YYYY-M not valid
     ('2012-04-9', ValueError),                  # YYYY-MM-D not valid
     ('201204', ValueError),                     # YYYYMM not valid
@@ -253,6 +261,14 @@ def test_bytes(isostr, dt):
 def test_iso_raises(isostr, exception):
     with pytest.raises(exception):
         isoparse(isostr)
+
+
+@pytest.mark.parametrize('sep_act,valid_sep', [
+    ('C', 'T'),
+    ('T', 'C')
+])
+def test_iso_raises_sep(sep_act, valid_sep):
+    isostr = '2012-04-25' + sep_act + '01:25:00'
 
 
 @pytest.mark.xfail()

@@ -38,16 +38,21 @@ def _takes_ascii(f):
 
 
 class isoparser(object):
-    def __init__(self, sep='T'):
+    def __init__(self, sep=None):
         """
         :param sep:
-            A single character that separates date and time portions
+            A single character that separates date and time portions. If
+            ``None``, the parser will accept any single character.
+            For strict ISO-8601 adherence, pass ``'T'``.
         """
-        if (len(sep) != 1 or ord(sep) >= 128 or sep in '0123456789'):
-            raise ValueError('Separator must be a single, non-numeric '
-                             'ASCII character')
+        if sep is not None:
+            if (len(sep) != 1 or ord(sep) >= 128 or sep in '0123456789'):
+                raise ValueError('Separator must be a single, non-numeric ' +
+                                 'ASCII character')
 
-        self._sep = sep.encode('ascii')
+            sep = sep.encode('ascii')
+
+        self._sep = sep
 
     @_takes_ascii
     def isoparse(self, dt_str):
@@ -57,7 +62,8 @@ class isoparser(object):
         An ISO-8601 datetime string consists of a date portion, followed
         optionally by a time portion - the date and time portions are separated
         by a single character separator, which is ``T`` in the official
-        standard.
+        standard. Incomplete date formats (such as ``YYYY-MM``) may *not* be
+        combined with a time portion.
 
         Supported date formats are:
 
@@ -108,11 +114,21 @@ class isoparser(object):
         :return:
             Returns a :class:`datetime.datetime` representing the string.
             Unspecified components default to their lowest value.
+
+        .. warning::
+
+            As of version 2.7.0, the strictness of the parser should not be
+            considered a stable part of the contract. Any valid ISO-8601 string
+            that parses correctly with the default settings will continue to
+            parse correctly in future versions, but invalid strings that
+            currently fail (e.g. ``2017-01-01T00:00+00:00:00``) are not
+            guaranteed to continue failing in future versions if they encode
+            a valid date.
         """
         components, pos = self._parse_isodate(dt_str)
 
         if len(dt_str) > pos:
-            if dt_str[pos:pos + 1] == self._sep:
+            if self._sep is None or dt_str[pos:pos + 1] == self._sep:
                 components += self._parse_isotime(dt_str[pos + 1:])
             else:
                 raise ValueError('String contains unknown ISO components')
