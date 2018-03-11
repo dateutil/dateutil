@@ -1,4 +1,4 @@
-from datetime import timedelta 
+from datetime import timedelta
 
 
 class _TzSingleton(type):
@@ -26,3 +26,18 @@ class _TzOffsetFactory(type):
         if instance is None:
             instance = cls.__instances.setdefault(key, type.__call__(cls, name, offset))
         return instance
+
+
+class _TzStrFactory(type):
+    def __init__(cls, *args, **kwargs):
+        cls.__instances = {}
+
+    def __call__(cls, s, posix_offset=False):
+        key = (s, posix_offset)
+        instance = cls.__instances.get(key, None)
+
+        if instance is None:
+            instance = cls.__instances.setdefault(key,
+                type.__call__(cls, s, posix_offset))
+        return instance
+

@@ -1296,6 +1296,25 @@ class TZStrTest(unittest.TestCase, TzFoldMixin):
         with self.assertRaises(ValueError):
             tz.tzstr('InvalidString;439999')
 
+    def testTzStrSingleton(self):
+        tz1 = tz.tzstr('EST5EDT')
+        tz2 = tz.tzstr('CST4CST')
+        tz3 = tz.tzstr('EST5EDT')
+
+        self.assertIsNot(tz1, tz2)
+        self.assertIs(tz1, tz3)
+
+    def testTzStrSingletonPosix(self):
+        tz_t1 = tz.tzstr('GMT+3', posix_offset=True)
+        tz_f1 = tz.tzstr('GMT+3', posix_offset=False)
+
+        tz_t2 = tz.tzstr('GMT+3', posix_offset=True)
+        tz_f2 = tz.tzstr('GMT+3', posix_offset=False)
+
+        self.assertIs(tz_t1, tz_t2)
+        self.assertIsNot(tz_t1, tz_f1)
+
+        self.assertIs(tz_f1, tz_f2)
 
 @pytest.mark.tzstr
 @pytest.mark.parametrize('tz_str,expected', [
@@ -1388,7 +1407,7 @@ def test_valid_dateutil_format(tz_str, expected):
     # and examples. It is unclear where this format originated from.
     with pytest.warns(tz.DeprecatedTzFormatWarning):
         tzi = tz.tzstr(tz_str)
-   
+
     assert tzi == expected
 
 

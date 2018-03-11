@@ -22,7 +22,7 @@ from ._common import tzrangebase, enfold
 from ._common import _validate_fromutc_inputs
 
 from ._factories import _TzSingleton, _TzOffsetFactory
-
+from ._factories import _TzStrFactory
 try:
     from .win import tzwin, tzwinlocal
 except ImportError:
@@ -966,6 +966,7 @@ class tzrange(tzrangebase):
         return self._dst_base_offset_
 
 
+@six.add_metaclass(_TzStrFactory)
 class tzstr(tzrange):
     """
     ``tzstr`` objects are time zone objects specified by a time-zone string as
