@@ -2930,6 +2930,20 @@ class RRuleTest(WarningTestMixin, unittest.TestCase):
                           "RRULE:FREQ=YEARLY;"
                           "UNTIL=TheCowsComeHome;BYDAY=1TU,-1TH\n"))
 
+    def testStrUntilMustBeUTC(self):
+        with self.assertRaises(ValueError):
+            list(rrulestr("DTSTART;TZID=America/New_York:19970902T090000\n"
+                          "RRULE:FREQ=YEARLY;"
+                          "UNTIL=19990101T000000;BYDAY=1TU,-1TH\n"))
+
+    def testStrUntilWithTZ(self):
+        NYC = tz.gettz('America/New_York')
+        rr = list(rrulestr("DTSTART;TZID=America/New_York:19970101T000000\n"
+                          "RRULE:FREQ=YEARLY;"
+                          "UNTIL=19990101T000000Z\n"))
+        self.assertEqual(list(rr), [datetime(1997, 1, 1, 0, 0, 0, tzinfo=NYC),
+                                    datetime(1998, 1, 1, 0, 0, 0, tzinfo=NYC)])
+
     def testStrEmptyByDay(self):
         with self.assertRaises(ValueError):
             list(rrulestr("DTSTART:19970902T090000\n"
