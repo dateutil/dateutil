@@ -1091,3 +1091,11 @@ def test_parse_tzinfos_fold():
 ])
 def test_rounding_floatlike_strings(dtstr, dt):
     assert parse(dtstr, default=datetime(2003, 9, 25)) == dt
+
+
+def test_decimal_error():
+    # GH 632 - decimal.Decimal raises some non-ValueError exception when
+    # constructed with an invalid value
+    with pytest.raises(ValueError):
+        parse('1: test')
+
