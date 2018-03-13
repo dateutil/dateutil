@@ -836,7 +836,11 @@ class parser(object):
     def _parse_numeric_token(self, tokens, idx, info, ymd, res, fuzzy):
         # Token is a number
         value_repr = tokens[idx]
-        value = Decimal(value_repr)
+        try:
+            value = self._to_decimal(value_repr)
+        except Exception as e:
+            six.raise_from(ValueError('Unknown numeric token'), e)
+
         len_li = len(value_repr)
 
         len_l = len(tokens)
@@ -895,7 +899,7 @@ class parser(object):
         elif idx + 2 < len_l and tokens[idx + 1] == ':':
             # HH:MM[:SS[.ss]]
             res.hour = int(value)
-            value = Decimal(tokens[idx + 2])  # TODO: try/except for this?
+            value = self._to_decimal(tokens[idx + 2])  # TODO: try/except for this?
             (res.minute, res.second) = self._parse_min_sec(value)
 
             if idx + 4 < len_l and tokens[idx + 3] == ':':
@@ -996,7 +1000,7 @@ class parser(object):
 
     def _assign_hms(self, res, value_repr, hms):
         # See GH issue #427, fixing float rounding
-        value = Decimal(value_repr)
+        value = self._to_decimal(value_repr)
 
         if hms == 0:
             # Hour
@@ -1195,6 +1199,13 @@ class parser(object):
                 return new_dt
 
         return dt
+
+    def _to_decimal(self, val):
+        try:
+            return Decimal(val)
+        except Exception as e:
+            msg = "Could not convert %s to decimal" % val
+            six.raise_from(ValueError(msg), e)
 
 
 DEFAULTPARSER = parser()
