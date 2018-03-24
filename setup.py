@@ -12,8 +12,6 @@ import warnings
 if isfile("MANIFEST"):
     os.unlink("MANIFEST")
 
-PACKAGES = find_packages(where='.', exclude=['dateutil.test'])
-
 if LooseVersion(setuptools.__version__) <= LooseVersion("24.3"):
     warnings.warn("python_requires requires setuptools version > 24.3",
                   UserWarning)
@@ -24,6 +22,14 @@ class Unsupported(TestCommand):
         print("Running 'test' with setup.py is not supported. "
               "Use 'pytest' or 'tox' to run the tests.")
 
+###
+# Load metadata
+PACKAGES = find_packages(where='.', exclude=['dateutil.test'])
+
+def README():
+    with open('README.rst') as f:
+        return f.read()
+README = README()
 
 setup(name="python-dateutil",
       use_scm_version={
@@ -36,10 +42,8 @@ setup(name="python-dateutil",
       maintainer_email="dateutil@python.org",
       url="https://dateutil.readthedocs.io",
       license="Dual License",
-      long_description="""
-The dateutil module provides powerful extensions to the
-datetime module available in the Python standard library.
-""",
+      long_description=README,
+      long_description_content_type='text/x-rst',
       packages=PACKAGES,
       python_requires=">=2.7, !=3.0.*, !=3.1.*, !=3.2.*",
       package_data={"dateutil.zoneinfo": ["dateutil-zoneinfo.tar.gz"]},
