@@ -1,0 +1,1 @@
+Improve error message when rrule's dtstart and until are not both naive or both aware. Reported and fixed by @ryanpetrello (gh issue #633, gh pr #634)

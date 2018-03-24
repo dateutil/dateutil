@@ -1,0 +1,1 @@
+Fixed issue where parser.parse would occasionally raise decimal.Decimal-specific error types rather than ValueError. Reported by @amureki (gh issue #632). Fixed by @pganssle (gh pr #636).
