@@ -28,7 +28,19 @@ PACKAGES = find_packages(where='.', exclude=['dateutil.test'])
 
 def README():
     with open('README.rst') as f:
-        return f.read()
+        readme_lines = f.readlines()
+
+    # The .. doctest directive is not supported by PyPA
+    lines_out = []
+    doctest_line_found = False
+    for line in readme_lines:
+        if line.startswith('.. doctest'):
+            doctest_line_found = True
+            lines_out.append('.. code-block:: python3\n')
+        else:
+            lines_out.append(line)
+
+    return ''.join(lines_out)
 README = README()
 
 setup(name="python-dateutil",
