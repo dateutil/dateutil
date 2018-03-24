@@ -1,0 +1,1 @@
+Updated license metadata and trove classifiers (gh prs #630 and #644).
