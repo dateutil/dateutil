@@ -1,0 +1,38 @@
+[tool.towncrier]
+    package = "dateutil"
+    package_dir = "dateutil"
+    filename = "NEWS"
+    directory = "changelog.d"
+    issue_format = "GH #{issue}"
+    template = "changelog.d/template.rst"
+
+    [[tool.towncrier.type]]
+        directory = "data"
+        name = "Data updates"
+        showcontent = true
+
+    [[tool.towncrier.type]]
+        directory = "deprecations"
+        name = "Deprecations"
+        showcontent = true
+
+    [[tool.towncrier.type]]
+        directory = "feature"
+        name = "Features"
+        showcontent = true
+
+    [[tool.towncrier.type]]
+        directory = "bugfix"
+        name = "Bugfixes"
+        showcontent = true
+
+    [[tool.towncrier.type]]
+        directory = "doc"
+        name = "Documentation changes"
+        showcontent = true
+
+    [[tool.towncrier.type]]
+        directory = "misc"
+        name = "Misc"
+        showcontent = false
+
