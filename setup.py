@@ -35,7 +35,7 @@ setup(name="python-dateutil",
       maintainer="Paul Ganssle",
       maintainer_email="dateutil@python.org",
       url="https://dateutil.readthedocs.io",
-      license="Apache 2.0",
+      license="Dual License",
       long_description="""
 The dateutil module provides powerful extensions to the
 datetime module available in the Python standard library.
