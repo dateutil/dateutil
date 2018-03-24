@@ -2536,6 +2536,31 @@ def test_resolve_imaginary_existing(dt):
     assert tz.resolve_imaginary(dt) is dt
 
 
+def __get_kiritimati_resolve_imaginary_test():
+    # In the 2018d release of the IANA database, the Kiritimati "imaginary day"
+    # data was corrected, so if the system zoneinfo is older than 2018d, the
+    # Kiritimati test will fail.
+
+    tzi = tz.gettz('Pacific/Kiritimati')
+    new_version = False
+    if not tz.datetime_exists(datetime(1995, 1, 1, 12, 30), tzi):
+        zif = zoneinfo.get_zonefile_instance()
+        if zif.metadata is not None:
+            new_version = zif.metadata['tzversion'] >= '2018d'
+
+        if new_version:
+            tzi = zif.get('Pacific/Kiritimati')
+    else:
+        new_version = True
+
+    if new_version:
+        dates = (datetime(1994, 12, 31, 12, 30), datetime(1995, 1, 1, 12, 30))
+    else:
+        dates = (datetime(1995, 1, 1, 12, 30), datetime(1995, 1, 2, 12, 30))
+
+    return (tzi, ) + dates
+
+
 @pytest.mark.tz_resolve_imaginary
 @pytest.mark.parametrize('tzi, dt, dt_exp', [
     (tz.gettz('Europe/London'),
@@ -2544,8 +2569,7 @@ def test_resolve_imaginary_existing(dt):
      datetime(2017, 3, 12, 2, 30), datetime(2017, 3, 12, 3, 30)),
     (tz.gettz('Australia/Sydney'),
      datetime(2014, 10, 5, 2, 0), datetime(2014, 10, 5, 3, 0)),
-    (tz.gettz('Pacific/Kiritimati'),
-     datetime(1995, 1, 1, 12, 30), datetime(1995, 1, 2, 12, 30)),
+    __get_kiritimati_resolve_imaginary_test(),
 ])
 def test_resolve_imaginary(tzi, dt, dt_exp):
     dt = dt.replace(tzinfo=tzi)
