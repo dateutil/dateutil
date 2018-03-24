@@ -27,6 +27,32 @@ If you would like to fix something in `dateutil` -  improvements to documentatio
 
 The most important thing to include in your pull request are *tests* - please write one or more tests to cover the behavior you intend your patch to improve. Ideally, tests would use only the public interface - try to get 100% difference coverage using only supported behavior of the API.
 
+#### Changelog
+To keep users abreast of the changes to the module and to give proper credit, `dateutil` maintains a changelog, which is managed by [towncrier](https://github.com/hawkowl/towncrier). To add a changelog entry, make a new file called `<issue_no>.<type>.rst`, where `<issue_no>` is the number of the PR you've just made (it's easiest to add the changelog *after* you've created the PR so you'll have this number), and `<type>` is one of the following types:
+
+- `feature`: A new feature, (e.g. a new function, method, attribute, etc)
+- `bugfix`: A fix to a bug
+- `doc`: A change to the documentation
+- `deprecation`: Used if deprecating a feature or dropping support for a Python version.
+- `misc`: A change that has no interesting effect for end users, such as fixes to the test suite or CI.
+
+PRs that include a feature or bugfix *and* a deprecation should create a separate entry for the deprecation.
+
+
+
+> {description of changes}. Reported by @{reporter} (gh issue #{issue\_no}). Fixed by @{patch submitter} (gh pr #{pr\_no})
+
+An example changelog entry might be:
+
+**581.bugfix.rst**
+```
+Fixed issue where the tz.tzstr constructor would erroneously succeed if passed
+an invalid value for tzstr. Reported by @pganssle (gh issue #259). Fixed by
+@pablogsal (gh pr #581)
+```
+
+For bugs reported and fixed by the same person use "Reported and fixed by @{patch submitter}". It is not necessary to create a github issue just for the purpose of mentioning it in the changelog, if the PR *is* the report, mentioning the PR is enough.
+
 ## License
 
 Starting December 1, 2017, all contributions will be assumed to be released under a dual license - the [Apache 2.0 License](https://www.apache.org/licenses/LICENSE-2.0) and the [3-Clause BSD License](https://opensource.org/licenses/BSD-3-Clause) unless otherwise specified in the pull request.
