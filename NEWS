@@ -1,5 +1,30 @@
+Version 2.7.1 (2018-03-24)
+===========================
+
+Data updates
+------------
+
+- Updated tzdata version to 2018d.
+
+
+Bugfixes
+--------
+
+- Fixed issue where parser.parse would occasionally raise
+  decimal.Decimal-specific error types rather than ValueError. Reported by
+  @amureki (gh issue #632). Fixed by @pganssle (gh pr #636).
+- Improve error message when rrule's dtstart and until are not both naive or
+  both aware. Reported and fixed by @ryanpetrello (gh issue #633, gh pr #634)
+
+
+Misc
+----
+
+- GH #644, GH #648
+
+
 Version 2.7.0
-----------
+=============
 - Dropped support for Python 2.6 (gh pr #362 by @jdufresne)
 - Dropped support for Python 3.2 (gh pr #626)
 - Updated zoneinfo file to 2018c (gh pr #616)
@@ -147,7 +172,7 @@ Version 2.7.0
 - Cleaned up various dead links in the documentation. (gh pr #602, #608, #618)
 
 Version 2.6.1
--------------
+=============
 - Updated zoneinfo file to 2017b. (gh pr #395)
 - Added Python 3.6 to CI testing (gh pr #365)
 - Removed duplicate test name that was preventing a test from being run.
@@ -179,7 +204,7 @@ Version 2.6.1
   granularly.
 
 Version 2.6.0
--------------
+=============
 - Added PEP-495-compatible methods to address ambiguous and imaginary dates in
   time zones in a backwards-compatible way. Ambiguous dates and times can now
   be safely represented by all dateutil time zones. Many thanks to Alexander
@@ -244,7 +269,7 @@ Version 2.6.0
 
 
 Version 2.5.3
--------------
+=============
 - Updated zoneinfo to 2016d
 - Fixed parser bug where unambiguous datetimes fail to parse when dayfirst is
   set to true. (gh issue #233, pr #234)
@@ -254,13 +279,13 @@ Version 2.5.3
 - Fixed incorrect version in documentation (gh issue #235, pr #243)
 
 Version 2.5.2
--------------
+=============
 - Updated zoneinfo to 2016c
 - Fixed parser bug where yearfirst and dayfirst parameters were not being
   respected when no separator was present. (gh issue #81 and #217, pr #229)
 
 Version 2.5.1
--------------
+=============
 - Updated zoneinfo to 2016b
 - Changed MANIFEST.in to explicitly include test suite in source distributions,
   with help from @koobs (gh issue #193, pr #194, #201, #221)
@@ -285,7 +310,7 @@ Version 2.5.1
 
 
 Version 2.5.0
--------------
+=============
 - Updated zoneinfo to 2016a
 - zoneinfo_metadata file version increased to 2.0 - the updated updatezinfo.py
   script will work with older zoneinfo_metadata.json files, but new metadata
@@ -375,7 +400,7 @@ Version 2.5.0
 
 
 Version 2.4.2
--------------
+=============
 - Updated zoneinfo to 2015b.
 - Fixed issue with parsing of tzstr on Python 2.7.x; tzstr will now be decoded
   if not a unicode type. gh #51 (lp:1331576), gh pr #55.
@@ -388,7 +413,7 @@ Version 2.4.2
 
 
 Version 2.4.1
--------------
+=============
 
 - Added explicit check for valid hours if AM/PM is specified in parser.
   (gh pr #22, issue #21)
@@ -408,7 +433,7 @@ Version 2.4.1
 - Updated zoneinfo to 2015a.
 
 Version 2.4.0
--------------
+=============
 
 - Fix an issue with relativedelta and freezegun (lp:1374022)
 - Fix tzinfo in windows for timezones without dst (lp:1010050, gh #2)
@@ -418,7 +443,7 @@ Version 2.4.0
     including defusing some infinite loops (gh #4)
 
 Version 2.3
------------
+===========
 
 - Cleanup directory structure, moved test.py to dateutil/tests/test.py
 
@@ -434,7 +459,7 @@ Version 2.3
 - New maintainer, together with new hosting: GitHub, Travis, Read-The-Docs
 
 Version 2.2
------------
+===========
 
 - Updated zoneinfo to 2013h
 
@@ -443,7 +468,7 @@ Version 2.2
 - Bug with LANG=C fixed by Mike Gilbert
 
 Version 2.1
------------
+===========
 
 - New maintainer
 
@@ -455,7 +480,7 @@ Version 2.1
 
 
 Version 2.0
------------
+===========
 
 - Ported to Python 3, by Brian Jones.  If you need dateutil for Python 2.X,
   please continue using the 1.X series.
@@ -465,7 +490,7 @@ Version 2.0
   details.
 
 Version 1.5
------------
+===========
 
 - As reported by Mathieu Bridon, rrules were matching the bysecond rules
   incorrectly against byminute in some circumstances when the SECONDLY
@@ -480,13 +505,13 @@ Version 1.5
 
 
 Version 1.4.1
--------------
+=============
 
 - Updated timezone information.
 
 
 Version 1.4
------------
+===========
 
 - Fixed another parser precision problem on conversion of decimal seconds
   to microseconds, as reported by Erik Brown.  Now these issues are gone
@@ -507,7 +532,7 @@ Version 1.4
 
 
 Version 1.3
------------
+===========
 
 - Fixed precision problem on conversion of decimal seconds to
   microseconds, as reported by Skip Montanaro.
@@ -526,7 +551,7 @@ Version 1.3
 
 
 Version 1.2
------------
+===========
 
 - Now tzfile will round timezones to full-minutes if necessary,
   since Python's datetime doesn't support sub-minute offsets.
@@ -539,7 +564,7 @@ Version 1.2
 
 
 Version 1.1
------------
+===========
 
 - Fixed rrule byyearday handling. Abramo Bagnara pointed out that
   RFC2445 allows negative numbers.
@@ -553,7 +578,7 @@ Version 1.1
 
 
 Version 1.0
------------
+===========
 
 - Fixed parsing of XXhXXm formatted time after day/month/year
   has been parsed.
@@ -562,7 +587,7 @@ Version 1.0
 
 
 Version 0.9
------------
+===========
 
 - Fixed pickling of timezone types, as reported by
   Andreas Köhler.
@@ -591,7 +616,7 @@ Version 0.9
 
 
 Version 0.5
------------
+===========
 
 - Removed FREQ_ prefix from rrule frequency constants
   WARNING: this breaks compatibility with previous versions.
