@@ -9,6 +9,8 @@ from setuptools.command.test import test as TestCommand
 from distutils.version import LooseVersion
 import warnings
 
+import io
+
 if isfile("MANIFEST"):
     os.unlink("MANIFEST")
 
@@ -27,7 +29,7 @@ class Unsupported(TestCommand):
 PACKAGES = find_packages(where='.', exclude=['dateutil.test'])
 
 def README():
-    with open('README.rst') as f:
+    with io.open('README.rst', encoding='utf-8') as f:
         readme_lines = f.readlines()
 
     # The .. doctest directive is not supported by PyPA
