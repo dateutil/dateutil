@@ -2,7 +2,7 @@ dateutil - powerful extensions to datetime
 ==========================================
 
 .. image:: https://img.shields.io/pypi/v/python-dateutil.svg?style=flat-square
-    :target: https://pypi.python.org/pypi/python-dateutil/
+    :target: https://pypi.org/project/python-dateutil/
     :alt: pypi version
 
 .. image:: https://img.shields.io/travis/dateutil/dateutil/master.svg?style=flat-square
@@ -29,13 +29,14 @@ the standard `datetime` module, available in Python.
 Download
 ========
 dateutil is available on PyPI
-https://pypi.python.org/pypi/python-dateutil/
+https://pypi.org/project/python-dateutil/
 
 The documentation is hosted at:
 https://dateutil.readthedocs.io/en/stable/
 
 Code
 ====
+The code and issue tracker are hosted on Github:
 https://github.com/dateutil/dateutil/
 
 Features
