@@ -57,6 +57,7 @@ switch, and thus all their contributions are dual-licensed.
 - Pascal van Kooten <kootenpv@MASKED>
 - Pavel Ponomarev <comrad.awsum@MASKED>
 - Peter Bieringer <pb@MASKED>
+- Pierre Gergondet <pierre.gergondet@MASKED> (gh: @gergondet)
 - Quentin Pradet <quentin@MASKED>
 - Roy Williams <rwilliams@MASKED>
 - Savraj <savraj@MASKED>
