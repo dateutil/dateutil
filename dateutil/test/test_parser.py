@@ -626,7 +626,7 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(parse("4 jul 1976"), datetime(1976, 7, 4))
 
     def testRandomFormat11(self):
-        self.assertEqual(parse("7-4-76"), datetime(1976, 7, 4))
+        self.assertEqual(parse("7-4-36"), datetime(2036, 7, 4))
 
     def testRandomFormat12(self):
         self.assertEqual(parse("19760704"), datetime(1976, 7, 4))
