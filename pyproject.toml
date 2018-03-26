@@ -3,6 +3,7 @@
     package_dir = "dateutil"
     filename = "NEWS"
     directory = "changelog.d"
+    title_format = "Version {version} ({project_date})"
     issue_format = "GH #{issue}"
     template = "changelog.d/template.rst"
 

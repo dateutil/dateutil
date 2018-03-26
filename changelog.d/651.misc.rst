@@ -1,1 +1,0 @@
-Fixed an issue with the setup script running in non-UTF-8 environment. Reported and fixed by @gergondet (gh pr #651)
