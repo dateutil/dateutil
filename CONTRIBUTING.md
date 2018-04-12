@@ -59,13 +59,6 @@ Starting December 1, 2017, all contributions will be assumed to be released unde
 
 All contributions before December 1, 2017 except those explicitly relicensed, are only under the 3-clause BSD license.
 
-## Building and releasing
-
-When you get the source, it does not contain the internal zoneinfo
-database. To get (and update) the database, run the updatezinfo.py script. Make sure
-that the zic command is in your path, and that you have network connectivity
-to get the latest timezone information from IANA, or from [our mirror of the
-IANA database](https://dateutil.github.io/tzdata/).
 
 ## Development Setup
 
