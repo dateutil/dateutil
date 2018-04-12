@@ -190,6 +190,8 @@ class tzoffset(datetime.tzinfo):
 class tzlocal(_tzinfo):
     """
     A :class:`tzinfo` subclass built around the ``time`` timezone functions.
+
+
     """
     def __init__(self):
         super(tzlocal, self).__init__()
@@ -392,6 +394,39 @@ class tzfile(_tzinfo):
     Time zone files can be compiled from the `IANA Time Zone database files
     <https://www.iana.org/time-zones>`_ with the `zic time zone compiler
     <https://www.freebsd.org/cgi/man.cgi?query=zic&sektion=8>`_
+
+    **Examples:**
+
+    .. doctest:: tzfile
+
+        >>> tz = tzfile("/etc/localtime")
+        >>> datetime.now(tz)
+        datetime.datetime(2003, 9, 27, 12, 3, 48, 392138,
+            tzinfo=tzfile('/etc/localtime'))
+
+        >>> datetime.now(tz).astimezone(tzutc())
+        datetime.datetime(2003, 9, 27, 15, 3, 53, 70863, tzinfo=tzutc())
+
+        >>> datetime.now(tz).tzname()
+        'BRST'
+        >>> datetime(2003, 1, 1, tzinfo=tz).tzname()
+        'BRDT'
+
+
+    Check the daylight limit:
+
+    .. doctest:: tzfile
+
+        >>> tz = tzfile('/usr/share/zoneinfo/EST5EDT')
+        >>> datetime(2003, 4, 6, 1, 59, tzinfo=tz).tzname()
+        'EST'
+        >>> datetime(2003, 4, 6, 2, 00, tzinfo=tz).tzname()
+        'EDT'
+        >>> datetime(2003, 10, 26, 0, 59, tzinfo=tz).tzname()
+        'EDT'
+        >>> datetime(2003, 10, 26, 1, 00, tzinfo=tz).tzname()
+        'EST'
+
     """
 
     def __init__(self, fileobj, filename=None):
