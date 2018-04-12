@@ -1,0 +1,1 @@
+Added documentation for ``dateutil.tz.gettz``. Reported by @pganssle (gh issue #647). Fixed by @weatherpattern (gh pr #704)

@@ -190,8 +190,6 @@ class tzoffset(datetime.tzinfo):
 class tzlocal(_tzinfo):
     """
     A :class:`tzinfo` subclass built around the ``time`` timezone functions.
-
-
     """
     def __init__(self):
         super(tzlocal, self).__init__()
@@ -1460,6 +1458,50 @@ def __get_gettz():
         tzlocal_classes += (tzwinlocal,)
 
     class GettzFunc(object):
+        """gettz(name=None)
+
+        Given a variety of inputs, like time zone name and ``TZ`` varible,
+        return the tz (aka Olson) database time zone.
+
+        :param name:
+            A time zone name, a ``TZ`` variable, or ``None``.
+
+        :return:
+            A :class:`dateutil.tz.tzfile`. If name is ``None``,
+            the ``tzfile`` localtime is returned. 
+
+        **Examples:**
+
+        You can get the local time.
+
+        .. code-block:: python
+
+            >>> gettz()
+            tzfile('/etc/localtime')
+
+        You can parse time zone names.
+
+        .. code-block:: python
+
+            >>> gettz('Pacific/Kiritimati')
+            tzfile('/usr/share/zoneinfo/Pacific/Kiritimati')
+
+        You can parse a ``TZ`` variable.
+
+        .. code-block:: python
+
+            >>> gettz('AEST-10AEDT-11,M10.1.0/2,M4.1.0/3')
+            tzstr('AEST-10AEDT-11,M10.1.0/2,M4.1.0/3')
+        
+        Calling with the same name will return the same object.
+
+        .. code-block:: python
+
+            >>> tz.gettz('Pacific/Kiritimati') is tz.gettz('Pacific/Kiritimati')
+            True
+
+
+        """
         def __init__(self):
 
             self.__instances = weakref.WeakValueDictionary()
