@@ -69,32 +69,51 @@ IANA database](https://dateutil.github.io/tzdata/).
 
 ## Development Setup
 
-Install the the dependencies for running the test suite using `pip` or `conda`.
+### Using a virtual environment
 
-### pip
+It is advisable to work in a virtual environment for development of `dateutil`. This can be done using [virtualenv](https://virtualenv.pypa.io):
 
-Run the following commands to create a [virtual environment](https://virtualenv.pypa.io) with all dependencies installed:
+```bash
+python -m virtualenv .venv      # Create virtual environment in .venv directory
+source .venv/bin/activate       # Activate the virtual environment
+```
 
-    python -m virtualenv .venv       # Create virtual environment in .venv directory
-    . .venv/bin/activate             # Activate the virtual environment
-    pip install -r requirements.txt  # Install the dependencies
+Alternatively you can create a [conda environment](https://conda.io/docs/user-guide/tasks/manage-environments.html):
 
-### conda
+```bash
+conda create -n dateutil                # Create a conda environment
+# conda create -n dateutil python=3.6   # Or specify a version
+source activate dateutil                # Activate the conda environment
+```
 
-Run the following commands to create a [conda environment](https://conda.io) with all dependencies installed:
+Once your virtual environment is created, install the library in development mode:
 
-    conda create -n dateutil                # Create a conda environment
-    # conda create -n dateutil python=3.6   # or specify a version
-    source activate dateutil                # Activate the conda environment
-    pip install -r requirements.txt         # Install the dependencies
+```bash
+pip install -e .
+```
+
+This will allow scripts run in your virtual environment to use the version of `dateutil` in your local directory. If you also want to run the tests in your local directory, install the test dependencies:
+
+```bash
+pip install -r requirements-dev.txt
+```
 
 ## Testing
 
-dateutil has a comprehensive test suite, which can be run simply by running
-`python -m pytest` in the project root. Note that if you don't have the internal
-zoneinfo database, some tests will fail. Apart from that, all tests should pass.
+The best way to test `dateutil` is to run `tox`. By default, `tox` will test against all supported versions of Python installed on your system. To limit the number of tests, run a specific subset of environments. For example, to run only on Python 2.7 and Python 3.6:
 
-To easily test dateutil against all supported Python versions, you can use
-[tox](https://tox.readthedocs.io/en/latest/).
+```bash
+tox -e py27,py36
+```
 
-All GitHub pull requests are automatically tested using travis and appveyor.
+You can also pass arguments to `pytest` through `tox` by placing them after `--`:
+
+```bash
+tox -e py36 -- -m tzstr
+```
+
+This will pass the `-m tzstr` parameter to `pytest`, running only the tests with the `tzstr` mark.
+
+The tests can also be run directly by running `pytest` or `python -m pytest` in the root directory. This will be likely be less thorough but is often faster and is a good first pass to check your changes.
+
+All GitHub pull requests are automatically tested using [Travis](https://travis-ci.org/dateutil/dateutil/) and [Appveyor](https://ci.appveyor.com/project/dateutil/dateutil).
