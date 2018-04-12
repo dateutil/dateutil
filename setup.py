@@ -1,10 +1,13 @@
 #!/usr/bin/python
 from os.path import isfile
 import os
+import sys
 
 import setuptools
 from setuptools import setup, find_packages
 from setuptools.command.test import test as TestCommand
+
+from build_cmd import BuildCommand
 
 from distutils.version import LooseVersion
 import warnings
@@ -45,6 +48,61 @@ def README():
     return ''.join(lines_out)
 README = README()
 
+def consume_custom_args():
+    """Consumes additional arguments to setup.py"""
+    # This is a hack-job because the only way I can tell to add user-specified
+    # options to `setup.py` subcommands is to set a cmdclass with user_options
+    # set, but user_options only works when added to the directly-invoked
+    # subcommand, not indirectly invoked (e.g. when python setup.py install
+    # invokes build, and build invokes build_py).
+    #
+    # To get around this, I'll consume these arguments directly from sys.argv
+    # in *all* cases, and use them to modify the inputs to setup()
+    #
+    # If you know of a better way to do this, please let me know.
+    valid_args = {'--no-zoneinfo': False,
+                  '--tzfiles': True,
+                  '--tzpath': True}
+
+    response = {
+        'no_zoneinfo': False,
+        'tzfiles': None,
+        'tzpath': None
+    }
+
+    out_args = sys.argv[0:1]
+
+    for arg in sys.argv[1:]:
+        argsplit = arg.split('=', 1)
+        key = argsplit[0]
+
+        if key in valid_args:
+            resp_key = key.lstrip('-').replace('-', '_')
+            if valid_args[key]:
+                if len(argsplit) == 0:
+                    raise ValueError('Missing argument to %s' % key)
+                response[resp_key] = argsplit[1]
+            else:
+                response[resp_key] = not response[resp_key]
+        else:
+            out_args.append(arg)
+
+    sys.argv = out_args
+    return response
+
+
+# Load custom arguments from command line independent of subcommand
+_custom_args = consume_custom_args()
+
+NO_ZONEINFO = _custom_args.pop('no_zoneinfo')
+BUILD_OPTIONS = {k: _custom_args.pop(k) for k in ('tzfiles', 'tzpath')}
+
+if NO_ZONEINFO:
+    PKG_DATA = {}
+else:
+    PKG_DATA = {"dateutil.zoneinfo": ["dateutil-zoneinfo.tar.gz"]}
+
+
 setup(name="python-dateutil",
       use_scm_version={
           'write_to': 'dateutil/_version.py',
@@ -60,7 +118,7 @@ setup(name="python-dateutil",
       long_description_content_type='text/x-rst',
       packages=PACKAGES,
       python_requires=">=2.7, !=3.0.*, !=3.1.*, !=3.2.*",
-      package_data={"dateutil.zoneinfo": ["dateutil-zoneinfo.tar.gz"]},
+      package_data=PKG_DATA,
       zip_safe=True,
       requires=["six"],
       setup_requires=['setuptools_scm'],
@@ -83,6 +141,11 @@ setup(name="python-dateutil",
       ],
       test_suite="dateutil.test",
       cmdclass={
-          "test": Unsupported
+          "test": Unsupported,
+          "build_py": BuildCommand,
+      },
+      # Custom arguments parsed from the command line
+      options={
+          'build_py': BUILD_OPTIONS,
       }
-      )
+    )

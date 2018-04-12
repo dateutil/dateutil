@@ -13,6 +13,7 @@ import time
 import sys
 import os
 import bisect
+import warnings
 
 import six
 from six import string_types
@@ -31,6 +32,34 @@ except ImportError:
 ZERO = datetime.timedelta(0)
 EPOCH = datetime.datetime.utcfromtimestamp(0)
 EPOCHORDINAL = EPOCH.toordinal()
+
+# Configure time zone paths
+if sys.platform != "win32":
+    TZFILES = [
+        "/etc/localtime",
+        "localtime",
+    ]
+
+    TZPATHS = [
+        "/usr/share/zoneinfo",
+        "/usr/lib/zoneinfo",
+        "/usr/share/lib/zoneinfo",
+        "/etc/zoneinfo",
+    ]
+
+else:
+    TZFILES = []
+    TZPATHS = []
+
+# _tzpaths is added at build time in systems that override these
+try:
+    from . import _tzpaths
+except ImportError:
+    pass
+else:
+    TZFILES = getattr(_tzpaths, 'TZFILES', TZFILES)
+    TZPATHS = getattr(_tzpaths, 'TZPATHS', TZPATHS)
+    del _tzpaths
 
 
 @six.add_metaclass(_TzSingleton)
@@ -1388,16 +1417,6 @@ class tzical(object):
         return "%s(%s)" % (self.__class__.__name__, repr(self._s))
 
 
-if sys.platform != "win32":
-    TZFILES = ["/etc/localtime", "localtime"]
-    TZPATHS = ["/usr/share/zoneinfo",
-               "/usr/lib/zoneinfo",
-               "/usr/share/lib/zoneinfo",
-               "/etc/zoneinfo"]
-else:
-    TZFILES = []
-    TZPATHS = []
-
 def __get_gettz():
     tzlocal_classes = (tzlocal,)
     if tzwinlocal is not None:
@@ -1483,8 +1502,10 @@ def __get_gettz():
                                 tz = None
 
                         if not tz:
-                            from dateutil.zoneinfo import get_zonefile_instance
-                            tz = get_zonefile_instance().get(name)
+                            with warnings.catch_warnings():
+                                warnings.simplefilter('ignore',
+                                    zoneinfo.ZoneInfoTarballMissingWarning)
+                                tz = zoneinfo.get_zonefile_instance().get(name)
 
                         if not tz:
                             for c in name:
@@ -1504,8 +1525,10 @@ def __get_gettz():
 
     return GettzFunc()
 
+
 gettz = __get_gettz()
 del __get_gettz
+
 
 def datetime_exists(dt, tz=None):
     """
