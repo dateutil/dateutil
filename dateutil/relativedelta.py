@@ -44,12 +44,14 @@ class relativedelta(object):
             the corresponding aritmetic operation on the original datetime value
             with the information in the relativedelta.
 
-        weekday:
-            One of the weekday instances (MO, TU, etc). These instances may
-            receive a parameter N, specifying the Nth weekday, which could
-            be positive or negative (like MO(+1) or MO(-2). Not specifying
-            it is the same as specifying +1. You can also use an integer,
-            where 0=MO.
+        weekday: 
+            One of the weekday instances (MO, TU, etc). These
+            instances may receive a parameter N, specifying the Nth
+            weekday, which could be positive or negative (like MO(+1)
+            or MO(-2). Not specifying it is the same as specifying
+            +1. You can also use an integer, where 0=MO. Notice that
+            if the calculated date is already Monday, for example,
+            using MO(1) or MO(-1) won't change the day.
 
         leapdays:
             Will add given days to the date found, if year is a leap
