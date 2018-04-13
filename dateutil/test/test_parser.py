@@ -18,6 +18,9 @@ from six.moves import StringIO
 
 import pytest
 
+from hypothesis.strategies import integers
+from hypothesis import given
+
 # Platform info
 IS_WIN = sys.platform.startswith('win')
 
@@ -26,6 +29,24 @@ try:
     PLATFORM_HAS_DASH_D = True
 except ValueError:
     PLATFORM_HAS_DASH_D = False
+
+class TestConvertyear(unittest.TestCase):
+    @given(integers(min_value=100))
+    def test_convertyear(self, n):
+        self.assertEqual(n, parserinfo().convertyear(n))
+
+    @given(integers(min_value=-50,
+                    max_value=49))
+    def test_no_specified_century(self, n):
+        p = parserinfo()
+        new_year = p._year + n
+        result = p.convertyear(new_year % 100, century_specified=False)
+        self.assertEqual(result, new_year)
+
+    @given(integers(max_value=-1))
+    def test_assert_non_negative(self, n):
+        with self.assertRaises(AssertionError):
+            parserinfo().convertyear(n)
 
 
 class TestFormat(unittest.TestCase):
