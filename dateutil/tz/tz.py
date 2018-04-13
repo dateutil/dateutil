@@ -1426,7 +1426,7 @@ def __get_gettz():
 
         def cache_clear(self):
             with self._cache_lock:
-                self.__instances = {}
+                self.__instances = weakref.WeakValueDictionary()
 
         @staticmethod
         def nocache(name=None):
