@@ -133,10 +133,6 @@ Starting with version 2.4.1, all source and binary distributions will be signed
 by a PGP key that has, at the very least, been signed by the key which made the
 previous release. A table of release signing keys can be found below:
 
-Starting with version 2.4.1, all source and binary distributions will be signed
-by a PGP key that has, at the very least, been signed by the key which made the
-previous release. A table of release signing keys can be found below:
-
 ===========  ============================
 Releases     Signing key fingerprint
 ===========  ============================
