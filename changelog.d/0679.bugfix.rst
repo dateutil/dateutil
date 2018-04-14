@@ -1,0 +1,1 @@
+Fixed an issue where decimal.Decimal would cast `NaN` or infinite value in a parser.parse, which will raise decimal.Decimal-specific errors. Reported and fixed by @amureki (gh issue #662, gh pr #679).
