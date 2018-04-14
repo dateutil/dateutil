@@ -61,6 +61,7 @@ switch, and thus all their contributions are dual-licensed.
 - Pierre Gergondet <pierre.gergondet@MASKED> (gh: @gergondet)
 - Quentin Pradet <quentin@MASKED>
 - Roy Williams <rwilliams@MASKED>
+- Rustem Saiargaliev (gh: @amureki) **D**
 - Savraj <savraj@MASKED>
 - Sergey Vishnikin <armicron@MASKED>
 - Stefan Bonchev **D**
