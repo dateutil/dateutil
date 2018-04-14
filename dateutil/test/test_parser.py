@@ -170,7 +170,6 @@ class ParserTest(unittest.TestCase):
                                    tzinfos={"BRST": long(-10800)}),
                              datetime(2003, 9, 25, 10, 36, 28,
                                       tzinfo=self.brsttz))
-
     def testDateCommandFormatIgnoreTz(self):
         self.assertEqual(parse("Thu Sep 25 10:36:28 BRST 2003",
                                ignoretz=True),
@@ -747,6 +746,14 @@ class ParserTest(unittest.TestCase):
     def testUnspecifiedDayFallbackFebLeapYear(self):
         self.assertEqual(parse("Feb 2008", default=datetime(2010, 1, 31)),
                          datetime(2008, 2, 29))
+
+    def testTzinfoDictionaryCouldReturnNone(self):
+        self.assertEqual(parse('2017-02-03 12:40 BRST', tzinfos={"BRST": None}),
+                        datetime(2017, 2, 3, 12, 40))
+
+    def testTzinfosCallableCouldReturnNone(self):
+        self.assertEqual(parse('2017-02-03 12:40 BRST', tzinfos=lambda *args: None),
+                                    datetime(2017, 2, 3, 12, 40))
 
     def testErrorType01(self):
         self.assertRaises(ValueError,
