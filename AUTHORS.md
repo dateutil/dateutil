@@ -24,6 +24,7 @@ switch, and thus all their contributions are dual-licensed.
 - Brandon W Maister <quodlibetor@MASKED>
 - Brock Mendel <jbrockmendel@MASKED> (gh: @jbrockmendel) **R**
 - Carlos <carlosxl@MASKED>
+- Christopher Cordero <ccordero@pm.me> (gh: cs-cordero) **D**
 - Christopher Corley <cscorley@MASKED>
 - Claudio Canepa <ccanepacc@MASKED>
 - Daniel Lepage <dplepage@MASKED>
