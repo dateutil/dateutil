@@ -31,6 +31,7 @@ switch, and thus all their contributions are dual-licensed.
 - Dominik Kozaczko <dominik@MASKED>
 - Elvis Pranskevichus <el@MASKED>
 - Florian Rathgeber (gh: @kynan)
+- Gabriel Bianconi <gabriel@MASKED> (gh: @GabrielBianconi) **D**
 - Gabriel Poesia <gabriel.poesia@MASKED>
 - Gustavo Niemeyer <gustavo@niemeyer.net> (gh: @niemeyer)
 - Holger Joukl <holger.joukl@MASKED> (gh: @hjoukl)
