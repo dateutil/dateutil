@@ -1202,10 +1202,15 @@ class parser(object):
 
     def _to_decimal(self, val):
         try:
-            return Decimal(val)
+            decimal_value = Decimal(val)
+            # See GH 662, edge case, infinite value should not be converted via `_to_decimal`
+            if not decimal_value.is_finite():
+                raise ValueError("Converted decimal value is infinite or NaN")
         except Exception as e:
             msg = "Could not convert %s to decimal" % val
             six.raise_from(ValueError(msg), e)
+        else:
+            return decimal_value
 
 
 DEFAULTPARSER = parser()
