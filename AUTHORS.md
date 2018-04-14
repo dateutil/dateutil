@@ -29,6 +29,7 @@ switch, and thus all their contributions are dual-licensed.
 - Daniel Lepage <dplepage@MASKED>
 - David Lehrian <david@MASKED>
 - Dominik Kozaczko <dominik@MASKED>
+- Elliot Hughes <elliot.hughes@gmail.com> (gh: @ElliotJH) **D**
 - Elvis Pranskevichus <el@MASKED>
 - Florian Rathgeber (gh: @kynan)
 - Gabriel Poesia <gabriel.poesia@MASKED>
