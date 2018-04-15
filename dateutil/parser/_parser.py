@@ -369,19 +369,17 @@ class parserinfo(object):
         range of self._year (current local time)
         """
 
-        # only called internally. Should never be negative
+        # Function contract is that the year is always positive
         assert year >= 0
 
-        if century_specified or year >= 100:
-            return year
+        if year < 100 and not century_specified:
+            # assume current century to start
+            year += self._century
 
-        # assume current century to start
-        year += self._century
-
-        if year >= self._year + 50:  # if too far in future
-            year -= 100
-        elif year < self._year - 50:  # if too far in past
-            year += 100
+            if year >= self._year + 50:  # if too far in future
+                year -= 100
+            elif year < self._year - 50:  # if too far in past
+                year += 100
 
         return year
 
