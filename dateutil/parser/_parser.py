@@ -364,13 +364,25 @@ class parserinfo(object):
         return self.TZOFFSET.get(name)
 
     def convertyear(self, year, century_specified=False):
-        if year < 100 and not century_specified:
-            year += self._century
-            if abs(year - self._year) >= 50:
-                if year < self._year:
-                    year += 100
-                else:
-                    year -= 100
+        """
+        Converts two-digit years to year within [-50, 49]
+        range of self._year (current local time)
+        """
+
+        # only called internally. Should never be negative
+        assert year >= 0
+
+        if century_specified or year >= 100:
+            return year
+
+        # assume current century to start
+        year += self._century
+
+        if year >= self._year + 50:  # if too far in future
+            year -= 100
+        elif year < self._year - 50:  # if too far in past
+            year += 100
+
         return year
 
     def validate(self, res):
