@@ -27,6 +27,7 @@ switch, and thus all their contributions are dual-licensed.
 - Christopher Cordero <ccordero@pm.me> (gh: cs-cordero) **D**
 - Christopher Corley <cscorley@MASKED>
 - Claudio Canepa <ccanepacc@MASKED>
+- Corey Girard <corey.r.girard@gmail.com> (gh: @coreygirard)
 - Daniel Lepage <dplepage@MASKED>
 - David Lehrian <david@MASKED>
 - Dominik Kozaczko <dominik@MASKED>
@@ -46,6 +47,7 @@ switch, and thus all their contributions are dual-licensed.
 - Kirit Thadaka <kirit.thadaka@gmail.com> (gh: @kirit93) **D**
 - Kubilay Kocak <koobs@MASKED>
 - Laszlo Kiss Kollar <kiss.kollar.laszlo@MASKED> (gh: @lkollar) **D**
+- Lauren Oldja <oldja@MASKED> (gh: @loldja)
 - Mario Corchero <mcorcherojim@MASKED> (gh: @mariocj89) **R**
 - Mateusz Dziedzic (gh: @m-dz) **D**
 - Matthew Schinckel <matt@MASKED>
