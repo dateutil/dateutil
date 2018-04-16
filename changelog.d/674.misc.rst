@@ -1,0 +1,1 @@
+Add property testing with hypothesis with property tests for parserinfo.convertyear. Implemented by @coreygirard and @loldja (gh pr #674)

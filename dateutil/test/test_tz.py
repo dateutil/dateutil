@@ -14,6 +14,8 @@ import unittest
 import sys
 import base64
 import copy
+import gc
+import weakref
 
 from functools import partial
 
@@ -731,6 +733,20 @@ class TzOffsetTest(unittest.TestCase):
 
         assert tz1 is tz2
 
+
+@pytest.mark.smoke
+@pytest.mark.tzoffset
+def test_tzoffset_weakref():
+    UTC1 = tz.tzoffset('UTC', 0)
+    UTC_ref = weakref.ref(tz.tzoffset('UTC', 0))
+    UTC1 is UTC_ref()
+    del UTC1
+    gc.collect()
+
+    assert UTC_ref() is None
+    assert UTC_ref() is not tz.tzoffset('UTC', 0)
+
+
 @pytest.mark.tzoffset
 @pytest.mark.parametrize('args', [
     ('UTC', 0),
@@ -1037,6 +1053,7 @@ class GettzTest(unittest.TestCase, TzFoldMixin):
 
         assert local1 is not local2
 
+
 @pytest.mark.gettz
 @pytest.mark.xfail(IS_WIN, reason='zoneinfo separately cached')
 def test_gettz_cache_clear():
@@ -1046,6 +1063,23 @@ def test_gettz_cache_clear():
     NYC2 = tz.gettz('America/New_York')
 
     assert NYC1 is not NYC2
+
+
+@pytest.mark.xfail(IS_WIN, reason="Windows does not use system zoneinfo")
+@pytest.mark.smoke
+@pytest.mark.gettz
+def test_gettz_weakref():
+    tz.gettz.cache_clear()
+    NYC1 = tz.gettz('America/New_York')
+    NYC_ref = weakref.ref(tz.gettz('America/New_York'))
+
+    assert NYC1 is NYC_ref()
+
+    del NYC1
+    gc.collect()
+
+    assert NYC_ref() is None
+    assert tz.gettz('America/New_York') is not NYC_ref()
 
 
 class ZoneInfoGettzTest(GettzTest, WarningTestMixin):
@@ -1374,6 +1408,21 @@ class TZStrTest(unittest.TestCase, TzFoldMixin):
 
         # Ensure that these still are all the same zone
         assert tz1 == tz2 == tz3
+
+
+@pytest.mark.smoke
+@pytest.mark.tzstr
+def test_tzstr_weakref():
+    tz_t1 = tz.tzstr('EST5EDT')
+    tz_t2_ref = weakref.ref(tz.tzstr('EST5EDT'))
+    assert tz_t1 is tz_t2_ref()
+
+    del tz_t1
+    gc.collect()
+
+    assert tz_t2_ref() is None
+    assert tz.tzstr('EST5EDT') is not tz_t2_ref()
+
 
 @pytest.mark.tzstr
 @pytest.mark.parametrize('tz_str,expected', [

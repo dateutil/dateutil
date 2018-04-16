@@ -24,13 +24,16 @@ switch, and thus all their contributions are dual-licensed.
 - Brandon W Maister <quodlibetor@MASKED>
 - Brock Mendel <jbrockmendel@MASKED> (gh: @jbrockmendel) **R**
 - Carlos <carlosxl@MASKED>
+- Christopher Cordero <ccordero@pm.me> (gh: cs-cordero) **D**
 - Christopher Corley <cscorley@MASKED>
 - Claudio Canepa <ccanepacc@MASKED>
+- Corey Girard <corey.r.girard@gmail.com> (gh: @coreygirard)
 - Daniel Lepage <dplepage@MASKED>
 - David Lehrian <david@MASKED>
 - Dominik Kozaczko <dominik@MASKED>
 - Elvis Pranskevichus <el@MASKED>
 - Florian Rathgeber (gh: @kynan)
+- Gabriel Bianconi <gabriel@MASKED> (gh: @GabrielBianconi) **D**
 - Gabriel Poesia <gabriel.poesia@MASKED>
 - Gustavo Niemeyer <gustavo@niemeyer.net> (gh: @niemeyer)
 - Holger Joukl <holger.joukl@MASKED> (gh: @hjoukl)
@@ -45,6 +48,7 @@ switch, and thus all their contributions are dual-licensed.
 - Kirit Thadaka <kirit.thadaka@gmail.com> (gh: @kirit93) **D**
 - Kubilay Kocak <koobs@MASKED>
 - Laszlo Kiss Kollar <kiss.kollar.laszlo@MASKED> (gh: @lkollar) **D**
+- Lauren Oldja <oldja@MASKED> (gh: @loldja)
 - Mario Corchero <mcorcherojim@MASKED> (gh: @mariocj89) **R**
 - Mateusz Dziedzic (gh: @m-dz) **D**
 - Matthew Schinckel <matt@MASKED>
@@ -61,6 +65,7 @@ switch, and thus all their contributions are dual-licensed.
 - Pierre Gergondet <pierre.gergondet@MASKED> (gh: @gergondet)
 - Quentin Pradet <quentin@MASKED>
 - Roy Williams <rwilliams@MASKED>
+- Rustem Saiargaliev (gh: @amureki) **D**
 - Savraj <savraj@MASKED>
 - Sergey Vishnikin <armicron@MASKED>
 - Stefan Bonchev **D**
