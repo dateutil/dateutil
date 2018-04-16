@@ -31,6 +31,7 @@ switch, and thus all their contributions are dual-licensed.
 - Daniel Lepage <dplepage@MASKED>
 - David Lehrian <david@MASKED>
 - Dominik Kozaczko <dominik@MASKED>
+- Elliot Hughes <elliot.hughes@gmail.com> (gh: @ElliotJH) **D**
 - Elvis Pranskevichus <el@MASKED>
 - Florian Rathgeber (gh: @kynan)
 - Gabriel Bianconi <gabriel@MASKED> (gh: @GabrielBianconi) **D**
@@ -44,6 +45,7 @@ switch, and thus all their contributions are dual-licensed.
 - Jitesh <jitesh@MASKED>
 - Jon Dufresne <jon.dufresne@MASKED> (gh: @jdufresne) **R**
 - Jonas Neubert <jonas@MASKED>
+- Kevin Nguyen <kvn219@MASKED>
 - Kirit Thadaka <kirit.thadaka@gmail.com> (gh: @kirit93) **D**
 - Kubilay Kocak <koobs@MASKED>
 - Laszlo Kiss Kollar <kiss.kollar.laszlo@MASKED> (gh: @lkollar) **D**
@@ -79,6 +81,7 @@ switch, and thus all their contributions are dual-licensed.
 - X O <xo@MASKED>
 - Yaron de Leeuw <me@jarondl.net> (gh: @jarondl)
 - Yoney <alper_yoney@hotmail.com> **D**
+- Yuan Huang <huangy22@gmail.com> (gh: @huangy22) **D**
 - Zbigniew Jędrzejewski-Szmek <zbyszek@MASKED>
 - bachmann <bachmann.matt@MASKED>
 - bjv <brandon.vanvaerenbergh@MASKED> (@bjamesvERT)

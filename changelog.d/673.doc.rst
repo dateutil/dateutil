@@ -1,0 +1,4 @@
+Updated the documentation for relativedelta. Removed references to
+tuple arguments for weekday, explained effect of weekday(_, 1) and
+better explained the order of operations that relativedelta
+applies. Fixed by @kvn219 @huangy22 and @ElliotJH (gh pr #673)
