@@ -1,0 +1,1 @@
+Add a test for the property that ``dateutil.parser.parse`` will support inversion of ``datetime.isoformat()`` so long as ``sep`` is an ASCII character. Added by @pganssle (gh pr #688)
