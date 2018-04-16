@@ -12,7 +12,7 @@ dateutil - powerful extensions to datetime
     :alt: pypi version
 
 .. |support| image:: https://img.shields.io/pypi/pyversions/python-dateutil.svg?style=flat-square
-    :target: https://pypi.python.org/pypi/python-dateutil/
+    :target: https://pypi.org/project/python-dateutil/
     :alt: supported Python version
 
 .. |travis| image:: https://img.shields.io/travis/dateutil/dateutil/master.svg?style=flat-square&label=Travis%20Build
@@ -32,7 +32,7 @@ dateutil - powerful extensions to datetime
    :target: https://gitter.im/dateutil/dateutil
 
 .. |licence| image:: https://img.shields.io/pypi/l/python-dateutil.svg?style=flat-square
-    :target: https://pypi.python.org/pypi/python-dateutil/
+    :target: https://pypi.org/project/python-dateutil/
     :alt: licence
 
 .. |readthedocs| image:: https://img.shields.io/readthedocs/dateutil/latest.svg?style=flat-square&label=Read%20the%20Docs
