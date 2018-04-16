@@ -41,6 +41,7 @@ switch, and thus all their contributions are dual-licensed.
 - Jitesh <jitesh@MASKED>
 - Jon Dufresne <jon.dufresne@MASKED> (gh: @jdufresne) **R**
 - Jonas Neubert <jonas@MASKED>
+- Kevin Nguyen <kvn219@MASKED>
 - Kirit Thadaka <kirit.thadaka@gmail.com> (gh: @kirit93) **D**
 - Kubilay Kocak <koobs@MASKED>
 - Laszlo Kiss Kollar <kiss.kollar.laszlo@MASKED> (gh: @lkollar) **D**
