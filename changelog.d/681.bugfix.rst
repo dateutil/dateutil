@@ -1,0 +1,4 @@
+**681.bugfix.rst**
+```
+Fixed a ValueError being thrown if tzinfos call explicity returns `None`. User should 
+be able to opt out of passing in tzinfos argment parse. Reported by @pganssle (gh issue #661) Fixed by @parsethis (gh pr #681)

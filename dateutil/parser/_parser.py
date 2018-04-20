@@ -1125,16 +1125,14 @@ class parser(object):
             tzdata = tzinfos(tzname, tzoffset)
         else:
             tzdata = tzinfos.get(tzname)
-
-        if isinstance(tzdata, datetime.tzinfo):
+        # handle case where tzinfo is paased an options that returns None
+        # eg tzinfos = {'BRST' : None}
+        if isinstance(tzdata, datetime.tzinfo) or tzdata is None:
             tzinfo = tzdata
         elif isinstance(tzdata, text_type):
             tzinfo = tz.tzstr(tzdata)
         elif isinstance(tzdata, integer_types):
             tzinfo = tz.tzoffset(tzname, tzdata)
-        else:
-            raise ValueError("Offset must be tzinfo subclass, "
-                             "tz string, or int offset.")
         return tzinfo
 
     def _build_tzaware(self, naive, res, tzinfos):
@@ -1170,7 +1168,7 @@ class parser(object):
             warnings.warn("tzname {tzname} identified but not understood.  "
                           "Pass `tzinfos` argument in order to correctly "
                           "return a timezone-aware datetime.  In a future "
-                          "version, this raise an "
+                          "version, this will raise an "
                           "exception.".format(tzname=res.tzname),
                           category=UnknownTimezoneWarning)
             aware = naive
