@@ -18,6 +18,8 @@ from freezegun import freeze_time
 
 import pytest
 
+
+@pytest.mark.rrule
 class RRuleTest(WarningTestMixin, unittest.TestCase):
     def _rrulestr_reverse_test(self, rule):
         """
@@ -4539,13 +4541,20 @@ class RRuleTest(WarningTestMixin, unittest.TestCase):
         self.assertEqual(list(rr), [datetime(1997, 1, 1)])
         self.assertEqual(list(newrr),
                              [datetime(1997, 1, 6)])
-                             
-    @freeze_time(datetime(2018,3,6,5,36,tzinfo=tz.tzutc()))
-    def testDtstartTimeZone(self):
-        rule_without_dtstart = rrule(freq=HOURLY,until=datetime(2018,3,6,8,0,tzinfo=tz.tzutc()))
-        rule_with_dtstart = rrule(freq=HOURLY,dtstart=datetime(2018,3,6,5,36,tzinfo=tz.tzutc()),until=datetime(2018,3,6,8,0,tzinfo=tz.tzutc()))
-        assert list(rule_without_dtstart) == list(rule_with_dtstart)
 
+
+@pytest.mark.rrule
+@freeze_time(datetime(2018, 3, 6, 5, 36, tzinfo=tz.UTC))
+def test_generated_aware_dtstart():
+    dtstart_exp = datetime(2018, 3, 6, 5, 36, tzinfo=tz.UTC)
+    UNTIL = datetime(2018, 3, 6, 8, 0, tzinfo=tz.UTC)
+
+    rule_without_dtstart = rrule(freq=HOURLY, until=UNTIL)
+    rule_with_dtstart = rrule(freq=HOURLY, dtstart=dtstart_exp, until=UNTIL)
+    assert list(rule_without_dtstart) == list(rule_with_dtstart)
+
+
+@pytest.mark.rruleset
 class RRuleSetTest(unittest.TestCase):
     def testSet(self):
         rrset = rruleset()
