@@ -337,10 +337,6 @@ class rrule(rrulebase):
 
     Additionally, it supports the following keyword arguments:
 
-    :param cache:
-        If given, it must be a boolean value specifying to enable or disable
-        caching of results. If you will use the same rrule instance multiple
-        times, enabling caching will improve the performance considerably.
     :param dtstart:
         The recurrence start. Besides being the base for the recurrence,
         missing parameters in the final recurrence instances will also be
@@ -387,6 +383,11 @@ class rrule(rrulebase):
     :param byyearday:
         If given, it must be either an integer, or a sequence of integers,
         meaning the year days to apply the recurrence to.
+    :param byeaster:
+        If given, it must be either an integer, or a sequence of integers,
+        positive or negative. Each integer will define an offset from the
+        Easter Sunday. Passing the offset 0 to byeaster will yield the Easter
+        Sunday itself. This is an extension to the RFC specification.
     :param byweekno:
         If given, it must be either an integer, or a sequence of integers,
         meaning the week numbers to apply the recurrence to. Week numbers
@@ -412,11 +413,10 @@ class rrule(rrulebase):
     :param bysecond:
         If given, it must be either an integer, or a sequence of integers,
         meaning the seconds to apply the recurrence to.
-    :param byeaster:
-        If given, it must be either an integer, or a sequence of integers,
-        positive or negative. Each integer will define an offset from the
-        Easter Sunday. Passing the offset 0 to byeaster will yield the Easter
-        Sunday itself. This is an extension to the RFC specification.
+    :param cache:
+        If given, it must be a boolean value specifying to enable or disable
+        caching of results. If you will use the same rrule instance multiple
+        times, enabling caching will improve the performance considerably.
      """
     def __init__(self, freq, dtstart=None,
                  interval=1, wkst=None, count=None, until=None, bysetpos=None,

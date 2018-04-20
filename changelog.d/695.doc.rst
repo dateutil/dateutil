@@ -1,0 +1,1 @@
+Changed order of keywords in rrule docstring. Reported and fixed by @rmahajan14 (gh issue #686, gh pr #695).
