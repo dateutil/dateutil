@@ -59,6 +59,7 @@ switch, and thus all their contributions are dual-licensed.
 - Michael J. Schultz <mjschultz@MASKED>
 - Mike Gilbert <floppym@MASKED>
 - Nick Smith <nick.smith@MASKED>
+- Orson Adams <orson.network@MASKED> (gh: @parsethis)
 - Paul Ganssle <paul@ganssle.io> (gh: @pganssle) **R**
 - Pascal van Kooten <kootenpv@MASKED>
 - Pavel Ponomarev <comrad.awsum@MASKED>
