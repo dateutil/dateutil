@@ -427,7 +427,10 @@ class rrule(rrulebase):
         super(rrule, self).__init__(cache)
         global easter
         if not dtstart:
-            dtstart = datetime.datetime.now().replace(microsecond=0)
+            if until and until.tzinfo:
+                dtstart = datetime.datetime.now(tz=until.tzinfo).replace(microsecond=0)
+            else:           
+                dtstart = datetime.datetime.now().replace(microsecond=0)
         elif not isinstance(dtstart, datetime.datetime):
             dtstart = datetime.datetime.fromordinal(dtstart.toordinal())
         else:

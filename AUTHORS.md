@@ -23,6 +23,7 @@ switch, and thus all their contributions are dual-licensed.
 - Bernat Gabor <bgabor8@bloomberg.net> (gh: @gaborbernat) **D**
 - Brandon W Maister <quodlibetor@MASKED>
 - Brock Mendel <jbrockmendel@MASKED> (gh: @jbrockmendel) **R**
+- Brook Li (gh: @absreim) **D**
 - Carlos <carlosxl@MASKED>
 - Christopher Cordero <ccordero@pm.me> (gh: cs-cordero) **D**
 - Christopher Corley <cscorley@MASKED>
