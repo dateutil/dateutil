@@ -4554,6 +4554,19 @@ def test_generated_aware_dtstart():
     assert list(rule_without_dtstart) == list(rule_with_dtstart)
 
 
+@pytest.mark.rrule
+@pytest.mark.rrulestr
+@pytest.mark.xfail(reason="rrulestr loses time zone, gh issue #637")
+@freeze_time(datetime(2018, 3, 6, 5, 36, tzinfo=tz.UTC))
+def test_generated_aware_dtstart_rrulestr():
+    rrule_without_dtstart = rrule(freq=HOURLY,
+                                  until=datetime(2018, 3, 6, 8, 0,
+                                                 tzinfo=tz.UTC))
+    rrule_r = rrulestr(str(rrule_without_dtstart))
+
+    assert list(rrule_r) == list(rrule_without_dtstart)
+
+
 @pytest.mark.rruleset
 class RRuleSetTest(unittest.TestCase):
     def testSet(self):
