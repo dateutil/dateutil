@@ -264,3 +264,12 @@ texinfo_documents = [
 
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 #texinfo_no_detailmenu = False
+
+# -- Link checking options -------------------------------------------------
+linkcheck_ignore = [
+    # This has been spotty lately so we're adding a mirror
+    r'https://pgp.mit.edu',
+]
+
+# Reduce problems with ephemeral failures
+linkcheck_retries = 5
