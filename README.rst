@@ -136,7 +136,7 @@ previous release. A table of release signing keys can be found below:
 ===========  ============================
 Releases     Signing key fingerprint
 ===========  ============================
-2.4.1-       `6B49 ACBA DCF6 BD1C A206 67AB CD54 FCE3 D964 BEFB`_
+2.4.1-       `6B49 ACBA DCF6 BD1C A206 67AB CD54 FCE3 D964 BEFB`_ (|pgp_mirror|_)
 ===========  ============================
 
 
@@ -154,3 +154,5 @@ All contributions after December 1, 2017 released under dual license - either `A
 .. _6B49 ACBA DCF6 BD1C A206 67AB CD54 FCE3 D964 BEFB:
    https://pgp.mit.edu/pks/lookup?op=vindex&search=0xCD54FCE3D964BEFB
 
+.. |pgp_mirror| replace:: mirror
+.. _pgp_mirror: https://sks-keyservers.net/pks/lookup?op=vindex&search=0xCD54FCE3D964BEFB
