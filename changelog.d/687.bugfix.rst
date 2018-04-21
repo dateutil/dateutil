@@ -1,0 +1,1 @@
+Fixed incorrect parsing of certain dates earlier than 100 AD when repesented in the form "%B.%Y.%d", e.g. "December.0031.30". (gh issue #687, pr #700)
