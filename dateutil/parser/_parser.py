@@ -458,9 +458,35 @@ class _ymd(list):
                 raise ValueError('Year is already set')
             self.ystridx = len(self) - 1
 
+    def _resolve_from_stridxs(self):
+        """
+        Try to resolve the identities of year/month/day elements using
+        ystridx, mstridx, and dstridx, if enough of these are specified.
+        """
+        strids = {'y': self.ystridx, 'm': self.mstridx, 'd': self.dstridx}
+        strids = {key: strids[key] for key in strids if strids[key] is not None}
+
+        if len(self) == 3 and len(strids) == 2:
+            # we can back out the remaining stridx value
+            missing = [x for x in range(3) if x not in strids.values()]
+            key = [x for x in ['y', 'm', 'd'] if x not in strids]
+            assert len(missing) == len(key) == 1
+            key = key[0]
+            val = missing[0]
+            strids[key] = val
+
+        assert len(self) == len(strids)  # otherwise this should not be called
+        return tuple([self[strids[key]] for key in ['y', 'm', 'd']
+                      if key in strids])
+
     def resolve_ymd(self, yearfirst, dayfirst):
         len_ymd = len(self)
         year, month, day = (None, None, None)
+
+        strids = {'y': self.ystridx, 'm': self.mstridx, 'd': self.dstridx}
+        strids = {key: strids[key] for key in strids if strids[key] is not None}
+        if len(self) == len(strids) or (len(self) == 3 and len(strids) == 2):
+            return self._resolve_from_stridxs()
 
         mstridx = self.mstridx
 
