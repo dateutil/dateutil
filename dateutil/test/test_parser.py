@@ -1106,3 +1106,9 @@ def test_decimal_error(value):
     # constructed with an invalid value
     with pytest.raises(ValueError):
         parse(value)
+
+
+def test_BYd_corner_case():
+    # GH#687
+    res = parse('December.0031.30')
+    assert res == datetime(31, 12, 30)
