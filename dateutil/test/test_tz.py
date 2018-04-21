@@ -1900,12 +1900,13 @@ class TZTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             tz.tzfile(BytesIO(b'BadFile'))
 
-    def testFilenameFromAttribute(self):
-        # Should set tz object's filename equal to a file "name" attribute
+    def testFilestreamWithNameRepr(self):
+        # If fileobj is a filestream with a "name" attribute this name should
+        # be reflected in the tz object's repr
         fileobj = BytesIO(base64.b64decode(TZFILE_EST5EDT))
         fileobj.name = 'foo'
         tzc = tz.tzfile(fileobj)
-        self.assertEqual(tzc._filename, 'foo')
+        self.assertEqual(repr(tzc), 'tzfile(' + repr('foo') + ')')
 
     def testRoundNonFullMinutes(self):
         # This timezone has an offset of 5992 seconds in 1900-01-01.
