@@ -67,6 +67,7 @@ switch, and thus all their contributions are dual-licensed.
 - Peter Bieringer <pb@MASKED>
 - Pierre Gergondet <pierre.gergondet@MASKED> (gh: @gergondet)
 - Quentin Pradet <quentin@MASKED>
+- Ridhi Mahajan <ridhikmahajan@MASKED> **D**
 - Roy Williams <rwilliams@MASKED>
 - Rustem Saiargaliev (gh: @amureki) **D**
 - Savraj <savraj@MASKED>
