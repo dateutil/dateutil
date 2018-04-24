@@ -39,7 +39,7 @@ class tzutc(datetime.tzinfo):
     """
     This is a tzinfo object that represents the UTC time zone.
 
-    **Examples:**
+    **Example:**
 
     .. doctest::
 
@@ -129,6 +129,25 @@ class tzoffset(datetime.tzinfo):
     :param offset:
         The time zone offset in seconds, or (since version 2.6.0, represented
         as a :py:class:`datetime.timedelta` object).
+
+    **Example**
+
+    .. doctest:: tzoffset
+       :options: +NORMALIZE_WHITESPACE
+
+        >>> from datetime import *
+        >>> from dateutil.tz import *
+
+        >>> datetime.now(tzoffset("BRST", -10800))
+        datetime.datetime(2003, 9, 27, 9, 52, 43, 624904,
+                  tzinfo=tzinfo=tzoffset('BRST', -10800))
+
+        >>> datetime.now(tzoffset("BRST", -10800)).tzname()
+        'BRST'
+
+        >>> datetime.now(tzoffset("BRST", -10800)).astimezone(tzutc())
+        datetime.datetime(2003, 9, 27, 12, 53, 11, 446419,
+                  tzinfo=tzutc())
     """
     def __init__(self, name, offset):
         self._name = name
@@ -190,6 +209,22 @@ class tzoffset(datetime.tzinfo):
 class tzlocal(_tzinfo):
     """
     A :class:`tzinfo` subclass built around the ``time`` timezone functions.
+
+    .. doctest:: tzlocal
+
+        >>> from datetime import *
+        >>> from dateutil.tz import *
+
+        >>> datetime.now(tzlocal())
+        datetime.datetime(2003, 9, 27, 10, 1, 43, 673605,
+                  tzinfo=tzlocal())
+
+        >>> datetime.now(tzlocal()).tzname()
+        'BRST'
+
+        >>> datetime.now(tzlocal()).astimezone(tzoffset(None, 0))
+        datetime.datetime(2003, 9, 27, 13, 3, 0, 11493,
+                  tzinfo=tzoffset(None, 0))
     """
     def __init__(self):
         super(tzlocal, self).__init__()
@@ -392,6 +427,21 @@ class tzfile(_tzinfo):
     Time zone files can be compiled from the `IANA Time Zone database files
     <https://www.iana.org/time-zones>`_ with the `zic time zone compiler
     <https://www.freebsd.org/cgi/man.cgi?query=zic&sektion=8>`_
+
+    **Example**
+
+    .. doctest:: tzfile
+
+        >>> tz = tzfile('/usr/share/zoneinfo/EST5EDT')
+        >>> datetime(2003, 4, 6, 1, 59, tzinfo=tz).tzname()
+        'EST'
+        >>> datetime(2003, 4, 6, 2, 00, tzinfo=tz).tzname()
+        'EDT'
+        >>> datetime(2003, 10, 26, 0, 59, tzinfo=tz).tzname()
+        'EDT'
+        >>> datetime(2003, 10, 26, 1, 00, tzinfo=tz).tzname()
+        'EST'
+
     """
 
     def __init__(self, fileobj, filename=None):
@@ -1010,6 +1060,88 @@ class tzstr(tzrange):
 
     .. _`GNU C Library: TZ Variable`:
         https://www.gnu.org/software/libc/manual/html_node/TZ-Variable.html
+
+    **Recognized formats**
+
+    * `EST5EDT`
+    * `EST5EDT,4,0,6,7200,10,0,26,7200,3600`
+    * `EST5EDT,4,1,0,7200,10,-1,0,7200,3600`
+    * `EST5EDT4,M4.1.0/02:00:00,M10-5-0/02:00`
+    * `EST5EDT4,95/02:00:00,298/02:00`
+    * `EST5EDT4,J96/02:00:00,J299/02:00`
+
+    Notice that if daylight information is not present, but a
+    daylight abbreviation was provided, `tzstr` will follow the
+    convention of using the first sunday of April to start daylight
+    saving, and the last sunday of October to end it. If start or
+    end time is not present, 2AM will be used, and if the daylight
+    offset is not present, the standard offset plus one hour will
+    be used. This convention is the same as used in the GNU libc.
+
+    This also means that some of the above examples are exactly
+    equivalent, and all of these examples are equivalent
+    in the year of 2003.
+
+    **Examples**
+
+    Here is the example mentioned in the `time module documentation.
+    <https://docs.python.org/3/library/time.html>`_
+
+    .. testsetup:: tzstr
+
+        import os
+        import time
+        from datetime import datetime
+        from dateutil.tz import tzstr
+
+    .. doctest:: tzstr
+
+        >>> os.environ['TZ'] = 'EST+05EDT,M4.1.0,M10.5.0'
+        >>> time.tzset()
+        >>> time.strftime('%X %x %Z')
+        '02:07:36 05/08/03 EDT'
+        >>> os.environ['TZ'] = 'AEST-10AEDT-11,M10.5.0,M3.5.0'
+        >>> time.tzset()
+        >>> time.strftime('%X %x %Z')
+        '16:08:12 05/08/03 AEST'
+
+
+    And here is an example showing the same information using `tzstr`,
+    without touching system settings.
+
+    .. doctest:: tzstr
+
+        >>> tz1 = tzstr('EST+05EDT,M4.1.0,M10.5.0')
+        >>> tz2 = tzstr('AEST-10AEDT-11,M10.5.0,M3.5.0')
+        >>> dt = datetime(2003, 5, 8, 2, 7, 36, tzinfo=tz1)
+        >>> dt.strftime('%X %x %Z')
+        '02:07:36 05/08/03 EDT'
+        >>> dt.astimezone(tz2).strftime('%X %x %Z')
+        '16:07:36 05/08/03 AEST'
+
+
+    Are these really equivalent?
+
+    .. doctest:: tzstr
+
+        >>> tzstr('EST5EDT') == tzstr('EST5EDT,4,1,0,7200,10,-1,0,7200,3600')
+        True
+
+
+    Check the daylight limit.
+
+    .. doctest:: tzstr
+
+        >>> tz = tzstr('EST+05EDT,M4.1.0,M10.5.0')
+        >>> datetime(2003, 4, 6, 1, 59, tzinfo=tz).tzname()
+        'EST'
+        >>> datetime(2003, 4, 6, 2, 00, tzinfo=tz).tzname()
+        'EDT'
+        >>> datetime(2003, 10, 26, 0, 59, tzinfo=tz).tzname()
+        'EDT'
+        >>> datetime(2003, 10, 26, 1, 00, tzinfo=tz).tzname()
+        'EST'
+
     """
     def __init__(self, s, posix_offset=False):
         global parser
@@ -1195,6 +1327,50 @@ class tzical(object):
         with CRLF endings.
 
     .. _`RFC 5545`: https://tools.ietf.org/html/rfc5545
+
+    **Example**
+
+    Here is a sample file extracted from the RFC. This file defines
+    the `EST5EDT` timezone, and will be used in the following example.
+
+    .. include:: samples/EST5EDT.ics
+       :literal:
+
+    And here is an example exploring a `tzical` type:
+
+    .. doctest:: tzfile
+
+        >>> from dateutil.tz import *; from datetime import *
+
+        >>> tz = tzical('samples/EST5EDT.ics')
+        >>> tz.keys()
+        ['US-Eastern']
+
+        >>> est = tz.get('US-Eastern')
+        >>> est
+        <tzicalvtz 'US-Eastern'>
+
+        >>> datetime.now(est)
+        datetime.datetime(2003, 10, 6, 19, 44, 18, 667987,
+                  tzinfo=<tzicalvtz 'US-Eastern'>)
+
+        >>> est == tz.get()
+        True
+
+
+    Let's check the daylight ranges, as usual:
+
+    .. doctest:: tzfile
+
+        >>> datetime(2003, 4, 6, 1, 59, tzinfo=est).tzname()
+        'EST'
+        >>> datetime(2003, 4, 6, 2, 00, tzinfo=est).tzname()
+        'EDT'
+
+        >>> datetime(2003, 10, 26, 0, 59, tzinfo=est).tzname()
+        'EDT'
+        >>> datetime(2003, 10, 26, 1, 00, tzinfo=est).tzname()
+        'EST'
     """
     def __init__(self, fileobj):
         global rrule
