@@ -388,8 +388,8 @@ class tzfile(_tzinfo):
         ``fileobj``'s ``name`` attribute or to ``repr(fileobj)``.
 
     See `Sources for Time Zone and Daylight Saving Time Data
-    <https://data.iana.org/time-zones/tz-link.html>`_ for more information. Time
-    zone files can be compiled from the `IANA Time Zone database files
+    <https://data.iana.org/time-zones/tz-link.html>`_ for more information.
+    Time zone files can be compiled from the `IANA Time Zone database files
     <https://www.iana.org/time-zones>`_ with the `zic time zone compiler
     <https://www.freebsd.org/cgi/man.cgi?query=zic&sektion=8>`_
     """
@@ -841,8 +841,9 @@ class tzrange(tzrangebase):
 
     :param start:
         A :class:`relativedelta.relativedelta` object or equivalent specifying
-        the time and time of year that daylight savings time starts. To specify,
-        for example, that DST starts at 2AM on the 2nd Sunday in March, pass:
+        the time and time of year that daylight savings time starts. To
+        specify, for example, that DST starts at 2AM on the 2nd Sunday in
+        March, pass:
 
             ``relativedelta(hours=2, month=3, day=1, weekday=SU(+2))``
 
@@ -850,12 +851,12 @@ class tzrange(tzrangebase):
         value is 2 AM on the first Sunday in April.
 
     :param end:
-        A :class:`relativedelta.relativedelta` object or equivalent representing
-        the time and time of year that daylight savings time ends, with the
-        same specification method as in ``start``. One note is that this should
-        point to the first time in the *standard* zone, so if a transition
-        occurs at 2AM in the DST zone and the clocks are set back 1 hour to 1AM,
-        set the `hours` parameter to +1.
+        A :class:`relativedelta.relativedelta` object or equivalent
+        representing the time and time of year that daylight savings time
+        ends, with the same specification method as in ``start``. One note is
+        that this should point to the first time in the *standard* zone, so if
+        a transition occurs at 2AM in the DST zone and the clocks are set back
+        1 hour to 1AM, set the ``hours`` parameter to +1.
 
 
     **Examples:**
@@ -986,8 +987,9 @@ class tzstr(tzrange):
 
     :param s:
         A time zone string in ``TZ`` variable format. This can be a
-        :class:`bytes` (2.x: :class:`str`), :class:`str` (2.x: :class:`unicode`)
-        or a stream emitting unicode characters (e.g. :class:`StringIO`).
+        :class:`bytes` (2.x: :class:`str`), :class:`str` (2.x:
+        :class:`unicode`) or a stream emitting unicode characters
+        (e.g. :class:`StringIO`).
 
     :param posix_offset:
         Optional. If set to ``True``, interpret strings such as ``GMT+3`` or
@@ -1522,9 +1524,10 @@ def datetime_exists(dt, tz=None):
         ``None`` or not provided, the datetime's own time zone will be used.
 
     :return:
-        Returns a boolean value whether or not the "wall time" exists in ``tz``.
+        Returns a boolean value whether or not the "wall time" exists in
+        ``tz``.
 
-    ..versionadded:: 2.7.0
+    .. versionadded:: 2.7.0
     """
     if tz is None:
         if dt.tzinfo is None:
@@ -1595,7 +1598,8 @@ def resolve_imaginary(dt):
     wall time would be in a zone had the offset transition not occurred, so
     it will always fall forward by the transition's change in offset.
 
-    ..doctest::
+    .. doctest::
+
         >>> from dateutil import tz
         >>> from datetime import datetime
         >>> NYC = tz.gettz('America/New_York')
@@ -1620,7 +1624,7 @@ def resolve_imaginary(dt):
         imaginary, the datetime returned is guaranteed to be the same object
         passed to the function.
 
-    ..versionadded:: 2.7.0
+    .. versionadded:: 2.7.0
     """
     if dt.tzinfo is not None and not datetime_exists(dt):
 
@@ -1634,8 +1638,8 @@ def resolve_imaginary(dt):
 
 def _datetime_to_timestamp(dt):
     """
-    Convert a :class:`datetime.datetime` object to an epoch timestamp in seconds
-    since January 1, 1970, ignoring the time zone.
+    Convert a :class:`datetime.datetime` object to an epoch timestamp in
+    seconds since January 1, 1970, ignoring the time zone.
     """
     return (dt.replace(tzinfo=None) - EPOCH).total_seconds()
 
