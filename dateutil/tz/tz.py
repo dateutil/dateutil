@@ -488,7 +488,7 @@ class tzfile(_tzinfo):
 
         if timecnt:
             out.trans_idx = struct.unpack(">%dB" % timecnt,
-                                            fileobj.read(timecnt))
+                                          fileobj.read(timecnt))
         else:
             out.trans_idx = []
 
@@ -1401,6 +1401,7 @@ else:
     TZFILES = []
     TZPATHS = []
 
+
 def __get_gettz():
     tzlocal_classes = (tzlocal,)
     if tzwinlocal is not None:
@@ -1491,7 +1492,10 @@ def __get_gettz():
 
                         if not tz:
                             for c in name:
-                                # name must have at least one offset to be a tzstr
+                                # name is not a tzstr unless it has at least
+                                # one offset. For short values of "name", an
+                                # explicit for loop seems to be the fastest way
+                                # To determine if a string contains a digit
                                 if c in "0123456789":
                                     try:
                                         tz = tzstr(name)
@@ -1507,8 +1511,10 @@ def __get_gettz():
 
     return GettzFunc()
 
+
 gettz = __get_gettz()
 del __get_gettz
+
 
 def datetime_exists(dt, tz=None):
     """
@@ -1575,7 +1581,7 @@ def datetime_ambiguous(dt, tz=None):
     if is_ambiguous_fn is not None:
         try:
             return tz.is_ambiguous(dt)
-        except:
+        except Exception:
             pass
 
     # If it doesn't come out and tell us it's ambiguous, we'll just check if
