@@ -162,7 +162,7 @@ Version 2.7.0
 - Style improvement to zoneinfo.tzfile that was confusing to static type
   checkers. Reported and fixed by @quodlibetor (gh pr #485)
 - Several unused imports were removed by @jdufresne. (gh pr #486)
-- Switched isinstance(*, collections.Callable) to callable, which is available
+- Switched ``isinstance(*, collections.Callable)`` to callable, which is available
   on all supported Python versions. Implemented by @jdufresne (gh pr #612)
 - Added CONTRIBUTING.md (gh pr #533)
 - Added AUTHORS.md (gh pr #542)
@@ -609,7 +609,7 @@ Version 0.9
   Andreas Köhler.
 
 - Implemented internal timezone information with binary
-  timezone files [1]. datautil.tz.gettz() function will now
+  timezone files. datautil.tz.gettz() function will now
   try to use the system timezone files, and fallback to
   the internal versions. It's also possible to ask for
   the internal versions directly by using
@@ -628,13 +628,11 @@ Version 0.9
 
 - Fixed other reported bugs.
 
-[1] http://www.twinsun.com/tz/tz-link.htm
-
 
 Version 0.5
 ===========
 
-- Removed FREQ_ prefix from rrule frequency constants
+- Removed ``FREQ_`` prefix from rrule frequency constants
   WARNING: this breaks compatibility with previous versions.
 
 - Fixed rrule.between() for cases where "after" is achieved
