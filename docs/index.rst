@@ -11,9 +11,14 @@ Documentation
 Contents:
 
 .. toctree::
+   :maxdepth: 1
+
+   Overview <self>
+   Changelog <changelog>
+
+.. toctree::
    :maxdepth: 2
 
-   self
    easter
    parser
    relativedelta
