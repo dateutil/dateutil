@@ -68,6 +68,7 @@ switch, and thus all their contributions are dual-licensed.
 - Peter Bieringer <pb@MASKED>
 - Pierre Gergondet <pierre.gergondet@MASKED> (gh: @gergondet)
 - Quentin Pradet <quentin@MASKED>
+- Raymond Cha (gh: @weatherpattern) **D**
 - Ridhi Mahajan <ridhikmahajan@MASKED> **D**
 - Roy Williams <rwilliams@MASKED>
 - Rustem Saiargaliev (gh: @amureki) **D**
