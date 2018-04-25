@@ -190,6 +190,8 @@ class tzoffset(datetime.tzinfo):
 class tzlocal(_tzinfo):
     """
     A :class:`tzinfo` subclass built around the ``time`` timezone functions.
+
+
     """
     def __init__(self):
         super(tzlocal, self).__init__()
@@ -392,6 +394,56 @@ class tzfile(_tzinfo):
     Time zone files can be compiled from the `IANA Time Zone database files
     <https://www.iana.org/time-zones>`_ with the `zic time zone compiler
     <https://www.freebsd.org/cgi/man.cgi?query=zic&sektion=8>`_
+
+    .. note::
+
+        Only construct a ``tzfile`` directly if you have a specific timezone
+        file on disk that you want to read into a Python ``tzinfo`` object.
+        If you want to get a ``tzfile`` representing a specific IANA zone,
+        (e.g. ``'America/New_York'``), you should call
+        :func:`dateutil.tz.gettz` with the zone identifier.
+
+
+    **Examples:**
+
+    Using the US Eastern time zone as an example, we can see that a ``tzfile``
+    provides time zone information for the standard Daylight Saving offsets:
+
+    .. testsetup:: tzfile
+
+        from dateutil.tz import gettz
+        from datetime import datetime
+
+    .. doctest:: tzfile
+
+        >>> NYC = gettz('America/New_York')
+        >>> NYC
+        tzfile('/usr/share/zoneinfo/America/New_York')
+
+        >>> print(datetime(2016, 1, 3, tzinfo=NYC))     # EST
+        2016-01-03 00:00:00-05:00
+
+        >>> print(datetime(2016, 7, 7, tzinfo=NYC))     # EDT
+        2016-07-07 00:00:00-04:00
+
+
+    The ``tzfile`` structure contains a fully history of the time zone,
+    so historical dates will also have the right offsets. For example, before
+    the adoption of the UTC standards, New York used local solar  mean time:
+
+    .. doctest:: tzfile
+
+       >>> print(datetime(1901, 4, 12, tzinfo=NYC))    # LMT
+       1901-04-12 00:00:00-04:56
+
+    And during World War II, New York was on "Eastern War Time", which was a
+    state of permanent daylight saving time:
+
+    .. doctest:: tzfile
+
+        >>> print(datetime(1944, 2, 7, tzinfo=NYC))    # EWT
+        1944-02-07 00:00:00-04:00
+
     """
 
     def __init__(self, fileobj, filename=None):
