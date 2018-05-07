@@ -1,0 +1,1 @@
+Corrected link syntax and updated URL to https for ISO year week number notation in relativedelta examples. (gh issue #670, pr #711)
