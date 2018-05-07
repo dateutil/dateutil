@@ -458,14 +458,11 @@ class _ymd(list):
                 raise ValueError('Year is already set')
             self.ystridx = len(self) - 1
 
-    def _resolve_from_stridxs(self):
+    def _resolve_from_stridxs(self, strids):
         """
         Try to resolve the identities of year/month/day elements using
         ystridx, mstridx, and dstridx, if enough of these are specified.
         """
-        strids = {'y': self.ystridx, 'm': self.mstridx, 'd': self.dstridx}
-        strids = {key: strids[key] for key in strids if strids[key] is not None}
-
         if len(self) == 3 and len(strids) == 2:
             # we can back out the remaining stridx value
             missing = [x for x in range(3) if x not in strids.values()]
@@ -476,19 +473,21 @@ class _ymd(list):
             strids[key] = val
 
         assert len(self) == len(strids)  # otherwise this should not be called
-        out = {'y': None, 'm': None, 'd': None}
-        out.update({key: self[strids[key]] for key in strids})
-        return (out['y'], out['m'], out['d'])
+        out = {key: self[strids[key]] for key in strids}
+        return (out.get('y'), out.get('m'), out.get('d'))
 
     def resolve_ymd(self, yearfirst, dayfirst):
         len_ymd = len(self)
         year, month, day = (None, None, None)
 
-        strids = {'y': self.ystridx, 'm': self.mstridx, 'd': self.dstridx}
-        strids = {key: strids[key] for key in strids if strids[key] is not None}
+        strids = (('y', self.ystridx),
+                  ('m', self.mstridx),
+                  ('d', self.dstridx))
+
+        strids = {key: val for key, val in strids if val is not None}
         if (len(self) == len(strids) > 0 or
                 (len(self) == 3 and len(strids) == 2)):
-            return self._resolve_from_stridxs()
+            return self._resolve_from_stridxs(strids)
 
         mstridx = self.mstridx
 
