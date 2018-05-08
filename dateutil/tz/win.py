@@ -47,7 +47,7 @@ TZKEYNAME = _settzkeyname()
 
 class tzres(object):
     """
-    Class for accessing `tzres.dll`, which contains timezone name related
+    Class for accessing ``tzres.dll``, which contains timezone name related
     resources.
 
     .. versionadded:: 2.5.0
@@ -80,9 +80,10 @@ class tzres(object):
         :param offset:
             A positive integer value referring to a string from the tzres dll.
 
-        ..note:
+        .. note::
+
             Offsets found in the registry are generally of the form
-            `@tzres.dll,-114`. The offset in this case if 114, not -114.
+            ``@tzres.dll,-114``. The offset in this case is 114, not -114.
 
         """
         resource = self.p_wchar()
