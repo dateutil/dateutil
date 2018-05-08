@@ -186,6 +186,20 @@ html_static_path = []
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'dateutildoc'
 
+# -- Options for autodoc -------------------------------------------------
+
+autodoc_mock_imports = ['ctypes.wintypes', 'six.moves.winreg']
+
+# Need to mock this out specifically to avoid errors
+import ctypes
+def pointer_mock(*args, **kwargs):
+    try:
+        return ctypes.POINTER(*args, **kwargs)
+    except Exception:
+        return None
+
+ctypes.POINTER = pointer_mock
+sys.modules['ctypes'] = ctypes
 
 # -- Options for LaTeX output ---------------------------------------------
 

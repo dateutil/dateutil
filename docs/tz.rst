@@ -36,9 +36,23 @@ Classes
 
 .. autoclass:: tzlocal
 
+.. autoclass:: tzwinlocal
+    :members: display, transitions
+
+    .. note::
+
+        Only available on Windows
+
 .. autoclass:: tzrange
 
 .. autoclass:: tzstr
 
 .. autoclass:: tzical
     :members:
+
+.. autoclass:: tzwin
+    :members: display, transitions, list
+
+    .. note::
+
+        Only available on Windows

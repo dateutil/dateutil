@@ -24,6 +24,7 @@ Contents:
    relativedelta
    rrule
    tz
+   tz.win <tzwin>
    utils
    zoneinfo
    examples
