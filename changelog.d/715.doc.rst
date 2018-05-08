@@ -1,0 +1,1 @@
+Add documentation for the ``dateutil.tz.win`` module and mocked out certain Windows-specific modules so that autodoc can still be run on non-Windows systems. (gh issue #442, pr #715)
