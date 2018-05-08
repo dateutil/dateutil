@@ -190,8 +190,6 @@ class tzoffset(datetime.tzinfo):
 class tzlocal(_tzinfo):
     """
     A :class:`tzinfo` subclass built around the ``time`` timezone functions.
-
-
     """
     def __init__(self):
         super(tzlocal, self).__init__()
@@ -1460,6 +1458,75 @@ def __get_gettz():
         tzlocal_classes += (tzwinlocal,)
 
     class GettzFunc(object):
+        """
+        Retrieve a time zone object from a string representation
+
+        This function is intended to retrieve the :py:class:`tzinfo` subclass
+        that best represents the time zone that would be used if a POSIX
+        `TZ variable`_ were set to the same value.
+
+        If no argument or an empty string is passed to ``gettz``, local time
+        is returned:
+
+        .. code-block:: python3
+
+            >>> gettz()
+            tzfile('/etc/localtime')
+
+        This function is also the preferred way to map IANA tz database keys
+        to :class:`tzfile` objects:
+
+        .. code-block:: python3
+
+            >>> gettz('Pacific/Kiritimati')
+            tzfile('/usr/share/zoneinfo/Pacific/Kiritimati')
+
+        On Windows, the standard is extended to include the Windows-specific
+        zone names provided by the operating system:
+
+        .. code-block:: python3
+
+            >>> gettz('Egypt Standard Time')
+            tzwin('Egypt Standard Time')
+
+        Passing a GNU ``TZ`` style string time zone specification returns a
+        :class:`tzstr` object:
+
+        .. code-block:: python3
+
+            >>> gettz('AEST-10AEDT-11,M10.1.0/2,M4.1.0/3')
+            tzstr('AEST-10AEDT-11,M10.1.0/2,M4.1.0/3')
+
+        :param name:
+            A time zone name (IANA, or, on Windows, Windows keys), location of
+            a ``tzfile(5)`` zoneinfo file or ``TZ`` variable style time zone
+            specifier. An empty string, no argument or ``None`` is interpreted
+            as local time.
+
+        :return:
+            Returns an instance of one of ``dateutil``'s :py:class:`tzinfo`
+            subclasses.
+
+        .. versionchanged:: 2.7.0
+
+            After version 2.7.0, any two calls to ``gettz`` using the same
+            input strings will return the same object:
+
+            .. code-block:: python3
+
+                >>> tz.gettz('America/Chicago') is tz.gettz('America/Chicago')
+                True
+
+            In addition to improving performance, this ensures that
+            `"same zone" semantics`_ are used for datetimes in the same zone.
+
+
+        .. _`TZ variable`:
+            https://www.gnu.org/software/libc/manual/html_node/TZ-Variable.html
+
+        .. _`"same zone" semantics`:
+            https://blog.ganssle.io/articles/2018/02/aware-datetime-arithmetic.html
+        """
         def __init__(self):
 
             self.__instances = weakref.WeakValueDictionary()
