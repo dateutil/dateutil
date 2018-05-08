@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """
 This module offers timezone implementations subclassing the abstract
-:py:`datetime.tzinfo` type. There are classes to handle tzfile format files
-(usually are in :file:`/etc/localtime`, :file:`/usr/share/zoneinfo`, etc), TZ
-environment string (in all known formats), given ranges (with help from
-relative deltas), local machine timezone, fixed offset timezone, and UTC
+:py:class:`datetime.tzinfo` type. There are classes to handle tzfile format
+files (usually are in :file:`/etc/localtime`, :file:`/usr/share/zoneinfo`,
+etc), TZ environment string (in all known formats), given ranges (with help
+from relative deltas), local machine timezone, fixed offset timezone, and UTC
 timezone.
 """
 import datetime
