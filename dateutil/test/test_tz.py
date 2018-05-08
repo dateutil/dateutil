@@ -110,6 +110,13 @@ AAAOJZ6djgAAAA8nf9EPAAAAECpQ9ZAAAAARLDIpEQAAABIuE1ySAAAAEzDnJBMAAAAUM7hIlAAA
 ABU2jBAVAAAAFkO3G5YAAAAXAAAAAQAAAAE=
 """
 
+TZFILE_DSTONLY = b"""
+VFppZjIAAAAAAAAAAAAAAAAAAAAAAAACAAAAAgAAAAAAAAACAAAAAgAAAAhKO8QQSzxa
+AAABAADh\nAAEAAABUYAEEKzA3ACswNgAAAAAAVFppZjIAAAAAAAAAAAAAAAAAAAAAAA
+ACAAAAAgAAAAAAAAAC\nAAAAAgAAAAgAAAAASjvEEAAAAABLPFoAAAEAAOEAAQAAAFRg
+AAQrMDcAKzA2AAAAAAAKPCswNj4t\nNgo=\n
+"""
+
 TZICAL_EST5EDT = """
 BEGIN:VTIMEZONE
 TZID:US-Eastern
@@ -1946,6 +1953,29 @@ class TZTest(unittest.TestCase):
             isstd_expected, isstd,
             "isstd UTC/local indicators parsed: %s != tzfile contents: %s"
             % (isstd, isstd_expected))
+
+    def testOffsetNoStd(self):
+        # If fileobj has only DST ttinfo entries, its STD will become equal to
+        # its DST. The UTC offset of the tzfile the will then be not equal to 0
+        # TZFILE_DSTONLY is an artificial timezone file where each dst byte is
+        # set to '1'
+        fileobj = BytesIO(base64.b64decode(TZFILE_DSTONLY))
+        tzc = tz.tzfile(fileobj)
+        dt = datetime(2018, 5, 9, 21, 0, 0)
+        self.assertNotEquals(tzc.utcoffset(dt), tz.ZERO)
+
+    def testBeforeTtinfoFirstDst(self):
+        # If fileobj has only DST ttinfo entries, its "before" ttinfo entry
+        # (the ttinfo before all transitions) will be its first DST entry.
+        # tzfile.dst() will return the dst offset of this first DST entry,
+        # which will always be 0.
+        # TZFILE_DSTONLY is an artificial timezone file where each dst byte is
+        # set to '1'
+        fileobj = BytesIO(base64.b64decode(TZFILE_DSTONLY))
+        tzc = tz.tzfile(fileobj)
+        dt = datetime(2002, 1, 1, 10, 0, 0)
+        # dst will return self._ttinfo_before.dstoffset for this datetime.
+        self.assertEqual(tzc.dst(dt), timedelta(0))
 
     def testGMTHasNoDaylight(self):
         # tz.tzstr("GMT+2") improperly considered daylight saving time.
