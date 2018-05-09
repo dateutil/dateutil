@@ -13,7 +13,6 @@ import time
 import sys
 import os
 import bisect
-import weakref
 
 import six
 from six import string_types
@@ -1529,7 +1528,7 @@ def __get_gettz():
         """
         def __init__(self):
 
-            self.__instances = weakref.WeakValueDictionary()
+            self.__instances = {}
             self._cache_lock = _thread.allocate_lock()
 
         def __call__(self, name=None):
