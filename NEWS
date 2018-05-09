@@ -1,3 +1,58 @@
+Version 2.7.3 (2018-05-09)
+==========================
+
+Data updates
+------------
+
+- Update tzdata to 2018e. (gh pr #710)
+
+
+Bugfixes
+--------
+
+- Fixed an issue where decimal.Decimal would cast `NaN` or infinite value in a
+  parser.parse, which will raise decimal.Decimal-specific errors. Reported and
+  fixed by @amureki (gh issue #662, gh pr #679).
+- Fixed a ValueError being thrown if tzinfos call explicity returns ``None``.
+  Reported by @pganssle (gh issue #661) Fixed by @parsethis (gh pr #681)
+- Fixed incorrect parsing of certain dates earlier than 100 AD when repesented
+  in the form "%B.%Y.%d", e.g. "December.0031.30". (gh issue #687, pr #700)
+- Fixed a bug where automatically generated DTSTART was naive even if a
+  specified UNTIL had a time zone. Automatically generated DTSTART will now
+  take on the timezone of an UNTIL date, if provided. Reported by @href (gh
+  issue #652). Fixed by @absreim (gh pr #693).
+
+
+Documentation changes
+---------------------
+
+- Corrected link syntax and updated URL to https for ISO year week number
+  notation in relativedelta examples. (gh issue #670, pr #711)
+- Add doctest examples to tzfile documentation. Done by @weatherpattern and
+  @pganssle (gh pr #671)
+- Updated the documentation for relativedelta. Removed references to tuple
+  arguments for weekday, explained effect of weekday(_, 1) and better explained
+  the order of operations that relativedelta applies. Fixed by @kvn219
+  @huangy22 and @ElliotJH (gh pr #673)
+- Added changelog to documentation. (gh issue #692, gh pr #707)
+- Changed order of keywords in rrule docstring. Reported and fixed by
+  @rmahajan14 (gh issue #686, gh pr #695).
+- Added documentation for ``dateutil.tz.gettz``. Reported by @pganssle (gh
+  issue #647). Fixed by @weatherpattern (gh pr #704)
+- Cleaned up malformed RST in the ``tz`` documentation. (gh issue #702, gh pr
+  #706)
+- Changed the default theme to sphinx_rtd_theme, and changed the sphinx
+  configuration to go along with that. (gh pr #707)
+- Reorganized ``dateutil.tz`` documentation and fixed issue with the
+  ``dateutil.tz`` docstring. (gh pr #714)
+
+
+Misc
+----
+
+- GH #674, GH #688, GH #699
+
+
 Version 2.7.2 (2018-03-26)
 ==========================
 

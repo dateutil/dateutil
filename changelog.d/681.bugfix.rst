@@ -1,1 +1,0 @@
-Fixed a ValueError being thrown if tzinfos call explicity returns ``None``.  Reported by @pganssle (gh issue #661) Fixed by @parsethis (gh pr #681)
