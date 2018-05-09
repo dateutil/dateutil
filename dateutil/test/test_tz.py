@@ -1052,6 +1052,20 @@ class GettzTest(unittest.TestCase, TzFoldMixin):
 
         assert local1 is not local2
 
+    def testGettzWeakRef(self):
+        tz.gettz.cache_clear()
+        NYC1 = tz.gettz('America/New_York')
+        NYC2 = tz.gettz('America/New_York')
+        assert id(NYC1) == id(NYC2)
+
+        weak_ref_id = id(NYC1)
+        del NYC1
+        del NYC2
+        gc.collect()
+
+        NYC3 = tz.gettz('America/New_York')
+        assert not weak_ref_id == id(NYC3)
+
 
 @pytest.mark.gettz
 @pytest.mark.xfail(IS_WIN, reason='zoneinfo separately cached')
@@ -1062,23 +1076,6 @@ def test_gettz_cache_clear():
     NYC2 = tz.gettz('America/New_York')
 
     assert NYC1 is not NYC2
-
-
-@pytest.mark.xfail(IS_WIN, reason="Windows does not use system zoneinfo")
-@pytest.mark.gettz
-def test_gettz_weakref():
-    tz.gettz.cache_clear()
-    NYC1 = tz.gettz('America/New_York')
-    NYC2 = tz.gettz('America/New_York')
-    assert id(NYC1) == id(NYC2)
-
-    weak_ref_id = id(NYC1)
-    del NYC1
-    del NYC2
-    gc.collect()
-
-    NYC3 = tz.gettz('America/New_York')
-    assert not weak_ref_id == id(NYC3)
 
 
 class ZoneInfoGettzTest(GettzTest, WarningTestMixin):
