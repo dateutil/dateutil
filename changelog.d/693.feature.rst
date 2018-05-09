@@ -1,1 +1,0 @@
-Fixed a bug where automatically generated DTSTART was naive even if a specified UNTIL had a time zone. Automatically generated DTSTART will now take on the timezone of an UNTIL date, if provided. Reported by @href (gh issue #652). Fixed by @absreim (gh pr #693).
