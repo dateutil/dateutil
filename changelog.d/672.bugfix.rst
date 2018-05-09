@@ -1,1 +1,0 @@
-Switched the ``tzoffset``, ``tzstr`` and ``gettz`` caches over to using weak references, so that the cache expires when no other references to the original ``tzinfo`` objects exist. This cache-expiry behavior is not considered part of the public interface and may change in the future. Requested by @pganssle (gh issue #635), implemented by @cs-cordero (gh pr #672).

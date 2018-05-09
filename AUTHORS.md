@@ -26,7 +26,6 @@ switch, and thus all their contributions are dual-licensed.
 - Brook Li (gh: @absreim) **D**
 - Carlos <carlosxl@MASKED>
 - Chris van den Berg (gh: bergvca) **D**
-- Christopher Cordero <ccordero@pm.me> (gh: cs-cordero) **D**
 - Christopher Corley <cscorley@MASKED>
 - Claudio Canepa <ccanepacc@MASKED>
 - Corey Girard <corey.r.girard@gmail.com> (gh: @coreygirard)
