@@ -14,7 +14,6 @@ import unittest
 import sys
 import base64
 import copy
-import gc
 
 from functools import partial
 
@@ -732,20 +731,6 @@ class TzOffsetTest(unittest.TestCase):
 
         assert tz1 is tz2
 
-    def testTzOffsetWeakRef(self):
-        UTC1 = tz.tzoffset('UTC', 0)
-        UTC2 = tz.tzoffset('UTC', 0)
-        assert id(UTC1) == id(UTC2)
-
-        weak_ref_id = id(UTC1)
-        del UTC1
-        del UTC2
-        gc.collect()
-
-        UTC3 = tz.tzoffset('UTC', 0)
-        assert not weak_ref_id == id(UTC3)
-
-
 @pytest.mark.tzoffset
 @pytest.mark.parametrize('args', [
     ('UTC', 0),
@@ -1051,21 +1036,6 @@ class GettzTest(unittest.TestCase, TzFoldMixin):
         local2 = tz.gettz()
 
         assert local1 is not local2
-
-    def testGettzWeakRef(self):
-        tz.gettz.cache_clear()
-        NYC1 = tz.gettz('America/New_York')
-        NYC2 = tz.gettz('America/New_York')
-        assert id(NYC1) == id(NYC2)
-
-        weak_ref_id = id(NYC1)
-        del NYC1
-        del NYC2
-        gc.collect()
-
-        NYC3 = tz.gettz('America/New_York')
-        assert not weak_ref_id == id(NYC3)
-
 
 @pytest.mark.gettz
 @pytest.mark.xfail(IS_WIN, reason='zoneinfo separately cached')
@@ -1404,20 +1374,6 @@ class TZStrTest(unittest.TestCase, TzFoldMixin):
 
         # Ensure that these still are all the same zone
         assert tz1 == tz2 == tz3
-
-    def testTzOffsetWeakRef(self):
-        tz_t1 = tz.tzstr('EST5EDT')
-        tz_t2 = tz.tzstr('EST5EDT')
-        assert id(tz_t1) == id(tz_t2)
-
-        weak_ref_id = id(tz_t1)
-        del tz_t1
-        del tz_t2
-        gc.collect()
-
-        tz_t3 = tz.tzstr('EST5EDT')
-        assert not weak_ref_id == id(tz_t3)
-
 
 @pytest.mark.tzstr
 @pytest.mark.parametrize('tz_str,expected', [
