@@ -15,7 +15,6 @@ import sys
 import base64
 import copy
 import gc
-import weakref
 
 from functools import partial
 
@@ -733,18 +732,18 @@ class TzOffsetTest(unittest.TestCase):
 
         assert tz1 is tz2
 
+    def testTzOffsetWeakRef(self):
+        UTC1 = tz.tzoffset('UTC', 0)
+        UTC2 = tz.tzoffset('UTC', 0)
+        assert id(UTC1) == id(UTC2)
 
-@pytest.mark.smoke
-@pytest.mark.tzoffset
-def test_tzoffset_weakref():
-    UTC1 = tz.tzoffset('UTC', 0)
-    UTC_ref = weakref.ref(tz.tzoffset('UTC', 0))
-    UTC1 is UTC_ref()
-    del UTC1
-    gc.collect()
+        weak_ref_id = id(UTC1)
+        del UTC1
+        del UTC2
+        gc.collect()
 
-    assert UTC_ref() is None
-    assert UTC_ref() is not tz.tzoffset('UTC', 0)
+        UTC3 = tz.tzoffset('UTC', 0)
+        assert not weak_ref_id == id(UTC3)
 
 
 @pytest.mark.tzoffset
@@ -1066,20 +1065,20 @@ def test_gettz_cache_clear():
 
 
 @pytest.mark.xfail(IS_WIN, reason="Windows does not use system zoneinfo")
-@pytest.mark.smoke
 @pytest.mark.gettz
 def test_gettz_weakref():
     tz.gettz.cache_clear()
     NYC1 = tz.gettz('America/New_York')
-    NYC_ref = weakref.ref(tz.gettz('America/New_York'))
+    NYC2 = tz.gettz('America/New_York')
+    assert id(NYC1) == id(NYC2)
 
-    assert NYC1 is NYC_ref()
-
+    weak_ref_id = id(NYC1)
     del NYC1
+    del NYC2
     gc.collect()
 
-    assert NYC_ref() is None
-    assert tz.gettz('America/New_York') is not NYC_ref()
+    NYC3 = tz.gettz('America/New_York')
+    assert not weak_ref_id == id(NYC3)
 
 
 class ZoneInfoGettzTest(GettzTest, WarningTestMixin):
@@ -1409,19 +1408,18 @@ class TZStrTest(unittest.TestCase, TzFoldMixin):
         # Ensure that these still are all the same zone
         assert tz1 == tz2 == tz3
 
+    def testTzOffsetWeakRef(self):
+        tz_t1 = tz.tzstr('EST5EDT')
+        tz_t2 = tz.tzstr('EST5EDT')
+        assert id(tz_t1) == id(tz_t2)
 
-@pytest.mark.smoke
-@pytest.mark.tzstr
-def test_tzstr_weakref():
-    tz_t1 = tz.tzstr('EST5EDT')
-    tz_t2_ref = weakref.ref(tz.tzstr('EST5EDT'))
-    assert tz_t1 is tz_t2_ref()
+        weak_ref_id = id(tz_t1)
+        del tz_t1
+        del tz_t2
+        gc.collect()
 
-    del tz_t1
-    gc.collect()
-
-    assert tz_t2_ref() is None
-    assert tz.tzstr('EST5EDT') is not tz_t2_ref()
+        tz_t3 = tz.tzstr('EST5EDT')
+        assert not weak_ref_id == id(tz_t3)
 
 
 @pytest.mark.tzstr
