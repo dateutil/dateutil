@@ -91,7 +91,9 @@ class isoparser(object):
         - ``hh:mm:ss.sss`` or ``hh:mm:ss.ssssss`` (3-6 sub-second digits)
 
         Midnight is a special case for `hh`, as the standard supports both
-        00:00 and 24:00 as a representation.
+        00:00 and 24:00 as a representation. The decimal separator can be
+        either a dot or a comma.
+
 
         .. caution::
 
@@ -193,7 +195,7 @@ class isoparser(object):
     _MICROSECOND_END_REGEX = re.compile(b'[-+Z]+')
     _DATE_SEP = b'-'
     _TIME_SEP = b':'
-    _MICRO_SEP = b'.'
+    _MICRO_SEPS = b'.,'
 
     def _parse_isodate(self, dt_str):
         try:
@@ -349,7 +351,7 @@ class isoparser(object):
 
             if comp == 3:
                 # Microsecond
-                if timestr[pos:pos + 1] != self._MICRO_SEP:
+                if timestr[pos:pos + 1] not in self._MICRO_SEPS:
                     continue
 
                 pos += 1
