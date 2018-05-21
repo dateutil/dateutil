@@ -660,10 +660,6 @@ class ParserTest(unittest.TestCase):
             dt = datetime(2008, 2, 27, 21, 26, 1, ms)
             self.assertEqual(parse(dt.isoformat()), dt)
 
-    # def testHighPrecisionSeconds(self):
-    #     self.assertEqual(parse("20080227T21:26:01.123456789"),
-    #                       datetime(2008, 2, 27, 21, 26, 1, 123456))
-
     def testCustomParserInfo(self):
         # Custom parser info wasn't working, as Michael Elsdörfer discovered.
         from dateutil.parser import parserinfo, parser
