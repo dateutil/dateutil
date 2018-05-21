@@ -24,9 +24,11 @@ class Unsupported(TestCommand):
         print("Running 'test' with setup.py is not supported. "
               "Use 'pytest' or 'tox' to run the tests.")
 
+
 ###
 # Load metadata
 PACKAGES = find_packages(where='.', exclude=['dateutil.test'])
+
 
 def README():
     with io.open('README.rst', encoding='utf-8') as f:
@@ -34,16 +36,15 @@ def README():
 
     # The .. doctest directive is not supported by PyPA
     lines_out = []
-    doctest_line_found = False
     for line in readme_lines:
         if line.startswith('.. doctest'):
-            doctest_line_found = True
             lines_out.append('.. code-block:: python3\n')
         else:
             lines_out.append(line)
 
     return ''.join(lines_out)
-README = README()
+README = README()  # NOQA
+
 
 setup(name="python-dateutil",
       use_scm_version={
