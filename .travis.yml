@@ -15,7 +15,7 @@ matrix:
     - python: "nightly"
 
 install:
-  - [ $TRAVIS_PYTHON_VERSION == "3.3" ] && pip install wheel<=0.30.0
+  - [[ $TRAVIS_PYTHON_VERSION == "3.3" ]] && pip install wheel<=0.30.0
   - pip install -U six && pip install -U tox
   - ./ci_tools/retry.sh python updatezinfo.py
 
