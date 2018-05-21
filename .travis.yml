@@ -2,14 +2,7 @@ sudo: false
 language: python
 cache: pip
 python:
-  - "2.7"
   - "3.3"
-  - "3.4"
-  - "3.5"
-  - "3.6"
-  - "nightly"
-  - "pypy-5.4"
-  - "pypy3"
 env:
   TOXENV=py
 
@@ -22,6 +15,7 @@ matrix:
     - python: "nightly"
 
 install:
+  - [[ $TRAVIS_PYTHON_VERSION == "3.3" ]] && pip install wheel<=0.30.0
   - pip install -U six && pip install -U tox
   - ./ci_tools/retry.sh python updatezinfo.py
 
