@@ -1,0 +1,1 @@
+Brought setup.py into compliance with PEP8. (gh pr #723)
