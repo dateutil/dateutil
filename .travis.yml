@@ -23,6 +23,7 @@ matrix:
 
 install:
   - pip install -U six && pip install -U tox
+  - if [[ $TRAVIS_PYTHON_VERSION == "3.3" ]]; then pip install 'virtualenv<16.0'; fi
   - ./ci_tools/retry.sh python updatezinfo.py
 
 script:
