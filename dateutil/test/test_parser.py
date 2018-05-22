@@ -28,6 +28,8 @@ except ValueError:
     PLATFORM_HAS_DASH_D = False
 
 parser_test_cases = [
+    ("Thu Sep 25 10:36:28 2003", datetime(2003, 9, 25, 10, 36, 28), "date command format strip"),
+    ("Thu Sep 25 2003", datetime(2003, 9, 25), "date command format strip"),
     ("2003-09-25T10:49:41", datetime(2003, 9, 25, 10, 49, 41), "iso format strip"),
     ("2003-09-25T10:49", datetime(2003, 9, 25, 10, 49), "iso format strip"),
     ("2003-09-25T10", datetime(2003, 9, 25, 10), "iso format strip"),
@@ -92,6 +94,64 @@ parser_test_cases = [
 @pytest.mark.parametrize("parsable_text,expected_datetime,message", parser_test_cases)
 def test_parser(parsable_text, expected_datetime, message):
     assert parse(parsable_text) == expected_datetime, message
+
+
+parser_default_test_cases = [
+    ("Thu Sep 25 10:36:28", datetime(2003, 9, 25, 10, 36, 28), "date command format strip"),
+    ("Thu Sep 10:36:28", datetime(2003, 9, 25, 10, 36, 28), "date command format strip"),
+    ("Thu 10:36:28", datetime(2003, 9, 25, 10, 36, 28), "date command format strip"),
+    ("Sep 10:36:28", datetime(2003, 9, 25, 10, 36, 28), "date command format strip"),
+    ("10:36:28", datetime(2003, 9, 25, 10, 36, 28), "date command format strip"),
+    ("10:36", datetime(2003, 9, 25, 10, 36), "date command format strip"),
+    ("Sep 2003", datetime(2003, 9, 25), "date command format strip"),
+    ("Sep", datetime(2003, 9, 25), "date command format strip"),
+    ("2003", datetime(2003, 9, 25), "date command format strip"),
+    ("10h36m28.5s", datetime(2003, 9, 25, 10, 36, 28, 500000), "hour with letters"),
+    ("10h36m28s", datetime(2003, 9, 25, 10, 36, 28), "hour with letters strip"),
+    ("10h36m", datetime(2003, 9, 25, 10, 36), "hour with letters strip"),
+    ("10h", datetime(2003, 9, 25, 10), "hour with letters strip"),
+    ("10 h 36", datetime(2003, 9, 25, 10, 36), "hour with letters strip"),
+    ("10 h 36.5", datetime(2003, 9, 25, 10, 36, 30), "hour with letter strip"),
+    ("36 m 5", datetime(2003, 9, 25, 0, 36, 5), "hour with letters spaces"),
+    ("36 m 5 s", datetime(2003, 9, 25, 0, 36, 5), "minute with letters spaces"),
+    ("36 m 05", datetime(2003, 9, 25, 0, 36, 5), "minute with letters spaces"),
+    ("36 m 05 s", datetime(2003, 9, 25, 0, 36, 5), "minutes with letters spaces"),
+    ("10h am", datetime(2003, 9, 25, 10), "hour am pm"),
+    ("10h pm", datetime(2003, 9, 25, 22), "hour am pm"),
+    ("10am", datetime(2003, 9, 25, 10), "hour am pm"),
+    ("10pm", datetime(2003, 9, 25, 22), "hour am pm"),
+    ("10:00 am", datetime(2003, 9, 25, 10), "hour am pm"),
+    ("10:00 pm", datetime(2003, 9, 25, 22), "hour am pm"),
+    ("10:00am", datetime(2003, 9, 25, 10), "hour am pm"),
+    ("10:00pm", datetime(2003, 9, 25, 22), "hour am pm"),
+    ("10:00a.m", datetime(2003, 9, 25, 10), "hour am pm"),
+    ("10:00p.m", datetime(2003, 9, 25, 22), "hour am pm"),
+    ("10:00a.m.", datetime(2003, 9, 25, 10), "hour am pm"),
+    ("10:00p.m.", datetime(2003, 9, 25, 22), "hour am pm"),
+    ("Wed", datetime(2003, 10, 1), "weekday alone"),
+    ("Wednesday", datetime(2003, 10, 1), "long weekday"),
+    ("October", datetime(2003, 10, 25), "long month"),
+    ("31-Dec-00", datetime(2000, 12, 31), "zero year"),
+    ("0:01:02", datetime(2003, 9, 25, 0, 1, 2), "random format"),
+    ("12h 01m02s am", datetime(2003, 9, 25, 0, 1, 2), "random format"),
+    ("12:08 PM", datetime(2003, 9, 25, 12, 8), "random format"),
+    ("01h02m03", datetime(2003, 9, 25, 1, 2, 3), "random format"),
+    ("01h02", datetime(2003, 9, 25, 1, 2), "random format"),
+    ("01h02s", datetime(2003, 9, 25, 1, 0, 2), "random format"),
+    ("01m02", datetime(2003, 9, 25, 0, 1, 2), "random format"),
+    ("01m02h", datetime(2003, 9, 25, 2, 1), "random format"),
+    ("2004 10 Apr 11h30m", datetime(2004, 4, 10, 11, 30), "random format")
+]
+
+
+@pytest.fixture
+def default():
+    return datetime(2003, 9, 25)
+
+
+@pytest.mark.parametrize("parsable_text,expected_datetime,message", parser_default_test_cases)
+def test_parser_default(parsable_text, expected_datetime, message, default):
+    assert parse(parsable_text, default=default) == expected_datetime, message
 
 
 class TestFormat(unittest.TestCase):
@@ -241,50 +301,6 @@ class ParserTest(unittest.TestCase):
                                ignoretz=True),
                          datetime(2003, 9, 25, 10, 36, 28))
 
-    def testDateCommandFormatStrip1(self):
-        self.assertEqual(parse("Thu Sep 25 10:36:28 2003"),
-                         datetime(2003, 9, 25, 10, 36, 28))
-
-    def testDateCommandFormatStrip2(self):
-        self.assertEqual(parse("Thu Sep 25 10:36:28", default=self.default),
-                         datetime(2003, 9, 25, 10, 36, 28))
-
-    def testDateCommandFormatStrip3(self):
-        self.assertEqual(parse("Thu Sep 10:36:28", default=self.default),
-                         datetime(2003, 9, 25, 10, 36, 28))
-
-    def testDateCommandFormatStrip4(self):
-        self.assertEqual(parse("Thu 10:36:28", default=self.default),
-                         datetime(2003, 9, 25, 10, 36, 28))
-
-    def testDateCommandFormatStrip5(self):
-        self.assertEqual(parse("Sep 10:36:28", default=self.default),
-                         datetime(2003, 9, 25, 10, 36, 28))
-
-    def testDateCommandFormatStrip6(self):
-        self.assertEqual(parse("10:36:28", default=self.default),
-                         datetime(2003, 9, 25, 10, 36, 28))
-
-    def testDateCommandFormatStrip7(self):
-        self.assertEqual(parse("10:36", default=self.default),
-                         datetime(2003, 9, 25, 10, 36))
-
-    def testDateCommandFormatStrip8(self):
-        self.assertEqual(parse("Thu Sep 25 2003"),
-                         datetime(2003, 9, 25))
-
-    def testDateCommandFormatStrip10(self):
-        self.assertEqual(parse("Sep 2003", default=self.default),
-                         datetime(2003, 9, 25))
-
-    def testDateCommandFormatStrip11(self):
-        self.assertEqual(parse("Sep", default=self.default),
-                         datetime(2003, 9, 25))
-
-    def testDateCommandFormatStrip12(self):
-        self.assertEqual(parse("2003", default=self.default),
-                         datetime(2003, 9, 25))
-
     def testDateRCommandFormat(self):
         self.assertEqual(parse("Thu, 25 Sep 2003 10:49:41 -0300"),
                          datetime(2003, 9, 25, 10, 49, 41,
@@ -342,100 +358,12 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(parse("10 09 03", yearfirst=True),
                          datetime(2010, 9, 3))
 
-    def testHourWithLetters(self):
-        self.assertEqual(parse("10h36m28.5s", default=self.default),
-                         datetime(2003, 9, 25, 10, 36, 28, 500000))
-
-    def testHourWithLettersStrip1(self):
-        self.assertEqual(parse("10h36m28s", default=self.default),
-                         datetime(2003, 9, 25, 10, 36, 28))
-
-    def testHourWithLettersStrip2(self):
-        self.assertEqual(parse("10h36m", default=self.default),
-                         datetime(2003, 9, 25, 10, 36))
-
-    def testHourWithLettersStrip3(self):
-        self.assertEqual(parse("10h", default=self.default),
-                         datetime(2003, 9, 25, 10))
-
-    def testHourWithLettersStrip4(self):
-        self.assertEqual(parse("10 h 36", default=self.default),
-                         datetime(2003, 9, 25, 10, 36))
-
-    def testHourWithLetterStrip5(self):
-        self.assertEqual(parse("10 h 36.5", default=self.default),
-                         datetime(2003, 9, 25, 10, 36, 30))
-
-    def testMinuteWithLettersSpaces1(self):
-        self.assertEqual(parse("36 m 5", default=self.default),
-                         datetime(2003, 9, 25, 0, 36, 5))
-
-    def testMinuteWithLettersSpaces2(self):
-        self.assertEqual(parse("36 m 5 s", default=self.default),
-                         datetime(2003, 9, 25, 0, 36, 5))
-
-    def testMinuteWithLettersSpaces3(self):
-        self.assertEqual(parse("36 m 05", default=self.default),
-                         datetime(2003, 9, 25, 0, 36, 5))
-
-    def testMinuteWithLettersSpaces4(self):
-        self.assertEqual(parse("36 m 05 s", default=self.default),
-                         datetime(2003, 9, 25, 0, 36, 5))
-
     def testAMPMNoHour(self):
         with self.assertRaises(ValueError):
             parse("AM")
 
         with self.assertRaises(ValueError):
             parse("Jan 20, 2015 PM")
-
-    def testHourAmPm1(self):
-        self.assertEqual(parse("10h am", default=self.default),
-                         datetime(2003, 9, 25, 10))
-
-    def testHourAmPm2(self):
-        self.assertEqual(parse("10h pm", default=self.default),
-                         datetime(2003, 9, 25, 22))
-
-    def testHourAmPm3(self):
-        self.assertEqual(parse("10am", default=self.default),
-                         datetime(2003, 9, 25, 10))
-
-    def testHourAmPm4(self):
-        self.assertEqual(parse("10pm", default=self.default),
-                         datetime(2003, 9, 25, 22))
-
-    def testHourAmPm5(self):
-        self.assertEqual(parse("10:00 am", default=self.default),
-                         datetime(2003, 9, 25, 10))
-
-    def testHourAmPm6(self):
-        self.assertEqual(parse("10:00 pm", default=self.default),
-                         datetime(2003, 9, 25, 22))
-
-    def testHourAmPm7(self):
-        self.assertEqual(parse("10:00am", default=self.default),
-                         datetime(2003, 9, 25, 10))
-
-    def testHourAmPm8(self):
-        self.assertEqual(parse("10:00pm", default=self.default),
-                         datetime(2003, 9, 25, 22))
-
-    def testHourAmPm9(self):
-        self.assertEqual(parse("10:00a.m", default=self.default),
-                         datetime(2003, 9, 25, 10))
-
-    def testHourAmPm10(self):
-        self.assertEqual(parse("10:00p.m", default=self.default),
-                         datetime(2003, 9, 25, 22))
-
-    def testHourAmPm11(self):
-        self.assertEqual(parse("10:00a.m.", default=self.default),
-                         datetime(2003, 9, 25, 10))
-
-    def testHourAmPm12(self):
-        self.assertEqual(parse("10:00p.m.", default=self.default),
-                         datetime(2003, 9, 25, 22))
 
     def testAMPMRange(self):
         with self.assertRaises(ValueError):
@@ -449,22 +377,6 @@ class ParserTest(unittest.TestCase):
                          datetime(2003, 9, 3))
         self.assertEqual(parse("Sep of 03", default=self.default),
                          datetime(2003, 9, 25))
-
-    def testWeekdayAlone(self):
-        self.assertEqual(parse("Wed", default=self.default),
-                         datetime(2003, 10, 1))
-
-    def testLongWeekday(self):
-        self.assertEqual(parse("Wednesday", default=self.default),
-                         datetime(2003, 10, 1))
-
-    def testLongMonth(self):
-        self.assertEqual(parse("October", default=self.default),
-                         datetime(2003, 10, 25))
-
-    def testZeroYear(self):
-        self.assertEqual(parse("31-Dec-00", default=self.default),
-                         datetime(2000, 12, 31))
 
     def testFuzzy(self):
         s = "Today is 25 of September of 2003, exactly " \
@@ -533,14 +445,6 @@ class ParserTest(unittest.TestCase):
                                ignoretz=True),
                          datetime(1994, 11, 5, 8, 15, 30))
 
-    def testRandomFormat13(self):
-        self.assertEqual(parse("0:01:02", default=self.default),
-                         datetime(2003, 9, 25, 0, 1, 2))
-
-    def testRandomFormat14(self):
-        self.assertEqual(parse("12h 01m02s am", default=self.default),
-                         datetime(2003, 9, 25, 0, 1, 2))
-
     def testRandomFormat17(self):
         self.assertEqual(parse("1976-07-04T00:01:02Z", ignoretz=True),
                          datetime(1976, 7, 4, 0, 1, 2))
@@ -554,39 +458,11 @@ class ParserTest(unittest.TestCase):
                                ignoretz=True),
                          datetime(2003, 9, 25, 12, 0))
 
-    def testRandomFormat25(self):
-        self.assertEqual(parse("12:08 PM", default=self.default),
-                         datetime(2003, 9, 25, 12, 8))
-
     def testRandomFormat26(self):
         with pytest.warns(UnknownTimezoneWarning):
             res = parse("5:50 A.M. on June 13, 1990")
 
         self.assertEqual(res, datetime(1990, 6, 13, 5, 50))
-
-    def testRandomFormat30(self):
-        self.assertEqual(parse("01h02m03", default=self.default),
-                         datetime(2003, 9, 25, 1, 2, 3))
-
-    def testRandomFormat31(self):
-        self.assertEqual(parse("01h02", default=self.default),
-                         datetime(2003, 9, 25, 1, 2))
-
-    def testRandomFormat32(self):
-        self.assertEqual(parse("01h02s", default=self.default),
-                         datetime(2003, 9, 25, 1, 0, 2))
-
-    def testRandomFormat33(self):
-        self.assertEqual(parse("01m02", default=self.default),
-                         datetime(2003, 9, 25, 0, 1, 2))
-
-    def testRandomFormat34(self):
-        self.assertEqual(parse("01m02h", default=self.default),
-                         datetime(2003, 9, 25, 2, 1))
-
-    def testRandomFormat35(self):
-        self.assertEqual(parse("2004 10 Apr 11h30m", default=self.default),
-                         datetime(2004, 4, 10, 11, 30))
 
     def testInvalidDay(self):
         with self.assertRaises(ValueError):
