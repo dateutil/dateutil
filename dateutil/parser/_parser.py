@@ -663,7 +663,7 @@ class parser(object):
     class _result(_resultbase):
         __slots__ = ["year", "month", "day", "weekday",
                      "hour", "minute", "second", "microsecond",
-                     "tzname", "tzoffset", "ampm","any_unused_tokens"]
+                     "tzname", "tzoffset", "ampm", "any_unused_tokens"]
 
     def _parse(self, timestr, dayfirst=None, yearfirst=None, fuzzy=False,
                fuzzy_with_tokens=False):
@@ -729,130 +729,7 @@ class parser(object):
         i = 0
         try:
             while i < len_l:
-
-                # Check if it's a number
-                value_repr = l[i]
-                try:
-                    value = float(value_repr)
-                except ValueError:
-                    value = None
-
-                if value is not None:
-                    # Numeric token
-                    i = self._parse_numeric_token(l, i, info, ymd, res, fuzzy)
-
-                # Check weekday
-                elif info.weekday(l[i]) is not None:
-                    value = info.weekday(l[i])
-                    res.weekday = value
-
-                # Check month name
-                elif info.month(l[i]) is not None:
-                    value = info.month(l[i])
-                    ymd.append(value, 'M')
-
-                    if i + 1 < len_l:
-                        if l[i + 1] in ('-', '/'):
-                            # Jan-01[-99]
-                            sep = l[i + 1]
-                            ymd.append(l[i + 2])
-
-                            if i + 3 < len_l and l[i + 3] == sep:
-                                # Jan-01-99
-                                ymd.append(l[i + 4])
-                                i += 2
-
-                            i += 2
-
-                        elif (i + 4 < len_l and l[i + 1] == l[i + 3] == ' ' and
-                              info.pertain(l[i + 2])):
-                            # Jan of 01
-                            # In this case, 01 is clearly year
-                            if l[i + 4].isdigit():
-                                # Convert it here to become unambiguous
-                                value = int(l[i + 4])
-                                year = str(info.convertyear(value))
-                                ymd.append(year, 'Y')
-                            else:
-                                # Wrong guess
-                                pass
-                                # TODO: not hit in tests
-                            i += 4
-
-                # Check am/pm
-                elif info.ampm(l[i]) is not None:
-                    value = info.ampm(l[i])
-                    val_is_ampm = self._ampm_valid(res.hour, res.ampm, fuzzy)
-
-                    if val_is_ampm:
-                        res.hour = self._adjust_ampm(res.hour, value)
-                        res.ampm = value
-
-                    elif fuzzy:
-                        skipped_idxs.append(i)
-
-                # Check for a timezone name
-                elif self._could_be_tzname(res.hour, res.tzname, res.tzoffset, l[i]):
-                    res.tzname = l[i]
-                    res.tzoffset = info.tzoffset(res.tzname)
-
-                    # Check for something like GMT+3, or BRST+3. Notice
-                    # that it doesn't mean "I am 3 hours after GMT", but
-                    # "my time +3 is GMT". If found, we reverse the
-                    # logic so that timezone parsing code will get it
-                    # right.
-                    if i + 1 < len_l and l[i + 1] in ('+', '-'):
-                        l[i + 1] = ('+', '-')[l[i + 1] == '+']
-                        res.tzoffset = None
-                        if info.utczone(res.tzname):
-                            # With something like GMT+3, the timezone
-                            # is *not* GMT.
-                            res.tzname = None
-
-                # Check for a numbered timezone
-                elif res.hour is not None and l[i] in ('+', '-'):
-                    signal = (-1, 1)[l[i] == '+']
-                    len_li = len(l[i + 1])
-
-                    # TODO: check that l[i + 1] is integer?
-                    if len_li == 4:
-                        # -0300
-                        hour_offset = int(l[i + 1][:2])
-                        min_offset = int(l[i + 1][2:])
-                    elif i + 2 < len_l and l[i + 2] == ':':
-                        # -03:00
-                        hour_offset = int(l[i + 1])
-                        min_offset = int(l[i + 3])  # TODO: Check that l[i+3] is minute-like?
-                        i += 2
-                    elif len_li <= 2:
-                        # -[0]3
-                        hour_offset = int(l[i + 1][:2])
-                        min_offset = 0
-                    else:
-                        raise ValueError(timestr)
-
-                    res.tzoffset = signal * (hour_offset * 3600 + min_offset * 60)
-
-                    # Look for a timezone name between parenthesis
-                    if (i + 5 < len_l and
-                            info.jump(l[i + 2]) and l[i + 3] == '(' and
-                            l[i + 5] == ')' and
-                            3 <= len(l[i + 4]) and
-                            self._could_be_tzname(res.hour, res.tzname,
-                                                  None, l[i + 4])):
-                        # -0300 (BRST)
-                        res.tzname = l[i + 4]
-                        i += 4
-
-                    i += 1
-
-                # Check jumps
-                elif not (info.jump(l[i]) or fuzzy):
-                    raise ValueError(timestr)
-
-                else:
-                    skipped_idxs.append(i)
-                i += 1
+                i = self._parse_token(i, l, res, info, ymd, skipped_idxs, fuzzy, timestr)
 
             # Process year/month/day
             year, month, day = ymd.resolve_ymd(yearfirst, dayfirst)
@@ -873,6 +750,138 @@ class parser(object):
             return res, tuple(skipped_tokens)
         else:
             return res, None
+
+    def _parse_token(self, idx, tokens, res, info, ymd,
+                     skipped_idxs, fuzzy, timestr):
+        len_l = len(tokens)
+
+        # Check if it's a number
+        value_repr = tokens[idx]
+        try:
+            value = float(value_repr)
+        except ValueError:
+            value = None
+
+        if value is not None:
+            # Numeric token
+            idx = self._parse_numeric_token(tokens, idx, info, ymd, res, fuzzy)
+
+        # Check weekday
+        elif info.weekday(tokens[idx]) is not None:
+            value = info.weekday(tokens[idx])
+            res.weekday = value
+
+        # Check month name
+        elif info.month(tokens[idx]) is not None:
+            value = info.month(tokens[idx])
+            ymd.append(value, 'M')
+
+            if idx + 1 < len_l:
+                if tokens[idx + 1] in ('-', '/'):
+                    # Jan-01[-99]
+                    sep = tokens[idx + 1]
+                    ymd.append(tokens[idx + 2])
+
+                    if idx + 3 < len_l and tokens[idx + 3] == sep:
+                        # Jan-01-99
+                        ymd.append(tokens[idx + 4])
+                        idx += 2
+
+                    idx += 2
+
+                elif (idx + 4 < len_l and
+                      tokens[idx + 1] == tokens[idx + 3] == ' ' and
+                      info.pertain(tokens[idx + 2])):
+                    # Jan of 01
+                    # In this case, 01 is clearly year
+                    if tokens[idx + 4].isdigit():
+                        # Convert it here to become unambiguous
+                        value = int(tokens[idx + 4])
+                        year = str(info.convertyear(value))
+                        ymd.append(year, 'Y')
+                    else:
+                        # Wrong guess
+                        pass
+                        # TODO: not hit in tests
+                    idx += 4
+
+        # Check am/pm
+        elif info.ampm(tokens[idx]) is not None:
+            value = info.ampm(tokens[idx])
+            val_is_ampm = self._ampm_valid(res.hour, res.ampm, fuzzy)
+
+            if val_is_ampm:
+                res.hour = self._adjust_ampm(res.hour, value)
+                res.ampm = value
+
+            elif fuzzy:
+                skipped_idxs.append(idx)
+
+        # Check for a timezone name
+        elif self._could_be_tzname(res.hour, res.tzname,
+                                   res.tzoffset, tokens[idx]):
+            res.tzname = tokens[idx]
+            res.tzoffset = info.tzoffset(res.tzname)
+
+            # Check for something like GMT+3, or BRST+3. Notice
+            # that it doesn't mean "I am 3 hours after GMT", but
+            # "my time +3 is GMT". If found, we reverse the
+            # logic so that timezone parsing code will get it
+            # right.
+            if idx + 1 < len_l and tokens[idx + 1] in ('+', '-'):
+                tokens[idx + 1] = ('+', '-')[tokens[idx + 1] == '+']
+                res.tzoffset = None
+                if info.utczone(res.tzname):
+                    # With something like GMT+3, the timezone
+                    # is *not* GMT.
+                    res.tzname = None
+
+        # Check for a numbered timezone
+        elif res.hour is not None and tokens[idx] in ('+', '-'):
+            signal = (-1, 1)[tokens[idx] == '+']
+            len_li = len(tokens[idx + 1])
+
+            # TODO: check that tokens[i + 1] is integer?
+            if len_li == 4:
+                # -0300
+                hour_offset = int(tokens[idx + 1][:2])
+                min_offset = int(tokens[idx + 1][2:])
+            elif idx + 2 < len_l and tokens[idx + 2] == ':':
+                # -03:00
+                hour_offset = int(tokens[idx + 1])
+                min_offset = int(tokens[idx + 3])
+                # TODO: Check that tokens[i+3] is minute-like?
+                idx += 2
+            elif len_li <= 2:
+                # -[0]3
+                hour_offset = int(tokens[idx + 1][:2])
+                min_offset = 0
+            else:
+                raise ValueError(timestr)
+
+            res.tzoffset = signal * (hour_offset * 3600 + min_offset * 60)
+
+            # Look for a timezone name between parenthesis
+            if (idx + 5 < len_l and
+                    info.jump(tokens[idx + 2]) and tokens[idx + 3] == '(' and
+                    tokens[idx + 5] == ')' and
+                    3 <= len(tokens[idx + 4]) and
+                    self._could_be_tzname(res.hour, res.tzname,
+                                          None, tokens[idx + 4])):
+                # -0300 (BRST)
+                res.tzname = tokens[idx + 4]
+                idx += 4
+
+            idx += 1
+
+        # Check jumps
+        elif not (info.jump(tokens[idx]) or fuzzy):
+            raise ValueError(timestr)
+
+        else:
+            skipped_idxs.append(idx)
+        idx += 1
+        return idx
 
     def _parse_numeric_token(self, tokens, idx, info, ymd, res, fuzzy):
         # Token is a number
@@ -1377,7 +1386,7 @@ class _tzparser(object):
 
     def parse(self, tzstr):
         res = self._result()
-        l = [x for x in re.split(r'([,:.]|[a-zA-Z]+|[0-9]+)',tzstr) if x]
+        l = [x for x in re.split(r'([,:.]|[a-zA-Z]+|[0-9]+)', tzstr) if x]
         used_idxs = list()
         try:
 
@@ -1435,7 +1444,6 @@ class _tzparser(object):
                         break
                 else:
                     break
-
 
             if i < len_l:
                 for j in range(i, len_l):
@@ -1563,7 +1571,7 @@ class _tzparser(object):
             return None
 
         unused_idxs = set(range(len_l)).difference(used_idxs)
-        res.any_unused_tokens = not {l[n] for n in unused_idxs}.issubset({",",":"})
+        res.any_unused_tokens = not {l[n] for n in unused_idxs}.issubset({",", ":"})
         return res
 
 
@@ -1572,6 +1580,7 @@ DEFAULTTZPARSER = _tzparser()
 
 def _parsetz(tzstr):
     return DEFAULTTZPARSER.parse(tzstr)
+
 
 class UnknownTimezoneWarning(RuntimeWarning):
     """Raised when the parser finds a timezone it cannot parse into a tzinfo"""
