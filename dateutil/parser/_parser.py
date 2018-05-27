@@ -571,6 +571,10 @@ class _ymd(list):
 
 
 class parser(object):
+    # timelex_cls is a class attribute so it can be easily overriden in
+    # subclasses
+    _timelex_cls = _timelex
+
     def __init__(self, info=None):
         self.info = info or parserinfo()
 
@@ -718,7 +722,7 @@ class parser(object):
             yearfirst = info.yearfirst
 
         res = self._result()
-        l = _timelex.split(timestr)         # Splits the timestr into tokens
+        l = self._timelex_cls.split(timestr)  # Splits the timestr into tokens
 
         skipped_idxs = []
 
