@@ -238,7 +238,7 @@ class _resultbase(object):
 
     def __len__(self):
         return (sum(getattr(self, attr) is not None
-                    for attr in self.__slots__))
+                    for attr in self.__slots__ if attr != "_defaults"))
 
     def __repr__(self):
         return self._repr(self.__class__.__name__)
