@@ -45,6 +45,7 @@ switch, and thus all their contributions are dual-licensed.
 - Jake Chorley (gh: @jakec-github) **D**
 - Jan Studený <jendas1@MASKED>
 - Jitesh <jitesh@MASKED>
+- John Purviance <jpurviance@MASKED> (gh @jpurviance) **D**
 - Jon Dufresne <jon.dufresne@MASKED> (gh: @jdufresne) **R**
 - Jonas Neubert <jonas@MASKED>
 - Kevin Nguyen <kvn219@MASKED>
