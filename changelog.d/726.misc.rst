@@ -1,0 +1,1 @@
+Migrated easter tests to use parametrized pytest tests rather than a for loop within a single test. Implemented by @jpurviance (gh pr #726)
