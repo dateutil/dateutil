@@ -2779,3 +2779,19 @@ def test_resolve_imaginary(tzi, dt, dt_exp):
     assert dt_r == dt_exp
     assert dt_r.tzname() == dt_exp.tzname()
     assert dt_r.utcoffset() == dt_exp.utcoffset()
+
+
+@pytest.mark.parametrize("delta", [timedelta(hours=-25), timedelta(hours=25),
+                                   timedelta(hours=-1000), timedelta(hours=1000)])
+def test_invalid_tzrange_offset(delta):
+    with pytest.raises(ValueError):
+        tz.tzrange("", delta)
+
+
+@pytest.mark.parametrize("delta", [timedelta(hours=0), timedelta(hours=-24), timedelta(hours=-6),
+                                   timedelta(), timedelta(hours=6), timedelta(hours=24)])
+def test_valid_tzrange_offset(delta):
+    try:
+        tz.tzrange("", delta)
+    except ValueError:
+        pytest.fail()

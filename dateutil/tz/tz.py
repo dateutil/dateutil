@@ -950,6 +950,13 @@ class tzrange(tzrangebase):
         self._std_abbr = stdabbr
         self._dst_abbr = dstabbr
 
+        if isinstance(stdoffset, datetime.timedelta) and \
+                not (datetime.timedelta(hours=-24) <= stdoffset <= datetime.timedelta(hours=24)):
+            tzrange_error_message = "Invalid timezone offset, " + \
+                                    "offset must be a timedelta strictly between: " +\
+                                    "-timedelta(hours=24) and timedelta(hours=24)"
+            six.raise_from(ValueError(tzrange_error_message), None)
+
         try:
             stdoffset = stdoffset.total_seconds()
         except (TypeError, AttributeError):
