@@ -56,8 +56,6 @@ __all__ = ["parse", "parserinfo"]
 # making public and/or figuring out if there is something we can
 # take off their plate.
 class _timelex(object):
-    # Fractional seconds are sometimes split by a comma
-    _split_decimal = re.compile("([.,])")
 
     def __init__(self, instream):
         if six.PY2:
@@ -70,17 +68,14 @@ class _timelex(object):
                 instream = instream.decode()
 
         if isinstance(instream, text_type):
-            instream = StringIO(instream)
+            self.stream = instream
         elif getattr(instream, 'read', None) is None:
             raise TypeError('Parser must be a string or character stream, not '
                             '{itype}'.format(itype=instream.__class__.__name__))
+        else:
+            self.stream = instream.read()
 
-        self.instream = instream
-        self.charstack = []
-        self.tokenstack = []
-        self.eof = False
-
-    def get_token(self):
+    def get_tokens(self):
         """
         This function breaks the time string into lexical units (tokens), which
         can be parsed by the parser. Lexical units are demarcated by changes in
@@ -94,132 +89,38 @@ class _timelex(object):
         function maintains a "token stack", for when the ambiguous context
         demands that multiple tokens be parsed at once.
         """
-        if self.tokenstack:
-            return self.tokenstack.pop(0)
+        stream = self.stream.replace('\x00', '')
 
-        seenletters = False
-        token = None
-        state = None
+        # TODO: Change \s --> \s+ (this doesn't match existing behavior)
+        # TODO: change the punctuation block to punc+ (doesnt match existing)
+        # TODO: can we merge the two digit patterns?
+        tokens = re.findall('\s|'
+                            '(?<![\.\d])\d+\.\d+(?![\.\d])'
+                            '|\d+'
+                            '|[a-zA-Z]+'
+                            '|[\./:]'
+                            '|[^\da-zA-Z\./:\s]+', stream)
 
-        while not self.eof:
-            # We only realize that we've reached the end of a token when we
-            # find a character that's not part of the current token - since
-            # that character may be part of the next token, it's stored in the
-            # charstack.
-            if self.charstack:
-                nextchar = self.charstack.pop(0)
-            else:
-                nextchar = self.instream.read(1)
-                while nextchar == '\x00':
-                    nextchar = self.instream.read(1)
+        # Re-combine token tuples of the form ["59", ",", "456"] because
+        # in this context the "," is treated as a decimal
+        # (e.g. in python's default logging format)
+        for n, token in enumerate(tokens[:-2]):
+            # Kludge to match ,-decimal behavior; it'd be better to do this
+            # later in the process and have a simpler tokenization
+            if (token is not None and token.isdigit() and
+                    tokens[n + 1] == ',' and tokens[n + 2].isdigit()):
+                # Have to check None b/c it might be replaced during the loop
+                # TODO: I _really_ don't faking the value here
+                tokens[n] = token + '.' + tokens[n + 2]
+                tokens[n + 1] = None
+                tokens[n + 2] = None
 
-            if not nextchar:
-                self.eof = True
-                break
-            elif not state:
-                # First character of the token - determines if we're starting
-                # to parse a word, a number or something else.
-                token = nextchar
-                if self.isword(nextchar):
-                    state = 'a'
-                elif self.isnum(nextchar):
-                    state = '0'
-                elif self.isspace(nextchar):
-                    token = ' '
-                    break  # emit token
-                else:
-                    break  # emit token
-            elif state == 'a':
-                # If we've already started reading a word, we keep reading
-                # letters until we find something that's not part of a word.
-                seenletters = True
-                if self.isword(nextchar):
-                    token += nextchar
-                elif nextchar == '.':
-                    token += nextchar
-                    state = 'a.'
-                else:
-                    self.charstack.append(nextchar)
-                    break  # emit token
-            elif state == '0':
-                # If we've already started reading a number, we keep reading
-                # numbers until we find something that doesn't fit.
-                if self.isnum(nextchar):
-                    token += nextchar
-                elif nextchar == '.' or (nextchar == ',' and len(token) >= 2):
-                    token += nextchar
-                    state = '0.'
-                else:
-                    self.charstack.append(nextchar)
-                    break  # emit token
-            elif state == 'a.':
-                # If we've seen some letters and a dot separator, continue
-                # parsing, and the tokens will be broken up later.
-                seenletters = True
-                if nextchar == '.' or self.isword(nextchar):
-                    token += nextchar
-                elif self.isnum(nextchar) and token[-1] == '.':
-                    token += nextchar
-                    state = '0.'
-                else:
-                    self.charstack.append(nextchar)
-                    break  # emit token
-            elif state == '0.':
-                # If we've seen at least one dot separator, keep going, we'll
-                # break up the tokens later.
-                if nextchar == '.' or self.isnum(nextchar):
-                    token += nextchar
-                elif self.isword(nextchar) and token[-1] == '.':
-                    token += nextchar
-                    state = 'a.'
-                else:
-                    self.charstack.append(nextchar)
-                    break  # emit token
-
-        if (state in ('a.', '0.') and (seenletters or token.count('.') > 1 or
-                                       token[-1] in '.,')):
-            l = self._split_decimal.split(token)
-            token = l[0]
-            for tok in l[1:]:
-                if tok:
-                    self.tokenstack.append(tok)
-
-        if state == '0.' and token.count('.') == 0:
-            token = token.replace(',', '.')
-
-        return token
-
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        token = self.get_token()
-        if token is None:
-            raise StopIteration
-
-        return token
-
-    def next(self):
-        return self.__next__()  # Python 2.x support
+        tokens = [x for x in tokens if x is not None]
+        return tokens
 
     @classmethod
     def split(cls, s):
-        return list(cls(s))
-
-    @classmethod
-    def isword(cls, nextchar):
-        """ Whether or not the next character is part of a word """
-        return nextchar.isalpha()
-
-    @classmethod
-    def isnum(cls, nextchar):
-        """ Whether the next character is part of a number """
-        return nextchar.isdigit()
-
-    @classmethod
-    def isspace(cls, nextchar):
-        """ Whether the next character is whitespace """
-        return nextchar.isspace()
+        return cls(s).get_tokens()
 
 
 class _resultbase(object):
