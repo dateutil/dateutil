@@ -98,7 +98,7 @@ class _timelex(object):
                             '(?<![\.\d])\d+\.\d+(?![\.\d])'
                             '|\d+'
                             '|[a-zA-Z]+'
-                            '|[\./:]'
+                            '|[\./:]+'
                             '|[^\da-zA-Z\./:\s]+', stream)
 
         # Re-combine token tuples of the form ["59", ",", "456"] because
