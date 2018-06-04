@@ -152,7 +152,7 @@ def test_parser_default(parsable_text, expected_datetime, assertion_message):
     assert parse(parsable_text, default=datetime(2003, 9, 25)) == expected_datetime, assertion_message
 
 
-class TestFormat(unittest.TestCase):
+class TestFormat(object):
 
     def test_ybd(self):
         # If we have a 4-digit year, a non-numeric month (abbreviated or not),
@@ -177,7 +177,7 @@ class TestFormat(unittest.TestCase):
         for fmt in unambig_fmts:
             dstr = actual.strftime(fmt)
             res = parse(dstr)
-            self.assertEqual(res, actual)
+            assert res == actual
 
 
 class TestInputFormats(object):
@@ -240,20 +240,20 @@ class TestInputFormats(object):
 
 class ParserTest(unittest.TestCase):
 
-    def setUp(self):
-        self.tzinfos = {"BRST": -10800}
-        self.brsttz = tzoffset("BRST", -10800)
-        self.default = datetime(2003, 9, 25)
+    @classmethod
+    def setup_class(cls):
+        cls.tzinfos = {"BRST": -10800}
+        cls.brsttz = tzoffset("BRST", -10800)
+        cls.default = datetime(2003, 9, 25)
 
         # Parser should be able to handle bytestring and unicode
-        self.uni_str = '2014-05-01 08:00:00'
-        self.str_str = self.uni_str.encode()
+        cls.uni_str = '2014-05-01 08:00:00'
+        cls.str_str = cls.uni_str.encode()
 
     def testParserParseStr(self):
         from dateutil.parser import parser
 
-        self.assertEqual(parser().parse(self.str_str),
-                         parser().parse(self.uni_str))
+        assert parser().parse(self.str_str) == parser().parse(self.uni_str)
 
     def testParseUnicodeWords(self):
 
@@ -271,9 +271,9 @@ class ParserTest(unittest.TestCase):
                       ("ноя", "Ноябрь"),
                       ("дек", "Декабрь")]
 
-        self.assertEqual(parse('10 Сентябрь 2015 10:20',
-                               parserinfo=rus_parserinfo()),
-                         datetime(2015, 9, 10, 10, 20))
+        expected = datetime(2015, 9, 10, 10, 20)
+        res = parse('10 Сентябрь 2015 10:20', parserinfo=rus_parserinfo())
+        assert res  == expected
 
     def testParseWithNulls(self):
         # This relies on the from __future__ import unicode_literals, because
@@ -281,8 +281,7 @@ class ParserTest(unittest.TestCase):
         # May want to switch to u'...' if we ever drop Python 3.2 support.
         pstring = '\x00\x00August 29, 1924'
 
-        self.assertEqual(parse(pstring),
-                         datetime(1924, 8, 29))
+        assert parse(pstring) == datetime(1924, 8, 29)
 
     def testDateCommandFormat(self):
         self.assertEqual(parse("Thu Sep 25 10:36:28 BRST 2003",
@@ -382,17 +381,17 @@ class ParserTest(unittest.TestCase):
                          datetime(2010, 9, 3))
 
     def testAMPMNoHour(self):
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             parse("AM")
 
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             parse("Jan 20, 2015 PM")
 
     def testAMPMRange(self):
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             parse("13:44 AM")
 
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             parse("January 25, 1921 23:13 PM")
 
     def testPertain(self):
@@ -493,7 +492,7 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(res, datetime(1990, 6, 13, 5, 50))
 
     def testInvalidDay(self):
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             parse("Feb 30, 2007")
 
     def testUnspecifiedDayFallback(self):
@@ -518,8 +517,8 @@ class ParserTest(unittest.TestCase):
                                     datetime(2017, 2, 3, 12, 40))
 
     def testErrorType01(self):
-        self.assertRaises(ValueError,
-                          parse, 'shouldfail')
+        with pytest.raises(ValueError):
+            parse('shouldfail')
 
     def testCorrectErrorOnFuzzyWithTokens(self):
         assertRaisesRegex(self, ValueError, 'Unknown string format',
@@ -537,22 +536,22 @@ class ParserTest(unittest.TestCase):
         delta = timedelta(days=365+31+1, seconds=1+60+60*60)
         dt = datetime(1900, 1, 1, 0, 0, 0, 0)
         for i in range(200):
-            self.assertEqual(parse(dt.ctime()), dt)
+            assert parse(dt.ctime()) == dt
             dt += delta
 
     def testIncreasingISOFormat(self):
         delta = timedelta(days=365+31+1, seconds=1+60+60*60)
         dt = datetime(1900, 1, 1, 0, 0, 0, 0)
         for i in range(200):
-            self.assertEqual(parse(dt.isoformat()), dt)
+            assert parse(dt.isoformat()) == dt
             dt += delta
 
     def testMicrosecondsPrecisionError(self):
         # Skip found out that sad precision problem. :-(
         dt1 = parse("00:11:25.01")
         dt2 = parse("00:12:10.01")
-        self.assertEqual(dt1.microsecond, 10000)
-        self.assertEqual(dt2.microsecond, 10000)
+        assert dt1.microsecond == 10000
+        assert dt2.microsecond == 10000
 
     def testMicrosecondPrecisionErrorReturns(self):
         # One more precision issue, discovered by Eric Brown.  This should
@@ -562,7 +561,7 @@ class ParserTest(unittest.TestCase):
                      1001,   1000,   999,   998,
                       101,    100,    99,    98]:
             dt = datetime(2008, 2, 27, 21, 26, 1, ms)
-            self.assertEqual(parse(dt.isoformat()), dt)
+            assert parse(dt.isoformat()) == dt
 
     def testCustomParserInfo(self):
         # Custom parser info wasn't working, as Michael Elsdörfer discovered.
@@ -573,7 +572,7 @@ class ParserTest(unittest.TestCase):
             MONTHS[0] = ("Foo", "Foo")
         myparser = parser(myparserinfo())
         dt = myparser.parse("01/Foo/2007")
-        self.assertEqual(dt, datetime(2007, 1, 1))
+        assert dt == datetime(2007, 1, 1)
 
     def testCustomParserShortDaynames(self):
         # Horacio Hoyos discovered that day names shorter than 3 characters,
@@ -656,18 +655,18 @@ class ParserTest(unittest.TestCase):
         # Pre-PR, the trailing colon will cause an IndexError at 824-825
         # when checking `i < len_l` and then accessing `l[i+1]`
         res = parse(dtstr, fuzzy=True)
-        self.assertEqual(res, datetime(2017, 7, 17, 6, 15))
+        assert res == datetime(2017, 7, 17, 6, 15)
 
     def test_hmBY(self):
         # See GH#483
         dtstr = '02:17NOV2017'
         res = parse(dtstr, default=self.default)
-        self.assertEqual(res, datetime(2017, 11, self.default.day, 2, 17))
+        assert res == datetime(2017, 11, self.default.day, 2, 17)
 
     def test_validate_hour(self):
         # See GH353
         invalid = "201A-01-01T23:58:39.239769+03:00"
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             parse(invalid)
 
     def test_era_trailing_year(self):
