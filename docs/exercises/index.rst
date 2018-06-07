@@ -10,3 +10,61 @@ If you are interested in helping improve the documentation of ``dateutil``, it i
     :backlinks: top
     :local:
 
+
+Martin Luther King Day
+--------------------------------
+
+
+    `Martin Luther King, Jr Day <https://en.wikipedia.org/wiki/Martin_Luther_King_Jr._Day>`_ is a US holiday that occurs every year on the third Monday in January?
+
+    How would you generate a `recurrence rule <../rrule.html>`_ that generates Martin Luther King Day, starting from its first observance in 1986?
+
+
+**Test Script**
+
+To solve this exercise, copy-paste this script into a document, change anything between the ``--- YOUR CODE ---`` comment blocks.
+
+.. raw:: html
+
+    <details>
+
+.. code-block:: python3
+
+    # ------- YOUR CODE -------------#
+    from dateutil import rrule
+
+    MLK_DAY = <<YOUR CODE HERE>>
+
+    # -------------------------------#
+
+    from datetime import datetime
+    MLK_TEST_CASES = [
+        ((datetime(1970, 1, 1), datetime(1980, 1, 1)),
+         []),
+        ((datetime(1980, 1, 1), datetime(1989, 1, 1)),
+         [datetime(1986, 1, 20),
+          datetime(1987, 1, 19),
+          datetime(1988, 1, 18)]),
+        ((datetime(2017, 2, 1), datetime(2022, 2, 1)),
+         [datetime(2018, 1, 15, 0, 0),
+          datetime(2019, 1, 21, 0, 0),
+          datetime(2020, 1, 20, 0, 0),
+          datetime(2021, 1, 18, 0, 0),
+          datetime(2022, 1, 17, 0, 0)]
+         ),
+    ]
+
+    def test_mlk_day():
+        for (between_args, expected) in MLK_TEST_CASES:
+            assert MLK_DAY.between(*between_args) == expected
+
+    if __name__ == "__main__":
+        test_mlk_day()
+        print('Success!')
+
+
+.. raw:: html
+
+    </details>
+
+
