@@ -28,6 +28,7 @@ Contents:
    utils
    zoneinfo
    examples
+   exercises <exercises/index>
 
 Indices and tables
 ==================
