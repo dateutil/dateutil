@@ -57,7 +57,7 @@ __all__ = ["parse", "parserinfo"]
 # take off their plate.
 class _timelex(object):
     # Fractional seconds are sometimes split by a comma
-    _split_decimal = re.compile("([.,])")
+    _split_decimal = re.compile("([.])")
 
     def __init__(self, instream):
         if six.PY2:
@@ -146,7 +146,7 @@ class _timelex(object):
                 # numbers until we find something that doesn't fit.
                 if self.isnum(nextchar):
                     token += nextchar
-                elif nextchar == '.' or (nextchar == ',' and len(token) >= 2):
+                elif nextchar == '.':
                     token += nextchar
                     state = '0.'
                 else:
@@ -177,7 +177,7 @@ class _timelex(object):
                     break  # emit token
 
         if (state in ('a.', '0.') and (seenletters or token.count('.') > 1 or
-                                       token[-1] in '.,')):
+                                       token[-1] in '.')):
             l = self._split_decimal.split(token)
             token = l[0]
             for tok in l[1:]:
@@ -946,6 +946,14 @@ class parser(object):
             if idx + 4 < len_l and tokens[idx + 3] == ':':
                 res.second, res.microsecond = self._parsems(tokens[idx + 4])
 
+                if (tokens[idx + 4].isdigit() and idx + 6 < len_l and
+                        tokens[idx + 5] == ',' and tokens[idx + 6].isdigit()):
+                    # We allow for python logging's default
+                    # format HH:MM:SS,ffffff
+                    joined = tokens[idx + 4] + '.' + tokens[idx + 6]
+                    res.second, res.microsecond = self._parsems(joined)
+                    idx += 2
+
                 idx += 2
 
             idx += 2
@@ -1112,7 +1120,7 @@ class parser(object):
     def _parsems(self, value):
         """Parse a I[.F] seconds value into (seconds, microseconds)."""
         if "." not in value:
-            return int(value), 0
+            return int(value), None
         else:
             i, f = value.split(".")
             return int(i), int(f.ljust(6, "0")[:6])
