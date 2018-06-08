@@ -8,6 +8,10 @@ from typing import (
 from dateutil.tz import tzfile
 
 
+ZONEFILENAME: str
+METADATA_FN: str
+
+
 def get_zonefile_instance(new_instance: bool = False) -> ZoneInfoFile: ...
 
 
