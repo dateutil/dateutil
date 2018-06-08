@@ -1,0 +1,2 @@
+Improved documentation on the use of ``until`` and ``count`` parameters in ``rrule``.
+Fixed by @lucaferocino (gh pr #755).

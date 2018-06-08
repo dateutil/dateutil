@@ -353,20 +353,26 @@ class rrule(rrulebase):
         from calendar.firstweekday(), and may be modified by
         calendar.setfirstweekday().
     :param count:
-        How many occurrences will be generated.
+        If given, this determines how many occurrences will be generated.
 
         .. note::
-            As of version 2.5.0, the use of the ``until`` keyword together
-            with the ``count`` keyword is deprecated per RFC-5545 Sec. 3.3.10.
+            As of version 2.5.0, the use of the keyword ``until`` in conjunction
+            with ``count`` is deprecated, to make sure ``dateutil`` is fully
+            compliant with `RFC-5545 Sec. 3.3.10 <https://tools.ietf.org/
+            html/rfc5545#section-3.3.10>`_. Therefore, ``until`` and ``count``
+            **must not** occur in the same call to ``rrule``.
     :param until:
-        If given, this must be a datetime instance, that will specify the
+        If given, this must be a datetime instance specifying the upper-bound
         limit of the recurrence. The last recurrence in the rule is the greatest
         datetime that is less than or equal to the value specified in the
         ``until`` parameter.
 
         .. note::
-            As of version 2.5.0, the use of the ``until`` keyword together
-            with the ``count`` keyword is deprecated per RFC-5545 Sec. 3.3.10.
+            As of version 2.5.0, the use of the keyword ``until`` in conjunction
+            with ``count`` is deprecated, to make sure ``dateutil`` is fully
+            compliant with `RFC-5545 Sec. 3.3.10 <https://tools.ietf.org/
+            html/rfc5545#section-3.3.10>`_. Therefore, ``until`` and ``count``
+            **must not** occur in the same call to ``rrule``.
     :param bysetpos:
         If given, it must be either an integer, or a sequence of integers,
         positive or negative. Each given integer will specify an occurrence
