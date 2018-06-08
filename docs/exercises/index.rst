@@ -122,7 +122,7 @@ To solve this exercise, copy-paste this script into a document, change anything 
 Parsing a local tzname
 ----------------------
 
-    Three-character time zone abbreviations are *not* unique in that they do not explicitly map to a time zone. A list of time zone abbreviations in use can be found `here <https://www.timeanddate.com/time/zones/>`_. This means that parsing a datetime string such as ``'2018-01-01 12:30:30 CST'`` is ambiguous without context. Using `dateutil.parse <../parse.html>`_ and `dateutil.tz <../tz.html>`_, it is possible to provide a context such that these local names are converted to proper time zones.
+    Three-character time zone abbreviations are *not* unique in that they do not explicitly map to a time zone. A list of time zone abbreviations in use can be found `here <https://www.timeanddate.com/time/zones/>`_. This means that parsing a datetime string such as ``'2018-01-01 12:30:30 CST'`` is ambiguous without context. Using `dateutil.parser <../parser.html>`_ and `dateutil.tz <../tz.html>`_, it is possible to provide a context such that these local names are converted to proper time zones.
 
 Problem 1
 *********
