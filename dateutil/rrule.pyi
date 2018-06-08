@@ -3,6 +3,7 @@ from datetime import (
     datetime,
     time,
 )
+from dateutil._common import weekday as weekdaybase
 from dateutil.tz.tz import tzfile
 from typing import (
     Any,
@@ -134,7 +135,5 @@ class rruleset:
     def _iter(self) -> Iterator[datetime]: ...
 
 
-
-
-class weekday:
+class weekday(weekdaybase):
     def __init__(self, wkday: int, n: Optional[int] = None) -> None: ...

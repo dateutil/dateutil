@@ -5,6 +5,7 @@ from typing import (
     Optional,
     Union,
 )
+from dateutil.tz import tzfile
 
 
 def get_zonefile_instance(new_instance: bool = False) -> ZoneInfoFile: ...
