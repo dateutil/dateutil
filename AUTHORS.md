@@ -65,6 +65,7 @@ switch, and thus all their contributions are dual-licensed.
 - Michael Aquilina <michaelaquilina@MASKED> (gh: @MichaelAquilina)
 - Michael J. Schultz <mjschultz@MASKED>
 - Mike Gilbert <floppym@MASKED>
+- Nicholas Herrriot <Nicholas.Herriot@gmail.com> **D**
 - Nick Smith <nick.smith@MASKED>
 - Orson Adams <orson.network@MASKED> (gh: @parsethis)
 - Paul Ganssle <paul@ganssle.io> (gh: @pganssle) **R**
