@@ -1,13 +1,11 @@
-from six import PY3
-
+from datetime import datetime, timedelta, tzinfo
 from functools import wraps
 
-from datetime import datetime, timedelta, tzinfo
-
+from six import PY3
 
 ZERO = timedelta(0)
 
-__all__ = ['tzname_in_python2', 'enfold']
+__all__ = ["tzname_in_python2", "enfold"]
 
 
 def tzname_in_python2(namefunc):
@@ -16,6 +14,7 @@ def tzname_in_python2(namefunc):
     tzname() API changed in Python 3. It used to return bytes, but was changed
     to unicode strings
     """
+
     def adjust_encoding(*args, **kwargs):
         name = namefunc(*args, **kwargs)
         if name is not None and not PY3:
@@ -28,7 +27,7 @@ def tzname_in_python2(namefunc):
 
 # The following is adapted from Alexander Belopolsky's tz library
 # https://github.com/abalkin/tz
-if hasattr(datetime, 'fold'):
+if hasattr(datetime, "fold"):
     # This is the pre-python 3.6 fold situation
     def enfold(dt, fold=1):
         """
@@ -50,7 +49,9 @@ if hasattr(datetime, 'fold'):
         """
         return dt.replace(fold=fold)
 
+
 else:
+
     class _DatetimeWithFold(datetime):
         """
         This is a class designed to provide a PEP 495-compliant interface for
@@ -59,6 +60,7 @@ else:
 
         .. versionadded:: 2.6.0
         """
+
         __slots__ = ()
 
         def replace(self, *args, **kwargs):
@@ -73,13 +75,19 @@ else:
             return a ``datetime.datetime`` even if ``fold`` is unchanged.
             """
             argnames = (
-                'year', 'month', 'day', 'hour', 'minute', 'second',
-                'microsecond', 'tzinfo'
+                "year",
+                "month",
+                "day",
+                "hour",
+                "minute",
+                "second",
+                "microsecond",
+                "tzinfo",
             )
 
             for arg, argname in zip(args, argnames):
                 if argname in kwargs:
-                    raise TypeError('Duplicate argument: {}'.format(argname))
+                    raise TypeError("Duplicate argument: {}".format(argname))
 
                 kwargs[argname] = arg
 
@@ -87,7 +95,7 @@ else:
                 if argname not in kwargs:
                     kwargs[argname] = getattr(self, argname)
 
-            dt_class = self.__class__ if kwargs.get('fold', 1) else datetime
+            dt_class = self.__class__ if kwargs.get("fold", 1) else datetime
 
             return dt_class(**kwargs)
 
@@ -113,7 +121,7 @@ else:
 
         .. versionadded:: 2.6.0
         """
-        if getattr(dt, 'fold', 0) == fold:
+        if getattr(dt, "fold", 0) == fold:
             return dt
 
         args = dt.timetuple()[:6]
@@ -130,6 +138,7 @@ def _validate_fromutc_inputs(f):
     The CPython version of ``fromutc`` checks that the input is a ``datetime``
     object and that ``self`` is attached as its ``tzinfo``.
     """
+
     @wraps(f)
     def fromutc(self, dt):
         if not isinstance(dt, datetime):
@@ -198,7 +207,7 @@ class _tzinfo(tzinfo):
         return _fold
 
     def _fold(self, dt):
-        return getattr(dt, 'fold', 0)
+        return getattr(dt, "fold", 0)
 
     def _fromutc(self, dt):
         """
@@ -217,8 +226,7 @@ class _tzinfo(tzinfo):
         # Re-implement the algorithm from Python's datetime.py
         dtoff = dt.utcoffset()
         if dtoff is None:
-            raise ValueError("fromutc() requires a non-None utcoffset() "
-                             "result")
+            raise ValueError("fromutc() requires a non-None utcoffset() " "result")
 
         # The original datetime.py code assumes that `dst()` defaults to
         # zero during ambiguous times. PEP 495 inverts this presumption, so
@@ -233,8 +241,9 @@ class _tzinfo(tzinfo):
         # ambiguous dates.
         dtdst = enfold(dt, fold=1).dst()
         if dtdst is None:
-            raise ValueError("fromutc(): dt.dst gave inconsistent "
-                             "results; cannot convert")
+            raise ValueError(
+                "fromutc(): dt.dst gave inconsistent " "results; cannot convert"
+            )
         return dt + dtdst
 
     @_validate_fromutc_inputs
@@ -282,8 +291,9 @@ class tzrangebase(_tzinfo):
 
     .. versionadded:: 2.6.0
     """
+
     def __init__(self):
-        raise NotImplementedError('tzrangebase is an abstract base class')
+        raise NotImplementedError("tzrangebase is an abstract base class")
 
     def utcoffset(self, dt):
         isdst = self._isdst(dt)
@@ -365,7 +375,7 @@ class tzrangebase(_tzinfo):
         start, end = self.transitions(dt.year)
 
         dt = dt.replace(tzinfo=None)
-        return (end <= dt < end + self._dst_base_offset)
+        return end <= dt < end + self._dst_base_offset
 
     def _isdst(self, dt):
         if not self.hasdst:

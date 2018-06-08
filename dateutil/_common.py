@@ -25,10 +25,7 @@ class weekday(object):
         return True
 
     def __hash__(self):
-        return hash((
-          self.weekday,
-          self.n,
-        ))
+        return hash((self.weekday, self.n))
 
     def __ne__(self, other):
         return not (self == other)
@@ -39,5 +36,6 @@ class weekday(object):
             return s
         else:
             return "%s(%+d)" % (s, self.n)
+
 
 # vim:ts=4:sw=4:et

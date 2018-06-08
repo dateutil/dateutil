@@ -1,6 +1,7 @@
 import sys
 import unittest
 
+
 class ImportVersionTest(unittest.TestCase):
     """ Test that dateutil.__version__ can be imported"""
 
@@ -10,7 +11,7 @@ class ImportVersionTest(unittest.TestCase):
     def testImportRoot(self):
         import dateutil
 
-        self.assertTrue(hasattr(dateutil, '__version__'))
+        self.assertTrue(hasattr(dateutil, "__version__"))
 
 
 class ImportEasterTest(unittest.TestCase):
@@ -28,6 +29,7 @@ class ImportEasterTest(unittest.TestCase):
 
 class ImportParserTest(unittest.TestCase):
     """ Test that dateutil.parser-related imports work properly """
+
     def testParserDirect(self):
         import dateutil.parser
 
@@ -48,6 +50,7 @@ class ImportParserTest(unittest.TestCase):
 
 class ImportRelativeDeltaTest(unittest.TestCase):
     """ Test that dateutil.relativedelta-related imports work properly """
+
     def testRelativeDeltaDirect(self):
         import dateutil.relativedelta
 
@@ -63,11 +66,13 @@ class ImportRelativeDeltaTest(unittest.TestCase):
 
         # In the public interface but not in all
         from dateutil.relativedelta import weekday
+
         self.assertIsNot(weekday, None)
 
 
 class ImportRRuleTest(unittest.TestCase):
     """ Test that dateutil.rrule related imports work properly """
+
     def testRRuleDirect(self):
         import dateutil.rrule
 
@@ -82,21 +87,38 @@ class ImportRRuleTest(unittest.TestCase):
         from dateutil.rrule import HOURLY, MINUTELY, SECONDLY
         from dateutil.rrule import MO, TU, WE, TH, FR, SA, SU
 
-        rr_all = (rrule, rruleset, rrulestr,
-                  YEARLY, MONTHLY, WEEKLY, DAILY,
-                  HOURLY, MINUTELY, SECONDLY,
-                  MO, TU, WE, TH, FR, SA, SU)
+        rr_all = (
+            rrule,
+            rruleset,
+            rrulestr,
+            YEARLY,
+            MONTHLY,
+            WEEKLY,
+            DAILY,
+            HOURLY,
+            MINUTELY,
+            SECONDLY,
+            MO,
+            TU,
+            WE,
+            TH,
+            FR,
+            SA,
+            SU,
+        )
 
         for var in rr_all:
             self.assertIsNot(var, None)
 
         # In the public interface but not in all
         from dateutil.rrule import weekday
+
         self.assertIsNot(weekday, None)
 
 
 class ImportTZTest(unittest.TestCase):
     """ Test that dateutil.tz related imports work properly """
+
     def testTzDirect(self):
         import dateutil.tz
 
@@ -119,9 +141,20 @@ class ImportTZTest(unittest.TestCase):
         from dateutil.tz import datetime_exists
         from dateutil.tz import resolve_imaginary
 
-        tz_all = ["tzutc", "tzoffset", "tzlocal", "tzfile", "tzrange",
-                  "tzstr", "tzical", "gettz", "datetime_ambiguous",
-                  "datetime_exists", "resolve_imaginary", "UTC"]
+        tz_all = [
+            "tzutc",
+            "tzoffset",
+            "tzlocal",
+            "tzfile",
+            "tzrange",
+            "tzstr",
+            "tzical",
+            "gettz",
+            "datetime_ambiguous",
+            "datetime_exists",
+            "resolve_imaginary",
+            "UTC",
+        ]
 
         tz_all += ["tzwin", "tzwinlocal"] if sys.platform.startswith("win") else []
         lvars = locals()
@@ -129,9 +162,11 @@ class ImportTZTest(unittest.TestCase):
         for var in tz_all:
             self.assertIsNot(lvars[var], None)
 
-@unittest.skipUnless(sys.platform.startswith('win'), "Requires Windows")
+
+@unittest.skipUnless(sys.platform.startswith("win"), "Requires Windows")
 class ImportTZWinTest(unittest.TestCase):
     """ Test that dateutil.tzwin related imports work properly """
+
     def testTzwinDirect(self):
         import dateutil.tzwin
 

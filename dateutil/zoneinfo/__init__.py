@@ -11,7 +11,7 @@ from dateutil.tz import tzfile as _tzfile
 __all__ = ["get_zonefile_instance", "gettz", "gettz_db_metadata"]
 
 ZONEFILENAME = "dateutil-zoneinfo.tar.gz"
-METADATA_FN = 'METADATA'
+METADATA_FN = "METADATA"
 
 
 class tzfile(_tzfile):
@@ -31,18 +31,22 @@ class ZoneInfoFile(object):
     def __init__(self, zonefile_stream=None):
         if zonefile_stream is not None:
             with TarFile.open(fileobj=zonefile_stream) as tf:
-                self.zones = {zf.name: tzfile(tf.extractfile(zf), filename=zf.name)
-                              for zf in tf.getmembers()
-                              if zf.isfile() and zf.name != METADATA_FN}
+                self.zones = {
+                    zf.name: tzfile(tf.extractfile(zf), filename=zf.name)
+                    for zf in tf.getmembers()
+                    if zf.isfile() and zf.name != METADATA_FN
+                }
                 # deal with links: They'll point to their parent object. Less
                 # waste of memory
-                links = {zl.name: self.zones[zl.linkname]
-                         for zl in tf.getmembers() if
-                         zl.islnk() or zl.issym()}
+                links = {
+                    zl.name: self.zones[zl.linkname]
+                    for zl in tf.getmembers()
+                    if zl.islnk() or zl.issym()
+                }
                 self.zones.update(links)
                 try:
                     metadata_json = tf.extractfile(tf.getmember(METADATA_FN))
-                    metadata_str = metadata_json.read().decode('UTF-8')
+                    metadata_str = metadata_json.read().decode("UTF-8")
                     self.metadata = json.loads(metadata_str)
                 except KeyError:
                     # no metadata in tar file
@@ -96,7 +100,7 @@ def get_zonefile_instance(new_instance=False):
     if new_instance:
         zif = None
     else:
-        zif = getattr(get_zonefile_instance, '_cached_instance', None)
+        zif = getattr(get_zonefile_instance, "_cached_instance", None)
 
     if zif is None:
         zif = ZoneInfoFile(getzoneinfofile_stream())
@@ -133,11 +137,13 @@ def gettz(name):
         Use :func:`get_zonefile_instance` to retrieve an instance of the
         dateutil-provided zoneinfo.
     """
-    warnings.warn("zoneinfo.gettz() will be removed in future versions, "
-                  "to use the dateutil-provided zoneinfo files, instantiate a "
-                  "ZoneInfoFile object and use ZoneInfoFile.zones.get() "
-                  "instead. See the documentation for details.",
-                  DeprecationWarning)
+    warnings.warn(
+        "zoneinfo.gettz() will be removed in future versions, "
+        "to use the dateutil-provided zoneinfo files, instantiate a "
+        "ZoneInfoFile object and use ZoneInfoFile.zones.get() "
+        "instead. See the documentation for details.",
+        DeprecationWarning,
+    )
 
     if len(_CLASS_ZONE_INSTANCE) == 0:
         _CLASS_ZONE_INSTANCE.append(ZoneInfoFile(getzoneinfofile_stream()))
@@ -156,11 +162,13 @@ def gettz_db_metadata():
         See deprecation warning in :func:`zoneinfo.gettz`. To get metadata,
         query the attribute ``zoneinfo.ZoneInfoFile.metadata``.
     """
-    warnings.warn("zoneinfo.gettz_db_metadata() will be removed in future "
-                  "versions, to use the dateutil-provided zoneinfo files, "
-                  "ZoneInfoFile object and query the 'metadata' attribute "
-                  "instead. See the documentation for details.",
-                  DeprecationWarning)
+    warnings.warn(
+        "zoneinfo.gettz_db_metadata() will be removed in future "
+        "versions, to use the dateutil-provided zoneinfo files, "
+        "ZoneInfoFile object and query the 'metadata' attribute "
+        "instead. See the documentation for details.",
+        DeprecationWarning,
+    )
 
     if len(_CLASS_ZONE_INSTANCE) == 0:
         _CLASS_ZONE_INSTANCE.append(ZoneInfoFile(getzoneinfofile_stream()))

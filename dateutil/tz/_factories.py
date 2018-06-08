@@ -1,5 +1,6 @@
-from datetime import timedelta
 import weakref
+from datetime import timedelta
+
 
 class _TzSingleton(type):
     def __init__(cls, *args, **kwargs):
@@ -10,6 +11,7 @@ class _TzSingleton(type):
         if cls.__instance is None:
             cls.__instance = super(_TzSingleton, cls).__call__()
         return cls.__instance
+
 
 class _TzFactory(type):
     def instance(cls, *args, **kwargs):
@@ -29,8 +31,7 @@ class _TzOffsetFactory(_TzFactory):
 
         instance = cls.__instances.get(key, None)
         if instance is None:
-            instance = cls.__instances.setdefault(key,
-                                                  cls.instance(name, offset))
+            instance = cls.__instances.setdefault(key, cls.instance(name, offset))
         return instance
 
 
@@ -43,7 +44,5 @@ class _TzStrFactory(_TzFactory):
         instance = cls.__instances.get(key, None)
 
         if instance is None:
-            instance = cls.__instances.setdefault(key,
-                cls.instance(s, posix_offset))
+            instance = cls.__instances.setdefault(key, cls.instance(s, posix_offset))
         return instance
-
