@@ -156,6 +156,8 @@ END:VTIMEZONE
 EST_TUPLE = ('EST', timedelta(hours=-5), timedelta(hours=0))
 EDT_TUPLE = ('EDT', timedelta(hours=-4), timedelta(hours=1))
 
+SUPPORTS_PARTIAL_MINUTES = sys.version_info >= (3, 6)
+
 
 ###
 # Helper functions
@@ -1908,11 +1910,31 @@ class TZTest(unittest.TestCase):
         tzc = tz.tzfile(fileobj)
         self.assertEqual(repr(tzc), 'tzfile(' + repr('foo') + ')')
 
-    def testRoundNonFullMinutes(self):
-        # This timezone has an offset of 5992 seconds in 1900-01-01.
+    @pytest.mark.skipif(not SUPPORTS_PARTIAL_MINUTES, reason='Partial minute offset supported')
+    def testPartialMinuteSupportTzfile(self):
+        # If user running python 3.6 or newer, exact offset is used
         tzc = tz.tzfile(BytesIO(base64.b64decode(EUROPE_HELSINKI)))
-        self.assertEqual(str(datetime(1900, 1, 1, 0, 0, tzinfo=tzc)),
-                             "1900-01-01 00:00:00+01:40")
+        assert datetime(1900, 1, 1, 0, 0, tzinfo=tzc).utcoffset() == timedelta(hours=1, minutes=39, seconds=52)
+
+    @pytest.mark.skipif(not SUPPORTS_PARTIAL_MINUTES, reason='Partial minute offset supported')
+    def testPartialMinuteSupportTimedelta(self):
+        delta = timedelta(hours=12, seconds=30)
+        test_date = datetime(2000, 1, 1, tzinfo=tz.tzoffset(None, delta))
+        assert test_date.utcoffset() == delta
+
+    @pytest.mark.skipif(SUPPORTS_PARTIAL_MINUTES, reason='Partial minute offset not supported')
+    def testRoundNonFullMinutesTzfile(self):
+        # This timezone has an offset of 5992 seconds in 1900-01-01.
+        # For python version pre-3.6, this will be rounded
+        tzc = tz.tzfile(BytesIO(base64.b64decode(EUROPE_HELSINKI)))
+        assert datetime(1900, 1, 1, 0, 0, tzinfo=tzc).utcoffset() == timedelta(hours=1, minutes=40)
+
+    @pytest.mark.skipif(SUPPORTS_PARTIAL_MINUTES, reason='Partial minute offset not supported')
+    def testRoundNonFullMinutesTimedelta(self):
+        delta = timedelta(hours=12, seconds=30)
+        test_date = datetime(2000, 1, 1, tzinfo=tz.tzoffset(None, delta))
+        assert test_date.utcoffset() == timedelta(hours=12, minutes=1)
+
 
     def testLeapCountDecodesProperly(self):
         # This timezone has leapcnt, and failed to decode until
@@ -2617,9 +2639,7 @@ def __get_kiritimati_resolve_imaginary_test():
 
     return (tzi, ) + dates
 
-
-@pytest.mark.tz_resolve_imaginary
-@pytest.mark.parametrize('tzi, dt, dt_exp', [
+resolve_imaginary_tests = [
     (tz.gettz('Europe/London'),
      datetime(2018, 3, 25, 1, 30), datetime(2018, 3, 25, 2, 30)),
     (tz.gettz('America/New_York'),
@@ -2627,24 +2647,19 @@ def __get_kiritimati_resolve_imaginary_test():
     (tz.gettz('Australia/Sydney'),
      datetime(2014, 10, 5, 2, 0), datetime(2014, 10, 5, 3, 0)),
     __get_kiritimati_resolve_imaginary_test(),
-])
+]
+
+if SUPPORTS_PARTIAL_MINUTES:
+    resolve_imaginary_tests.append(
+        (tz.gettz('Africa/Monrovia'),
+         datetime(1972, 1, 7, 0, 30), datetime(1972, 1, 7, 1, 14, 30)))
+
+@pytest.mark.tz_resolve_imaginary
+@pytest.mark.parametrize('tzi, dt, dt_exp', resolve_imaginary_tests)
 def test_resolve_imaginary(tzi, dt, dt_exp):
     dt = dt.replace(tzinfo=tzi)
     dt_exp = dt_exp.replace(tzinfo=tzi)
 
-    dt_r = tz.resolve_imaginary(dt)
-    assert dt_r == dt_exp
-    assert dt_r.tzname() == dt_exp.tzname()
-    assert dt_r.utcoffset() == dt_exp.utcoffset()
-
-
-@pytest.mark.xfail
-@pytest.mark.tz_resolve_imaginary
-def test_resolve_imaginary_monrovia():
-    # See GH #582 - When that is resolved, move this into test_resolve_imaginary
-    tzi = tz.gettz('Africa/Monrovia')
-    dt = datetime(1972, 1, 7, hour=0, minute=30, second=0, tzinfo=tzi)
-    dt_exp = datetime(1972, 1, 7, hour=1, minute=14, second=30, tzinfo=tzi)
 
     dt_r = tz.resolve_imaginary(dt)
     assert dt_r == dt_exp
