@@ -1,4 +1,3 @@
-from dateutil.rrule import weekday
 from typing import Optional
 
 

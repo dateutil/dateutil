@@ -48,11 +48,9 @@ class _timelex:
 
 
 class _tzparser:
+    class _result:
+        def __init__(self) -> None: ...
     def parse(self, tzstr: str) -> Optional[_tzparser._result]: ...
-
-
-class _tzparser._result:
-    def __init__(self) -> None: ...
 
 
 class _ymd:

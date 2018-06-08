@@ -11,7 +11,6 @@ from dateutil.parser._parser import _tzparser
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import rruleset
 from dateutil.test._common import ComparesEqualClass
-from dateutil.zoneinfo import tzfile
 from tarfile import ExFileObject
 from typing import (
     Any,
