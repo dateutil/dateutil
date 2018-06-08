@@ -76,6 +76,7 @@ switch, and thus all their contributions are dual-licensed.
 - Rustem Saiargaliev (gh: @amureki) **D**
 - Savraj <savraj@MASKED>
 - Sergey Vishnikin <armicron@MASKED>
+- Sherry Zhou (gh: @cssherry) **D**
 - Stefan Bonchev **D**
 - Thierry Bastian <thierryb@MASKED>
 - Thomas A Caswell <tcaswell@MASKED> (gh: @tacaswell)
