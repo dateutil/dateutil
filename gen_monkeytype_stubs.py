@@ -29,9 +29,12 @@ def main():
         and p.parts[-1] not in EXCLUDE_FILES
     ]
 
-    modules = {module_name_from_path(p): str(p) + "i" for p in module_paths}
+    modules = {module_name_from_path(p): Path(str(p) + "i") for p in module_paths}
     for mod, output in modules.items():
         subprocess.run(f"monkeytype stub {mod} > {output}", shell=True)
+        # remove empty output files
+        if output.stat().st_size == 0:
+            output.unlink()
 
 
 if __name__ == "__main__":
