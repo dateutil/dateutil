@@ -25,6 +25,7 @@ switch, and thus all their contributions are dual-licensed.
 - Brock Mendel <jbrockmendel@MASKED> (gh: @jbrockmendel) **R**
 - Brook Li (gh: @absreim) **D**
 - Carlos <carlosxl@MASKED>
+- Cheuk Ting Ho <cheukting.ho@gmail.com> (gh: @cheukting) **D**
 - Chris van den Berg (gh: bergvca) **D**
 - Christopher Cordero <ccordero@pm.me> (gh: cs-cordero) **D**
 - Christopher Corley <cscorley@MASKED>
