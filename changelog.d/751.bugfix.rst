@@ -1,0 +1,1 @@
+Changed handling of T24:00 to be compliant with the standard. T24:00 now represents midnight on the *following* day. Fixed by @cheukting (gh issue #658, gh pr #751)
