@@ -1,0 +1,1 @@
+Relicensed Alex Willmer's commits (mainly those in pr #120) @moreati (gh pr #750)
