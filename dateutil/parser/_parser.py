@@ -611,8 +611,7 @@ class parser(object):
                 >>> parse("2012-01-19 17:21:00 BRST", tzinfos=tzinfos)
                 datetime.datetime(2012, 1, 19, 17, 21, tzinfo=tzoffset(u'BRST', -7200))
                 >>> parse("2012-01-19 17:21:00 CST", tzinfos=tzinfos)
-                datetime.datetime(2012, 1, 19, 17, 21,
-                                  tzinfo=tzfile('/usr/share/zoneinfo/America/Chicago'))
+                datetime.datetime(2012, 1, 19, 17, 21, tzinfo=tzfile(u'...America/Chicago'))
 
             This parameter is ignored if ``ignoretz`` is set.
 
@@ -703,7 +702,7 @@ class parser(object):
 
                 >>> from dateutil.parser import parse
                 >>> parse("Today is January 1, 2047 at 8:21:00AM", fuzzy_with_tokens=True)
-                (datetime.datetime(2047, 1, 1, 8, 21), (u'Today is ', u' ', u'at '))
+                (datetime.datetime(2047, 1, 1, 8, 21), (u'Today is ', u' ', u' ', u'at '))
 
         """
         if fuzzy_with_tokens:
@@ -1137,10 +1136,12 @@ class parser(object):
 
     def _recombine_skipped(self, tokens, skipped_idxs):
         """
+        >>> from dateutil.parser import parser
         >>> tokens = ["foo", " ", "bar", " ", "19June2000", "baz"]
         >>> skipped_idxs = [0, 1, 2, 5]
-        >>> _recombine_skipped(tokens, skipped_idxs)
-        ["foo bar", "baz"]
+        >>> p = parser()
+        >>> p._recombine_skipped(tokens, skipped_idxs)
+        [u'foo bar', u'baz']
         """
         skipped_tokens = []
         for i, idx in enumerate(sorted(skipped_idxs)):
@@ -1300,8 +1301,7 @@ def parse(timestr, parserinfo=None, **kwargs):
             >>> parse("2012-01-19 17:21:00 BRST", tzinfos=tzinfos)
             datetime.datetime(2012, 1, 19, 17, 21, tzinfo=tzoffset(u'BRST', -7200))
             >>> parse("2012-01-19 17:21:00 CST", tzinfos=tzinfos)
-            datetime.datetime(2012, 1, 19, 17, 21,
-                              tzinfo=tzfile('/usr/share/zoneinfo/America/Chicago'))
+            datetime.datetime(2012, 1, 19, 17, 21, tzinfo=tzfile(u'...America/Chicago'))
 
         This parameter is ignored if ``ignoretz`` is set.
 
@@ -1333,7 +1333,7 @@ def parse(timestr, parserinfo=None, **kwargs):
 
             >>> from dateutil.parser import parse
             >>> parse("Today is January 1, 2047 at 8:21:00AM", fuzzy_with_tokens=True)
-            (datetime.datetime(2047, 1, 1, 8, 21), (u'Today is ', u' ', u'at '))
+            (datetime.datetime(2047, 1, 1, 8, 21), (u'Today is ', u' ', u' ', u'at '))
 
     :return:
         Returns a :class:`datetime.datetime` object or, if the
