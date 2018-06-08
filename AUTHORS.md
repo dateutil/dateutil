@@ -30,6 +30,7 @@ switch, and thus all their contributions are dual-licensed.
 - Christopher Corley <cscorley@MASKED>
 - Claudio Canepa <ccanepacc@MASKED>
 - Corey Girard <corey.r.girard@gmail.com> (gh: @coreygirard)
+- Cosimo Lupo <cosimo@anthrotype.com> (gh: @anthrotype)
 - Daniel Lepage <dplepage@MASKED>
 - David Lehrian <david@MASKED>
 - Dominik Kozaczko <dominik@MASKED>
