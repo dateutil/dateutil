@@ -1,6 +1,6 @@
 """Test for the "import *" functionality.
 
-As imort * can be only done at module level, it has been added in a separate file
+As import * can be only done at module level, it has been added in a separate file
 """
 import unittest
 

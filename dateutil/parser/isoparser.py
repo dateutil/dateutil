@@ -139,6 +139,10 @@ class isoparser(object):
             else:
                 raise ValueError('String contains unknown ISO components')
 
+        if len(components) > 3 and components[3] == 24:
+            components[3] = 0
+            return datetime(*components) + timedelta(days=1)
+
         return datetime(*components)
 
     @_takes_ascii
@@ -169,6 +173,9 @@ class isoparser(object):
         :return:
             Returns a :class:`datetime.time` object
         """
+        components = self._parse_isotime(timestr)
+        if components[0] == 24:
+            components[0] = 0
         return time(*self._parse_isotime(timestr))
 
     @_takes_ascii
@@ -368,7 +375,6 @@ class isoparser(object):
             # Standard supports 00:00 and 24:00 as representations of midnight
             if any(component != 0 for component in components[1:4]):
                 raise ValueError('Hour may only be 24 at 24:00:00.000')
-            components[0] = 0
 
         return components
 

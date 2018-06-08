@@ -1,0 +1,1 @@
+Add build requirements to pyproject.toml. (gh issue #736, gh pr #746)

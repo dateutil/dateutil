@@ -63,9 +63,8 @@ setup(name="python-dateutil",
       python_requires=">=2.7, !=3.0.*, !=3.1.*, !=3.2.*",
       package_data={"dateutil.zoneinfo": ["dateutil-zoneinfo.tar.gz"]},
       zip_safe=True,
-      requires=["six"],
       setup_requires=['setuptools_scm'],
-      install_requires=["six >=1.5"],  # XXX fix when packaging is sane again
+      install_requires=["six >=1.5"],
       classifiers=[
           'Development Status :: 5 - Production/Stable',
           'Intended Audience :: Developers',

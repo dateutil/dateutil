@@ -1,0 +1,2 @@
+Check that README is rendered correctly on PyPI. Reported by @pganssle (gh issue #734). Fixed by
+@alimcmaster1 (gh pr #740)
