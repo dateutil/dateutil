@@ -12,7 +12,6 @@ import six
 
 UTC = tz.tzutc()
 
-
 def _generate_tzoffsets(limited):
     def _mkoffset(hmtuple, fmt):
         h, m = hmtuple
@@ -42,24 +41,18 @@ def _generate_tzoffsets(limited):
 
     return out
 
-
 FULL_TZOFFSETS = _generate_tzoffsets(False)
 FULL_TZOFFSETS_AWARE = [x for x in FULL_TZOFFSETS if x[1]]
 TZOFFSETS = _generate_tzoffsets(True)
 
 DATES = [datetime(1996, 1, 1), datetime(2017, 1, 1)]
-
-
 @pytest.mark.parametrize('dt', tuple(DATES))
 def test_year_only(dt):
     dtstr = dt.strftime('%Y')
 
     assert isoparse(dtstr) == dt
 
-
 DATES += [datetime(2000, 2, 1), datetime(2017, 4, 1)]
-
-
 @pytest.mark.parametrize('dt', tuple(DATES))
 def test_year_month(dt):
     fmt = '%Y-%m'
@@ -67,18 +60,14 @@ def test_year_month(dt):
 
     assert isoparse(dtstr) == dt
 
-
 DATES += [datetime(2016, 2, 29), datetime(2018, 3, 15)]
 YMD_FMTS = ('%Y%m%d', '%Y-%m-%d')
-
-
 @pytest.mark.parametrize('dt', tuple(DATES))
 @pytest.mark.parametrize('fmt', YMD_FMTS)
 def test_year_month_day(dt, fmt):
     dtstr = dt.strftime(fmt)
 
     assert isoparse(dtstr) == dt
-
 
 def _isoparse_date_and_time(dt, date_fmt, time_fmt, tzoffset,
                             microsecond_precision=None):
@@ -100,22 +89,16 @@ def _isoparse_date_and_time(dt, date_fmt, time_fmt, tzoffset,
 
     assert isoparse(dtstr) == dt
 
-
 DATETIMES = [datetime(1998, 4, 16, 12),
              datetime(2019, 11, 18, 23),
              datetime(2014, 12, 16, 4)]
-
-
 @pytest.mark.parametrize('dt', tuple(DATETIMES))
 @pytest.mark.parametrize('date_fmt', YMD_FMTS)
 @pytest.mark.parametrize('tzoffset', TZOFFSETS)
 def test_ymd_h(dt, date_fmt, tzoffset):
     _isoparse_date_and_time(dt, date_fmt, '%H', tzoffset)
 
-
 DATETIMES = [datetime(2012, 1, 6, 9, 37)]
-
-
 @pytest.mark.parametrize('dt', tuple(DATETIMES))
 @pytest.mark.parametrize('date_fmt', YMD_FMTS)
 @pytest.mark.parametrize('time_fmt', ('%H%M', '%H:%M'))
@@ -123,13 +106,10 @@ DATETIMES = [datetime(2012, 1, 6, 9, 37)]
 def test_ymd_hm(dt, date_fmt, time_fmt, tzoffset):
     _isoparse_date_and_time(dt, date_fmt, time_fmt, tzoffset)
 
-
 DATETIMES = [datetime(2003, 9, 2, 22, 14, 2),
              datetime(2003, 8, 8, 14, 9, 14),
              datetime(2003, 4, 7, 6, 14, 59)]
 HMS_FMTS = ('%H%M%S', '%H:%M:%S')
-
-
 @pytest.mark.parametrize('dt', tuple(DATETIMES))
 @pytest.mark.parametrize('date_fmt', YMD_FMTS)
 @pytest.mark.parametrize('time_fmt', HMS_FMTS)
@@ -137,10 +117,7 @@ HMS_FMTS = ('%H%M%S', '%H:%M:%S')
 def test_ymd_hms(dt, date_fmt, time_fmt, tzoffset):
     _isoparse_date_and_time(dt, date_fmt, time_fmt, tzoffset)
 
-
 DATETIMES = [datetime(2017, 11, 27, 6, 14, 30, 123456)]
-
-
 @pytest.mark.parametrize('dt', tuple(DATETIMES))
 @pytest.mark.parametrize('date_fmt', YMD_FMTS)
 @pytest.mark.parametrize('time_fmt', (x + sep + '%f' for x in HMS_FMTS
@@ -153,7 +130,6 @@ def test_ymd_hms_micro(dt, date_fmt, time_fmt, tzoffset, precision):
 
     _isoparse_date_and_time(dt, date_fmt, time_fmt, tzoffset, precision)
 
-
 @pytest.mark.parametrize('tzoffset', FULL_TZOFFSETS)
 def test_full_tzoffsets(tzoffset):
     dt = datetime(2017, 11, 27, 6, 14, 30, 123456)
@@ -161,7 +137,6 @@ def test_full_tzoffsets(tzoffset):
     time_fmt = '%H:%M:%S.%f'
 
     _isoparse_date_and_time(dt, date_fmt, time_fmt, tzoffset)
-
 
 @pytest.mark.parametrize('dt_str', [
     '2014-04-11T00',
@@ -173,11 +148,10 @@ def test_full_tzoffsets(tzoffset):
     '2014-04-11T00:00:00.000',
     '2014-04-11T24:00:00.000',
     '2014-04-11T00:00:00.000000',
-    '2014-04-11T24:00:00.000000'
-])
+    '2014-04-11T24:00:00.000000']
+                         )
 def test_datetime_midnight(dt_str):
     assert isoparse(dt_str) == datetime(2014, 4, 11, 0, 0, 0, 0)
-
 
 @pytest.mark.parametrize('datestr', [
     '2014-01-01',
@@ -188,13 +162,12 @@ def test_isoparse_sep_none(datestr, sep):
     isostr = datestr + sep + '14:33:09'
     assert isoparse(isostr) == datetime(2014, 1, 1, 14, 33, 9)
 
-
 ##
 # Uncommon date formats
 TIME_ARGS = ('time_args',
              ((None, time(0), None),) + tuple(('%H:%M:%S.%f', _t, _tz)
-                                              for _t, _tz in
-                                              it.product([time(0), time(9, 30), time(14, 47)], TZOFFSETS)))
+                                              for _t, _tz in it.product([time(0), time(9, 30), time(14, 47)],
+                                                                        TZOFFSETS)))
 
 
 @pytest.mark.parametrize('isocal,dt_expected', [
@@ -221,7 +194,6 @@ def test_isoweek_day(isocal, dt_expected):
         dtstr = fmt.format(*isocal)
         assert isoparse(dtstr) == dt_expected
 
-
 @pytest.mark.parametrize('isoord,dt_expected', [
     ((2004, 1), datetime(2004, 1, 1)),
     ((2016, 60), datetime(2016, 2, 29)),
@@ -236,6 +208,7 @@ def test_iso_ordinal(isoord, dt_expected):
         assert isoparse(dtstr) == dt_expected
 
 
+###
 # Acceptance of bytes
 @pytest.mark.parametrize('isostr,dt', [
     (b'2014', datetime(2014, 1, 1)),
@@ -255,6 +228,7 @@ def test_bytes(isostr, dt):
     assert isoparse(isostr) == dt
 
 
+###
 # Invalid ISO strings
 @pytest.mark.parametrize('isostr,exception', [
     ('201', ValueError),  # ISO string too short
@@ -292,16 +266,6 @@ def test_iso_raises(isostr, exception):
         isoparse(isostr)
 
 
-# Test Invalid ISO Str with Seperator
-@pytest.mark.parametrize('isostr,sep,exception', [
-    ('2014-02-04T12:30:15.224', ':', ValueError)  # String contains unknown ISO components
-])
-def test_iso_with_sep_raises(isostr, sep, exception):
-    with pytest.raises(exception):
-        parser = isoparser(sep=sep)
-        parser.isoparse(isostr)
-
-
 @pytest.mark.parametrize('sep_act,valid_sep', [
     ('C', 'T'),
     ('T', 'C')
@@ -321,6 +285,7 @@ def test_iso_raises_failing(isostr, exception):
         isoparse(isostr)
 
 
+###
 # Test ISOParser constructor
 @pytest.mark.parametrize('sep', ['  ', '9', '🍛'])
 def test_isoparser_invalid_sep(sep):
@@ -339,6 +304,7 @@ def test_isoparser_byte_sep():
     assert dt == dt_rt
 
 
+###
 # Test parse_tzstr
 @pytest.mark.parametrize('tzoffset', FULL_TZOFFSETS)
 def test_parse_tzstr(tzoffset):
@@ -371,6 +337,7 @@ def test_parse_tzstr_fails(tzstr, exception):
         isoparser().parse_tzstr(tzstr)
 
 
+###
 # Test parse_isodate
 def __make_date_examples():
     dates_no_day = [
@@ -425,6 +392,7 @@ def test_isodate_raises(isostr, exception):
         isoparser().parse_isodate(isostr)
 
 
+###
 # Test parse_isotime
 def __make_time_examples():
     outputs = []
@@ -483,7 +451,6 @@ def test_isotime(time_val, time_fmt, as_bytes):
     iparser = isoparser()
 
     assert iparser.parse_isotime(tstr) == time_val
-
 
 @pytest.mark.parametrize('isostr,exception', [
     ('3', ValueError),  # ISO string too short
