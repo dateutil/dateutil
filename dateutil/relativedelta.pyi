@@ -10,6 +10,16 @@ from typing import (
 )
 
 
+
+MO: weekday
+TU: weekday
+WE: weekday
+TH: weekday
+FR: weekday
+SA: weekday
+SU: weekday
+
+
 def _sign(x: Union[int, float]) -> int: ...
 
 

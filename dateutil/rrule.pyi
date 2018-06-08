@@ -17,6 +17,23 @@ from typing import (
 )
 
 
+YEARLY: int
+MONTHLY: int
+WEEKLY: int
+DAILY: int
+HOURLY: int
+MINUTELY: int
+SECONDLY: int
+
+MO: weekday
+TU: weekday
+WE: weekday
+TH: weekday
+FR: weekday
+SA: weekday
+SU: weekday
+
+
 def _invalidates_cache(f: Callable) -> Callable: ...
 
 
@@ -72,6 +89,9 @@ class _rrulestr:
         ignoretz: bool = False,
         tzinfos: None = None
     ) -> rrule: ...
+
+
+rrulestr: _rrulestr
 
 
 class rrule:
