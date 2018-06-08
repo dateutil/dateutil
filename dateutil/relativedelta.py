@@ -17,8 +17,12 @@ __all__ = ["relativedelta", "MO", "TU", "WE", "TH", "FR", "SA", "SU"]
 
 class relativedelta(object):
     """
-    The relativedelta type is based on the specification of the excellent
-    work done by M.-A. Lemburg in his
+    The relativedelta type is designed to be applied to an existing datetime and
+    can replace specific components of that datetime, or represents an interval
+    of time.
+
+    It is based on the specification of the excellent work done by M.-A. Lemburg
+    in his
     `mx.DateTime <https://www.egenix.com/products/python/mxBase/mxDateTime/>`_ extension.
     However, notice that this type does *NOT* implement the same algorithm as
     his work. Do *NOT* expect it to behave like mx.DateTime's counterpart.
@@ -45,13 +49,15 @@ class relativedelta(object):
             with the information in the relativedelta.
 
         weekday: 
-            One of the weekday instances (MO, TU, etc). These
-            instances may receive a parameter N, specifying the Nth
-            weekday, which could be positive or negative (like MO(+1)
-            or MO(-2). Not specifying it is the same as specifying
-            +1. You can also use an integer, where 0=MO. Notice that
-            if the calculated date is already Monday, for example,
-            using MO(1) or MO(-1) won't change the day.
+            One of the weekday instances (MO, TU, etc) available in the
+            relativedelta module. These instances may receive a parameter N,
+            specifying the Nth weekday, which could be positive or negative
+            (like MO(+1) or MO(-2)). Not specifying it is the same as specifying
+            +1. You can also use an integer, where 0=MO. This argument is always
+            relative e.g. if the calculated date is already Monday, using MO(1)
+            or MO(-1) won't change the day. To effectively make it absolute, use
+            it in combination with the day argument (e.g. day=1, MO(1) for first
+            Monday of the month).
 
         leapdays:
             Will add given days to the date found, if year is a leap
