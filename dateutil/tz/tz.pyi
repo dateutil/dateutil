@@ -11,10 +11,10 @@ from dateutil.parser._parser import _tzparser
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import rruleset
 from dateutil.test._common import ComparesEqualClass
-from tarfile import ExFileObject
 from typing import (
     Any,
     Dict,
+    IO,
     List,
     Optional,
     Tuple,
@@ -42,9 +42,9 @@ def resolve_imaginary(dt: datetime) -> datetime: ...
 
 
 class _ContextWrapper:
-    def __enter__(self) -> Union[BytesIO, ExFileObject, StringIO]: ...
+    def __enter__(self) -> Union[BytesIO, IO[bytes], StringIO]: ...
     def __exit__(*args, **kwargs) -> None: ...
-    def __init__(self, context: Union[BytesIO, ExFileObject, StringIO]) -> None: ...
+    def __init__(self, context: Union[BytesIO, IO[bytes], StringIO]) -> None: ...
 
 
 class _ttinfo:
@@ -81,7 +81,7 @@ class tzfile:
     def __eq__(self, other: object) -> bool: ...
     def __init__(
         self,
-        fileobj: Optional[Union[BytesIO, ExFileObject, str]],
+        fileobj: Optional[Union[BytesIO, IO[bytes], str]],
         filename: Optional[str] = None
     ) -> None: ...
     def __ne__(self, other: object) -> bool: ...
