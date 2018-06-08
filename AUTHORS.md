@@ -33,6 +33,7 @@ switch, and thus all their contributions are dual-licensed.
 - Cosimo Lupo <cosimo@anthrotype.com> (gh: @anthrotype)
 - Daniel Lepage <dplepage@MASKED>
 - David Lehrian <david@MASKED>
+- Dean Allsopp (gh: @daplantagenet) **D**
 - Dominik Kozaczko <dominik@MASKED>
 - Elliot Hughes <elliot.hughes@gmail.com> (gh: @ElliotJH) **D**
 - Elvis Pranskevichus <el@MASKED>
