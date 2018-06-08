@@ -5,6 +5,10 @@ rrule
 .. automodule:: dateutil.rrule
    :members:
    :undoc-members:
+   
+   .. autoclass:: dateutil.rrule.rrulebase
+      :members:
+      :undoc-members:   
 
 rrule examples
 --------------
