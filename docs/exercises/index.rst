@@ -112,9 +112,128 @@ To solve this exercise, copy-paste this script into a document, change anything 
 
     if __name__ == "__main__":
         test_next_monday_1()
+        print('Success!')
 
 .. raw:: html
 
     </details>
 
+
+Parsing a local tzname
+----------------------
+
+    Three-character time zone abbreviations are *not* unique in that they do not explicitly map to a time zone. A list of time zone abbreviations in use can be found `here <https://www.timeanddate.com/time/zones/>`_. This means that parsing a datetime string such as ``'2018-01-01 12:30:30 CST'`` is ambiguous without context. Using `dateutil.parse <../parse.html>`_ and `dateutil.tz <../tz.html>`_, it is possible to provide a context such that these local names are converted to proper time zones.
+
+Problem 1
+*********
+    Given the context that you will only be parsing dates coming from the continental United States, India and Japan, write a function that parses a datetime string and returns a timezone-aware ``datetime`` with an IANA-style timezone attached.
+
+    Note: For the purposes of the experiment, you may ignore the portions of the United States like Arizona and parts of Indiana that do not observe daylight saving time.
+
+**Test Script**
+
+To solve this exercise, copy-paste this script into a document, change anything between the ``--- YOUR CODE ---`` comment blocks.
+
+.. raw:: html
+
+    <details>
+
+
+.. code-block:: python3
+
+    # --------- YOUR CODE -------------- #
+    from dateutil.parser import parse
+    from dateutil import tz
+
+    def parse_func_us_jp_ind():
+        <<YOUR CODE HERE>>
+
+    # ---------------------------------- #
+
+    from dateutil import tz
+    from datetime import datetime
+
+
+    PARSE_TZ_TEST_DATETIMES = [
+        datetime(2018, 1, 1, 12, 0),
+        datetime(2018, 3, 20, 2, 0),
+        datetime(2018, 5, 12, 3, 30),
+        datetime(2014, 9, 1, 23)
+    ]
+
+    PARSE_TZ_TEST_ZONES = [
+        tz.gettz('America/New_York'),
+        tz.gettz('America/Chicago'),
+        tz.gettz('America/Denver'),
+        tz.gettz('America/Los_Angeles'),
+        tz.gettz('Asia/Kolkata'),
+        tz.gettz('Asia/Tokyo'),
+    ]
+
+    def test_parse():
+        for tzi in PARSE_TZ_TEST_ZONES:
+            for dt in PARSE_TZ_TEST_DATETIMES:
+                dt_exp = dt.replace(tzinfo=tzi)
+                dtstr = dt_exp.strftime('%Y-%m-%d %H:%M:%S %Z')
+
+                dt_act = parse_func_us_jp_ind(dtstr)
+                assert dt_act == dt_exp
+                assert dt_act.tzinfo is dt_exp.tzinfo
+
+    if __name__ == "__main__":
+        test_parse()
+        print('Success!')
+
+.. raw:: html
+
+    </details>
+
+
+Problem 2
+*********
+    Given the context that you will *only* be passed dates from India or Ireland, write a function that correctly parses all *unambiguous* time zone strings to aware datetimes localized to the correct IANA zone, and for *ambiguous* time zone strings default to India.
+
+**Test Script**
+
+To solve this exercise, copy-paste this script into a document, change anything between the ``--- YOUR CODE ---`` comment blocks.
+
+
+.. raw:: html
+
+    <details>
+
+.. code-block:: python3
+
+    # --------- YOUR CODE -------------- #
+    from dateutil.parser import parse
+    from dateutil import tz
+
+    def parse_func_ind_ire():
+        <<YOUR CODE HERE>>
+
+    # ---------------------------------- #
+    ISRAEL = tz.gettz('Asia/Jerusalem')
+    INDIA = tz.gettz('Asia/Kolkata')
+    PARSE_IXT_TEST_CASE = [
+        ('2018-02-03 12:00 IST+02:00', datetime(2018, 2, 3, 12, tzinfo=ISRAEL)),
+        ('2018-06-14 12:00 IDT+03:00', datetime(2018, 6, 14, 12, tzinfo=ISRAEL)),
+        ('2018-06-14 12:00 IST', datetime(2018, 6, 14, 12, tzinfo=INDIA)),
+        ('2018-06-14 12:00 IST+05:30', datetime(2018, 6, 14, 12, tzinfo=INDIA)),
+        ('2018-02-03 12:00 IST', datetime(2018, 2, 3, 12, tzinfo=INDIA)),
+    ]
+
+
+    def test_parse_ixt():
+        for dtstr, dt_exp in PARSE_IXT_TEST_CASE:
+            dt_act = parse_func_ind_ire(dtstr)
+            assert dt_act == dt_exp, (dt_act, dt_exp)
+            assert dt_act.tzinfo is dt_exp.tzinfo, (dt_act, dt_exp)
+
+    if __name__ == "__main__":
+        test_parse_ixt()
+        print('Success!')
+
+.. raw:: html
+
+    </details>
 
