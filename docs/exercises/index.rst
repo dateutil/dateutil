@@ -62,6 +62,56 @@ To solve this exercise, copy-paste this script into a document, change anything 
         test_mlk_day()
         print('Success!')
 
+.. raw:: html
+
+    </details>
+
+
+
+Next Monday meeting
+-------------------
+
+    A team has a meeting at 10 AM every Monday and wants a function that tells them, given a ``datetime.datetime`` object, what is the date and time of the *next* Monday meeting? This is probably best accomplished using a `relativedelta <../relativedelta.html>`_.
+
+**Test Script**
+
+To solve this exercise, copy-paste this script into a document, change anything between the ``--- YOUR CODE ---`` comment blocks.
+
+.. raw:: html
+
+    <details>
+
+
+.. code-block:: python3
+
+    # --------- YOUR CODE -------------- #
+    from dateutil import relativedelta
+
+    def next_monday(dt):
+        <<YOUR CODE HERE>>
+
+    # ---------------------------------- #
+
+    from datetime import datetime
+    from dateutil import tz
+
+    NEXT_MONDAY_CASES = [
+        (datetime(2018, 4, 11, 14, 30, 15, 123456),
+         datetime(2018, 4, 16, 10, 0)),
+        (datetime(2018, 4, 16, 10, 0),
+         datetime(2018, 4, 16, 10, 0)),
+        (datetime(2018, 4, 16, 10, 30),
+         datetime(2018, 4, 23, 10, 0)),
+        (datetime(2018, 4, 14, 9, 30, tzinfo=tz.gettz('America/New_York')),
+         datetime(2018, 4, 16, 10, 0, tzinfo=tz.gettz('America/New_York'))),
+    ]
+
+    def test_next_monday_1():
+        for dt_in, dt_out in NEXT_MONDAY_CASES:
+            assert next_monday(dt_in) == dt_out
+
+    if __name__ == "__main__":
+        test_next_monday_1()
 
 .. raw:: html
 
