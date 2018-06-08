@@ -1729,9 +1729,9 @@ def resolve_imaginary(dt):
         >>> print(tz.resolve_imaginary(datetime.datetime(2017, 3, 12, 2, 30, tzinfo=NYC)))
         2017-03-12 03:30:00-04:00
 
-        >>> KIR = tz.gettz('Pacific/Kiritimati')
-        >>> print(tz.resolve_imaginary(datetime.datetime(1995, 1, 1, 12, 30, tzinfo=KIR)))
-        1995-01-02 12:30:00+14:00
+        >>> APIA = tz.gettz('Pacific/Apia')
+        >>> print(tz.resolve_imaginary(datetime.datetime(2011, 12, 30, 12, tzinfo=APIA)))
+        2011-12-31 12:00:00+14:00
 
     As a note, :func:`datetime.astimezone` is guaranteed to produce a valid,
     existing datetime, so a round-trip to and from UTC is sufficient to get
