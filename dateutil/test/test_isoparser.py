@@ -266,6 +266,15 @@ def test_iso_raises(isostr, exception):
         isoparse(isostr)
 
 
+# Test Invalid ISO Str with Seperator
+@pytest.mark.parametrize('isostr,sep,exception', [
+    ('2014-02-04T12:30:15.224', ':', ValueError)  # String contains unknown ISO components
+])
+def test_iso_with_sep_raises(isostr, sep, exception):
+    with pytest.raises(exception):
+        parser = isoparser(sep=sep)
+        parser.isoparse(isostr)
+
 @pytest.mark.parametrize('sep_act,valid_sep', [
     ('C', 'T'),
     ('T', 'C')
