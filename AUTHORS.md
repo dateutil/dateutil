@@ -70,6 +70,7 @@ switch, and thus all their contributions are dual-licensed.
 - Paul Ganssle <paul@ganssle.io> (gh: @pganssle) **R**
 - Pascal van Kooten <kootenpv@MASKED>
 - Pavel Ponomarev <comrad.awsum@MASKED>
+- Pavlo Andriychenko (gh: @rs2)
 - Peter Bieringer <pb@MASKED>
 - Pierre Gergondet <pierre.gergondet@MASKED> (gh: @gergondet)
 - Quentin Pradet <quentin@MASKED>
