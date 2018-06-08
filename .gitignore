@@ -28,3 +28,6 @@ tzdata*.tar.gz
 .idea
 .cache
 .mypy_cache
+
+# monkeytype call trace database
+monkeytype.sqlite3
