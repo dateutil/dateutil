@@ -7,10 +7,24 @@ from .tz import __doc__
 #: .. versionadded:: 2.7.0
 UTC = tzutc()
 
-__all__ = ["tzutc", "tzoffset", "tzlocal", "tzfile", "tzrange",
-           "tzstr", "tzical", "tzwin", "tzwinlocal", "gettz",
-           "enfold", "datetime_ambiguous", "datetime_exists",
-           "resolve_imaginary", "UTC", "DeprecatedTzFormatWarning"]
+__all__ = [
+    "tzutc",
+    "tzoffset",
+    "tzlocal",
+    "tzfile",
+    "tzrange",
+    "tzstr",
+    "tzical",
+    "tzwin",
+    "tzwinlocal",
+    "gettz",
+    "enfold",
+    "datetime_ambiguous",
+    "datetime_exists",
+    "resolve_imaginary",
+    "UTC",
+    "DeprecatedTzFormatWarning",
+]
 
 
 class DeprecatedTzFormatWarning(Warning):

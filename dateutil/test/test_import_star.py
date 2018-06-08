@@ -5,10 +5,13 @@ As imort * can be only done at module level, it has been added in a separate fil
 import unittest
 
 prev_locals = list(locals())
-from dateutil import *
-new_locals = {name:value for name,value in locals().items()
-              if name not in prev_locals}
-new_locals.pop('prev_locals')
+from dateutil import *  # isort:skip
+
+new_locals = {
+    name: value for name, value in locals().items() if name not in prev_locals
+}
+new_locals.pop("prev_locals")
+
 
 class ImportStarTest(unittest.TestCase):
     """ Test that `from dateutil import *` adds the modules in __all__ locally"""

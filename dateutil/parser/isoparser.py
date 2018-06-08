@@ -7,14 +7,14 @@ ISO-8601 specification.
 
 ..versionadded:: 2.7.0
 """
-from datetime import datetime, timedelta, time, date
 import calendar
-from dateutil import tz
-
+import re
+from datetime import date, datetime, time, timedelta
 from functools import wraps
 
-import re
 import six
+
+from dateutil import tz
 
 __all__ = ["isoparse", "isoparser"]
 
@@ -23,15 +23,15 @@ def _takes_ascii(f):
     @wraps(f)
     def func(self, str_in, *args, **kwargs):
         # If it's a stream, read the whole thing
-        str_in = getattr(str_in, 'read', lambda: str_in)()
+        str_in = getattr(str_in, "read", lambda: str_in)()
 
         # If it's unicode, turn it into bytes, since ISO-8601 only covers ASCII
         if isinstance(str_in, six.text_type):
             # ASCII is the same in UTF-8
             try:
-                str_in = str_in.encode('ascii')
+                str_in = str_in.encode("ascii")
             except UnicodeEncodeError as e:
-                msg = 'ISO-8601 strings should contain only ASCII characters'
+                msg = "ISO-8601 strings should contain only ASCII characters"
                 six.raise_from(ValueError(msg), e)
 
         return f(self, str_in, *args, **kwargs)
@@ -48,11 +48,12 @@ class isoparser(object):
             For strict ISO-8601 adherence, pass ``'T'``.
         """
         if sep is not None:
-            if (len(sep) != 1 or ord(sep) >= 128 or sep in '0123456789'):
-                raise ValueError('Separator must be a single, non-numeric ' +
-                                 'ASCII character')
+            if len(sep) != 1 or ord(sep) >= 128 or sep in "0123456789":
+                raise ValueError(
+                    "Separator must be a single, non-numeric " + "ASCII character"
+                )
 
-            sep = sep.encode('ascii')
+            sep = sep.encode("ascii")
 
         self._sep = sep
 
@@ -134,10 +135,10 @@ class isoparser(object):
         components, pos = self._parse_isodate(dt_str)
 
         if len(dt_str) > pos:
-            if self._sep is None or dt_str[pos:pos + 1] == self._sep:
-                components += self._parse_isotime(dt_str[pos + 1:])
+            if self._sep is None or dt_str[pos : pos + 1] == self._sep:
+                components += self._parse_isotime(dt_str[pos + 1 :])
             else:
-                raise ValueError('String contains unknown ISO components')
+                raise ValueError("String contains unknown ISO components")
 
         return datetime(*components)
 
@@ -154,8 +155,9 @@ class isoparser(object):
         """
         components, pos = self._parse_isodate(datestr)
         if pos < len(datestr):
-            raise ValueError('String contains unknown ISO ' +
-                             'components: {}'.format(datestr))
+            raise ValueError(
+                "String contains unknown ISO " + "components: {}".format(datestr)
+            )
         return date(*components)
 
     @_takes_ascii
@@ -192,10 +194,10 @@ class isoparser(object):
         return self._parse_tzstr(tzstr, zero_as_utc=zero_as_utc)
 
     # Constants
-    _MICROSECOND_END_REGEX = re.compile(b'[-+Z]+')
-    _DATE_SEP = b'-'
-    _TIME_SEP = b':'
-    _MICRO_SEPS = b'.,'
+    _MICROSECOND_END_REGEX = re.compile(b"[-+Z]+")
+    _DATE_SEP = b"-"
+    _TIME_SEP = b":"
+    _MICRO_SEPS = b".,"
 
     def _parse_isodate(self, dt_str):
         try:
@@ -208,7 +210,7 @@ class isoparser(object):
         components = [1, 1, 1]
 
         if len_str < 4:
-            raise ValueError('ISO string too short')
+            raise ValueError("ISO string too short")
 
         # Year
         components[0] = int(dt_str[0:4])
@@ -216,72 +218,73 @@ class isoparser(object):
         if pos >= len_str:
             return components, pos
 
-        has_sep = dt_str[pos:pos + 1] == self._DATE_SEP
+        has_sep = dt_str[pos : pos + 1] == self._DATE_SEP
         if has_sep:
             pos += 1
 
         # Month
         if len_str - pos < 2:
-            raise ValueError('Invalid common month')
+            raise ValueError("Invalid common month")
 
-        components[1] = int(dt_str[pos:pos + 2])
+        components[1] = int(dt_str[pos : pos + 2])
         pos += 2
 
         if pos >= len_str:
             if has_sep:
                 return components, pos
             else:
-                raise ValueError('Invalid ISO format')
+                raise ValueError("Invalid ISO format")
 
         if has_sep:
-            if dt_str[pos:pos + 1] != self._DATE_SEP:
-                raise ValueError('Invalid separator in ISO string')
+            if dt_str[pos : pos + 1] != self._DATE_SEP:
+                raise ValueError("Invalid separator in ISO string")
             pos += 1
 
         # Day
         if len_str - pos < 2:
-            raise ValueError('Invalid common day')
-        components[2] = int(dt_str[pos:pos + 2])
+            raise ValueError("Invalid common day")
+        components[2] = int(dt_str[pos : pos + 2])
         return components, pos + 2
 
     def _parse_isodate_uncommon(self, dt_str):
         if len(dt_str) < 4:
-            raise ValueError('ISO string too short')
+            raise ValueError("ISO string too short")
 
         # All ISO formats start with the year
         year = int(dt_str[0:4])
 
         has_sep = dt_str[4:5] == self._DATE_SEP
 
-        pos = 4 + has_sep       # Skip '-' if it's there
-        if dt_str[pos:pos + 1] == b'W':
+        pos = 4 + has_sep  # Skip '-' if it's there
+        if dt_str[pos : pos + 1] == b"W":
             # YYYY-?Www-?D?
             pos += 1
-            weekno = int(dt_str[pos:pos + 2])
+            weekno = int(dt_str[pos : pos + 2])
             pos += 2
 
             dayno = 1
             if len(dt_str) > pos:
-                if (dt_str[pos:pos + 1] == self._DATE_SEP) != has_sep:
-                    raise ValueError('Inconsistent use of dash separator')
+                if (dt_str[pos : pos + 1] == self._DATE_SEP) != has_sep:
+                    raise ValueError("Inconsistent use of dash separator")
 
                 pos += has_sep
 
-                dayno = int(dt_str[pos:pos + 1])
+                dayno = int(dt_str[pos : pos + 1])
                 pos += 1
 
             base_date = self._calculate_weekdate(year, weekno, dayno)
         else:
             # YYYYDDD or YYYY-DDD
             if len(dt_str) - pos < 3:
-                raise ValueError('Invalid ordinal day')
+                raise ValueError("Invalid ordinal day")
 
-            ordinal_day = int(dt_str[pos:pos + 3])
+            ordinal_day = int(dt_str[pos : pos + 3])
             pos += 3
 
             if ordinal_day < 1 or ordinal_day > (365 + calendar.isleap(year)):
-                raise ValueError('Invalid ordinal day' +
-                                 ' {} for year {}'.format(ordinal_day, year))
+                raise ValueError(
+                    "Invalid ordinal day" + " {} for year {}".format(ordinal_day, year)
+                )
 
             base_date = date(year, 1, 1) + timedelta(days=ordinal_day - 1)
 
@@ -308,13 +311,13 @@ class isoparser(object):
             Returns a :class:`datetime.date`
         """
         if not 0 < week < 54:
-            raise ValueError('Invalid week: {}'.format(week))
+            raise ValueError("Invalid week: {}".format(week))
 
-        if not 0 < day < 8:     # Range is 1-7
-            raise ValueError('Invalid weekday: {}'.format(day))
+        if not 0 < day < 8:  # Range is 1-7
+            raise ValueError("Invalid weekday: {}".format(day))
 
         # Get week 1 for the specific year:
-        jan_4 = date(year, 1, 4)   # Week 1 always has January 4th in it
+        jan_4 = date(year, 1, 4)  # Week 1 always has January 4th in it
         week_1 = jan_4 - timedelta(days=jan_4.isocalendar()[2] - 1)
 
         # Now add the specific number of weeks and days to get what we want
@@ -328,14 +331,14 @@ class isoparser(object):
         comp = -1
 
         if len(timestr) < 2:
-            raise ValueError('ISO time too short')
+            raise ValueError("ISO time too short")
 
         has_sep = len_str >= 3 and timestr[2:3] == self._TIME_SEP
 
         while pos < len_str and comp < 5:
             comp += 1
 
-            if timestr[pos:pos + 1] in b'-+Z':
+            if timestr[pos : pos + 1] in b"-+Z":
                 # Detect time zone boundary
                 components[-1] = self._parse_tzstr(timestr[pos:])
                 pos = len_str
@@ -343,63 +346,65 @@ class isoparser(object):
 
             if comp < 3:
                 # Hour, minute, second
-                components[comp] = int(timestr[pos:pos + 2])
+                components[comp] = int(timestr[pos : pos + 2])
                 pos += 2
-                if (has_sep and pos < len_str and
-                        timestr[pos:pos + 1] == self._TIME_SEP):
+                if (
+                    has_sep
+                    and pos < len_str
+                    and timestr[pos : pos + 1] == self._TIME_SEP
+                ):
                     pos += 1
 
             if comp == 3:
                 # Microsecond
-                if timestr[pos:pos + 1] not in self._MICRO_SEPS:
+                if timestr[pos : pos + 1] not in self._MICRO_SEPS:
                     continue
 
                 pos += 1
-                us_str = self._MICROSECOND_END_REGEX.split(timestr[pos:pos + 6],
-                                                           1)[0]
+                us_str = self._MICROSECOND_END_REGEX.split(timestr[pos : pos + 6], 1)[0]
 
-                components[comp] = int(us_str) * 10**(6 - len(us_str))
+                components[comp] = int(us_str) * 10 ** (6 - len(us_str))
                 pos += len(us_str)
 
         if pos < len_str:
-            raise ValueError('Unused components in ISO string')
+            raise ValueError("Unused components in ISO string")
 
         if components[0] == 24:
             # Standard supports 00:00 and 24:00 as representations of midnight
             if any(component != 0 for component in components[1:4]):
-                raise ValueError('Hour may only be 24 at 24:00:00.000')
+                raise ValueError("Hour may only be 24 at 24:00:00.000")
             components[0] = 0
 
         return components
 
     def _parse_tzstr(self, tzstr, zero_as_utc=True):
-        if tzstr == b'Z':
+        if tzstr == b"Z":
             return tz.tzutc()
 
         if len(tzstr) not in {3, 5, 6}:
-            raise ValueError('Time zone offset must be 1, 3, 5 or 6 characters')
+            raise ValueError("Time zone offset must be 1, 3, 5 or 6 characters")
 
-        if tzstr[0:1] == b'-':
+        if tzstr[0:1] == b"-":
             mult = -1
-        elif tzstr[0:1] == b'+':
+        elif tzstr[0:1] == b"+":
             mult = 1
         else:
-            raise ValueError('Time zone offset requires sign')
+            raise ValueError("Time zone offset requires sign")
 
         hours = int(tzstr[1:3])
         if len(tzstr) == 3:
             minutes = 0
         else:
-            minutes = int(tzstr[(4 if tzstr[3:4] == self._TIME_SEP else 3):])
+            minutes = int(tzstr[(4 if tzstr[3:4] == self._TIME_SEP else 3) :])
 
         if zero_as_utc and hours == 0 and minutes == 0:
             return tz.tzutc()
         else:
             if minutes > 59:
-                raise ValueError('Invalid minutes in time zone offset')
+                raise ValueError("Invalid minutes in time zone offset")
 
             if hours > 23:
-                raise ValueError('Invalid hours in time zone offset')
+                raise ValueError("Invalid hours in time zone offset")
 
             return tz.tzoffset(None, mult * (hours * 60 + minutes) * 60)
 

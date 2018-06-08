@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-from datetime import timedelta, datetime
 
 import unittest
-
-from dateutil import tz
-from dateutil import utils
-from dateutil.utils import within_delta
+from datetime import datetime, timedelta
 
 from freezegun import freeze_time
+
+from dateutil import tz, utils
+from dateutil.utils import within_delta
 
 UTC = tz.tzutc()
 NYC = tz.gettz("America/New_York")
@@ -21,23 +20,19 @@ class UtilsTest(unittest.TestCase):
 
     @freeze_time(datetime(2014, 12, 15, 12), tz_offset=5)
     def testTodayTzInfo(self):
-        self.assertEqual(utils.today(NYC),
-                         datetime(2014, 12, 15, 0, 0, 0, tzinfo=NYC))
+        self.assertEqual(utils.today(NYC), datetime(2014, 12, 15, 0, 0, 0, tzinfo=NYC))
 
     @freeze_time(datetime(2014, 12, 15, 23), tz_offset=5)
     def testTodayTzInfoDifferentDay(self):
-        self.assertEqual(utils.today(UTC),
-                         datetime(2014, 12, 16, 0, 0, 0, tzinfo=UTC))
+        self.assertEqual(utils.today(UTC), datetime(2014, 12, 16, 0, 0, 0, tzinfo=UTC))
 
     def testDefaultTZInfoNaive(self):
         dt = datetime(2014, 9, 14, 9, 30)
-        self.assertIs(utils.default_tzinfo(dt, NYC).tzinfo,
-                      NYC)
+        self.assertIs(utils.default_tzinfo(dt, NYC).tzinfo, NYC)
 
     def testDefaultTZInfoAware(self):
         dt = datetime(2014, 9, 14, 9, 30, tzinfo=UTC)
-        self.assertIs(utils.default_tzinfo(dt, NYC).tzinfo,
-                      UTC)
+        self.assertIs(utils.default_tzinfo(dt, NYC).tzinfo, UTC)
 
     def testWithinDelta(self):
         d1 = datetime(2016, 1, 1, 12, 14, 1, 9)

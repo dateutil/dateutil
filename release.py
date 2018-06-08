@@ -10,6 +10,7 @@ import sys
 
 import click
 
+
 @click.group()
 def cli():
     pass
