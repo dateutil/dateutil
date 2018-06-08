@@ -1,0 +1,1 @@
+Parametrized many parser tests. Fixed by @jpurviance (gh pr #727)
