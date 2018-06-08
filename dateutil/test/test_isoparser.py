@@ -336,7 +336,6 @@ def test_parse_tzstr_fails(tzstr, exception):
     with pytest.raises(exception):
         isoparser().parse_tzstr(tzstr)
 
-
 ###
 # Test parse_isodate
 def __make_date_examples():
