@@ -1,6 +1,6 @@
-from datetime import timedelta
-import time
+import os
 import weakref
+from datetime import timedelta
 
 
 class _TzSingleton(type):
@@ -17,23 +17,22 @@ class _TzSingleton(type):
 class _TzChangeSingleton(type):
 
     """
-    A :class: `tzlocalsingleton`
-               Singleton that guards against TZ changes
+    A :class: `_Tzlocalsingleton`
+               Singleton metaclass to return same instance
+               if 'TZ' env variable is unchanged
     """
 
     def __init__(cls, *args, **kwargs):
         cls.__instance = None
-        cls.__tz = time.tzname
+        cls.__tz = os.environ.get('TZ')
         super(_TzChangeSingleton, cls).__init__(*args, **kwargs)
 
     def __call__(cls):
-        current_tz = time.tzname
+        current_tz = os.environ.get('TZ')
         if cls.__instance is None or cls.__tz != current_tz:
             cls.__tz = current_tz
             cls.__instance = super(_TzChangeSingleton, cls).__call__()
-            return cls.__instance
-        elif cls.__tz == current_tz:
-            return cls.__instance
+        return cls.__instance
 
 
 class _TzFactory(type):

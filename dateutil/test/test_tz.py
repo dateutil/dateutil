@@ -822,6 +822,14 @@ class testSingleton(unittest.TestCase):
 
         self.assertNotEqual(id(tz3), id(tz4))
 
+        with TZEnvContext('EST5EDT'):
+            tz5 = tz.tzlocal()
+
+        with TZEnvContext('EST6EDT'):
+            tz6 = tz.tzlocal()
+
+        self.assertNotEqual(id(tz5), id(tz6))
+
 
 @pytest.mark.parametrize('args,kwargs', [
     (('EST', -18000), {}),
