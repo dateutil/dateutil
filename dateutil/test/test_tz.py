@@ -803,10 +803,15 @@ class TzLocalTest(unittest.TestCase):
 
         self.assertEqual(repr(tzl), 'tzlocal()')
 
-    def testSingleton(self):
+@pytest.mark.tzlocal
+@unittest.skipIf(IS_WIN, "requires Unix")
+@unittest.skipUnless(TZEnvContext.tz_change_allowed(),
+                     TZEnvContext.tz_change_disallowed_message())
+class testSingleton(unittest.TestCase):
+
+    def testTZSingleTone(self):
         tz1 = tz.tzlocal()
         tz2 = tz.tzlocal()
-
         self.assertEqual(id(tz1), id(tz2))
 
         with TZEnvContext('Australia/Sydney'):
