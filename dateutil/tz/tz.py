@@ -22,7 +22,7 @@ from ._common import tzname_in_python2, _tzinfo
 from ._common import tzrangebase, enfold
 from ._common import _validate_fromutc_inputs
 
-from ._factories import _TzSingleton, _TzOffsetFactory
+from ._factories import _TzSingleton, _TzOffsetFactory, _TzChangeSingleton
 from ._factories import _TzStrFactory
 try:
     from .win import tzwin, tzwinlocal
@@ -187,6 +187,7 @@ class tzoffset(datetime.tzinfo):
     __reduce__ = object.__reduce__
 
 
+@six.add_metaclass(_TzChangeSingleton)
 class tzlocal(_tzinfo):
     """
     A :class:`tzinfo` subclass built around the ``time`` timezone functions.

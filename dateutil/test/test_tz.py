@@ -803,6 +803,20 @@ class TzLocalTest(unittest.TestCase):
 
         self.assertEqual(repr(tzl), 'tzlocal()')
 
+    def testSingleton(self):
+        tz1 = tz.tzlocal()
+        tz2 = tz.tzlocal()
+
+        self.assertEqual(id(tz1), id(tz2))
+
+        with TZEnvContext('Australia/Sydney'):
+            tz3 = tz.tzlocal()
+
+        with TZEnvContext('America/New_York'):
+            tz4 = tz.tzlocal()
+
+        self.assertNotEqual(id(tz3), id(tz4))
+
 
 @pytest.mark.parametrize('args,kwargs', [
     (('EST', -18000), {}),
