@@ -68,6 +68,7 @@ switch, and thus all their contributions are dual-licensed.
 - Nicholas Herrriot <Nicholas.Herriot@gmail.com> **D**
 - Nick Smith <nick.smith@MASKED>
 - Orson Adams <orson.network@MASKED> (gh: @parsethis)
+- Paul Dickson (gh @prdickson) **D**
 - Paul Ganssle <paul@ganssle.io> (gh: @pganssle) **R**
 - Pascal van Kooten <kootenpv@MASKED>
 - Pavel Ponomarev <comrad.awsum@MASKED>
