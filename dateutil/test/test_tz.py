@@ -1066,11 +1066,13 @@ class GettzTest(unittest.TestCase, TzFoldMixin):
 
         assert NYC1 is NYC2
 
-    def testGettzCacheTzLocal(self):
-        local1 = tz.gettz()
-        local2 = tz.gettz()
 
-        assert local1 is not local2
+@mark_tzlocal_nix
+def test_Gettz_CacheTzLocal():
+    local1 = tz.gettz()
+    local2 = tz.gettz()
+
+    assert local1 is not local2
 
 
 @pytest.mark.gettz
