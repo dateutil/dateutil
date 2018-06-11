@@ -473,8 +473,10 @@ def test_isotime(time_val, time_fmt, as_bytes):
     ('14:30:15+', ValueError),                  # Time zone too short
     ('14:30:15+1234567', ValueError),           # Time zone invalid
     ('14:59:59+25:00', ValueError),             # Invalid tz hours
+    ('14:59:59+12:-3', ValueError),             # Invalid tz minutes
     ('14:59:59+12:62', ValueError),             # Invalid tz minutes
     ('14:59:59+12:59:62', ValueError),          # Invalid tz seconds
+    ('14:59:59+12:59:-2', ValueError),          # Invalid tz seconds
     ('14:59:30_344583', ValueError),            # Invalid microsecond separator
 ])
 def test_isotime_raises(isostr, exception):

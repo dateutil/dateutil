@@ -411,11 +411,10 @@ class isoparser(object):
         if zero_as_utc and hours == 0 and minutes == 0 and seconds == 0:
             return tz.tzutc()
         else:
-
-            if seconds > 59:
+            if not 0 <= seconds < 60:
                 raise ValueError('Invalid seconds in time zone offset')
 
-            if minutes > 59:
+            if not 0 <= minutes < 60:
                 raise ValueError('Invalid minutes in time zone offset')
 
             if hours > 23:
