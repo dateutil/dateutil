@@ -416,7 +416,7 @@ class tzfile(_tzinfo):
 
         >>> NYC = gettz('America/New_York')
         >>> NYC
-        tzfile('/usr/share/zoneinfo/America/New_York')
+        tzfile(u'...America/New_York')
 
         >>> print(datetime(2016, 1, 3, tzinfo=NYC))     # EST
         2016-01-03 00:00:00-05:00
