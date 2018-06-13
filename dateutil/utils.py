@@ -7,11 +7,15 @@ datetimes.
 """
 from __future__ import unicode_literals
 
-from datetime import datetime, time, tzinfo, timedelta
-from typing import Union
+from datetime import datetime, time
 
 
-def today(tzinfo=None):  # type: (Union[tzinfo, None]) -> datetime
+if False:
+    from datetime import tzinfo, timedelta
+    from typing import Optional
+
+
+def today(tzinfo=None):  # type: (Optional[tzinfo]) -> datetime
     """
     Returns a :py:class:`datetime` representing the current day at midnight
 
