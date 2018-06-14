@@ -1,5 +1,6 @@
 from datetime import timedelta
 import weakref
+from collections import OrderedDict
 
 class _TzSingleton(type):
     def __init__(cls, *args, **kwargs):
@@ -20,6 +21,7 @@ class _TzFactory(type):
 class _TzOffsetFactory(_TzFactory):
     def __init__(cls, *args, **kwargs):
         cls.__instances = weakref.WeakValueDictionary()
+        cls.__strong_cache = OrderedDict()
 
     def __call__(cls, name, offset):
         if isinstance(offset, timedelta):
@@ -31,12 +33,19 @@ class _TzOffsetFactory(_TzFactory):
         if instance is None:
             instance = cls.__instances.setdefault(key,
                                                   cls.instance(name, offset))
+
+        cls.__strong_cache[key] = cls.__strong_cache.pop(key, instance)
+
+        if len(cls.__strong_cache) == 9:  #only to hold 8 items
+            cls.__strong_cache.popitem(last=False)
+
         return instance
 
 
 class _TzStrFactory(_TzFactory):
     def __init__(cls, *args, **kwargs):
         cls.__instances = weakref.WeakValueDictionary()
+        cls.__strong_cache = OrderedDict()
 
     def __call__(cls, s, posix_offset=False):
         key = (s, posix_offset)
@@ -45,5 +54,11 @@ class _TzStrFactory(_TzFactory):
         if instance is None:
             instance = cls.__instances.setdefault(key,
                 cls.instance(s, posix_offset))
+
+        cls.__strong_cache[key] = cls.__strong_cache.pop(key, instance)
+
+        if len(cls.__strong_cache) == 9:  #only to hold 8 items
+            cls.__strong_cache.popitem(last=False)
+
         return instance
 
