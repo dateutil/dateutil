@@ -1,0 +1,1 @@
+Added support for sub-minute offsets in Python 3.6+. Fixed by @cssherry (gh issue #582, pr #763)
