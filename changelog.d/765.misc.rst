@@ -1,0 +1,2 @@
+Make TimeZone objects singletons. Reported by @pganssle (gh issue #668). Partially Fixed by
+@alimcmaster1 (gh pr #765)

@@ -824,6 +824,33 @@ class TzLocalTest(unittest.TestCase):
 
         self.assertEqual(repr(tzl), 'tzlocal()')
 
+@pytest.mark.tzlocal
+@unittest.skipIf(IS_WIN, "requires Unix")
+@unittest.skipUnless(TZEnvContext.tz_change_allowed(),
+                     TZEnvContext.tz_change_disallowed_message())
+class testSingleton(unittest.TestCase):
+
+    def testTZSingleTone(self):
+        tz1 = tz.tzlocal()
+        tz2 = tz.tzlocal()
+        self.assertEqual(id(tz1), id(tz2))
+
+        with TZEnvContext('Australia/Sydney'):
+            tz3 = tz.tzlocal()
+
+        with TZEnvContext('America/New_York'):
+            tz4 = tz.tzlocal()
+
+        self.assertNotEqual(id(tz3), id(tz4))
+
+        with TZEnvContext('EST5EDT'):
+            tz5 = tz.tzlocal()
+
+        with TZEnvContext('EST6EDT'):
+            tz6 = tz.tzlocal()
+
+        self.assertNotEqual(id(tz5), id(tz6))
+
 
 @pytest.mark.parametrize('args,kwargs', [
     (('EST', -18000), {}),
@@ -1068,11 +1095,13 @@ class GettzTest(unittest.TestCase, TzFoldMixin):
 
         assert NYC1 is NYC2
 
-    def testGettzCacheTzLocal(self):
-        local1 = tz.gettz()
-        local2 = tz.gettz()
 
-        assert local1 is not local2
+@mark_tzlocal_nix
+def test_Gettz_CacheTzLocal():
+    local1 = tz.gettz()
+    local2 = tz.gettz()
+
+    assert local1 is not local2
 
 
 @pytest.mark.gettz

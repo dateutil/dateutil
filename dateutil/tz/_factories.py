@@ -1,5 +1,7 @@
-from datetime import timedelta
+import os
 import weakref
+from datetime import timedelta
+
 
 class _TzSingleton(type):
     def __init__(cls, *args, **kwargs):
@@ -10,6 +12,28 @@ class _TzSingleton(type):
         if cls.__instance is None:
             cls.__instance = super(_TzSingleton, cls).__call__()
         return cls.__instance
+
+
+class _TzChangeSingleton(type):
+
+    """
+    A :class: `_Tzlocalsingleton`
+               Singleton metaclass to return same instance
+               if 'TZ' env variable is unchanged
+    """
+
+    def __init__(cls, *args, **kwargs):
+        cls.__instance = None
+        cls.__tz = os.environ.get('TZ')
+        super(_TzChangeSingleton, cls).__init__(*args, **kwargs)
+
+    def __call__(cls):
+        current_tz = os.environ.get('TZ')
+        if cls.__instance is None or cls.__tz != current_tz:
+            cls.__tz = current_tz
+            cls.__instance = super(_TzChangeSingleton, cls).__call__()
+        return cls.__instance
+
 
 class _TzFactory(type):
     def instance(cls, *args, **kwargs):
@@ -46,4 +70,3 @@ class _TzStrFactory(_TzFactory):
             instance = cls.__instances.setdefault(key,
                 cls.instance(s, posix_offset))
         return instance
-
