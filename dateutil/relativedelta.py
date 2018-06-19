@@ -276,7 +276,7 @@ class relativedelta(object):
         values for the relative attributes.
 
         >>> relativedelta(days=1.5, hours=2).normalized()
-        relativedelta(days=1, hours=14)
+        relativedelta(days=+1, hours=+14)
 
         :return:
             Returns a :class:`dateutil.relativedelta.relativedelta` object.
