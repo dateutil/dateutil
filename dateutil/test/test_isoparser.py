@@ -55,7 +55,7 @@ def test_year_only(dt):
 DATES += [datetime(2000, 2, 1), datetime(2017, 4, 1)]
 @pytest.mark.parametrize('dt', tuple(DATES))
 def test_year_month(dt):
-    fmt   = '%Y-%m'
+    fmt = '%Y-%m'
     dtstr = dt.strftime(fmt)
 
     assert isoparse(dtstr) == dt
@@ -126,7 +126,7 @@ DATETIMES = [datetime(2017, 11, 27, 6, 14, 30, 123456)]
 @pytest.mark.parametrize('precision', list(range(3, 7)))
 def test_ymd_hms_micro(dt, date_fmt, time_fmt, tzoffset, precision):
     # Truncate the microseconds to the desired precision for the representation
-    dt = dt.replace(microsecond=int(round(dt.microsecond, precision-6)))
+    dt = dt.replace(microsecond=int(round(dt.microsecond, precision - 6)))
 
     _isoparse_date_and_time(dt, date_fmt, time_fmt, tzoffset, precision)
 
@@ -165,14 +165,15 @@ def test_isoparse_sep_none(datestr, sep):
 ##
 # Uncommon date formats
 TIME_ARGS = ('time_args',
-    ((None, time(0), None), ) + tuple(('%H:%M:%S.%f', _t, _tz)
-        for _t, _tz in it.product([time(0), time(9, 30), time(14, 47)],
-                                  TZOFFSETS)))
+             ((None, time(0), None),) + tuple(('%H:%M:%S.%f', _t, _tz)
+                                              for _t, _tz in it.product([time(0), time(9, 30), time(14, 47)],
+                                                                        TZOFFSETS)))
 
-@pytest.mark.parametrize('isocal,dt_expected',[
+
+@pytest.mark.parametrize('isocal,dt_expected', [
     ((2017, 10), datetime(2017, 3, 6)),
-    ((2020, 1), datetime(2019, 12, 30)),    # ISO year != Cal year
-    ((2004, 53), datetime(2004, 12, 27)),   # Only half the week is in 2014
+    ((2020, 1), datetime(2019, 12, 30)),  # ISO year != Cal year
+    ((2004, 53), datetime(2004, 12, 27)),  # Only half the week is in 2014
 ])
 def test_isoweek(isocal, dt_expected):
     # TODO: Figure out how to parametrize this on formats, too
@@ -180,11 +181,12 @@ def test_isoweek(isocal, dt_expected):
         dtstr = fmt.format(*isocal)
         assert isoparse(dtstr) == dt_expected
 
-@pytest.mark.parametrize('isocal,dt_expected',[
+
+@pytest.mark.parametrize('isocal,dt_expected', [
     ((2016, 13, 7), datetime(2016, 4, 3)),
-    ((2004, 53, 7), datetime(2005, 1, 2)),      # ISO year != Cal year
-    ((2009, 1, 2), datetime(2008, 12, 30)),     # ISO year < Cal year
-    ((2009, 53, 6), datetime(2010, 1, 2))       # ISO year > Cal year
+    ((2004, 53, 7), datetime(2005, 1, 2)),  # ISO year != Cal year
+    ((2009, 1, 2), datetime(2008, 12, 30)),  # ISO year < Cal year
+    ((2009, 53, 6), datetime(2010, 1, 2))  # ISO year > Cal year
 ])
 def test_isoweek_day(isocal, dt_expected):
     # TODO: Figure out how to parametrize this on formats, too
@@ -220,8 +222,8 @@ def test_iso_ordinal(isoord, dt_expected):
     (b'2014-02-04T12:30:15.224Z', datetime(2014, 2, 4, 12, 30, 15, 224000,
                                            tz.tzutc())),
     (b'2014-02-04T12:30:15.224+05:00',
-        datetime(2014, 2, 4, 12, 30, 15, 224000,
-                 tzinfo=tz.tzoffset(None, timedelta(hours=5))))])
+     datetime(2014, 2, 4, 12, 30, 15, 224000,
+              tzinfo=tz.tzoffset(None, timedelta(hours=5))))])
 def test_bytes(isostr, dt):
     assert isoparse(isostr) == dt
 
@@ -229,40 +231,49 @@ def test_bytes(isostr, dt):
 ###
 # Invalid ISO strings
 @pytest.mark.parametrize('isostr,exception', [
-    ('201', ValueError),                        # ISO string too short
-    ('2012-0425', ValueError),                  # Inconsistent date separators
-    ('201204-25', ValueError),                  # Inconsistent date separators
-    ('20120425T0120:00', ValueError),           # Inconsistent time separators
-    ('20120425T012500-334', ValueError),        # Wrong microsecond separator
-    ('2001-1', ValueError),                     # YYYY-M not valid
-    ('2012-04-9', ValueError),                  # YYYY-MM-D not valid
-    ('201204', ValueError),                     # YYYYMM not valid
-    ('20120411T03:30+', ValueError),            # Time zone too short
-    ('20120411T03:30+1234567', ValueError),     # Time zone too long
-    ('20120411T03:30-25:40', ValueError),       # Time zone invalid
-    ('2012-1a', ValueError),                    # Invalid month
-    ('20120411T03:30+00:60', ValueError),       # Time zone invalid minutes
-    ('20120411T03:30+00:61', ValueError),       # Time zone invalid minutes
-    ('20120411T033030.123456012:00',            # No sign in time zone
-        ValueError),
-    ('2012-W00', ValueError),                   # Invalid ISO week
-    ('2012-W55', ValueError),                   # Invalid ISO week
-    ('2012-W01-0', ValueError),                 # Invalid ISO week day
-    ('2012-W01-8', ValueError),                 # Invalid ISO week day
-    ('2013-000', ValueError),                   # Invalid ordinal day
-    ('2013-366', ValueError),                   # Invalid ordinal day
-    ('2013366', ValueError),                    # Invalid ordinal day
-    ('2014-03-12Т12:30:14', ValueError),        # Cyrillic T
-    ('2014-04-21T24:00:01', ValueError),        # Invalid use of 24 for midnight
-    ('2014_W01-1', ValueError),                 # Invalid separator
-    ('2014W01-1', ValueError),                  # Inconsistent use of dashes
-    ('2014-W011', ValueError),                  # Inconsistent use of dashes
+    ('201', ValueError),  # ISO string too short
+    ('2012-0425', ValueError),  # Inconsistent date separators
+    ('201204-25', ValueError),  # Inconsistent date separators
+    ('20120425T0120:00', ValueError),  # Inconsistent time separators
+    ('20120425T012500-334', ValueError),  # Wrong microsecond separator
+    ('2001-1', ValueError),  # YYYY-M not valid
+    ('2012-04-9', ValueError),  # YYYY-MM-D not valid
+    ('201204', ValueError),  # YYYYMM not valid
+    ('20120411T03:30+', ValueError),  # Time zone too short
+    ('20120411T03:30+1234567', ValueError),  # Time zone too long
+    ('20120411T03:30-25:40', ValueError),  # Time zone invalid
+    ('2012-1a', ValueError),  # Invalid month
+    ('20120411T03:30+00:60', ValueError),  # Time zone invalid minutes
+    ('20120411T03:30+00:61', ValueError),  # Time zone invalid minutes
+    ('20120411T033030.123456012:00',  # No sign in time zone
+     ValueError),
+    ('2012-W00', ValueError),  # Invalid ISO week
+    ('2012-W55', ValueError),  # Invalid ISO week
+    ('2012-W01-0', ValueError),  # Invalid ISO week day
+    ('2012-W01-8', ValueError),  # Invalid ISO week day
+    ('2013-000', ValueError),  # Invalid ordinal day
+    ('2013-366', ValueError),  # Invalid ordinal day
+    ('2013366', ValueError),  # Invalid ordinal day
+    ('2014-03-12Т12:30:14', ValueError),  # Cyrillic T
+    ('2014-04-21T24:00:01', ValueError),  # Invalid use of 24 for midnight
+    ('2014_W01-1', ValueError),  # Invalid separator
+    ('2014W01-1', ValueError),  # Inconsistent use of dashes
+    ('2014-W011', ValueError),  # Inconsistent use of dashes
 
 ])
 def test_iso_raises(isostr, exception):
     with pytest.raises(exception):
         isoparse(isostr)
 
+
+# Test Invalid ISO Str with Seperator
+@pytest.mark.parametrize('isostr,sep,exception', [
+    ('2014-02-04T12:30:15.224', ':', ValueError)  # String contains unknown ISO components
+])
+def test_iso_with_sep_raises(isostr, sep, exception):
+    with pytest.raises(exception):
+        parser = isoparser(sep=sep)
+        parser.isoparse(isostr)
 
 @pytest.mark.parametrize('sep_act,valid_sep', [
     ('C', 'T'),
@@ -274,7 +285,7 @@ def test_iso_raises_sep(sep_act, valid_sep):
 
 @pytest.mark.xfail()
 @pytest.mark.parametrize('isostr,exception', [
-    ('20120425T01:2000', ValueError),           # Inconsistent time separators
+    ('20120425T01:2000', ValueError),  # Inconsistent time separators
 ])
 def test_iso_raises_failing(isostr, exception):
     # These are test cases where the current implementation is too lenient
@@ -324,11 +335,11 @@ def test_parse_tzstr_zero_as_utc(tzstr, zero_as_utc):
 
 
 @pytest.mark.parametrize('tzstr,exception', [
-    ('00:00', ValueError),     # No sign
-    ('05:00', ValueError),     # No sign
-    ('_00:00', ValueError),    # Invalid sign
-    ('+25:00', ValueError),    # Offset too large
-    ('00:0000', ValueError),   # String too long
+    ('00:00', ValueError),  # No sign
+    ('05:00', ValueError),  # No sign
+    ('_00:00', ValueError),  # Invalid sign
+    ('+25:00', ValueError),  # Offset too large
+    ('00:0000', ValueError),  # String too long
 ])
 def test_parse_tzstr_fails(tzstr, exception):
     with pytest.raises(exception):
@@ -376,13 +387,13 @@ def test_parse_isodate(d, dt_fmt, as_bytes):
 
 
 @pytest.mark.parametrize('isostr,exception', [
-    ('243', ValueError),                        # ISO string too short
-    ('2014-0423', ValueError),                  # Inconsistent date separators
-    ('201404-23', ValueError),                  # Inconsistent date separators
-    ('2014日03月14', ValueError),                # Not ASCII
-    ('2013-02-29', ValueError),                 # Not a leap year
-    ('2014/12/03', ValueError),                 # Wrong separators
-    ('2014-04-19T', ValueError),                # Unknown components
+    ('243', ValueError),  # ISO string too short
+    ('2014-0423', ValueError),  # Inconsistent date separators
+    ('201404-23', ValueError),  # Inconsistent date separators
+    ('2014日03月14', ValueError),  # Not ASCII
+    ('2013-02-29', ValueError),  # Not a leap year
+    ('2014/12/03', ValueError),  # Wrong separators
+    ('2014-04-19T', ValueError),  # Unknown components
 ])
 def test_isodate_raises(isostr, exception):
     with pytest.raises(exception):
@@ -427,7 +438,7 @@ def __make_time_examples():
 
     # Time zones
     ex_naive = list(it.chain.from_iterable(x[0:2] for x in outputs))
-    o = it.product(ex_naive, TZOFFSETS)    # ((time, fmt), (tzinfo, offsetstr))
+    o = it.product(ex_naive, TZOFFSETS)  # ((time, fmt), (tzinfo, offsetstr))
     o = ((t.replace(tzinfo=tzi), fmt + off_str)
          for (t, fmt), (tzi, off_str) in o)
 
@@ -450,21 +461,21 @@ def test_isotime(time_val, time_fmt, as_bytes):
     assert iparser.parse_isotime(tstr) == time_val
 
 @pytest.mark.parametrize('isostr,exception', [
-    ('3', ValueError),                          # ISO string too short
-    ('14時30分15秒', ValueError),                # Not ASCII
-    ('14_30_15', ValueError),                   # Invalid separators
-    ('1430:15', ValueError),                    # Inconsistent separator use
-    ('14:30:15.3684000309', ValueError),        # Too much us precision
-    ('25', ValueError),                         # Invalid hours
-    ('25:15', ValueError),                      # Invalid hours
-    ('14:60', ValueError),                      # Invalid minutes
-    ('14:59:61', ValueError),                   # Invalid seconds
-    ('14:30:15.3446830500', ValueError),        # No sign in time zone
-    ('14:30:15+', ValueError),                  # Time zone too short
-    ('14:30:15+1234567', ValueError),           # Time zone invalid
-    ('14:59:59+25:00', ValueError),             # Invalid tz hours
-    ('14:59:59+12:62', ValueError),             # Invalid tz minutes
-    ('14:59:30_344583', ValueError),            # Invalid microsecond separator
+    ('3', ValueError),  # ISO string too short
+    ('14時30分15秒', ValueError),  # Not ASCII
+    ('14_30_15', ValueError),  # Invalid separators
+    ('1430:15', ValueError),  # Inconsistent separator use
+    ('14:30:15.3684000309', ValueError),  # Too much us precision
+    ('25', ValueError),  # Invalid hours
+    ('25:15', ValueError),  # Invalid hours
+    ('14:60', ValueError),  # Invalid minutes
+    ('14:59:61', ValueError),  # Invalid seconds
+    ('14:30:15.3446830500', ValueError),  # No sign in time zone
+    ('14:30:15+', ValueError),  # Time zone too short
+    ('14:30:15+1234567', ValueError),  # Time zone invalid
+    ('14:59:59+25:00', ValueError),  # Invalid tz hours
+    ('14:59:59+12:62', ValueError),  # Invalid tz minutes
+    ('14:59:30_344583', ValueError),  # Invalid microsecond separator
 ])
 def test_isotime_raises(isostr, exception):
     iparser = isoparser()
@@ -474,8 +485,8 @@ def test_isotime_raises(isostr, exception):
 
 @pytest.mark.xfail()
 @pytest.mark.parametrize('isostr,exception', [
-    ('14:3015', ValueError),                    # Inconsistent separator use
-    ('201202', ValueError)                      # Invalid ISO format
+    ('14:3015', ValueError),  # Inconsistent separator use
+    ('201202', ValueError)  # Invalid ISO format
 ])
 def test_isotime_raises_xfail(isostr, exception):
     iparser = isoparser()
