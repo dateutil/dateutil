@@ -74,7 +74,7 @@ class tzres(object):
 
         >>> from dateutil.tzwin import tzres
         >>> tzr = tzres()
-        >>> print(tzr.load_name(112))
+        >>> tzr.load_name(112)
         'Eastern Standard Time'
 
         :param offset:
@@ -98,9 +98,9 @@ class tzres(object):
 
         >>> from dateutil.tzwin import tzres
         >>> tzr = tzres()
-        >>> print(tzr.name_from_string('@tzres.dll,-251'))
+        >>> tzr.name_from_string('@tzres.dll,-251')
         'Dateline Daylight Time'
-        >>> print(tzr.name_from_string('Eastern Standard Time'))
+        >>> tzr.name_from_string('Eastern Standard Time')
         'Eastern Standard Time'
 
         :param tzname_str:

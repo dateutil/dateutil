@@ -82,9 +82,10 @@ class relativedelta(object):
 
     For example
 
-    >>> dt = datetime(2018, 4, 9, 13, 37, 0)
-    >>> delta = relativedelta(hours=25, day=1, weekday=MO(1))
-    datetime(2018, 4, 2, 14, 37, 0)
+    >>> import datetime
+    >>> dt = datetime.datetime(2018, 4, 9, 13, 37, 0)
+    >>> dt + relativedelta(hours=25, day=1, weekday=MO(1))
+    datetime.datetime(2018, 4, 2, 14, 37)
 
     First, the day is set to 1 (the first of the month), then 25 hours
     are added, to get to the 2nd day and 14th hour, finally the

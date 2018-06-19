@@ -46,16 +46,13 @@ class tzutc(datetime.tzinfo):
 
     .. doctest::
 
-        >>> from datetime import *
-        >>> from dateutil.tz import *
+        >>> import datetime
+        >>> from dateutil.tz import tzutc
 
-        >>> datetime.now()
-        datetime.datetime(2003, 9, 27, 9, 40, 1, 521290)
+        >>> datetime.datetime.now().tzname() is None
+        True
 
-        >>> datetime.now(tzutc())
-        datetime.datetime(2003, 9, 27, 12, 40, 12, 156379, tzinfo=tzutc())
-
-        >>> datetime.now(tzutc()).tzname()
+        >>> datetime.datetime.now(tzutc()).tzname()
         'UTC'
 
     .. versionchanged:: 2.7.0
@@ -420,12 +417,13 @@ class tzfile(_tzinfo):
 
         >>> NYC = gettz('America/New_York')
         >>> NYC
-        tzfile('/usr/share/zoneinfo/America/New_York')
+        tzfile(u'...America/New_York')
 
-        >>> print(datetime(2016, 1, 3, tzinfo=NYC))     # EST
+        >>> import datetime
+        >>> print(datetime.datetime(2016, 1, 3, tzinfo=NYC))  # EST
         2016-01-03 00:00:00-05:00
 
-        >>> print(datetime(2016, 7, 7, tzinfo=NYC))     # EDT
+        >>> print(datetime.datetime(2016, 7, 7, tzinfo=NYC))  # EDT
         2016-07-07 00:00:00-04:00
 
 
@@ -435,15 +433,15 @@ class tzfile(_tzinfo):
 
     .. doctest:: tzfile
 
-       >>> print(datetime(1901, 4, 12, tzinfo=NYC))    # LMT
-       1901-04-12 00:00:00-04:56
+        >>> print(datetime.datetime(1901, 4, 12, tzinfo=NYC))  # LMT
+        1901-04-12 00:00:00-05:00
 
     And during World War II, New York was on "Eastern War Time", which was a
     state of permanent daylight saving time:
 
     .. doctest:: tzfile
 
-        >>> print(datetime(1944, 2, 7, tzinfo=NYC))    # EWT
+        >>> print(datetime.datetime(1944, 2, 7, tzinfo=NYC))  # EWT
         1944-02-07 00:00:00-04:00
 
     """
@@ -1727,14 +1725,14 @@ def resolve_imaginary(dt):
     .. doctest::
 
         >>> from dateutil import tz
-        >>> from datetime import datetime
+        >>> import datetime
         >>> NYC = tz.gettz('America/New_York')
-        >>> print(tz.resolve_imaginary(datetime(2017, 3, 12, 2, 30, tzinfo=NYC)))
+        >>> print(tz.resolve_imaginary(datetime.datetime(2017, 3, 12, 2, 30, tzinfo=NYC)))
         2017-03-12 03:30:00-04:00
 
-        >>> KIR = tz.gettz('Pacific/Kiritimati')
-        >>> print(tz.resolve_imaginary(datetime(1995, 1, 1, 12, 30, tzinfo=KIR)))
-        1995-01-02 12:30:00+14:00
+        >>> APIA = tz.gettz('Pacific/Apia')
+        >>> print(tz.resolve_imaginary(datetime.datetime(2011, 12, 30, 12, tzinfo=APIA)))
+        2011-12-31 12:00:00+14:00
 
     As a note, :func:`datetime.astimezone` is guaranteed to produce a valid,
     existing datetime, so a round-trip to and from UTC is sufficient to get
