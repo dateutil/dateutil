@@ -484,6 +484,10 @@ def test_isotime_midnight(isostr):
     ('14:59:59+25:00', ValueError),             # Invalid tz hours
     ('14:59:59+12:62', ValueError),             # Invalid tz minutes
     ('14:59:30_344583', ValueError),            # Invalid microsecond separator
+    ('24:01', ValueError),                      # 24 used for non-midnight time
+    ('24:00:01', ValueError),                   # 24 used for non-midnight time
+    ('24:00:00.001', ValueError),               # 24 used for non-midnight time
+    ('24:00:00.000001', ValueError),            # 24 used for non-midnight time
 ])
 def test_isotime_raises(isostr, exception):
     iparser = isoparser()

@@ -1,0 +1,1 @@
+Added tests that parse_isotime only allows hours == 24 when the time is midnight. (gh pr #773)
