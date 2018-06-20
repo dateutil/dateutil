@@ -1,0 +1,1 @@
+Added tests that an error is raised for an incorrect separator character in a strict isoparser. Contribution by @alimcmaster1 (gh pr #772).
