@@ -1,0 +1,1 @@
+Added documentation for the ``rrule.rrulestr`` function. Fixed by @prdickson (gh issue #623, gh pr #762)

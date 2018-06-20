@@ -1413,6 +1413,49 @@ class rruleset(rrulebase):
 
 
 class _rrulestr(object):
+    """ Parses a string representation of a recurrence rule or set of
+    recurrence rules.
+
+    :param s:
+        Required, a string defining one or more recurrence rules.
+
+    :param dtstart:
+        If given, used as the default recurrence start if not specified in the
+        rule string.
+
+    :param cache:
+        If set ``True`` caching of results will be enabled, improving
+        performance of multiple queries considerably.
+
+    :param unfold:
+        If set ``True`` indicates that a rule string is split over more
+        than one line and should be joined before processing.
+
+    :param forceset:
+        If set ``True`` forces a :class:`dateutil.rrule.rruleset` to
+        be returned.
+
+    :param compatible:
+        If set ``True`` forces ``unfold`` and ``forceset`` to be ``True``.
+
+    :param ignoretz:
+        If set ``True``, time zones in parsed strings are ignored and a naive
+        :class:`datetime.datetime` object is returned.
+
+    :param tzids:
+        If given, a callable or mapping used to retrieve a
+        :class:`datetime.tzinfo` from a string representation.
+        Defaults to :func:`dateutil.tz.gettz`.
+
+    :param tzinfos:
+        Additional time zone names / aliases which may be present in a string
+        representation.  See :func:`dateutil.parser.parse` for more
+        information.
+
+    :return:
+        Returns a :class:`dateutil.rrule.rruleset` or
+        :class:`dateutil.rrule.rrule`
+    """
 
     _freq_map = {"YEARLY": YEARLY,
                  "MONTHLY": MONTHLY,
