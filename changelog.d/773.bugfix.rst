@@ -1,0 +1,1 @@
+Fixed an issue where ``isoparser.parse_isotime`` was unable to handle the ``24:00`` variant representation of midnight. (gh pr #773)
