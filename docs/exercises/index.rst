@@ -11,6 +11,8 @@ If you are interested in helping improve the documentation of ``dateutil``, it i
     :local:
 
 
+.. _mlk-day-exercise:
+
 Martin Luther King Day
 --------------------------------
 
@@ -66,6 +68,7 @@ To solve this exercise, copy-paste this script into a document, change anything 
 
     </details>
 
+A solution to this problem is provided :doc:`here <solutions/mlk-day-rrule>`.
 
 
 Next Monday meeting
