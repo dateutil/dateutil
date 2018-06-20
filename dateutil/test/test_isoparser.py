@@ -452,6 +452,22 @@ def test_isotime(time_val, time_fmt, as_bytes):
 
     assert iparser.parse_isotime(tstr) == time_val
 
+
+@pytest.mark.parametrize('isostr', [
+    '24:00',
+    '2400',
+    '24:00:00',
+    '240000',
+    '24:00:00.000',
+    '24:00:00,000',
+    '24:00:00.000000',
+    '24:00:00,000000',
+])
+def test_isotime_midnight(isostr):
+    iparser = isoparser()
+    assert iparser.parse_isotime(isostr) == time(0, 0, 0, 0)
+
+
 @pytest.mark.parametrize('isostr,exception', [
     ('3', ValueError),                          # ISO string too short
     ('14時30分15秒', ValueError),                # Not ASCII
