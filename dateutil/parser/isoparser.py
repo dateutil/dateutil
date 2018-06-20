@@ -176,7 +176,7 @@ class isoparser(object):
         components = self._parse_isotime(timestr)
         if components[0] == 24:
             components[0] = 0
-        return time(*self._parse_isotime(timestr))
+        return time(*components)
 
     @_takes_ascii
     def parse_tzstr(self, tzstr, zero_as_utc=True):
