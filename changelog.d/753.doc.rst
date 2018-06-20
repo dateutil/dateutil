@@ -1,0 +1,1 @@
+Added an example of how to customize the parser with a parserinfo subclass. Added by @prdickson (gh #753)
