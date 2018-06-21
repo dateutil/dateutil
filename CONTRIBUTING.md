@@ -28,7 +28,7 @@ If you would like to fix something in `dateutil` -  improvements to documentatio
 The most important thing to include in your pull request are *tests* - please write one or more tests to cover the behavior you intend your patch to improve. Ideally, tests would use only the public interface - try to get 100% difference coverage using only supported behavior of the API.
 
 #### Changelog
-To keep users abreast of the changes to the module and to give proper credit, `dateutil` maintains a changelog, which is managed by [towncrier](https://github.com/hawkowl/towncrier). To add a changelog entry, make a new file called `<issue_no>.<type>.rst`, where `<issue_no>` is the number of the PR you've just made (it's easiest to add the changelog *after* you've created the PR so you'll have this number), and `<type>` is one of the following types:
+To keep users abreast of the changes to the module and to give proper credit, `dateutil` maintains a changelog, which is managed by [towncrier](https://github.com/hawkowl/towncrier). To add a changelog entry, make a new file called `<issue_no>.<type>.rst` in the `changelog.d` directory, where `<issue_no>` is the number of the PR you've just made (it's easiest to add the changelog *after* you've created the PR so you'll have this number), and `<type>` is one of the following types:
 
 - `feature`: A new feature, (e.g. a new function, method, attribute, etc)
 - `bugfix`: A fix to a bug

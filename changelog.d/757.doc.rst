@@ -1,0 +1,1 @@
+Improved the contributing documentation to specify where to create changelog files. Contributed by @andrewcbennett (gh pr #757)
