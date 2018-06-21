@@ -1,0 +1,3 @@
+- Fixed doctests reported by @pganssle (gh issue #124).
+- Enabled doctests in tox.
+@rs2 (gh pr #749)
