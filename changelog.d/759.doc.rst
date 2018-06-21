@@ -1,0 +1,1 @@
+Improved the documentation for the ``relativedelta.relativedelta`` class. Contributed by @andrewcbennett (gh pr #759)
