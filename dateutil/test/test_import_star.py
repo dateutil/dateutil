@@ -22,12 +22,12 @@ class ImportStarTest(unittest.TestCase):
         import dateutil.utils
         import dateutil.zoneinfo
 
-        self.assertEquals(dateutil.easter, new_locals.pop("easter"))
-        self.assertEquals(dateutil.parser, new_locals.pop("parser"))
-        self.assertEquals(dateutil.relativedelta, new_locals.pop("relativedelta"))
-        self.assertEquals(dateutil.rrule, new_locals.pop("rrule"))
-        self.assertEquals(dateutil.tz, new_locals.pop("tz"))
-        self.assertEquals(dateutil.utils, new_locals.pop("utils"))
-        self.assertEquals(dateutil.zoneinfo, new_locals.pop("zoneinfo"))
+        self.assertEqual(dateutil.easter, new_locals.pop("easter"))
+        self.assertEqual(dateutil.parser, new_locals.pop("parser"))
+        self.assertEqual(dateutil.relativedelta, new_locals.pop("relativedelta"))
+        self.assertEqual(dateutil.rrule, new_locals.pop("rrule"))
+        self.assertEqual(dateutil.tz, new_locals.pop("tz"))
+        self.assertEqual(dateutil.utils, new_locals.pop("utils"))
+        self.assertEqual(dateutil.zoneinfo, new_locals.pop("zoneinfo"))
 
         self.assertFalse(new_locals)
