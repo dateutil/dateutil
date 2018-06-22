@@ -52,7 +52,7 @@ switch, and thus all their contributions are dual-licensed.
 - Jitesh <jitesh@MASKED>
 - John Purviance <jpurviance@MASKED> (gh @jpurviance) **D**
 - Jon Dufresne <jon.dufresne@MASKED> (gh: @jdufresne) **R**
-- Jonas Neubert <jonas@MASKED>
+- Jonas Neubert <jonas@MASKED> (gh: @jonemo) **R**
 - Kevin Nguyen <kvn219@MASKED> **D**
 - Kirit Thadaka <kirit.thadaka@gmail.com> (gh: @kirit93) **D**
 - Kubilay Kocak <koobs@MASKED>
@@ -72,7 +72,7 @@ switch, and thus all their contributions are dual-licensed.
 - Orson Adams <orson.network@MASKED> (gh: @parsethis) **D**
 - Paul Dickson (gh @prdickson) **D**
 - Paul Ganssle <paul@ganssle.io> (gh: @pganssle) **R**
-- Pascal van Kooten <kootenpv@MASKED>
+- Pascal van Kooten <kootenpv@MASKED> (gh: @kootenpv) **R**
 - Pavel Ponomarev <comrad.awsum@MASKED>
 - Peter Bieringer <pb@MASKED>
 - Pierre Gergondet <pierre.gergondet@MASKED> (gh: @gergondet) **D**
@@ -86,7 +86,7 @@ switch, and thus all their contributions are dual-licensed.
 - Sherry Zhou (gh: @cssherry) **D**
 - Stefan Bonchev **D**
 - Thierry Bastian <thierryb@MASKED>
-- Thomas A Caswell <tcaswell@MASKED> (gh: @tacaswell)
+- Thomas A Caswell <tcaswell@MASKED> (gh: @tacaswell) **R**
 - Thomas Achtemichuk <tom@MASKED>
 - Thomas Kluyver <takowl@MASKED> (gh: @takluyver)
 - Tomasz Kluczkowski (gh: @Tomasz-Kluczkowski) **D**
@@ -101,8 +101,8 @@ switch, and thus all their contributions are dual-licensed.
 - bachmann <bachmann.matt@MASKED>
 - bjv <brandon.vanvaerenbergh@MASKED> (@bjamesvERT)
 - gl <gl@MASKED>
-- labrys <labrys@MASKED> (gh: @labrys)
+- labrys <labrys@MASKED> (gh: @labrys) **R**
 - ms-boom <ms-boom@MASKED>
-- ryanss <ryanssdev@MASKED> (gh: @ryanss)
+- ryanss <ryanssdev@MASKED> (gh: @ryanss) **R**
 
 Unless someone has deliberately given permission to publish their e-mail, I have masked the domain names. If you are not on this list and believe you should be, or you *are* on this list and your information is inaccurate, please e-mail the current maintainer or the mailing list (dateutil@python.org) with your name, e-mail (if desired) and github (if desired / applicable), as you would like them displayed. Additionally, please indicate if you are willing to dual license your old contributions under Apache 2.0.
