@@ -85,11 +85,16 @@ To solve this exercise, copy-paste this script into a document, change anything 
 .. code-block:: python3
 
     # --------- YOUR CODE -------------- #
-    from dateutil import relativedelta
+	from dateutil import relativedelta
+	import datetime
+	from datetime import datetime
+	from dateutil import tz
 
-    def next_monday(dt):
-        <<YOUR CODE HERE>>
-
+	def next_monday(now):
+		next_meet = now + relativedelta.relativedelta(weekday = 0, hour = 10, minute = 0, second = 0, microsecond = 0) 
+		if next_meet < now:
+			next_meet = next_meet + relativedelta.relativedelta(weeks = 1)
+		return next_meet
     # ---------------------------------- #
 
     from datetime import datetime
