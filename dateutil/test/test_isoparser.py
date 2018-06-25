@@ -221,7 +221,17 @@ def test_iso_ordinal(isoord, dt_expected):
                                            tz.tzutc())),
     (b'2014-02-04T12:30:15.224+05:00',
         datetime(2014, 2, 4, 12, 30, 15, 224000,
-                 tzinfo=tz.tzoffset(None, timedelta(hours=5))))])
+                 tzinfo=tz.tzoffset(None, timedelta(hours=5)))),
+    (b'2014-02-04T12:30:15.224+000042',
+        datetime(2014, 2, 4, 12, 30, 15, 224000,
+                 tzinfo=tz.tzoffset(None, timedelta(seconds=42)))),
+    (b'2014-02-04T12:30:15.224+050042',
+        datetime(2014, 2, 4, 12, 30, 15, 224000,
+                 tzinfo=tz.tzoffset(None, timedelta(hours=5, seconds=42)))),
+    (b'2014-02-04T12:30:15.224+05:02:13',
+        datetime(2014, 2, 4, 12, 30, 15, 224000,
+                 tzinfo=tz.tzoffset(None, timedelta(hours=5, minutes=2,
+                                                    seconds=13))))])
 def test_bytes(isostr, dt):
     assert isoparse(isostr) == dt
 
@@ -482,7 +492,10 @@ def test_isotime_midnight(isostr):
     ('14:30:15+', ValueError),                  # Time zone too short
     ('14:30:15+1234567', ValueError),           # Time zone invalid
     ('14:59:59+25:00', ValueError),             # Invalid tz hours
+    ('14:59:59+12:-3', ValueError),             # Invalid tz minutes
     ('14:59:59+12:62', ValueError),             # Invalid tz minutes
+    ('14:59:59+12:59:62', ValueError),          # Invalid tz seconds
+    ('14:59:59+12:59:-2', ValueError),          # Invalid tz seconds
     ('14:59:30_344583', ValueError),            # Invalid microsecond separator
     ('24:01', ValueError),                      # 24 used for non-midnight time
     ('24:00:01', ValueError),                   # 24 used for non-midnight time

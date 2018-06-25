@@ -33,6 +33,7 @@ switch, and thus all their contributions are dual-licensed.
 - Claudio Canepa <ccanepacc@MASKED>
 - Corey Girard <corey.r.girard@gmail.com> (gh: @coreygirard)
 - Cosimo Lupo <cosimo@anthrotype.com> (gh: @anthrotype)
+- Dan Villiom Podlaski Christiansen <danchr@gmail.com> (gh: @danchr) **D**
 - Daniel Lepage <dplepage@MASKED>
 - David Lehrian <david@MASKED>
 - Dean Allsopp (gh: @daplantagenet) **D**
