@@ -1,0 +1,1 @@
+Switched test suite over to throwing errors whenever unexpected warnings are raised. As part of this, the test_import_star test was cleaned up, as it had been throwing deprecation warnings. (gh pr #780)
