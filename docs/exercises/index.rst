@@ -66,8 +66,7 @@ To solve this exercise, copy-paste this script into a document, change anything 
 
     </details>
 
-
-
+    
 Next Monday meeting
 -------------------
 
@@ -85,16 +84,10 @@ To solve this exercise, copy-paste this script into a document, change anything 
 .. code-block:: python3
 
     # --------- YOUR CODE -------------- #
-	from dateutil import relativedelta
-	import datetime
-	from datetime import datetime
-	from dateutil import tz
+    from dateutil import relativedelta
 
-	def next_monday(now):
-		next_meet = now + relativedelta.relativedelta(weekday = 0, hour = 10, minute = 0, second = 0, microsecond = 0) 
-		if next_meet < now:
-			next_meet = next_meet + relativedelta.relativedelta(weeks = 1)
-		return next_meet
+    def next_monday(dt):
+        <<YOUR CODE HERE>>
     # ---------------------------------- #
 
     from datetime import datetime
@@ -123,6 +116,7 @@ To solve this exercise, copy-paste this script into a document, change anything 
 
     </details>
 
+    +A solution to this problem is provided :doc:`here <solutions/next-monday-relativedelta>`.
 
 Parsing a local tzname
 ----------------------
