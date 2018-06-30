@@ -81,6 +81,7 @@ switch, and thus all their contributions are dual-licensed.
 - Ridhi Mahajan <ridhikmahajan@MASKED> **D**
 - Roy Williams <rwilliams@MASKED>
 - Rustem Saiargaliev (gh: @amureki) **D**
+- Satyabrat Bhol <satyabrat35@MASKED> (gh: @Satyabrat35) **D**
 - Savraj <savraj@MASKED>
 - Sergey Vishnikin <armicron@MASKED>
 - Sherry Zhou (gh: @cssherry) **D**
