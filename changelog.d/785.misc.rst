@@ -1,0 +1,1 @@
+Tests are now run against the master branch of the tz database. (gh issue #617, gh pr #785)

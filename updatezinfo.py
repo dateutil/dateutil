@@ -12,8 +12,8 @@ from dateutil.zoneinfo import rebuild
 METADATA_FILE = "zonefile_metadata.json"
 
 
-def main():
-    with io.open(METADATA_FILE, 'r') as f:
+def main(metadata_file):
+    with io.open(metadata_file, 'r') as f:
         metadata = json.load(f)
 
     releases_urls = metadata['releases_url']
@@ -52,4 +52,11 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('metadata', metavar='METADATA_FILE',
+                        default=METADATA_FILE,
+                        nargs='?')
+
+    args = parser.parse_args()
+    main(args.metadata)
