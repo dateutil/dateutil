@@ -1,0 +1,2 @@
+Accept more than 6 fractional digits in `isoparse`.
+Reported and fixed by @jayschwa (gh issue #786, gh pr #787).
