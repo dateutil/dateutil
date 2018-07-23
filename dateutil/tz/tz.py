@@ -465,7 +465,7 @@ class tzfile(_tzinfo):
 
         if fileobj is not None:
             if not file_opened_here:
-                fileobj = _ContextWrapper(fileobj)
+                fileobj = _nullcontext(fileobj)
 
             with fileobj as file_stream:
                 tzobj = self._read_tzfile(file_stream)
@@ -1257,7 +1257,7 @@ class tzical(object):
             fileobj = open(fileobj, 'r')
         else:
             self._s = getattr(fileobj, 'name', repr(fileobj))
-            fileobj = _ContextWrapper(fileobj)
+            fileobj = _nullcontext(fileobj)
 
         self._vtz = {}
 
@@ -1784,18 +1784,22 @@ else:
         return calculated_offset
 
 
-class _ContextWrapper(object):
-    """
-    Class for wrapping contexts so that they are passed through in a
-    with statement.
-    """
-    def __init__(self, context):
-        self.context = context
+try:
+    # Python 3.7 feature
+    from contextmanager import nullcontext as _nullcontext
+except ImportError:
+    class _nullcontext(object):
+        """
+        Class for wrapping contexts so that they are passed through in a
+        with statement.
+        """
+        def __init__(self, context):
+            self.context = context
 
-    def __enter__(self):
-        return self.context
+        def __enter__(self):
+            return self.context
 
-    def __exit__(*args, **kwargs):
-        pass
+        def __exit__(*args, **kwargs):
+            pass
 
 # vim:ts=4:sw=4:et
