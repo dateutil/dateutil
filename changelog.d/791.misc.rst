@@ -1,0 +1,1 @@
+Moved the ``tz.tz._ContextWrapper`` class to ``tz.tz._nullcontext``; the old class is now a backport of ``contextmanager.nullcontext``, which is used if available. (gh pr #791)
