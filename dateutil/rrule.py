@@ -1107,6 +1107,104 @@ class rrule(rrulebase):
             if value in byxxx:
                 return (accumulator, value)
 
+    def _validate_rule(self, bymonth=None, bymonthday=None, byyearday=None, byeaster=None,
+                        byweekno=None, byweekday=None, byhour=None, byminute=None, bysecond=None):
+        if bymonth is not None:
+            if isinstance(bymonth, integer_types) and (bymonth > 12 or bymonth < 1):
+                raise ValueError("BYMONTH values must all be integers from 1 to 12.")
+            elif isinstance(bymonth, (list,tuple)):
+                for value in bymonth:
+                    if isinstance(value, integer_types):
+                        if value > 12 or value < 1:
+                            raise ValueError("BYMONTH values must all be integers from 1 to 12.")
+                    else:
+                        raise ValueError("BYMONTH values must all be integers from 1 to 12.")
+            else:
+                raise ValueError("BYMONTH values must all be integers from 1 to 12.")
+        if bymonthday is not None:
+            if isinstance(bymonthday, integer_types) and (abs(bymonthday) > 31 or abs(bymonthday) < 1):
+                raise ValueError("BYMONTHDAY values must all be integers from 1 to 31 or from -31 to -1.")
+            elif isinstance(bymonthday, (list,tuple)):
+                for value in bymonthday:
+                    if isinstance(value, integer_types):
+                        if abs(value) > 31 or abs(value) < 1:
+                            raise ValueError("BYMONTHDAY values must all be integers from 1 to 31 or from -31 to -1.")
+                    else:
+                        raise ValueError("BYMONTHDAY values must all be integers from 1 to 31 or from -31 to -1.")
+            else:
+                raise ValueError("BYMONTHDAY values must all be integers from 1 to 31 or from -31 to -1.")
+        if byyearday is not None:
+            if isinstance(byyearday, integer_types) and (abs(byyearday) > 366 or abs(byyearday) < 1):
+                raise ValueError("BYYEARDAY values must all be integers from 1 to 366 or from -366 to -1.")
+            elif isinstance(byyearday, (list,tuple)):
+                for value in byyearday:
+                    if isinstance(value, integer_types):
+                        if abs(value) > 366 or abs(value) < 1:
+                            raise ValueError("BYYEARDAY values must all be integers from 1 to 366 or from -366 to -1.")
+                    else:
+                        raise ValueError("BYYEARDAY values must all be integers from 1 to 366 or from -366 to -1.")
+            else:
+                raise ValueError("BYYEARDAY values must all be integers from 1 to 366 or from -366 to -1.")
+        if byeaster is not None:
+            if isinstance(byeaster, integer_types) and (abs(byeaster) > 366 or abs(byeaster) < 1):
+                raise ValueError("BYEASTER values must all be integers from 1 to 366 or from -366 to -1.")
+            elif isinstance(byeaster, (list,tuple)):
+                for value in byeaster:
+                    if isinstance(value, integer_types):
+                        if abs(value) > 366 or abs(value) < 1:
+                            raise ValueError("BYEASTER values must all be integers from 1 to 366 or from -366 to -1.")
+                    else:
+                        raise ValueError("BYEASTER values must all be integers from 1 to 366 or from -366 to -1.")
+            else:
+                raise ValueError("BYEASTER values must all be integers from 1 to 366 or from -366 to -1.")
+        if byweekno is not None:
+            if isinstance(byweekno, integer_types) and (abs(byweekno) > 1 or abs(byweekno) < 53):
+                raise ValueError("BYWEEKNO values must all be integers from 1 to 53 or from -53 to -1.")
+            elif isinstance(byweekno, (list,tuple)):
+                for value in byweekno:
+                    if isinstance(value, integer_types):
+                        if abs(value) > 366 or abs(value) < 1:
+                            raise ValueError("BYWEEKNO values must all be integers from 1 to 53 or from -53 to -1.")
+                    else:
+                        raise ValueError("BYWEEKNO values must all be integers from 1 to 53 or from -53 to -1.")
+            else:
+                raise ValueError("BYWEEKNO values must all be integers from 1 to 53 or from -53 to -1.")
+        if byhour is not None:
+            if isinstance(byhour, integer_types) and (byhour > 23 or byhour < 0):
+                raise ValueError("BYHOUR values must all be integers from 0 to 23.")
+            elif isinstance(byhour, (list,tuple)):
+                for value in byhour:
+                    if isinstance(value, integer_types):
+                        if value > 23 or value < 0:
+                            raise ValueError("BYHOUR values must all be integers from 0 to 23.")
+                    else:
+                        raise ValueError("BYHOUR values must all be integers from 0 to 23.")
+            else:
+                raise ValueError("BYHOUR values must all be integers from 0 to 23.")
+        if byminute is not None:
+            if isinstance(byminute, integer_types) and (byminute > 59 or byminute < 0):
+                raise ValueError("BYMINUTE values must all be integers from 0 to 59.")
+            elif isinstance(byminute, (list,tuple)):
+                for value in byminute:
+                    if isinstance(value, integer_types):
+                        if value > 59 or value < 0:
+                            raise ValueError("BYMINUTE values must all be integers from 0 to 59.")
+                    else:
+                        raise ValueError("BYMINUTE values must all be integers from 0 to 59.")
+            else:
+                raise ValueError("BYMINUTE values must all be integers from 0 to 59.")
+        if bysecond is not None:
+            if isinstance(bysecond, integer_types) and (bysecond > 60 or bysecond < 0):
+                raise ValueError("BYSECOND values must all be integers from 0 to 60.")
+            elif isinstance(bysecond, (list,tuple)):
+                for value in bysecond:
+                    if isinstance(value, integer_types):
+                        if value > 60 or value < 0:
+                            raise ValueError("BYSECOND values must all be integers from 0 to 60.")
+                    else:
+                        raise ValueError("BYSECOND values must all be integers from 0 to 60.")
+            else:
+                raise ValueError("BYSECOND values must all be integers from 0 to 60.")
 
 class _iterinfo(object):
     __slots__ = ["rrule", "lastyear", "lastmonth",
