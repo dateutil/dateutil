@@ -111,7 +111,8 @@ class tzutc(datetime.tzinfo):
         return (isinstance(other, tzutc) or
                 (isinstance(other, tzoffset) and other._offset == ZERO))
 
-    __hash__ = None
+    def __hash__(self):
+        return hash(id(self))
 
     def __ne__(self, other):
         return not (self == other)

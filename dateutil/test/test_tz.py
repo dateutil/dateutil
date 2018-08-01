@@ -610,6 +610,7 @@ class TzWinFoldMixin(object):
 
 ###
 # Test Cases
+@pytest.mark.tzutc
 class TzUTCTest(unittest.TestCase):
     def testSingleton(self):
         UTC_0 = tz.tzutc()
@@ -666,6 +667,13 @@ class TzUTCTest(unittest.TestCase):
         dt = datetime(2011, 9, 1, 2, 30, tzinfo=tz.tzutc())
 
         self.assertFalse(tz.datetime_ambiguous(dt))
+
+    def testHashable(self):
+        assert hash(tz.UTC) == hash(tz.tzutc())
+
+    def testCanBeInSets(self):
+        s = {tz.UTC}
+        assert tz.tzutc() in s
 
 
 @pytest.mark.tzoffset
