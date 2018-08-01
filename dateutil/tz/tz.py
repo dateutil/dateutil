@@ -179,7 +179,8 @@ class tzoffset(datetime.tzinfo):
 
         return self._offset == other._offset
 
-    __hash__ = None
+    def __hash__(self):
+        return hash((self._name, self._offset))
 
     def __ne__(self, other):
         return not (self == other)
