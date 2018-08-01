@@ -1,0 +1,1 @@
+Made ``tzutc`` and ``tzoffset`` explicitly hashable. Reported by @mroeschke (gh issue #792, gh pr #794)
