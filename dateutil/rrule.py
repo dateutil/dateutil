@@ -1156,14 +1156,14 @@ class rrule(rrulebase):
             else:
                 raise ValueError(byyearday_err_str)
         if byeaster is not None:
-            byeaster_err_str = "BYEASTER values must all be integers from 1 to 366 or from -366 to -1."
+            byeaster_err_str = "BYEASTER values must all be integers from -366 to 366."
             if isinstance(byeaster, integer_types):
-                if abs(byeaster) > 366 or abs(byeaster) < 1:
+                if abs(byeaster) > 366:
                     raise ValueError(byeaster_err_str)
             elif isinstance(byeaster, (list,tuple)):
                 for value in byeaster:
                     if isinstance(value, integer_types):
-                        if abs(value) > 366 or abs(value) < 1:
+                        if abs(value) > 366:
                             raise ValueError(byeaster_err_str)
                     else:
                         raise ValueError(byeaster_err_str)
@@ -1172,7 +1172,7 @@ class rrule(rrulebase):
         if byweekno is not None:
             byweekno_err_str = "BYWEEKNO values must all be integers from 1 to 53 or from -53 to -1."
             if isinstance(byweekno, integer_types):
-                if abs(byweekno) > 1 or abs(byweekno) < 53:
+                if abs(byweekno) < 1 or abs(byweekno) > 53:
                     raise ValueError(byweekno_err_str)
             elif isinstance(byweekno, (list,tuple)):
                 for value in byweekno:
