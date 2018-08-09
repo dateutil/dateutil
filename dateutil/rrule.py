@@ -1128,7 +1128,8 @@ class rrule(rrulebase):
             else:
                 raise ValueError(bymonth_err_str)
         if bymonthday is not None:
-            bymonthday_err_str = "BYMONTHDAY values must all be integers from 1 to 31 or from -31 to -1."
+            bymonthday_err_str = ("BYMONTHDAY values must all be integers from " 
+                                  "1 to 31 or from -31 to -1.")
             if isinstance(bymonthday, integer_types):
                 if abs(bymonthday) > 31 or abs(bymonthday) < 1:
                     raise ValueError(bymonthday_err_str)
@@ -1142,7 +1143,8 @@ class rrule(rrulebase):
             else:
                 raise ValueError(bymonthday_err_str)
         if byyearday is not None:
-            byyearday_err_str = "BYYEARDAY values must all be integers from 1 to 366 or from -366 to -1."
+            byyearday_err_str = ("BYYEARDAY values must all be integers from "
+                                 "1 to 366 or from -366 to -1.")
             if isinstance(byyearday, integer_types):
                 if abs(byyearday) > 366 or abs(byyearday) < 1:
                     raise ValueError(byyearday_err_str)
@@ -1170,7 +1172,8 @@ class rrule(rrulebase):
             else:
                 raise ValueError(byeaster_err_str)
         if byweekno is not None:
-            byweekno_err_str = "BYWEEKNO values must all be integers from 1 to 53 or from -53 to -1."
+            byweekno_err_str = ("BYWEEKNO values must all be integers from "
+                                "1 to 53 or from -53 to -1.")
             if isinstance(byweekno, integer_types):
                 if abs(byweekno) < 1 or abs(byweekno) > 53:
                     raise ValueError(byweekno_err_str)
