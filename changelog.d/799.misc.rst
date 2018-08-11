@@ -1,0 +1,1 @@
+Pinned setuptools to <40.0 in CI build on Python 3.3, for whatever reason pip doesn't respect python_requires for that package on Python 3.3. (gh pr #799)
