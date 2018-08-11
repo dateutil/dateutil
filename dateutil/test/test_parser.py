@@ -314,6 +314,11 @@ class ParserTest(unittest.TestCase):
                          datetime(2003, 9, 25, 10, 49, 41,
                                   tzinfo=self.brsttz))
 
+    def testISOFormatStrip2(self):
+        self.assertEqual(parse("2003-09-25T10:49:41+03:00"),
+                         datetime(2003, 9, 25, 10, 49, 41,
+                                  tzinfo=tzoffset(None, 10800)))
+
     def testISOStrippedFormat(self):
         self.assertEqual(parse("20030925T104941.5-0300"),
                          datetime(2003, 9, 25, 10, 49, 41, 500000,
@@ -323,6 +328,11 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(parse("20030925T104941-0300"),
                          datetime(2003, 9, 25, 10, 49, 41,
                                   tzinfo=self.brsttz))
+
+    def testISOStrippedFormatStrip2(self):
+        self.assertEqual(parse("20030925T104941+0300"),
+                         datetime(2003, 9, 25, 10, 49, 41,
+                                  tzinfo=tzoffset(None, 10800)))
 
     def testDateWithDash8(self):
         self.assertEqual(parse("10-09-2003", dayfirst=True),
