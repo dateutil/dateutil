@@ -23,6 +23,7 @@ switch, and thus all their contributions are dual-licensed.
 - Andrew Bennett (gh: @andrewcbennett) **D**
 - Andrew Murray <radarhere@MASKED>
 - Bernat Gabor <bgabor8@bloomberg.net> (gh: @gaborbernat) **D**
+- Bradlee Speice <bradlee@speice.io> (gh: @bspeice) **D**
 - Brandon W Maister <quodlibetor@MASKED>
 - Brock Mendel <jbrockmendel@MASKED> (gh: @jbrockmendel) **R**
 - Brook Li (gh: @absreim) **D**
