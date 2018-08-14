@@ -1076,7 +1076,6 @@ class GettzTest(unittest.TestCase, TzFoldMixin):
 
 
 @pytest.mark.gettz
-@pytest.mark.xfail
 def test_gettz_badzone():
     # Make sure passing a bad TZ string to gettz returns None
     # GH #800
