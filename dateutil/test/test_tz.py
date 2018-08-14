@@ -1076,6 +1076,15 @@ class GettzTest(unittest.TestCase, TzFoldMixin):
 
 
 @pytest.mark.gettz
+@pytest.mark.xfail
+def test_gettz_badzone():
+    # Make sure passing a bad TZ string to gettz returns None
+    # GH #800
+    tzi = tz.gettz('🐼')
+    assert tzi is None
+
+
+@pytest.mark.gettz
 @pytest.mark.xfail(IS_WIN, reason='zoneinfo separately cached')
 def test_gettz_cache_clear():
     NYC1 = tz.gettz('America/New_York')
