@@ -8,6 +8,7 @@ from ._common import ComparesEqual
 from datetime import datetime, timedelta
 from datetime import time as dt_time
 from datetime import tzinfo
+from six import PY2
 from six import BytesIO, StringIO
 import unittest
 
@@ -1073,6 +1074,26 @@ class GettzTest(unittest.TestCase, TzFoldMixin):
         local2 = tz.gettz()
 
         assert local1 is not local2
+
+
+@pytest.mark.gettz
+@pytest.mark.parametrize('badzone', [
+    'Fake.Region/Abcdefghijklmnop',  # Violates several tz project name rules
+])
+def test_gettz_badzone(badzone):
+    # Make sure passing a bad TZ string to gettz returns None (GH #800)
+    tzi = tz.gettz(badzone)
+    assert tzi is None
+
+
+@pytest.mark.gettz
+@pytest.mark.xfail(IS_WIN and PY2,
+                   reason='tzwin fails with non-unicode characters on 2.7')
+def test_gettz_badzone_unicode():
+    # Make sure a unicode string can be passed to TZ (GH #802)
+    # When fixed, combine this with test_gettz_badzone
+    tzi = tz.gettz('🐼')
+    assert tzi is None
 
 
 @pytest.mark.gettz

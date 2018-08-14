@@ -1539,10 +1539,15 @@ def __get_gettz():
 
                 if rv is None:
                     rv = self.nocache(name=name)
-                    if not (name is None or isinstance(rv, tzlocal_classes)):
+                    if not (name is None
+                            or isinstance(rv, tzlocal_classes)
+                            or rv is None):
                         # tzlocal is slightly more complicated than the other
                         # time zone providers because it depends on environment
                         # at construction time, so don't cache that.
+                        #
+                        # We also cannot store weak references to None, so we
+                        # will also not store that.
                         self.__instances[name] = rv
 
             return rv
