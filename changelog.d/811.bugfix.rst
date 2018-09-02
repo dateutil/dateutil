@@ -1,0 +1,1 @@
+Improved performance and inspection properties of tzname methods. (gh pr #811)
