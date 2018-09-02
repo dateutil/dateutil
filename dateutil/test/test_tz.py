@@ -1950,11 +1950,6 @@ class TZTest(unittest.TestCase):
         tzc = tz.tzfile(fileobj)
         self.assertEqual(repr(tzc), 'tzfile(' + repr('foo') + ')')
 
-
-
-
-
-
     def testLeapCountDecodesProperly(self):
         # This timezone has leapcnt, and failed to decode until
         # Eugene Oden notified about the issue.
@@ -2034,6 +2029,19 @@ def test_sub_minute_rounding_tzfile():
     tzc = tz.tzfile(BytesIO(base64.b64decode(EUROPE_HELSINKI)))
     offset = timedelta(hours=1, minutes=40)
     assert datetime(1900, 1, 1, 0, 0, tzinfo=tzc).utcoffset() == offset
+
+
+@pytest.mark.tzfile
+def test_samoa_transition():
+    # utcoffset() was erroneously returning +14:00 an hour early (GH #812)
+    APIA = tz.gettz('Pacific/Apia')
+    dt = datetime(2011, 12, 29, 23, 59, tzinfo=APIA)
+    assert dt.utcoffset() == timedelta(hours=-10)
+
+    # Make sure the transition actually works, too
+    dt_after = (dt.astimezone(tz.UTC) + timedelta(minutes=1)).astimezone(APIA)
+    assert dt_after == datetime(2011, 12, 31, tzinfo=APIA)
+    assert dt_after.utcoffset() == timedelta(hours=14)
 
 
 @unittest.skipUnless(IS_WIN, "Requires Windows")

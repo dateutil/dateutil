@@ -657,37 +657,44 @@ class tzfile(_tzinfo):
         # isgmt are off, so it should be in wall time. OTOH, it's
         # always in gmt time. Let me know if you have comments
         # about this.
-        laststdoffset = None
+        lastdst = None
+        lastoffset = None
+        lastdstoffset = None
+        lastbaseoffset = None
         out.trans_list = []
+
         for i, tti in enumerate(out.trans_idx):
-            if not tti.isdst:
-                offset = tti.offset
-                laststdoffset = offset
-            else:
-                if laststdoffset is not None:
-                    # Store the DST offset as well and update it in the list
-                    tti.dstoffset = tti.offset - laststdoffset
-                    out.trans_idx[i] = tti
+            offset = tti.offset
+            dstoffset = 0
 
-                offset = laststdoffset or 0
+            if lastdst is not None:
+                if tti.isdst:
+                    if not lastdst:
+                        dstoffset = offset - lastoffset
 
-            out.trans_list.append(out.trans_list_utc[i] + offset)
+                    if not dstoffset and lastdstoffset:
+                        dstoffset = lastdstoffset
 
-        # In case we missed any DST offsets on the way in for some reason, make
-        # a second pass over the list, looking for the /next/ DST offset.
-        laststdoffset = None
-        for i in reversed(range(len(out.trans_idx))):
-            tti = out.trans_idx[i]
-            if tti.isdst:
-                if not (tti.dstoffset or laststdoffset is None):
-                    tti.dstoffset = tti.offset - laststdoffset
-            else:
-                laststdoffset = tti.offset
+                    tti.dstoffset = datetime.timedelta(seconds=dstoffset)
+                    lastdstoffset = dstoffset
 
-            if not isinstance(tti.dstoffset, datetime.timedelta):
-                tti.dstoffset = datetime.timedelta(seconds=tti.dstoffset)
+            # If a time zone changes its base offset during a DST transition,
+            # then you need to adjust by the previous base offset to get the
+            # transition time in local time. Otherwise you use the current
+            # base offset. Ideally, I would have some mathematical proof of
+            # why this is true, but I haven't really thought about it enough.
+            baseoffset = offset - dstoffset
+            adjustment = baseoffset
+            if (lastbaseoffset is not None and baseoffset != lastbaseoffset
+                    and tti.isdst != lastdst):
+                # The base DST has changed
+                adjustment = lastbaseoffset
 
-            out.trans_idx[i] = tti
+            lastdst = tti.isdst
+            lastoffset = offset
+            lastbaseoffset = baseoffset
+
+            out.trans_list.append(out.trans_list_utc[i] + adjustment)
 
         out.trans_idx = tuple(out.trans_idx)
         out.trans_list = tuple(out.trans_list)
