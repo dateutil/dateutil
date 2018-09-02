@@ -1,0 +1,1 @@
+Fixed a bug with base offset changes during DST in ``tzfile``, and refactored the way base offset changes are detected. Originally reported on StackOverflow by @MartinThoma. (gh issue #812, gh pr #810)
