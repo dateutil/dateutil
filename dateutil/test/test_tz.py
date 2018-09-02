@@ -2032,9 +2032,8 @@ def test_sub_minute_rounding_tzfile():
 
 
 @pytest.mark.tzfile
-@pytest.mark.xfail
 def test_samoa_transition():
-    # utcoffset() is erroneously returning +14:00 an hour early (GH #812)
+    # utcoffset() was erroneously returning +14:00 an hour early (GH #812)
     APIA = tz.gettz('Pacific/Apia')
     dt = datetime(2011, 12, 29, 23, 59, tzinfo=APIA)
     assert dt.utcoffset() == timedelta(hours=-10)
