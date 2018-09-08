@@ -1,0 +1,1 @@
+Dropped use of six.(Bytes|String)IO in favor of io.(Bytes|String)IO in two test files. Patch by @jdufresne (gh pr #813)
