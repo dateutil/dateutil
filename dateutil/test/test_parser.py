@@ -14,7 +14,7 @@ from dateutil.parser import UnknownTimezoneWarning
 from ._common import TZEnvContext
 
 from six import assertRaisesRegex, PY3
-from six.moves import StringIO
+from io import StringIO
 
 import pytest
 

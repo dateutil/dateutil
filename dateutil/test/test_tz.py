@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 from datetime import time as dt_time
 from datetime import tzinfo
 from six import PY2
-from six import BytesIO, StringIO
+from io import BytesIO, StringIO
 import unittest
 
 import sys
