@@ -1,0 +1,1 @@
+Changed the ``python setup.py test`` to print an error to ``stderr`` and exit with 1 instead of 0. Reported and fixed by @hroncok (gh pr #814)
