@@ -1709,8 +1709,7 @@ def datetime_ambiguous(dt, tz=None):
         tz = dt.tzinfo
 
     # If a time zone defines its own "is_ambiguous" function, we'll use that.
-    is_ambiguous_fn = getattr(tz, 'is_ambiguous', None)
-    if is_ambiguous_fn is not None:
+    if hasattr(tz, 'is_ambiguous'):
         try:
             return tz.is_ambiguous(dt)
         except Exception:
