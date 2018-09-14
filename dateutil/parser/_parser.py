@@ -40,7 +40,7 @@ from calendar import monthrange
 from io import StringIO
 
 import six
-from six import binary_type, integer_types, text_type
+from six import integer_types, text_type
 
 from decimal import Decimal
 
@@ -63,7 +63,7 @@ class _timelex(object):
         if six.PY2:
             # In Python 2, we can't duck type properly because unicode has
             # a 'decode' function, and we'd be double-decoding
-            if isinstance(instream, (binary_type, bytearray)):
+            if isinstance(instream, (bytes, bytearray)):
                 instream = instream.decode()
         else:
             if getattr(instream, 'decode', None) is not None:
