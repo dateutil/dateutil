@@ -66,12 +66,12 @@ class _timelex(object):
             if isinstance(instream, (binary_type, bytearray)):
                 instream = instream.decode()
         else:
-            if getattr(instream, 'decode', None) is not None:
+            if hasattr(instream, 'decode'):
                 instream = instream.decode()
 
         if isinstance(instream, text_type):
             instream = StringIO(instream)
-        elif getattr(instream, 'read', None) is None:
+        elif not hasattr(instream, 'read'):
             raise TypeError('Parser must be a string or character stream, not '
                             '{itype}'.format(itype=instream.__class__.__name__))
 
