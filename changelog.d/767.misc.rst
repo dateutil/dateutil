@@ -1,0 +1,1 @@
+Refactored some parser input format tests into a separate class. Patch by @jbrockmendel (gh pr #767)
