@@ -181,16 +181,6 @@ class TestFormat(unittest.TestCase):
 
 
 class TestInputFormats(object):
-    @classmethod
-    def setup_class(cls):
-        cls.tzinfos = {"BRST": -10800}
-        cls.brsttz = tzoffset("BRST", -10800)
-        cls.default = datetime(2003, 9, 25)
-
-        # Parser should be able to handle bytestring and unicode
-        cls.uni_str = '2014-05-01 08:00:00'
-        cls.str_str = cls.uni_str.encode()
-
     def test_empty_string_invalid(self):
         with pytest.raises(ValueError):
             parse('')
@@ -228,8 +218,12 @@ class TestInputFormats(object):
         assert res == expected
 
     def test_parse_str(self):
-        res = parse(self.str_str)
-        expected = parse(self.uni_str)
+        # Parser should be able to handle bytestring and unicode
+        uni_str = '2014-05-01 08:00:00'
+        bytes_str = uni_str.encode()
+
+        res = parse(bytes_str)
+        expected = parse(uni_str)
         assert res == expected
 
     def test_parse_bytes(self):
