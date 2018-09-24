@@ -1,0 +1,1 @@
+Removed unnecessary binary_type compatibility shims. Added by @jdufresne (gh pr #817)
