@@ -1565,7 +1565,7 @@ def __get_gettz():
 
                 self.__strong_cache[name] = self.__strong_cache.pop(name, rv)
 
-                if len(self.__strong_cache) == (self.__strong_cache_size + 1):
+                if len(self.__strong_cache) > self.__strong_cache_size:
                     self.__strong_cache.popitem(last=False)
 
             return rv

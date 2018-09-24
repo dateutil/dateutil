@@ -2,6 +2,7 @@ from datetime import timedelta
 import weakref
 from collections import OrderedDict
 
+
 class _TzSingleton(type):
     def __init__(cls, *args, **kwargs):
         cls.__instance = None
@@ -11,6 +12,7 @@ class _TzSingleton(type):
         if cls.__instance is None:
             cls.__instance = super(_TzSingleton, cls).__call__()
         return cls.__instance
+
 
 class _TzFactory(type):
     def instance(cls, *args, **kwargs):
@@ -22,6 +24,7 @@ class _TzOffsetFactory(_TzFactory):
     def __init__(cls, *args, **kwargs):
         cls.__instances = weakref.WeakValueDictionary()
         cls.__strong_cache = OrderedDict()
+        cls.__strong_cache_size = 8
 
     def __call__(cls, name, offset):
         if isinstance(offset, timedelta):
@@ -36,7 +39,9 @@ class _TzOffsetFactory(_TzFactory):
 
         cls.__strong_cache[key] = cls.__strong_cache.pop(key, instance)
 
-        if len(cls.__strong_cache) == 9:  #only to hold 8 items
+        # Remove an item if the strong cache is overpopulated
+        # TODO: Maybe this should be under a lock?
+        if len(cls.__strong_cache) > cls.__strong_cache_size:
             cls.__strong_cache.popitem(last=False)
 
         return instance
@@ -46,6 +51,7 @@ class _TzStrFactory(_TzFactory):
     def __init__(cls, *args, **kwargs):
         cls.__instances = weakref.WeakValueDictionary()
         cls.__strong_cache = OrderedDict()
+        cls.__strong_cache_size = 8
 
     def __call__(cls, s, posix_offset=False):
         key = (s, posix_offset)
@@ -57,7 +63,10 @@ class _TzStrFactory(_TzFactory):
 
         cls.__strong_cache[key] = cls.__strong_cache.pop(key, instance)
 
-        if len(cls.__strong_cache) == 9:  #only to hold 8 items
+
+        # Remove an item if the strong cache is overpopulated
+        # TODO: Maybe this should be under a lock?
+        if len(cls.__strong_cache) > cls.__strong_cache_size:
             cls.__strong_cache.popitem(last=False)
 
         return instance

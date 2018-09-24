@@ -746,12 +746,12 @@ def test_tzoffset_weakref():
     del UTC1
     gc.collect()
 
-    assert UTC_ref() is not None # Because strong cache should keep it
+    assert UTC_ref() is not None    # Should be in the strong cache
     assert UTC_ref() is tz.tzoffset('UTC', 0)
 
     # Fill the strong cache with other items
     for offset in range(5,15):
-        tz.tzoffset('UTC', offset)
+        tz.tzoffset('RandomZone', offset)
 
     gc.collect()
     assert UTC_ref() is  None
@@ -1149,7 +1149,7 @@ def test_gettz_weakref():
     del NYC1
     gc.collect()
 
-    assert NYC_ref() is not None # Because strong cache should keep it
+    assert NYC_ref() is not None        # Should still be in the strong cache
     assert tz.gettz('America/New_York') is NYC_ref()
 
     # Populate strong cache with other timezones
@@ -1158,7 +1158,7 @@ def test_gettz_weakref():
     tz.gettz('Australia/Currie')
 
     gc.collect()
-    assert NYC_ref() is None # Because strong cache should keep it
+    assert NYC_ref() is None    # Should have been pushed out
     assert tz.gettz('America/New_York') is not NYC_ref()
 
 class ZoneInfoGettzTest(GettzTest, WarningTestMixin):
