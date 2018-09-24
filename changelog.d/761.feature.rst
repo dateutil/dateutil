@@ -1,0 +1,1 @@
+Added a small "strong value" cache into ``tz.gettz``, ``tz.tzoffset`` and ``tz.tzstr`` to improve performance in the situation where transient references are repeatedly created to the same time zones, but no strong reference is continuously held. Patch by Gökçen Nurlu (gh issue #691, gh pr #761)
