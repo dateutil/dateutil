@@ -291,7 +291,7 @@ class parserinfo(object):
            ("s", "second", "seconds")]
     AMPM = [("am", "a"),
             ("pm", "p")]
-    UTCZONE = ["UTC", "GMT", "Z"]
+    UTCZONE = ["UTC", "GMT", "Z", "z"]
     PERTAIN = ["of"]
     TZOFFSET = {}
     # TODO: ERA = ["AD", "BC", "CE", "BCE", "Stardate",

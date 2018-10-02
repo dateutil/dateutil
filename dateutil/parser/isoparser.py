@@ -341,7 +341,7 @@ class isoparser(object):
         while pos < len_str and comp < 5:
             comp += 1
 
-            if timestr[pos:pos + 1] in b'-+Z':
+            if timestr[pos:pos + 1] in b'-+Zz':
                 # Detect time zone boundary
                 components[-1] = self._parse_tzstr(timestr[pos:])
                 pos = len_str
@@ -376,7 +376,7 @@ class isoparser(object):
         return components
 
     def _parse_tzstr(self, tzstr, zero_as_utc=True):
-        if tzstr == b'Z':
+        if tzstr == b'Z' or tzstr == b'z':
             return tz.tzutc()
 
         if len(tzstr) not in {3, 5, 6}:
