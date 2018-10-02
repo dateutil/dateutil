@@ -1,0 +1,1 @@
+Accept 'z' as valid UTC time zone in isoparser. Reported by @cjgibson (gh issue #820). Fixed by @Cheukting (gh pr #822)
