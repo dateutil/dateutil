@@ -228,6 +228,8 @@ def test_iso_ordinal(isoord, dt_expected):
     (b'20140204T123015.224', datetime(2014, 2, 4, 12, 30, 15, 224000)),
     (b'2014-02-04T12:30:15.224Z', datetime(2014, 2, 4, 12, 30, 15, 224000,
                                            tz.tzutc())),
+    (b'2014-02-04T12:30:15.224z', datetime(2014, 2, 4, 12, 30, 15, 224000,
+                                           tz.tzutc())),
     (b'2014-02-04T12:30:15.224+05:00',
         datetime(2014, 2, 4, 12, 30, 15, 224000,
                  tzinfo=tz.tzoffset(None, timedelta(hours=5))))])

@@ -472,6 +472,11 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(parse("1976-07-04T00:01:02Z", ignoretz=True),
                          datetime(1976, 7, 4, 0, 1, 2))
 
+    def testRandomFormat18(self):
+        self.assertEqual(parse("1986-07-05T08:15:30z",
+                               ignoretz=True),
+                         datetime(1986, 7, 5, 8, 15, 30))
+
     def testRandomFormat20(self):
         self.assertEqual(parse("Tue Apr 4 00:22:12 PDT 1995", ignoretz=True),
                          datetime(1995, 4, 4, 0, 22, 12))
