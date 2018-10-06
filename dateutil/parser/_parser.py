@@ -388,8 +388,8 @@ class parserinfo(object):
         if res.year is not None:
             res.year = self.convertyear(res.year, res.century_specified)
 
-        if (res.tzoffset == 0 and not res.tzname or res.tzname == 'Z'
-            or res.tzname == 'z'):
+        if ((res.tzoffset == 0 and not res.tzname) or
+             (res.tzname == 'Z' or res.tzname == 'z')):
             res.tzname = "UTC"
             res.tzoffset = 0
         elif res.tzoffset != 0 and res.tzname and self.utczone(res.tzname):
