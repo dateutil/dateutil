@@ -44,6 +44,7 @@ switch, and thus all their contributions are dual-licensed.
 - Florian Rathgeber (gh: @kynan) **D**
 - Gabriel Bianconi <gabriel@MASKED> (gh: @GabrielBianconi) **D**
 - Gabriel Poesia <gabriel.poesia@MASKED>
+- Gökçen Nurlu <gnurlu1@bloomberg.net> (gh: @gokcennurlu) **D**
 - Gustavo Niemeyer <gustavo@niemeyer.net> (gh: @niemeyer)
 - Holger Joukl <holger.joukl@MASKED> (gh: @hjoukl)
 - Igor <mrigor83@MASKED>

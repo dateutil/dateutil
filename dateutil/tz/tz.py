@@ -14,6 +14,7 @@ import sys
 import os
 import bisect
 import weakref
+from collections import OrderedDict
 
 import six
 from six import string_types
@@ -1538,6 +1539,8 @@ def __get_gettz():
         def __init__(self):
 
             self.__instances = weakref.WeakValueDictionary()
+            self.__strong_cache_size = 8
+            self.__strong_cache = OrderedDict()
             self._cache_lock = _thread.allocate_lock()
 
         def __call__(self, name=None):
@@ -1556,12 +1559,27 @@ def __get_gettz():
                         # We also cannot store weak references to None, so we
                         # will also not store that.
                         self.__instances[name] = rv
+                    else:
+                        # No need for strong caching, return immediately
+                        return rv
+
+                self.__strong_cache[name] = self.__strong_cache.pop(name, rv)
+
+                if len(self.__strong_cache) > self.__strong_cache_size:
+                    self.__strong_cache.popitem(last=False)
 
             return rv
+
+        def set_cache_size(self, size):
+            with self._cache_lock:
+                self.__strong_cache_size = size
+                while len(self.__strong_cache) > size:
+                    self.__strong_cache.popitem(last=False)
 
         def cache_clear(self):
             with self._cache_lock:
                 self.__instances = weakref.WeakValueDictionary()
+                self.__strong_cache.clear()
 
         @staticmethod
         def nocache(name=None):

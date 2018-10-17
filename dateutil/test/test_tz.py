@@ -746,7 +746,15 @@ def test_tzoffset_weakref():
     del UTC1
     gc.collect()
 
-    assert UTC_ref() is None
+    assert UTC_ref() is not None    # Should be in the strong cache
+    assert UTC_ref() is tz.tzoffset('UTC', 0)
+
+    # Fill the strong cache with other items
+    for offset in range(5,15):
+        tz.tzoffset('RandomZone', offset)
+
+    gc.collect()
+    assert UTC_ref() is  None
     assert UTC_ref() is not tz.tzoffset('UTC', 0)
 
 
@@ -1106,12 +1114,33 @@ def test_gettz_cache_clear():
 
     assert NYC1 is not NYC2
 
+@pytest.mark.gettz
+@pytest.mark.xfail(IS_WIN, reason='zoneinfo separately cached')
+def test_gettz_set_cache_size():
+    tz.gettz.cache_clear()
+    tz.gettz.set_cache_size(3)
+
+    MONACO_ref = weakref.ref(tz.gettz('Europe/Monaco'))
+    EASTER_ref = weakref.ref(tz.gettz('Pacific/Easter'))
+    CURRIE_ref = weakref.ref(tz.gettz('Australia/Currie'))
+
+    gc.collect()
+
+    assert MONACO_ref() is not None
+    assert EASTER_ref() is not None
+    assert CURRIE_ref() is not None
+
+    tz.gettz.set_cache_size(2)
+    gc.collect()
+
+    assert MONACO_ref() is None
 
 @pytest.mark.xfail(IS_WIN, reason="Windows does not use system zoneinfo")
 @pytest.mark.smoke
 @pytest.mark.gettz
 def test_gettz_weakref():
     tz.gettz.cache_clear()
+    tz.gettz.set_cache_size(2)
     NYC1 = tz.gettz('America/New_York')
     NYC_ref = weakref.ref(tz.gettz('America/New_York'))
 
@@ -1120,9 +1149,17 @@ def test_gettz_weakref():
     del NYC1
     gc.collect()
 
-    assert NYC_ref() is None
-    assert tz.gettz('America/New_York') is not NYC_ref()
+    assert NYC_ref() is not None        # Should still be in the strong cache
+    assert tz.gettz('America/New_York') is NYC_ref()
 
+    # Populate strong cache with other timezones
+    tz.gettz('Europe/Monaco')
+    tz.gettz('Pacific/Easter')
+    tz.gettz('Australia/Currie')
+
+    gc.collect()
+    assert NYC_ref() is None    # Should have been pushed out
+    assert tz.gettz('America/New_York') is not NYC_ref()
 
 class ZoneInfoGettzTest(GettzTest, WarningTestMixin):
     def gettz(self, name):
@@ -1460,6 +1497,13 @@ def test_tzstr_weakref():
     assert tz_t1 is tz_t2_ref()
 
     del tz_t1
+    gc.collect()
+
+    assert tz_t2_ref() is not None
+    assert tz.tzstr('EST5EDT') is tz_t2_ref()
+
+    for offset in range(5,15):
+        tz.tzstr('GMT+{}'.format(offset))
     gc.collect()
 
     assert tz_t2_ref() is None
