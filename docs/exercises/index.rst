@@ -66,8 +66,7 @@ To solve this exercise, copy-paste this script into a document, change anything 
 
     </details>
 
-
-
+    
 Next Monday meeting
 -------------------
 
@@ -89,7 +88,6 @@ To solve this exercise, copy-paste this script into a document, change anything 
 
     def next_monday(dt):
         <<YOUR CODE HERE>>
-
     # ---------------------------------- #
 
     from datetime import datetime
@@ -118,6 +116,7 @@ To solve this exercise, copy-paste this script into a document, change anything 
 
     </details>
 
+    +A solution to this problem is provided :doc:`here <solutions/next-monday-relativedelta>`.
 
 Parsing a local tzname
 ----------------------
