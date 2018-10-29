@@ -381,8 +381,10 @@ def __make_date_examples():
 def test_parse_isodate(d, dt_fmt, as_bytes):
     d_str = d.strftime(dt_fmt)
     if isinstance(d_str, six.text_type) and as_bytes:
+        print('Inside text_type date')
         d_str = d_str.encode('ascii')
     elif isinstance(d_str, bytes) and not as_bytes:
+        print('Inside bytes date')
         d_str = d_str.decode('ascii')
 
     iparser = isoparser()
@@ -455,8 +457,10 @@ def __make_time_examples():
 def test_isotime(time_val, time_fmt, as_bytes):
     tstr = time_val.strftime(time_fmt)
     if isinstance(time_val, six.text_type) and as_bytes:
+        print('Inside text_type time')
         tstr = tstr.encode('ascii')
     elif isinstance(time_val, bytes) and not as_bytes:
+        print('Inside bytes time')
         tstr = tstr.decode('ascii')
 
     iparser = isoparser()
