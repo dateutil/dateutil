@@ -313,7 +313,7 @@ def test_isoparser_byte_sep():                                  #pragma: no cove
 
     dt_rt = isoparser(sep=b'T').isoparse(dt_str)                #pragma: no cover
 
-    assert dt == dt_str                                         #pragma: no cover
+    assert dt == dt_rt                                          #pragma: no cover
 
 
 ###
