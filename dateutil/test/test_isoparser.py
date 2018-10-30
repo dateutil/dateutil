@@ -286,14 +286,14 @@ def test_iso_with_sep_raises(sep_act, valid_sep, exception):
         parser.isoparse(isostr)
 
 
-@pytest.mark.xfail()
+@pytest.mark.xfail()                            #pragma: no cover
 @pytest.mark.parametrize('isostr,exception', [
     ('20120425T01:2000', ValueError),           # Inconsistent time separators
 ])
 def test_iso_raises_failing(isostr, exception):
     # These are test cases where the current implementation is too lenient
     # and need to be fixed
-    with pytest.raises(exception):
+    with pytest.raises(exception):              #pragma: no cover
         isoparse(isostr)
 
 
@@ -306,7 +306,7 @@ def test_isoparser_invalid_sep(sep):
 
 
 # This only fails on Python 3
-@pytest.mark.xfail(six.PY3, reason="Fails on Python 3 only")
+@pytest.mark.xfail(six.PY3, reason="Fails on Python 3 only")    #pragma: no cover
 def test_isoparser_byte_sep():
     dt = datetime(2017, 12, 6, 12, 30, 45)
     dt_str = dt.isoformat(sep=str('T'))
@@ -379,13 +379,19 @@ def __make_date_examples():
 @pytest.mark.parametrize('d,dt_fmt', __make_date_examples())
 @pytest.mark.parametrize('as_bytes', [True, False])
 def test_parse_isodate(d, dt_fmt, as_bytes):
-    d_str = d.strftime(dt_fmt)
-    if isinstance(d_str, six.text_type) and as_bytes:
-        print('Inside text_type date')
-        d_str = d_str.encode('ascii')
-    elif isinstance(d_str, bytes) and not as_bytes:
-        print('Inside bytes date')
-        d_str = d_str.decode('ascii')
+    if six.PY2:
+        #strftime returns str in python2
+        d_str_s = unicode(d.strftime(dt_fmt))
+    else:
+        d_str_s = d.strftime(dt_fmt)
+
+    d_str_b = d.strftime(dt_fmt).encode('ascii') #encode to bytes to test
+
+    for d_str in d_str_s, d_str_b:
+        if isinstance(d_str, six.text_type) and as_bytes:
+            d_str = d_str.encode('ascii')
+        elif isinstance(d_str, bytes) and not as_bytes:
+            d_str = d_str.decode('ascii')
 
     iparser = isoparser()
     assert iparser.parse_isodate(d_str) == d
@@ -401,7 +407,7 @@ def test_parse_isodate(d, dt_fmt, as_bytes):
     ('2014-04-19T', ValueError),                # Unknown components
 ])
 def test_isodate_raises(isostr, exception):
-    with pytest.raises(exception):
+    with pytest.raises(exception):              #pragma: no cover
         isoparser().parse_isodate(isostr)
 
 
@@ -455,13 +461,18 @@ def __make_time_examples():
 @pytest.mark.parametrize('time_val,time_fmt', __make_time_examples())
 @pytest.mark.parametrize('as_bytes', [True, False])
 def test_isotime(time_val, time_fmt, as_bytes):
-    tstr = time_val.strftime(time_fmt)
-    if isinstance(time_val, six.text_type) and as_bytes:
-        print('Inside text_type time')
-        tstr = tstr.encode('ascii')
-    elif isinstance(time_val, bytes) and not as_bytes:
-        print('Inside bytes time')
-        tstr = tstr.decode('ascii')
+    if six.PY2:
+        tstr_s = unicode(time_val.strftime(time_fmt))
+    else:
+        tstr_s = time_val.strftime(time_fmt)
+
+    tstr_b = time_val.strftime(time_fmt).encode('ascii')
+
+    for tstr in tstr_s, tstr_b:
+        if isinstance(time_val, six.text_type) and as_bytes:
+            tstr = tstr.encode('ascii')
+        elif isinstance(time_val, bytes) and not as_bytes:
+            tstr = tstr.decode('ascii')
 
     iparser = isoparser()
 
@@ -505,16 +516,16 @@ def test_isotime_midnight(isostr):
 ])
 def test_isotime_raises(isostr, exception):
     iparser = isoparser()
-    with pytest.raises(exception):
+    with pytest.raises(exception):              #pragma: no cover
         iparser.parse_isotime(isostr)
 
 
-@pytest.mark.xfail()
+@pytest.mark.xfail()                            #pragma: no cover
 @pytest.mark.parametrize('isostr,exception', [
     ('14:3015', ValueError),                    # Inconsistent separator use
     ('201202', ValueError)                      # Invalid ISO format
 ])
 def test_isotime_raises_xfail(isostr, exception):
     iparser = isoparser()
-    with pytest.raises(exception):
+    with pytest.raises(exception):              #pragma: no cover
         iparser.parse_isotime(isostr)
