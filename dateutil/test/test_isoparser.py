@@ -469,9 +469,9 @@ def test_isotime(time_val, time_fmt, as_bytes):
     tstr_b = time_val.strftime(time_fmt).encode('ascii')
 
     for tstr in tstr_s, tstr_b:
-        if isinstance(time_val, six.text_type) and as_bytes:
+        if isinstance(tstr, six.text_type) and as_bytes:
             tstr = tstr.encode('ascii')
-        elif isinstance(time_val, bytes) and not as_bytes:
+        elif isinstance(tstr, bytes) and not as_bytes:
             tstr = tstr.decode('ascii')
 
     iparser = isoparser()
