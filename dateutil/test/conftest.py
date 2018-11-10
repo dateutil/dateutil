@@ -1,4 +1,21 @@
 import os
+import pytest
+
+
+# Configure pytest to ignore xfailing tests
+# See: https://stackoverflow.com/a/53198349/467366
+def pytest_collection_modifyitems(items):
+    for item in items:
+        # Python 3.3 support
+        marker_getter = getattr(item, 'get_closest_marker',
+                                getattr(item, 'get_marker'))
+
+        marker = marker_getter('xfail')
+
+        # Need to query the args because conditional xfail tests still have
+        # the xfail mark even if they are not expected to fail
+        if marker and (not marker.args or marker.args[0]):
+            item.add_marker(pytest.mark.no_cover)
 
 
 def set_tzpath():
