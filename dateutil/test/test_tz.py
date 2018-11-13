@@ -2635,22 +2635,22 @@ class DatetimeExistsTest(unittest.TestCase):
         self.assertFalse(tz.datetime_exists(dt, tz=AEST))
 
 
-class EnfoldTest(unittest.TestCase):
-    def testEnterFoldDefault(self):
+class TestEnfold:
+    def test_enter_fold_default(self):
         dt = tz.enfold(datetime(2020, 1, 19, 3, 32))
 
-        self.assertEqual(dt.fold, 1)
+        assert dt.fold == 1
 
-    def testEnterFold(self):
+    def test_enter_fold(self):
         dt = tz.enfold(datetime(2020, 1, 19, 3, 32), fold=1)
 
-        self.assertEqual(dt.fold, 1)
+        assert dt.fold == 1
 
-    def testExitFold(self):
+    def test_exit_fold(self):
         dt = tz.enfold(datetime(2020, 1, 19, 3, 32), fold=0)
 
         # Before Python 3.6, dt.fold won't exist if fold is 0.
-        self.assertEqual(getattr(dt, 'fold', 0), 0)
+        assert getattr(dt, 'fold', 0) == 0
 
 
 @pytest.mark.tz_resolve_imaginary
