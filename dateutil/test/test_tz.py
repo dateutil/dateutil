@@ -2661,6 +2661,12 @@ class TestEnfold:
         assert dt2 == tz.enfold(datetime(1952, 2, 3, 13, 31, 16, 9), fold=1)
         assert dt2.fold == 1
 
+    def test_fold_replace_exception_duplicate_args(self):
+        dt = tz.enfold(datetime(1999, 1, 3), fold=1)
+
+        with pytest.raises(TypeError):
+            dt.replace(1950, year=2000)
+
 
 @pytest.mark.tz_resolve_imaginary
 class ImaginaryDateTest(unittest.TestCase):
