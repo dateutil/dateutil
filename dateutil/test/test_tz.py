@@ -2652,6 +2652,15 @@ class TestEnfold:
         # Before Python 3.6, dt.fold won't exist if fold is 0.
         assert getattr(dt, 'fold', 0) == 0
 
+    def test_fold_replace_args(self):
+        # This test can be dropped when Python < 3.6 is dropped, since it
+        # is mainly to cover the `replace` method on _DatetimeWithFold
+        dt = tz.enfold(datetime(1950, 1, 2, 12, 30, 15, 8), fold=1)
+
+        dt2 = dt.replace(1952, 2, 3, 13, 31, 16, 9)
+        assert dt2 == tz.enfold(datetime(1952, 2, 3, 13, 31, 16, 9), fold=1)
+        assert dt2.fold == 1
+
 
 @pytest.mark.tz_resolve_imaginary
 class ImaginaryDateTest(unittest.TestCase):
