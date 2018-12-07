@@ -347,11 +347,11 @@ class rrule(rrulebase):
         YEARLY, an interval of 2 means once every two years, but with HOURLY,
         it means once every two hours. The default interval is 1.
     :param wkst:
-        The week start day. Must be one of the MO, TU, WE constants, or an
-        integer, specifying the first day of the week. This will affect
-        recurrences based on weekly periods. The default week start is got
-        from calendar.firstweekday(), and may be modified by
-        calendar.setfirstweekday().
+        The week start day. Must be one of the constants (MO, TU, WE, etc) or 
+        an integer specifying the first day of the week. This will affect
+        recurrences based on weekly periods. If not specified, 
+        calendar.firstweekday() will be used as the default. This value may 
+        be modified by calendar.setfirstweekday().
     :param count:
         If given, this determines how many occurrences will be generated.
 
