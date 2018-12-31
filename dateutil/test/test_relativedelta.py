@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-from ._common import WarningTestMixin, NotAValue
+from ._common import WarningTestMixin, NotAValue, ComparesEqual
 
 import calendar
 from datetime import datetime, date, timedelta
@@ -302,6 +302,26 @@ class RelativeDeltaTest(WarningTestMixin, unittest.TestCase):
 
         self.assertEqual(d1, d2)
         self.assertNotEqual(d1, d3)
+
+    def testNotImplementedComparison(self):
+        with self.assertRaises(TypeError):
+            relativedelta(month=1) > relativedelta(days=30)
+
+        with self.assertRaises(TypeError):
+            relativedelta(month=1) >= relativedelta(days=30)
+
+        with self.assertRaises(TypeError):
+            relativedelta(month=1) < relativedelta(days=30)
+
+        with self.assertRaises(TypeError):
+            relativedelta(month=1) <= relativedelta(days=30)
+
+    def textCustomComparison(self):
+        rd = relativedelta(month=1)
+        assert rd(month=1) < ComparesEqual
+        assert rd(month=1) <= ComparesEqual
+        assert not rd(month=1) > ComparesEqual
+        assert not rd(month=1) >= ComparesEqual
 
     def testInequalityTypeMismatch(self):
         # Different type

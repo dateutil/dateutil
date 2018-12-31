@@ -5,7 +5,7 @@ import calendar
 import operator
 from math import copysign
 
-from six import integer_types
+from six import integer_types, PY2
 from warnings import warn
 
 from ._common import weekday
@@ -13,6 +13,16 @@ from ._common import weekday
 MO, TU, WE, TH, FR, SA, SU = weekdays = tuple(weekday(x) for x in range(7))
 
 __all__ = ["relativedelta", "MO", "TU", "WE", "TH", "FR", "SA", "SU"]
+
+
+if PY2:
+    def _mk_cmp(op):
+        m = "'{op}' not supported between instances of '{name}' and '{name}'"
+        def not_implemented(self, other):
+            if isinstance(other, self.__class__):
+                raise TypeError(m.format(op=op, name=self.__class__.__name__))
+            return NotImplemented
+        return not_implemented
 
 
 class relativedelta(object):
@@ -591,6 +601,13 @@ class relativedelta(object):
                 l.append("{attr}={value}".format(attr=attr, value=repr(value)))
         return "{classname}({attrs})".format(classname=self.__class__.__name__,
                                              attrs=", ".join(l))
+
+    if PY2:
+        # Backport Python 3-like failure semantics into this class
+        __lt__ = _mk_cmp('<')
+        __le__ = _mk_cmp('<=')
+        __gt__ = _mk_cmp('>')
+        __ge__ = _mk_cmp('>=')
 
 
 def _sign(x):

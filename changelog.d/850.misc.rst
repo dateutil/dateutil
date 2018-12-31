@@ -1,0 +1,3 @@
+Breaking change, not implemented comparison operations between relativedelta
+objects for Python2 now works like in Python3 (methods >, >=, <, <=
+rise TypeError). Added by @jettify (gh pr #850)

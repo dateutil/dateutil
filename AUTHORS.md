@@ -72,6 +72,7 @@ switch, and thus all their contributions are dual-licensed.
 - Mike Gilbert <floppym@MASKED>
 - Nicholas Herrriot <Nicholas.Herriot@gmail.com> **D**
 - Nick Smith <nick.smith@MASKED>
+- Nikolay Novik (gh: @jettify) **D**
 - Orson Adams <orson.network@MASKED> (gh: @parsethis) **D**
 - Paul Dickson (gh @prdickson) **D**
 - Paul Ganssle <paul@ganssle.io> (gh: @pganssle) **R**
