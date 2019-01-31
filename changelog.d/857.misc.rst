@@ -1,0 +1,2 @@
+Fixed issue with get_marker API change introduced by pytest version >= 4.0
+Reported and fixed by @nicoe (gh issue #857, pr #858)
