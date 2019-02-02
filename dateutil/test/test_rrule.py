@@ -3518,21 +3518,18 @@ class RRuleTest(WarningTestMixin, unittest.TestCase):
         self._rrulestr_reverse_test(rrule(MONTHLY,
                                           count=4,
                                           dtstart=datetime(2014, 12, 31),
-                                          rscale='GREGORY',
                                           skip='OMIT'))
 
     def testToStrMonthlySkipBackward(self):
         self._rrulestr_reverse_test(rrule(MONTHLY,
                                           count=4,
                                           dtstart=datetime(2014, 12, 31),
-                                          rscale='GREGORY',
                                           skip='BACKWARD'))
 
     def testToStrMonthlySkipForward(self):
         self._rrulestr_reverse_test(rrule(MONTHLY,
                                           count=4,
                                           dtstart=datetime(2014, 12, 31),
-                                          rscale='GREGORY',
                                           skip='FORWARD'))
 
     def testToStrWeekly(self):

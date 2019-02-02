@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 The rrule module offers a small, complete, and very fast, implementation of
 the recurrence rules documented in the
@@ -428,18 +427,12 @@ class rrule(rrulebase):
         Can be either 'OMIT' (same as None), 'BACKWARD' or 'FORWARD'.
      """
 
-    # List taken from https://www.unicode.org/repos/cldr/tags/latest/common/bcp47/calendar.xml
-    VALID_RSCALES = {'GREGORIAN', 'GREGORY',
-                     'BUDDHIST', 'CHINESE', 'COPTIC', 'DANGI', 'ETHIOAA', 'ETHIOPIC',
-                     'HEBREW', 'INDIAN', 'ISLAMIC', 'JAPANESE', 'PERSIAN', 'ROC'}
-
     def __init__(self, freq, dtstart=None,
                  interval=1, wkst=None, count=None, until=None, bysetpos=None,
                  bymonth=None, bymonthday=None, byyearday=None, byeaster=None,
                  byweekno=None, byweekday=None,
                  byhour=None, byminute=None, bysecond=None,
-                 rscale=None, skip=None,
-                 cache=False):
+                 skip=None, cache=False):
         super(rrule, self).__init__(cache)
         global easter
         if not dtstart:
@@ -693,29 +686,15 @@ class rrule(rrulebase):
             self._bysecond = tuple(sorted(self._bysecond))
             self._original_rule['bysecond'] = self._bysecond
 
-        # rscale
-        if rscale is not None:
-            rscale = rscale.upper()
-            if rscale in self.VALID_RSCALES:
-                if rscale not in {'GREGORY', 'GREGORIAN'}:
-                    raise NotImplementedError('Non-gregorian calendar '
-                                              '{} not supported.'.format(rscale))
-            else:
-                raise ValueError('Invalid RSCALE component: {}'.format(rscale))
-            self._original_rule['rscale'] = rscale
-
         # skip
         if skip is not None:
             skip = skip.upper()
             if skip not in {'OMIT', 'BACKWARD', 'FORWARD'}:
-                raise ValueError('Invalid SKIP component: {}'.format(rscale))
+                raise ValueError('Invalid SKIP component: {}'.format(skip))
 
             self._skip = skip
             self._original_rule['skip'] = skip
-
-            # ensure rscale is set
-            if 'rscale' not in self._original_rule:
-                self._original_rule['rscale'] = 'GREGORIAN'
+            self._original_rule['rscale'] = 'GREGORIAN'
         else:
             self._skip = 'OMIT'
 
@@ -1607,6 +1586,11 @@ class _rrulestr(object):
 
     _handle_BYDAY = _handle_BYWEEKDAY
 
+    # List taken from https://www.unicode.org/repos/cldr/tags/latest/common/bcp47/calendar.xml
+    _VALID_RSCALES = {'GREGORIAN', 'GREGORY', 'BUDDHIST', 'CHINESE', 'COPTIC',
+                      'DANGI', 'ETHIOAA', 'ETHIOPIC', 'HEBREW', 'INDIAN',
+                      'ISLAMIC', 'JAPANESE', 'PERSIAN', 'ROC'}
+
     def _parse_rfc_rrule(self, line,
                          dtstart=None,
                          cache=False,
@@ -1631,8 +1615,22 @@ class _rrulestr(object):
                 raise ValueError("unknown parameter '%s'" % name)
             except (KeyError, ValueError):
                 raise ValueError("invalid '%s': %s" % (name, value))
+
         if 'skip' in rrkwargs and 'rscale' not in rrkwargs:
             raise ValueError("SKIP must have a RSCALE")
+
+        if 'rscale' in rrkwargs:
+            # Only the Gregorian calendar is supported at the moment
+            rscale = rrkwargs.pop('rscale')
+
+            if rscale not in self._VALID_RSCALES:
+                msg = "Invalid RSCALE value: %s" % rscale
+                raise ValueError(msg)
+
+            if rscale not in {'GREGORIAN', 'GREGORY'}:
+                msg = "Unsupported RSCALE value: %s" % rscale
+                raise NotImplementedError(msg)
+
         return rrule(dtstart=dtstart, cache=cache, **rrkwargs)
 
     def _parse_rfc(self, s,
