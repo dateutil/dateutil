@@ -1,0 +1,2 @@
+Implemented the "SKIP" option in rrule, per RFC 7529. Implemented by
+@yoch (gh issue #285, pr #522)
