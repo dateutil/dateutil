@@ -1095,8 +1095,6 @@ def test_gettz_badzone(badzone):
 
 
 @pytest.mark.gettz
-@pytest.mark.xfail(IS_WIN and PY2,
-                   reason='tzwin fails with non-unicode characters on 2.7')
 def test_gettz_badzone_unicode():
     # Make sure a unicode string can be passed to TZ (GH #802)
     # When fixed, combine this with test_gettz_badzone
