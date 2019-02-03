@@ -71,6 +71,7 @@ switch, and thus all their contributions are dual-licensed.
 - Michael J. Schultz <mjschultz@MASKED>
 - Mike Gilbert <floppym@MASKED>
 - Nicholas Herrriot <Nicholas.Herriot@gmail.com> **D**
+- Nicolas Évrard (gh: @nicoe) **D**
 - Nick Smith <nick.smith@MASKED>
 - Orson Adams <orson.network@MASKED> (gh: @parsethis) **D**
 - Paul Dickson (gh @prdickson) **D**
