@@ -2853,6 +2853,16 @@ class RRuleTest(WarningTestMixin, unittest.TestCase):
                           datetime(1997, 9, 9, 9, 0),
                           datetime(1997, 9, 16, 9, 0)])
 
+    def testStrSetExDateMultiple(self):
+        rrstr = ("DTSTART:19970902T090000\n"
+                 "RRULE:FREQ=YEARLY;COUNT=6;BYDAY=TU,TH\n"
+                 "EXDATE:19970904T090000,19970911T090000,19970918T090000\n")
+
+        rr = rrulestr(rrstr)
+        assert list(rr) == [datetime(1997, 9, 2, 9, 0),
+                            datetime(1997, 9, 9, 9, 0),
+                            datetime(1997, 9, 16, 9, 0)]
+
     def testStrSetExDateWithTZID(self):
         BXL = tz.gettz('Europe/Brussels')
         rr = rrulestr("DTSTART;TZID=Europe/Brussels:19970902T090000\n"
@@ -2986,6 +2996,11 @@ class RRuleTest(WarningTestMixin, unittest.TestCase):
 
         self.assertEqual(list(rr), [datetime(1997, 9, 2, 0, 0, 0),
                                     datetime(1998, 9, 2, 0, 0, 0)])
+
+    def testStrMultipleDTStartComma(self):
+        with pytest.raises(ValueError):
+            rr = rrulestr("DTSTART:19970101T000000,19970202T000000\n"
+                          "RRULE:FREQ=YEARLY;COUNT=1")
 
     def testStrInvalidUntil(self):
         with self.assertRaises(ValueError):
