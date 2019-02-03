@@ -2853,7 +2853,6 @@ class RRuleTest(WarningTestMixin, unittest.TestCase):
                           datetime(1997, 9, 9, 9, 0),
                           datetime(1997, 9, 16, 9, 0)])
 
-    @pytest.mark.xfail
     def testStrSetExDateWithTZID(self):
         BXL = tz.gettz('Europe/Brussels')
         rr = rrulestr("DTSTART;TZID=Europe/Brussels:19970902T090000\n"
@@ -2888,7 +2887,6 @@ class RRuleTest(WarningTestMixin, unittest.TestCase):
         rr = rrulestr(rrstr)
         assert list(rr) == [datetime(1997, 9, 4, 9), datetime(1997, 9, 11, 9)]
 
-    @pytest.mark.xfail
     def testStrSetExDateValueDateTimeWithTZID(self):
         BXL = tz.gettz('Europe/Brussels')
         rrstr = '\n'.join([
@@ -2902,7 +2900,6 @@ class RRuleTest(WarningTestMixin, unittest.TestCase):
         assert list(rr) == [datetime(1997, 9, 4, 9, tzinfo=BXL),
                             datetime(1997, 9, 11, 9, tzinfo=BXL)]
 
-    @pytest.mark.xfail
     def testStrSetExDateValueDate(self):
         rrstr = '\n'.join([
             "DTSTART;VALUE=DATE:19970902",

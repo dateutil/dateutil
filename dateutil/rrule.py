@@ -435,7 +435,7 @@ class rrule(rrulebase):
         if not dtstart:
             if until and until.tzinfo:
                 dtstart = datetime.datetime.now(tz=until.tzinfo).replace(microsecond=0)
-            else:           
+            else:
                 dtstart = datetime.datetime.now().replace(microsecond=0)
         elif not isinstance(dtstart, datetime.datetime):
             dtstart = datetime.datetime.fromordinal(dtstart.toordinal())
@@ -1629,10 +1629,48 @@ class _rrulestr(object):
                         raise ValueError("unsupported EXRULE parm: "+parm)
                     exrulevals.append(value)
                 elif name == "EXDATE":
+                    value_found = False
+                    TZID = None
                     for parm in parms:
-                        if parm != "VALUE=DATE-TIME":
-                            raise ValueError("unsupported EXDATE parm: "+parm)
-                    exdatevals.append(value)
+                        if parm.startswith("TZID="):
+                            try:
+                                tzkey = TZID_NAMES[parm.split('TZID=')[-1]]
+                            except KeyError:
+                                continue
+                            if tzids is None:
+                                from . import tz
+                                tzlookup = tz.gettz
+                            elif callable(tzids):
+                                tzlookup = tzids
+                            else:
+                                tzlookup = getattr(tzids, 'get', None)
+                                if tzlookup is None:
+                                    msg = ('tzids must be a callable, ' +
+                                           'mapping, or None, ' +
+                                           'not %s' % tzids)
+                                    raise ValueError(msg)
+
+                            TZID = tzlookup(tzkey)
+                            continue
+                        if parm not in {"VALUE=DATE-TIME", "VALUE=DATE"}:
+                            raise ValueError("unsupported EXDATE parm: "
+                                             + parm)
+                        else:
+                            if value_found:
+                                msg = ("Duplicate value parameter found in "
+                                       "EXDATE: " + parm)
+                                raise ValueError(msg)
+                            value_found = True
+                    for datestr in value.split(','):
+                        exdate = parser.parse(datestr, ignoretz=ignoretz,
+                                             tzinfos=tzinfos)
+                        if TZID is not None:
+                            if exdate.tzinfo is None:
+                                exdate = exdate.replace(tzinfo=TZID)
+                            else:
+                                raise ValueError(
+                                    'EXDATE specifies multiple timezone')
+                        exdatevals.append(exdate)
                 elif name == "DTSTART":
                     # RFC 5445 3.8.2.4: The VALUE parameter is optional, but
                     # may be found only once.
@@ -1698,10 +1736,7 @@ class _rrulestr(object):
                                                       ignoretz=ignoretz,
                                                       tzinfos=tzinfos))
                 for value in exdatevals:
-                    for datestr in value.split(','):
-                        rset.exdate(parser.parse(datestr,
-                                                 ignoretz=ignoretz,
-                                                 tzinfos=tzinfos))
+                    rset.exdate(value)
                 if compatible and dtstart:
                     rset.rdate(dtstart)
                 return rset
