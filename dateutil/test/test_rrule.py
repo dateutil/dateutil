@@ -4934,3 +4934,21 @@ class WeekdayTest(unittest.TestCase):
 
         for repstr, wday in zip(with_n_reprs, with_n_wdays):
             self.assertEqual(repr(wday), repstr)
+
+
+@pytest.mark.rrule
+@pytest.mark.xfail
+@pytest.mark.parametrize('rrkwargs, exp', [
+    ({}, [datetime(2015, 1, 31), datetime(2015, 3, 31)]),
+    ({'skip': OMIT},
+     [datetime(2015, 1, 31), datetime(2015, 3, 31)]),
+    ({'skip': BACKWARD},
+     [datetime(2015, 1, 31), datetime(2015, 2, 28)]),
+    ({'skip': FORWARD},
+     [datetime(2015, 1, 31), datetime(2015, 3, 1)]),
+])
+def test_skip_bymonthday(rrkwargs, exp):
+    rr = rrule(MONTHLY, dtstart=datetime(2015, 1, 1), bymonthday=31, count=2)
+    rr = rr.replace(**rrkwargs)
+
+    assert list(rr) == exp
