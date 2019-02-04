@@ -1,1 +1,0 @@
-Started testing against Python 3.7 on Linux. (gh pr #784)

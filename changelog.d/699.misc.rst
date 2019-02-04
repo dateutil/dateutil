@@ -1,2 +1,0 @@
-Added unittest to check if tz's objects repr contains the "name" attribute of an input fileobject.
-Added by @Bergvca (gh pr #699)

@@ -1,1 +1,0 @@
-Remove deprecated requires from setup.py. Reported by @mhsmith (gh issue #720). Fixed by @cssherry (gh pr #752)

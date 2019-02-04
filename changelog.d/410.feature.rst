@@ -1,2 +1,0 @@
-Added support for EXDATE parameters when parsing rrule strings.
-Reported by @mlorant (gh issue #410), fixed by @nicoe (gh pr #859).
