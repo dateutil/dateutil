@@ -960,11 +960,11 @@ class tzrange(tzrangebase):
         except (TypeError, AttributeError):
             pass
 
-        if stdoffset and not (datetime.timedelta(hours=-24).total_seconds() <= stdoffset <= datetime.timedelta(hours=24).total_seconds()):
-            tzrange_error_message = "Invalid timezone offset, " + \
-                                    "offset must be a timedelta strictly between: " +\
-                                    "-timedelta(hours=24) and timedelta(hours=24)"
-            raise ValueError(tzrange_error_message)
+
+        if stdoffset and not -86400 < stdoffset < 86400:
+            msg = ("Invalid stdoffset: offset must be strictly between " +
+                   "-24 hours and 24 hours.")
+            raise ValueError(msg)
 
         if stdoffset is not None:
             self._std_offset = datetime.timedelta(seconds=stdoffset)
@@ -977,6 +977,14 @@ class tzrange(tzrangebase):
             self._dst_offset = self._std_offset + datetime.timedelta(hours=+1)
         else:
             self._dst_offset = ZERO
+
+        if (self._dst_offset is not ZERO and
+            not (datetime.timedelta(hours=-24) < self._dst_offset
+                 < datetime.timedelta(hours=24))):
+            msg = ("Invalid dstoffset: offset must be strictly between " +
+                   "-24 hours and 24 hours.")
+            raise ValueError(msg)
+
 
         if dstabbr and start is None:
             self._start_delta = relativedelta.relativedelta(
