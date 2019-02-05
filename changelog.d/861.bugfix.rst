@@ -1,1 +1,0 @@
-Fixed error condition in ``tz.gettz`` when a non-ASCII timezone is passed on Windows in Python 2.7. (gh issue #802, pr #861)

@@ -1,1 +1,0 @@
-Added a ``build-system.build-backend`` key in ``pyproject.toml`` and explicitly started shipping the ``pyproject.toml`` file in source distributions. (gh pr #863)

@@ -1,1 +1,0 @@
-Changed the default theme to sphinx_rtd_theme, and changed the sphinx configuration to go along with that. (gh pr #707)

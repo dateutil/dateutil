@@ -1,3 +1,120 @@
+Version 2.8.0 (2019-02-04)
+==========================
+
+Data updates
+------------
+
+- Updated tzdata version to to 2018i.
+
+
+Features
+--------
+
+- Added support for ``EXDATE`` parameters when parsing ``rrule`` strings.
+  Reported by @mlorant (gh issue #410), fixed by @nicoe (gh pr #859).
+- Added support for sub-minute time zone offsets in Python 3.6+.
+  Fixed by @cssherry (gh issue #582, pr #763)
+- Switched the ``tzoffset``, ``tzstr`` and ``gettz`` caches over to using weak
+  references, so that the cache expires when no other references to the
+  original ``tzinfo`` objects exist. This cache-expiry behavior is not
+  guaranteed in the public interface and may change in the future. To improve
+  performance in the case where transient references to the same time zones
+  are repeatedly created but no strong reference is continuously held, a
+  smaller "strong value" cache was also added. Weak value cache implemented by
+  @cs-cordero (gh pr #672, #801), strong cache added by
+  Gökçen Nurlu (gh issue #691, gh pr #761)
+
+
+Bugfixes
+--------
+
+- Added time zone inference when initializing an ``rrule`` with a specified
+  ``UNTIL`` but without an explicitly specified ``DTSTART``; the time zone
+  of the generated ``DTSTART`` will now be taken from the ``UNTIL`` rule.
+  Reported by @href (gh issue #652). Fixed by @absreim (gh pr #693).
+- Fixed an issue where ``parser.parse`` would raise ``Decimal``-specific errors
+  instead of a standard ``ValueError`` if certain malformed values were parsed
+  (e.g. ``NaN`` or infinite values). Reported and fixed by
+  @amureki (gh issue #662, gh pr #679).
+- Fixed issue in ``parser`` where a ``tzinfos`` call explicitly returning
+  ``None`` would throw a ``ValueError``.
+  Fixed by @parsethis (gh issue #661, gh pr #681)
+- Fixed incorrect parsing of certain dates earlier than 100 AD when repesented
+  in the form "%B.%Y.%d", e.g. "December.0031.30". (gh issue #687, pr #700)
+- Add support for ISO 8601 times with comma as the decimal separator in the
+  ``dateutil.parser.isoparse`` function. (gh pr #721)
+- Changed handling of ``T24:00`` to be compliant with the standard. ``T24:00``
+  now represents midnight on the *following* day.
+  Fixed by @cheukting (gh issue #658, gh pr #751)
+- Fixed an issue where ``isoparser.parse_isotime`` was unable to handle the
+  ``24:00`` variant representation of midnight. (gh pr #773)
+- Added support for more than 6 fractional digits in `isoparse`.
+  Reported and fixed by @jayschwa (gh issue #786, gh pr #787).
+- Added 'z' (lower case Z) as valid UTC time zone in isoparser.
+  Reported by @cjgibson (gh issue #820). Fixed by @Cheukting (gh pr #822)
+- Fixed a bug with base offset changes during DST in ``tzfile``, and refactored
+  the way base offset changes are detected. Originally reported on
+  StackOverflow by @MartinThoma. (gh issue #812, gh pr #810)
+- Fixed error condition in ``tz.gettz`` when a non-ASCII timezone is passed on
+  Windows in Python 2.7. (gh issue #802, pr #861)
+- Improved performance and inspection properties of ``tzname`` methods.
+  (gh pr #811)
+- Removed unnecessary binary_type compatibility shims.
+  Added by @jdufresne (gh pr #817)
+- Changed ``python setup.py test`` to print an error to ``stderr`` and exit
+  with 1 instead of 0. Reported and fixed by @hroncok (gh pr #814)
+- Added a ``pyproject.toml`` file with build requirements and an explicitly
+  specified build backend. (gh issue #736, gh prs #746, #863)
+
+
+Documentation changes
+---------------------
+
+- Added documentation for the ``rrule.rrulestr`` function.
+  Fixed by @prdickson (gh issue #623, gh pr #762)
+- Added documentation for ``dateutil.tz.gettz``.
+  Fixed by @weatherpattern (gh issue #647, gh pr #704)
+- Add documentation for the ``dateutil.tz.win`` module and mocked out certain
+  Windows-specific modules so that autodoc can still be run on non-Windows
+  systems. (gh issue #442, pr #715)
+- Added changelog to documentation. (gh issue #692, gh pr #707)
+- Changed order of keywords in the ``rrule`` docstring.
+  Reported and fixed by @rmahajan14 (gh issue #686, gh pr #695).
+- Improved documentation on the use of ``until`` and ``count`` parameters in
+  ``rrule``. Fixed by @lucaferocino (gh pr #755).
+- Added an example of how to use a custom ``parserinfo`` subclass to parse
+  non-standard datetime formats in the examples documentation for ``parser``.
+  Added by @prdickson (gh #753)
+- Added doctest examples to ``tzfile`` documentation.
+  Patch by @weatherpattern (gh pr #671)
+- Updated the documentation for ``relativedelta``'s ``weekday`` arguments.
+  Fixed by @kvn219 @huangy22 and @ElliotJH (gh pr #673)
+- Improved explanation of the order that ``relativedelta`` components are
+  applied in. Fixed by @kvn219 @huangy22 and @ElliotJH (gh pr #673)
+- Expanded the description and examples in the ``relativedelta`` class.
+  Contributed by @andrewcbennett (gh pr #759)
+- Improved the contributing documentation to clarify where to put new changelog
+  files. Contributed by @andrewcbennett (gh pr #757)
+- Fixed a broken doctest in the ``relativedelta`` module.
+  Fixed by @nherriot (gh pr #758).
+- Changed the default theme to ``sphinx_rtd_theme``, and changed the sphinx
+  configuration accordingly. (gh pr #707)
+- Reorganized ``dateutil.tz`` documentation and fixed issue with the
+  ``dateutil.tz`` docstring. (gh pr #714)
+- Cleaned up malformed RST in the ``tz`` documentation.
+  (gh issue #702, gh pr #706)
+- Corrected link syntax and updated URL to https for ISO year week number
+  notation in ``relativedelta`` examples. (gh issue #670, pr #711)
+
+
+Misc
+----
+
+- GH #674, GH #688, GH #699, GH #720, GH #723, GH #726, GH #727, GH #740,
+  GH #750, GH #760, GH #767, GH #772, GH #773, GH #780, GH #784, GH #785,
+  GH #791, GH #799, GH #813, GH #836, GH #839, GH #857
+
+
 Version 2.7.5 (2018-10-27)
 ==========================
 
