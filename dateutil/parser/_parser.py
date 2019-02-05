@@ -916,11 +916,16 @@ class parser(object):
                 res.second, res.microsecond = self._parsems(s[4:])
 
         elif len_li in (8, 12, 14):
-            # YYYYMMDD
+            # YYYYMMDD or DDMMYYYY
             s = tokens[idx]
-            ymd.append(s[:4], 'Y')
-            ymd.append(s[4:6])
-            ymd.append(s[6:8])
+            if int(s[4:6]) <= 12 and int(s[6:8]) <= 31:
+                ymd.append(s[:4], 'Y')
+                ymd.append(s[4:6])
+                ymd.append(s[6:8])
+            else:
+                ymd.append(s[4:], 'Y')
+                ymd.append(s[2:4])
+                ymd.append(s[:2])
 
             if len_li > 8:
                 res.hour = int(s[8:10])
