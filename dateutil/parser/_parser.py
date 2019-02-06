@@ -475,7 +475,7 @@ class _ymd(list):
 
         assert len(self) == len(strids)  # otherwise this should not be called
         out = {key: self[strids[key]] for key in strids}
-        return (out.get('y'), out.get('m'), out.get('d'))
+        return (out.get('y'), out.get('m'), out.get('d'), None)
 
     def resolve_ymd(self, yearfirst, dayfirst):
         len_ymd = len(self)
@@ -515,15 +515,19 @@ class _ymd(list):
             if self[0] > 31:
                 # 99-01
                 year, month = self
+                order = 'ym'
             elif self[1] > 31:
                 # 01-99
                 month, year = self
+                order = 'my'
             elif dayfirst and self[1] <= 12:
                 # 13-01
                 day, month = self
+                order = 'dm'
             else:
                 # 01-13
                 month, day = self
+                order = 'md'
 
         elif len_ymd == 3:
             # Three members
@@ -531,26 +535,32 @@ class _ymd(list):
                 if self[1] > 31:
                     # Apr-2003-25
                     month, year, day = self
+                    order = 'myd'
                 else:
                     month, day, year = self
+                    order = 'mdy'
             elif mstridx == 1:
                 if self[0] > 31 or (yearfirst and self[2] <= 31):
                     # 99-Jan-01
                     year, month, day = self
+                    order = 'ymd'
                 else:
                     # 01-Jan-01
                     # Give precendence to day-first, since
                     # two-digit years is usually hand-written.
                     day, month, year = self
+                    order = 'dmy'
 
             elif mstridx == 2:
                 # WTF!?
                 if self[1] > 31:
                     # 01-99-Jan
                     day, year, month = self
+                    order = 'dym'
                 else:
                     # 99-01-Jan
                     year, day, month = self
+                    order = 'ydm'
 
             else:
                 if (self[0] > 31 or
@@ -559,16 +569,20 @@ class _ymd(list):
                     # 99-01-01
                     if dayfirst and self[2] <= 12:
                         year, day, month = self
+                        order = 'ydm'
                     else:
                         year, month, day = self
+                        order = 'ymd'
                 elif self[0] > 12 or (dayfirst and self[1] <= 12):
                     # 13-01-01
                     day, month, year = self
+                    order = 'dmy'
                 else:
                     # 01-13-01
                     month, day, year = self
+                    order = 'mdy'
 
-        return year, month, day
+        return year, month, day, order
 
 
 class parser(object):
@@ -643,7 +657,7 @@ class parser(object):
             default = datetime.datetime.now().replace(hour=0, minute=0,
                                                       second=0, microsecond=0)
 
-        res, skipped_tokens = self._parse(timestr, **kwargs)
+        res, skipped_tokens, ymd_order = self._parse(timestr, **kwargs)
 
         if res is None:
             raise ValueError("Unknown string format:", timestr)
@@ -657,9 +671,9 @@ class parser(object):
             ret = self._build_tzaware(ret, res, tzinfos)
 
         if kwargs.get('fuzzy_with_tokens', False):
-            return ret, skipped_tokens
+            return ret, skipped_tokens, ymd_order
         else:
-            return ret
+            return ret, ymd_order
 
     class _result(_resultbase):
         __slots__ = ["year", "month", "day", "weekday",
@@ -856,7 +870,7 @@ class parser(object):
                 i += 1
 
             # Process year/month/day
-            year, month, day = ymd.resolve_ymd(yearfirst, dayfirst)
+            year, month, day, ymd_order = ymd.resolve_ymd(yearfirst, dayfirst)
 
             res.century_specified = ymd.century_specified
             res.year = year
@@ -864,16 +878,16 @@ class parser(object):
             res.day = day
 
         except (IndexError, ValueError):
-            return None, None
+            return None, None, None
 
         if not info.validate(res):
-            return None, None
+            return None, None, None
 
         if fuzzy_with_tokens:
             skipped_tokens = self._recombine_skipped(l, skipped_idxs)
-            return res, tuple(skipped_tokens)
+            return res, tuple(skipped_tokens), ymd_order
         else:
-            return res, None
+            return res, None, ymd_order
 
     def _parse_numeric_token(self, tokens, idx, info, ymd, res, fuzzy):
         # Token is a number
