@@ -77,4 +77,4 @@ steps:
   inputs:
     testResultsFiles: '**/TEST-*.xml'
     testRunTitle: '$(Agent.JobName)'
-  condition: succeededOrFailed()
+  condition: and(succeededOrFailed(), not(eq(variables['Agent.JobName'], 'Docs')))
