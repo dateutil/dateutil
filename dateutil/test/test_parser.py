@@ -14,7 +14,7 @@ from dateutil.parser import UnknownTimezoneWarning
 from ._common import TZEnvContext
 
 from six import assertRaisesRegex, PY3
-from six.moves import StringIO
+from io import StringIO
 
 import pytest
 
@@ -180,30 +180,20 @@ class TestFormat(unittest.TestCase):
             self.assertEqual(res, actual)
 
 
-class ParserTest(unittest.TestCase):
-
-    def setUp(self):
-        self.tzinfos = {"BRST": -10800}
-        self.brsttz = tzoffset("BRST", -10800)
-        self.default = datetime(2003, 9, 25)
-
-        # Parser should be able to handle bytestring and unicode
-        self.uni_str = '2014-05-01 08:00:00'
-        self.str_str = self.uni_str.encode()
-
-    def testEmptyString(self):
-        with self.assertRaises(ValueError):
+class TestInputFormats(object):
+    def test_empty_string_invalid(self):
+        with pytest.raises(ValueError):
             parse('')
 
-    def testNone(self):
-        with self.assertRaises(TypeError):
+    def test_none_invalid(self):
+        with pytest.raises(TypeError):
             parse(None)
 
-    def testInvalidType(self):
-        with self.assertRaises(TypeError):
+    def test_int_invalid(self):
+        with pytest.raises(TypeError):
             parse(13)
 
-    def testDuckTyping(self):
+    def test_duck_typing(self):
         # We want to support arbitrary classes that implement the stream
         # interface.
 
@@ -216,24 +206,48 @@ class ParserTest(unittest.TestCase):
 
         dstr = StringPassThrough(StringIO('2014 January 19'))
 
-        self.assertEqual(parse(dstr), datetime(2014, 1, 19))
+        res = parse(dstr)
+        expected = datetime(2014, 1, 19)
+        assert res == expected
 
-    def testParseStream(self):
+    def test_parse_stream(self):
         dstr = StringIO('2014 January 19')
 
-        self.assertEqual(parse(dstr), datetime(2014, 1, 19))
+        res = parse(dstr)
+        expected = datetime(2014, 1, 19)
+        assert res == expected
 
-    def testParseStr(self):
-        self.assertEqual(parse(self.str_str),
-                         parse(self.uni_str))
+    def test_parse_str(self):
+        # Parser should be able to handle bytestring and unicode
+        uni_str = '2014-05-01 08:00:00'
+        bytes_str = uni_str.encode()
 
-    def testParseBytes(self):
-        self.assertEqual(parse(b'2014 January 19'), datetime(2014, 1, 19))
+        res = parse(bytes_str)
+        expected = parse(uni_str)
+        assert res == expected
 
-    def testParseBytearray(self):
-        # GH #417
-        self.assertEqual(parse(bytearray(b'2014 January 19')),
-                         datetime(2014, 1, 19))
+    def test_parse_bytes(self):
+        res = parse(b'2014 January 19')
+        expected = datetime(2014, 1, 19)
+        assert res == expected
+
+    def test_parse_bytearray(self):
+        # GH#417
+        res = parse(bytearray(b'2014 January 19'))
+        expected = datetime(2014, 1, 19)
+        assert res == expected
+
+
+class ParserTest(unittest.TestCase):
+
+    def setUp(self):
+        self.tzinfos = {"BRST": -10800}
+        self.brsttz = tzoffset("BRST", -10800)
+        self.default = datetime(2003, 9, 25)
+
+        # Parser should be able to handle bytestring and unicode
+        self.uni_str = '2014-05-01 08:00:00'
+        self.str_str = self.uni_str.encode()
 
     def testParserParseStr(self):
         from dateutil.parser import parser
@@ -294,6 +308,7 @@ class ParserTest(unittest.TestCase):
                                    tzinfos={"BRST": long(-10800)}),
                              datetime(2003, 9, 25, 10, 36, 28,
                                       tzinfo=self.brsttz))
+
     def testDateCommandFormatIgnoreTz(self):
         self.assertEqual(parse("Thu Sep 25 10:36:28 BRST 2003",
                                ignoretz=True),
@@ -314,6 +329,11 @@ class ParserTest(unittest.TestCase):
                          datetime(2003, 9, 25, 10, 49, 41,
                                   tzinfo=self.brsttz))
 
+    def testISOFormatStrip2(self):
+        self.assertEqual(parse("2003-09-25T10:49:41+03:00"),
+                         datetime(2003, 9, 25, 10, 49, 41,
+                                  tzinfo=tzoffset(None, 10800)))
+
     def testISOStrippedFormat(self):
         self.assertEqual(parse("20030925T104941.5-0300"),
                          datetime(2003, 9, 25, 10, 49, 41, 500000,
@@ -323,6 +343,11 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(parse("20030925T104941-0300"),
                          datetime(2003, 9, 25, 10, 49, 41,
                                   tzinfo=self.brsttz))
+
+    def testISOStrippedFormatStrip2(self):
+        self.assertEqual(parse("20030925T104941+0300"),
+                         datetime(2003, 9, 25, 10, 49, 41,
+                                  tzinfo=tzoffset(None, 10800)))
 
     def testDateWithDash8(self):
         self.assertEqual(parse("10-09-2003", dayfirst=True),
@@ -447,6 +472,11 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(parse("1976-07-04T00:01:02Z", ignoretz=True),
                          datetime(1976, 7, 4, 0, 1, 2))
 
+    def testRandomFormat18(self):
+        self.assertEqual(parse("1986-07-05T08:15:30z",
+                               ignoretz=True),
+                         datetime(1986, 7, 5, 8, 15, 30))
+
     def testRandomFormat20(self):
         self.assertEqual(parse("Tue Apr 4 00:22:12 PDT 1995", ignoretz=True),
                          datetime(1995, 4, 4, 0, 22, 12))
@@ -533,7 +563,6 @@ class ParserTest(unittest.TestCase):
                       101,    100,    99,    98]:
             dt = datetime(2008, 2, 27, 21, 26, 1, ms)
             self.assertEqual(parse(dt.isoformat()), dt)
-
 
     def testCustomParserInfo(self):
         # Custom parser info wasn't working, as Michael Elsdörfer discovered.
@@ -754,6 +783,7 @@ class TestParseUnimplementedCases(object):
         expected = datetime(2017, 12, 1)
         assert res == expected
 
+
 @pytest.mark.skipif(IS_WIN, reason='Windows does not use TZ var')
 def test_parse_unambiguous_nonexistent_local():
     # When dates are specified "EST" even when they should be "EDT" in the
@@ -824,4 +854,3 @@ def test_decimal_error(value):
     # constructed with an invalid value
     with pytest.raises(ValueError):
         parse(value)
-

@@ -18,13 +18,21 @@ matrix:
   include:
     - python: 3.6
       env: TOXENV=docs
+    - python: 3.6
+      env: TOXENV=tz
+    - python: 3.7
+      # This is required until Travis has a default image that
+      # can run Python 3.7
+      dist: xenial
+      sudo: required
   allow_failures:
     - python: "nightly"
 
 install:
   - pip install -U six && pip install -U tox
   - if [[ $TRAVIS_PYTHON_VERSION == "3.3" ]]; then pip install 'virtualenv<16.0'; fi
-  - ./ci_tools/retry.sh python updatezinfo.py
+  - if [[ $TRAVIS_PYTHON_VERSION == "3.3" ]]; then pip install 'setuptools<40.0'; fi
+  - if [[ $TOXENV == "py" ]]; then ./ci_tools/retry.sh python updatezinfo.py; fi
 
 script:
   - tox

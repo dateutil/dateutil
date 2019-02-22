@@ -1,1 +1,0 @@
-Reorganized ``dateutil.tz`` documentation and fixed issue with the ``dateutil.tz`` docstring. (gh pr #714)

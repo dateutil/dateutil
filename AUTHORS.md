@@ -19,8 +19,11 @@ switch, and thus all their contributions are dual-licensed.
 - Alex Verdyan <verdyan@MASKED>
 - Alex Willmer <alex@moreati.org.uk> (gh: @moreati) **R**
 - Alexander Brugh <alexander.brugh@MASKED> (gh: @abrugh)
+- Alistair McMaster <alistair@MASKED> (gh: @alimcmaster1 ) **D**
+- Andrew Bennett (gh: @andrewcbennett) **D**
 - Andrew Murray <radarhere@MASKED>
 - Bernat Gabor <bgabor8@bloomberg.net> (gh: @gaborbernat) **D**
+- Bradlee Speice <bradlee@speice.io> (gh: @bspeice) **D**
 - Brandon W Maister <quodlibetor@MASKED>
 - Brock Mendel <jbrockmendel@MASKED> (gh: @jbrockmendel) **R**
 - Brook Li (gh: @absreim) **D**
@@ -30,32 +33,34 @@ switch, and thus all their contributions are dual-licensed.
 - Christopher Cordero <ccordero@pm.me> (gh: cs-cordero) **D**
 - Christopher Corley <cscorley@MASKED>
 - Claudio Canepa <ccanepacc@MASKED>
-- Corey Girard <corey.r.girard@gmail.com> (gh: @coreygirard)
-- Cosimo Lupo <cosimo@anthrotype.com> (gh: @anthrotype)
+- Corey Girard <corey.r.girard@gmail.com> (gh: @coreygirard) **D**
+- Cosimo Lupo <cosimo@anthrotype.com> (gh: @anthrotype) **D**
 - Daniel Lepage <dplepage@MASKED>
 - David Lehrian <david@MASKED>
 - Dean Allsopp (gh: @daplantagenet) **D**
 - Dominik Kozaczko <dominik@MASKED>
 - Elliot Hughes <elliot.hughes@gmail.com> (gh: @ElliotJH) **D**
 - Elvis Pranskevichus <el@MASKED>
-- Florian Rathgeber (gh: @kynan)
+- Florian Rathgeber (gh: @kynan) **D**
 - Gabriel Bianconi <gabriel@MASKED> (gh: @GabrielBianconi) **D**
 - Gabriel Poesia <gabriel.poesia@MASKED>
+- Gökçen Nurlu <gnurlu1@bloomberg.net> (gh: @gokcennurlu) **D**
 - Gustavo Niemeyer <gustavo@niemeyer.net> (gh: @niemeyer)
 - Holger Joukl <holger.joukl@MASKED> (gh: @hjoukl)
 - Igor <mrigor83@MASKED>
 - Ionuț Ciocîrlan <jdxlark@MASKED>
 - Jake Chorley (gh: @jakec-github) **D**
 - Jan Studený <jendas1@MASKED>
+- Jay Weisskopf <jay@jayschwa.net> (gh: @jayschwa) **D**
 - Jitesh <jitesh@MASKED>
 - John Purviance <jpurviance@MASKED> (gh @jpurviance) **D**
 - Jon Dufresne <jon.dufresne@MASKED> (gh: @jdufresne) **R**
-- Jonas Neubert <jonas@MASKED>
-- Kevin Nguyen <kvn219@MASKED>
+- Jonas Neubert <jonas@MASKED> (gh: @jonemo) **R**
+- Kevin Nguyen <kvn219@MASKED> **D**
 - Kirit Thadaka <kirit.thadaka@gmail.com> (gh: @kirit93) **D**
 - Kubilay Kocak <koobs@MASKED>
 - Laszlo Kiss Kollar <kiss.kollar.laszlo@MASKED> (gh: @lkollar) **D**
-- Lauren Oldja <oldja@MASKED> (gh: @loldja)
+- Lauren Oldja <oldja@MASKED> (gh: @loldja) **D**
 - Luca Ferocino <luca.ferox@MASKED> (gh: @lucaferocino) **D**
 - Mario Corchero <mcorcherojim@MASKED> (gh: @mariocj89) **R**
 - Mateusz Dziedzic (gh: @m-dz) **D**
@@ -65,24 +70,28 @@ switch, and thus all their contributions are dual-licensed.
 - Michael Aquilina <michaelaquilina@MASKED> (gh: @MichaelAquilina)
 - Michael J. Schultz <mjschultz@MASKED>
 - Mike Gilbert <floppym@MASKED>
+- Nicholas Herrriot <Nicholas.Herriot@gmail.com> **D**
+- Nicolas Évrard (gh: @nicoe) **D**
 - Nick Smith <nick.smith@MASKED>
-- Orson Adams <orson.network@MASKED> (gh: @parsethis)
+- Orson Adams <orson.network@MASKED> (gh: @parsethis) **D**
+- Paul Dickson (gh @prdickson) **D**
 - Paul Ganssle <paul@ganssle.io> (gh: @pganssle) **R**
-- Pascal van Kooten <kootenpv@MASKED>
+- Pascal van Kooten <kootenpv@MASKED> (gh: @kootenpv) **R**
 - Pavel Ponomarev <comrad.awsum@MASKED>
 - Peter Bieringer <pb@MASKED>
-- Pierre Gergondet <pierre.gergondet@MASKED> (gh: @gergondet)
+- Pierre Gergondet <pierre.gergondet@MASKED> (gh: @gergondet) **D**
 - Quentin Pradet <quentin@MASKED>
 - Raymond Cha (gh: @weatherpattern) **D**
 - Ridhi Mahajan <ridhikmahajan@MASKED> **D**
 - Roy Williams <rwilliams@MASKED>
 - Rustem Saiargaliev (gh: @amureki) **D**
+- Satyabrat Bhol <satyabrat35@MASKED> (gh: @Satyabrat35) **D**
 - Savraj <savraj@MASKED>
 - Sergey Vishnikin <armicron@MASKED>
 - Sherry Zhou (gh: @cssherry) **D**
 - Stefan Bonchev **D**
 - Thierry Bastian <thierryb@MASKED>
-- Thomas A Caswell <tcaswell@MASKED> (gh: @tacaswell)
+- Thomas A Caswell <tcaswell@MASKED> (gh: @tacaswell) **R**
 - Thomas Achtemichuk <tom@MASKED>
 - Thomas Kluyver <takowl@MASKED> (gh: @takluyver)
 - Tomasz Kluczkowski (gh: @Tomasz-Kluczkowski) **D**
@@ -97,9 +106,8 @@ switch, and thus all their contributions are dual-licensed.
 - bachmann <bachmann.matt@MASKED>
 - bjv <brandon.vanvaerenbergh@MASKED> (@bjamesvERT)
 - gl <gl@MASKED>
-- labrys <labrys@MASKED> (gh: @labrys)
+- labrys <labrys@MASKED> (gh: @labrys) **R**
 - ms-boom <ms-boom@MASKED>
-- ryanss <ryanssdev@MASKED> (gh: @ryanss)
-- Alistair McMaster <alistair@MASKED> (gh: @alimcmaster1 ) **D**
+- ryanss <ryanssdev@MASKED> (gh: @ryanss) **R**
 
 Unless someone has deliberately given permission to publish their e-mail, I have masked the domain names. If you are not on this list and believe you should be, or you *are* on this list and your information is inaccurate, please e-mail the current maintainer or the mailing list (dateutil@python.org) with your name, e-mail (if desired) and github (if desired / applicable), as you would like them displayed. Additionally, please indicate if you are willing to dual license your old contributions under Apache 2.0.

@@ -1,0 +1,80 @@
+pool:
+  vmImage: $[ variables.POOL_IMAGE ]
+
+strategy:
+  matrix:
+    Python27:
+      python.version: '2.7'
+    Python34:
+      python.version: '3.4'
+    Python35:
+      python.version: '3.5'
+    Python36:
+      python.version: '3.6'
+    Python37:
+      python.version: '3.7'
+    Docs:
+      python.version: '3.6'
+      TOXENV: docs
+    TZ:
+      python.version: '3.6'
+      TOXENV: tz
+    macOS:
+      python.version: '3.6'
+      POOL_IMAGE: macos-10.13
+    Windows:
+      python.version: '3.6'
+      POOL_IMAGE: vs2017-win2016
+      installzic: 'windows'
+    PyPy:
+      PYTHON: 'pypy'
+    PyPy3:
+      PYTHON: 'pypy3'
+
+variables:
+  TOXENV: py
+  POOL_IMAGE: ubuntu-16.04
+  PYTHON: 'python'
+
+steps:
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: $(python.version)
+  condition: notIn(variables.PYTHON, 'pypy', 'pypy3')
+
+- bash: |
+    PYPYDIR=$(dirname $(dirname $(readlink -f $(which $PYTHON))))
+    sudo chmod a+rwX -R $PYPYDIR
+    $PYTHON -m ensurepip
+  displayName: Ensure pip
+  condition: in(variables.PYTHON, 'pypy', 'pypy3')
+
+- bash: |
+    $PYTHON -m pip install -U six && $PYTHON -m pip install -U tox
+    if [[ $PYTHON_VERSION == "3.3" ]]; then pip install 'virtualenv<16.0'; fi
+    if [[ $PYTHON_VERSION == "3.3" ]]; then pip install 'setuptools<40.0'; fi
+  displayName: Ensure prereqs
+
+- bash: |
+    curl https://get.enterprisedb.com/postgresql/postgresql-9.4.20-1-windows-x64-binaries.zip --output postgresql.zip
+    unzip -oq postgresql.zip -d postgresql
+    echo $PATH
+    echo "##vso[task.prependpath]$(System.DefaultWorkingDirectory)\postgresql\pgsql\bin"
+  displayName: Install zic on Windows
+  condition: eq(variables.installzic, 'windows')
+
+- bash: |
+    if [[ $TOXENV == "py" ]]; then
+      ./ci_tools/retry.sh $PYTHON updatezinfo.py
+      $PYTHON -m tox -- dateutil/test --cov-config=tox.ini --cov=dateutil --junitxml=unittests/TEST-$(Agent.JobName).xml
+      $PYTHON -m tox -e coverage,codecov
+    else
+      $PYTHON -m tox
+    fi
+  displayName: Run tox
+
+- task: PublishTestResults@2
+  inputs:
+    testResultsFiles: '**/TEST-*.xml'
+    testRunTitle: '$(Agent.JobName)'
+  condition: and(succeededOrFailed(), not(eq(variables['Agent.JobName'], 'Docs')))

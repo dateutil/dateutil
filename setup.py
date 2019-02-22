@@ -10,6 +10,7 @@ from distutils.version import LooseVersion
 import warnings
 
 import io
+import sys
 
 if isfile("MANIFEST"):
     os.unlink("MANIFEST")
@@ -21,8 +22,9 @@ if LooseVersion(setuptools.__version__) <= LooseVersion("24.3"):
 
 class Unsupported(TestCommand):
     def run(self):
-        print("Running 'test' with setup.py is not supported. "
-              "Use 'pytest' or 'tox' to run the tests.")
+        sys.stderr.write("Running 'test' with setup.py is not supported. "
+                         "Use 'pytest' or 'tox' to run the tests.\n")
+        sys.exit(1)
 
 
 ###
