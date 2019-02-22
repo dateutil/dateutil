@@ -50,7 +50,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'dateutil'
-copyright = '2016, dateutil'
+copyright = '2019, dateutil'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
