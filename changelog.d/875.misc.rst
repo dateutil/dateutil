@@ -1,0 +1,3 @@
+Switched release.py over to using ``pep517.build`` for creating releases,
+rather than direct invocations of ``setup.py``.
+Fixed by @smeng10 (gh issue #869, gh pr #875)

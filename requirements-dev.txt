@@ -7,3 +7,4 @@ freezegun ; python_version != '3.3'
 hypothesis >= 3.30
 coverage
 mock ; python_version < '3.0'
+pep517 >= 0.5.0

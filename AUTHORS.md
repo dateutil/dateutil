@@ -89,6 +89,7 @@ switch, and thus all their contributions are dual-licensed.
 - Savraj <savraj@MASKED>
 - Sergey Vishnikin <armicron@MASKED>
 - Sherry Zhou (gh: @cssherry) **D**
+- Siping Meng (gh: @smeng10) **D**
 - Stefan Bonchev **D**
 - Thierry Bastian <thierryb@MASKED>
 - Thomas A Caswell <tcaswell@MASKED> (gh: @tacaswell) **R**
