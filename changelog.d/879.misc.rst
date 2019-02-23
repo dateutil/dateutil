@@ -1,0 +1,3 @@
+Fixed a minor bug in ``test_isoparser`` related to ``bytes``/``str`` handling.
+Fixed by @fhuang5 (gh issue #776, gh pr #879)
+
