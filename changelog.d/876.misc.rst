@@ -1,0 +1,2 @@
+Added a "build" environment into the tox configuration, to handle dependency
+management when making releases. Fixed by @smeng10 (gh issue #870 gh pr #876)
