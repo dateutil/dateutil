@@ -1,0 +1,3 @@
+Moved as many keys from ``setup.py`` to ``setup.cfg`` as possible.
+Fixed by @FakeNameSE, @aquinlan82, @jachen20, and @gurgenz221
+(gh issue #871, gh pr #880)

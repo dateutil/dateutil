@@ -20,8 +20,10 @@ switch, and thus all their contributions are dual-licensed.
 - Alex Willmer <alex@moreati.org.uk> (gh: @moreati) **R**
 - Alexander Brugh <alexander.brugh@MASKED> (gh: @abrugh)
 - Alistair McMaster <alistair@MASKED> (gh: @alimcmaster1 ) **D**
+- Allison Quinlan <aquinlan82@gmail.com> (gh: @aquinlan) **D**
 - Andrew Bennett (gh: @andrewcbennett) **D**
 - Andrew Murray <radarhere@MASKED>
+- Aritro Nandi <gurgenz221@gmail.com> (gh: @gurgenz221) **D**
 - Bernat Gabor <bgabor8@bloomberg.net> (gh: @gaborbernat) **D**
 - Bradlee Speice <bradlee@speice.io> (gh: @bspeice) **D**
 - Brandon W Maister <quodlibetor@MASKED>
@@ -45,10 +47,12 @@ switch, and thus all their contributions are dual-licensed.
 - Gabriel Bianconi <gabriel@MASKED> (gh: @GabrielBianconi) **D**
 - Gabriel Poesia <gabriel.poesia@MASKED>
 - Gökçen Nurlu <gnurlu1@bloomberg.net> (gh: @gokcennurlu) **D**
+- Grant Garrett-Grossman <grantlycee@gmail.com> (gh: @FakeNameSE) **D**
 - Gustavo Niemeyer <gustavo@niemeyer.net> (gh: @niemeyer)
 - Holger Joukl <holger.joukl@MASKED> (gh: @hjoukl)
 - Igor <mrigor83@MASKED>
 - Ionuț Ciocîrlan <jdxlark@MASKED>
+- Jacqueline Chen <jacqueline415@outlook.com> (gh: @jachen20) **D**
 - Jake Chorley (gh: @jakec-github) **D**
 - Jan Studený <jendas1@MASKED>
 - Jay Weisskopf <jay@jayschwa.net> (gh: @jayschwa) **D**
