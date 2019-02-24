@@ -25,6 +25,9 @@ matrix:
       # can run Python 3.7
       dist: xenial
       sudo: required
+    - python: 3.7
+      env: TOXENV=build
+      dist: xenial
   allow_failures:
     - python: "nightly"
 
@@ -36,7 +39,7 @@ install:
 
 script:
   - tox
+  - if [[ $TOXENV == "build" ]]; then [ ! -e "dist/*.whl" ] && [ ! -e "dist/*.tar.gz" ]; fi
 
 after_success:
   - if [[ $TOXENV == "py" ]]; then tox -e coverage,codecov; fi
-
