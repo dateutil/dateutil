@@ -43,6 +43,7 @@ switch, and thus all their contributions are dual-licensed.
 - Dominik Kozaczko <dominik@MASKED>
 - Elliot Hughes <elliot.hughes@gmail.com> (gh: @ElliotJH) **D**
 - Elvis Pranskevichus <el@MASKED>
+- Fan Huang <fanhuang.scb@gmail.com>(gh: @fhuang5) **D**
 - Florian Rathgeber (gh: @kynan) **D**
 - Gabriel Bianconi <gabriel@MASKED> (gh: @GabrielBianconi) **D**
 - Gabriel Poesia <gabriel.poesia@MASKED>

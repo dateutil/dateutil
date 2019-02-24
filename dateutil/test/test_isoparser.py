@@ -77,13 +77,13 @@ def _isoparse_date_and_time(dt, date_fmt, time_fmt, tzoffset,
     dtstr = dt.strftime(fmt)
 
     if microsecond_precision is not None:
-        if not fmt.endswith('%f'):
+        if not fmt.endswith('%f'):  # pragma: nocover
             raise ValueError('Time format has no microseconds!')
 
-        if microsecond_precision != 6:
+        if microsecond_precision != 6: 
             dtstr = dtstr[:-(6 - microsecond_precision)]
-        elif microsecond_precision > 6:
-            raise ValueError('Precision must be 1-6')
+        elif microsecond_precision > 6: # pragma: nocover
+            raise ValueError('Precision must be 1-6') 
 
     dtstr += offset_str
 
@@ -286,8 +286,8 @@ def test_iso_with_sep_raises(sep_act, valid_sep, exception):
         parser.isoparse(isostr)
 
 
-@pytest.mark.xfail()
-@pytest.mark.parametrize('isostr,exception', [
+@pytest.mark.xfail() 
+@pytest.mark.parametrize('isostr,exception', [  # pragma: nocover
     ('20120425T01:2000', ValueError),           # Inconsistent time separators
 ])
 def test_iso_raises_failing(isostr, exception):
@@ -454,9 +454,9 @@ def __make_time_examples():
 @pytest.mark.parametrize('as_bytes', [True, False])
 def test_isotime(time_val, time_fmt, as_bytes):
     tstr = time_val.strftime(time_fmt)
-    if isinstance(time_val, six.text_type) and as_bytes:
+    if isinstance(tstr, six.text_type) and as_bytes:
         tstr = tstr.encode('ascii')
-    elif isinstance(time_val, bytes) and not as_bytes:
+    elif isinstance(tstr, bytes) and not as_bytes:
         tstr = tstr.decode('ascii')
 
     iparser = isoparser()
@@ -505,8 +505,8 @@ def test_isotime_raises(isostr, exception):
         iparser.parse_isotime(isostr)
 
 
-@pytest.mark.xfail()
-@pytest.mark.parametrize('isostr,exception', [
+@pytest.mark.xfail() 
+@pytest.mark.parametrize('isostr,exception', [  # pragma: nocover
     ('14:3015', ValueError),                    # Inconsistent separator use
     ('201202', ValueError)                      # Invalid ISO format
 ])
