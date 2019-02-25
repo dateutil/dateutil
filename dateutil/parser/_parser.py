@@ -49,7 +49,7 @@ from warnings import warn
 from .. import relativedelta
 from .. import tz
 
-__all__ = ["parse", "parserinfo"]
+__all__ = ["parse", "parserinfo", "ParserError"]
 
 
 # TODO: pandas.core.tools.datetimes imports this explicitly.  Might be worth
@@ -626,7 +626,7 @@ class parser(object):
             first element being a :class:`datetime.datetime` object, the second
             a tuple containing the fuzzy tokens.
 
-        :raises ValueError:
+        :raises ParserError:
             Raised for invalid or unknown string format, if the provided
             :class:`tzinfo` is not in a valid format, or if an invalid date
             would be created.
@@ -646,10 +646,10 @@ class parser(object):
         res, skipped_tokens = self._parse(timestr, **kwargs)
 
         if res is None:
-            raise ValueError("Unknown string format:", timestr)
+            raise ParserError("Unknown string format: %s", timestr)
 
         if len(res) == 0:
-            raise ValueError("String does not contain a date:", timestr)
+            raise ParserError("String does not contain a date: %s", timestr)
 
         ret = self._build_naive(res, default)
 
@@ -1587,6 +1587,19 @@ DEFAULTTZPARSER = _tzparser()
 
 def _parsetz(tzstr):
     return DEFAULTTZPARSER.parse(tzstr)
+
+
+class ParserError(ValueError):
+    """Error class for representing failure to parse a datetime string."""
+    def __str__(self):
+        try:
+            return self.args[0] % self.args[1:]
+        except (TypeError, IndexError):
+            return super(ParserError, self).__str__()
+
+        def __repr__(self):
+            return "%s(%s)" % (self.__class__.__name__, str(self))
+
 
 class UnknownTimezoneWarning(RuntimeWarning):
     """Raised when the parser finds a timezone it cannot parse into a tzinfo"""
