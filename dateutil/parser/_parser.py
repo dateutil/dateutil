@@ -571,6 +571,74 @@ class _ymd(list):
         return year, month, day
 
 
+def next_jump(tokens, idx, skip_comma=True):
+    """
+    Get the next sibling and its index, skipping over whitespace
+    and (if specified) commas.
+
+    Parameters
+    ----------
+    tokens : list[str]
+    idx : int
+    skip_comma : bool, default True
+
+    Returns
+    -------
+    sib : str or None
+    sib_idx : int or None
+    """
+    if idx == len(tokens) - 1:
+        (sib, sib_idx) = (None, None)
+    else:
+        sib_idx = idx + 1
+        sib = tokens[sib_idx]
+        if sib.isspace():
+            (sib, sib_idx) = next_jump(tokens, idx + 1)
+        elif (skip_comma and sib == ',' and idx + 3 < len(tokens) and
+              tokens[idx + 2].isspace()):
+            # e.g. if tokens[idx] is the "30" in "Dec 30, 2016" we want to
+            #  return the "2016"
+            sib_idx = idx + 3
+            sib = tokens[sib_idx]
+
+    return sib, sib_idx
+
+
+def prev_jump(tokens, idx, skip_comma=True):
+    """
+    Get the previous sibling and its index, skipping over whitespace
+    and (if specified) commas.
+
+    Parameters
+    ----------
+    tokens : list[str]
+    idx : int
+    skip_comma : bool, default True
+
+    Returns
+    -------
+    sib : str or None
+    sib_idx : int or None
+    """
+    if idx == 0:
+        (sib, sib_idx) = (None, None)
+    else:
+        sib_idx = idx - 1
+        sib = tokens[sib_idx]
+        if sib.isspace():
+            if idx - 1 == 0:
+                (sib, sib_idx) = (None, None)
+            elif skip_comma and tokens[idx - 2] == ',':
+                # e.g. tokens[idx] is the "2016" in "Dec 30, 2016", we want
+                #  to return the "30"
+                (sib, sib_idx) = prev_jump(tokens, idx - 2)
+            else:
+                sib_idx = idx - 2
+                sib = tokens[sib_idx]
+
+    return sib, sib_idx
+
+
 class parser(object):
     def __init__(self, info=None):
         self.info = info or parserinfo()
@@ -980,6 +1048,15 @@ class parser(object):
 
                 idx += 1
             idx += 1
+
+        elif (not ymd.has_year and len_li == 4 and
+              info.month(next_jump(tokens, idx)[0] or '')):
+            # e.g. this is the "0003" in "0003 Nov 06"
+            # unambiguous year, use value_repr instead of value to avoid
+            #  dropping leading zeros, e.g. "0031" represents 31 AD,
+            #  not 2031
+            # Note: this check must come before the check for info.jump below
+            ymd.append(value_repr, 'Y')
 
         elif idx + 1 >= len_l or info.jump(tokens[idx + 1]):
             if idx + 2 < len_l and info.ampm(tokens[idx + 2]) is not None:

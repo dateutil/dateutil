@@ -677,6 +677,17 @@ class ParserTest(unittest.TestCase):
         res = parse(dstr)
         assert res.year == 2001, res
 
+    def test_first_century(self):
+        dstr = '0031 Nov 03'
+        expected = datetime(31, 11, 3)
+        res = parse(dstr)
+        assert res == expected, res
+
+        # Same but no spaces
+        dstr = '0031Nov03'
+        res = parse(dstr)
+        assert res == expected, res
+
 
 class TestOutOfBounds(object):
 
@@ -727,12 +738,6 @@ class TestParseUnimplementedCases(object):
         res = parse(dstr)
         assert res == expected, (res, expected)
 
-    @pytest.mark.xfail
-    def test_first_century(self):
-        dstr = '0031 Nov 03'
-        expected = datetime(31, 11, 3)
-        res = parse(dstr)
-        assert res == expected, res
 
     @pytest.mark.xfail
     def test_era_trailing_year_with_dots(self):
