@@ -1111,14 +1111,6 @@ class parser(object):
             second = int(60 * sec_remainder)
         return (minute, second)
 
-    def _parsems(self, value):
-        """Parse a I[.F] seconds value into (seconds, microseconds)."""
-        if "." not in value:
-            return int(value), 0
-        else:
-            i, f = value.split(".")
-            return int(i), int(f.ljust(6, "0")[:6])
-
     def _parse_hms(self, idx, tokens, info, hms_idx):
         # TODO: Is this going to admit a lot of false-positives for when we
         # just happen to have digits and "h", "m" or "s" characters in non-date
@@ -1137,21 +1129,35 @@ class parser(object):
 
         return (new_idx, hms)
 
-    def _recombine_skipped(self, tokens, skipped_idxs):
-        """
-        >>> tokens = ["foo", " ", "bar", " ", "19June2000", "baz"]
-        >>> skipped_idxs = [0, 1, 2, 5]
-        >>> _recombine_skipped(tokens, skipped_idxs)
-        ["foo bar", "baz"]
-        """
-        skipped_tokens = []
-        for i, idx in enumerate(sorted(skipped_idxs)):
-            if i > 0 and idx - 1 == skipped_idxs[i - 1]:
-                skipped_tokens[-1] = skipped_tokens[-1] + tokens[idx]
-            else:
-                skipped_tokens.append(tokens[idx])
+    # ------------------------------------------------------------------
+    # Handling for individual tokens.  These are kept as methods instead
+    #  of functions for the sake of customizability via subclassing.
 
-        return skipped_tokens
+    def _parsems(self, value):
+        """Parse a I[.F] seconds value into (seconds, microseconds)."""
+        if "." not in value:
+            return int(value), 0
+        else:
+            i, f = value.split(".")
+            return int(i), int(f.ljust(6, "0")[:6])
+
+    def _to_decimal(self, val):
+        try:
+            decimal_value = Decimal(val)
+            # See GH 662, edge case, infinite value should not be converted
+            #  via `_to_decimal`
+            if not decimal_value.is_finite():
+                raise ValueError("Converted decimal value is infinite or NaN")
+        except Exception as e:
+            msg = "Could not convert %s to decimal" % val
+            six.raise_from(ValueError(msg), e)
+        else:
+            return decimal_value
+
+    # ------------------------------------------------------------------
+    # Post-Parsing construction of datetime output.  These are kept as
+    #  methods instead of functions for the sake of customizability via
+    #  subclassing.
 
     def _build_tzinfo(self, tzinfos, tzname, tzoffset):
         if callable(tzinfos):
@@ -1241,17 +1247,21 @@ class parser(object):
 
         return dt
 
-    def _to_decimal(self, val):
-        try:
-            decimal_value = Decimal(val)
-            # See GH 662, edge case, infinite value should not be converted via `_to_decimal`
-            if not decimal_value.is_finite():
-                raise ValueError("Converted decimal value is infinite or NaN")
-        except Exception as e:
-            msg = "Could not convert %s to decimal" % val
-            six.raise_from(ValueError(msg), e)
-        else:
-            return decimal_value
+    def _recombine_skipped(self, tokens, skipped_idxs):
+        """
+        >>> tokens = ["foo", " ", "bar", " ", "19June2000", "baz"]
+        >>> skipped_idxs = [0, 1, 2, 5]
+        >>> _recombine_skipped(tokens, skipped_idxs)
+        ["foo bar", "baz"]
+        """
+        skipped_tokens = []
+        for i, idx in enumerate(sorted(skipped_idxs)):
+            if i > 0 and idx - 1 == skipped_idxs[i - 1]:
+                skipped_tokens[-1] = skipped_tokens[-1] + tokens[idx]
+            else:
+                skipped_tokens.append(tokens[idx])
+
+        return skipped_tokens
 
 
 DEFAULTPARSER = parser()
