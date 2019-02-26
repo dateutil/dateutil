@@ -618,55 +618,6 @@ def next_jump(tokens, idx, skip_comma=True):
     return sib, sib_idx
 
 
-def prev_jump(tokens, idx, skip_comma=True):
-    """
-    Get the previous sibling and its index, skipping over whitespace
-    and (if specified) commas.
-
-    :param tokens:
-        list of strings
-
-    :param idx:
-        integer index for a single token among tokens.
-
-    :param skip_comma:
-        bool describing whether commas should be "jumped" in addition
-        to whitespace.  Default True.
-
-    :return:
-        A tuple (sib, sib_idx) of the sibling found and the index at which
-        it was found.  If no sibling is found, (None, None) is returned.
-
-    .. doctest::
-        >>> tokens = ['Dec', ' ', '30', ',', ' ', '2016']
-        >>> prev_jump(tokens, 0)
-        (None, None)
-        >>> prev_jump(tokens, 2)
-        ('Dec', 0)
-        >>> prev_jump(tokens, 5)
-        ('30', 2)
-        >>> prev_jump(tokens, 5, skip_comma=False)
-        (',', 3)
-    """
-    if idx == 0:
-        (sib, sib_idx) = (None, None)
-    else:
-        sib_idx = idx - 1
-        sib = tokens[sib_idx]
-        if sib.isspace():
-            if idx - 1 == 0:
-                (sib, sib_idx) = (None, None)
-            elif skip_comma and tokens[idx - 2] == ',':
-                # e.g. tokens[idx] is the "2016" in "Dec 30, 2016", we want
-                #  to return the "30"
-                (sib, sib_idx) = prev_jump(tokens, idx - 2)
-            else:
-                sib_idx = idx - 2
-                sib = tokens[sib_idx]
-
-    return sib, sib_idx
-
-
 class parser(object):
     def __init__(self, info=None):
         self.info = info or parserinfo()
