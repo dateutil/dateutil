@@ -589,6 +589,17 @@ def next_jump(tokens, idx, skip_comma=True):
     :return:
         A tuple (sib, sib_idx) of the sibling found and the index at which
         it was found.  If no sibling is found, (None, None) is returned.
+
+    .. doctest::
+        >>> tokens = ['Dec', ' ', '30', ',', ' ', '2016']
+        >>> next_jump(tokens, 0)
+        ('30', 2)
+        >>> next_jump(tokens, 2)
+        ('2016', 5)
+        >>> next_jump(tokens, 2, skip_comma=False)
+        (',', 3)
+        >>> next_jump(tokens, 5)
+        (None, None)
     """
     if idx == len(tokens) - 1:
         (sib, sib_idx) = (None, None)
@@ -625,6 +636,17 @@ def prev_jump(tokens, idx, skip_comma=True):
     :return:
         A tuple (sib, sib_idx) of the sibling found and the index at which
         it was found.  If no sibling is found, (None, None) is returned.
+
+    .. doctest::
+        >>> tokens = ['Dec', ' ', '30', ',', ' ', '2016']
+        >>> prev_jump(tokens, 0)
+        (None, None)
+        >>> prev_jump(tokens, 2)
+        ('Dec', 0)
+        >>> prev_jump(tokens, 5)
+        ('30', 2)
+        >>> prev_jump(tokens, 5, skip_comma=False)
+        (',', 3)
     """
     if idx == 0:
         (sib, sib_idx) = (None, None)
