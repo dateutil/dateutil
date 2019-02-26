@@ -576,16 +576,19 @@ def next_jump(tokens, idx, skip_comma=True):
     Get the next sibling and its index, skipping over whitespace
     and (if specified) commas.
 
-    Parameters
-    ----------
-    tokens : list[str]
-    idx : int
-    skip_comma : bool, default True
+    :param tokens:
+        list of strings
 
-    Returns
-    -------
-    sib : str or None
-    sib_idx : int or None
+    :param idx:
+        integer index for a single token among tokens.
+
+    :param skip_comma:
+        bool describing whether commas should be "jumped" in addition
+        to whitespace.  Default True.
+
+    :return:
+        A tuple (sib, sib_idx) of the sibling found and the index at which
+        it was found.  If no sibling is found, (None, None) is returned.
     """
     if idx == len(tokens) - 1:
         (sib, sib_idx) = (None, None)
@@ -609,16 +612,19 @@ def prev_jump(tokens, idx, skip_comma=True):
     Get the previous sibling and its index, skipping over whitespace
     and (if specified) commas.
 
-    Parameters
-    ----------
-    tokens : list[str]
-    idx : int
-    skip_comma : bool, default True
+    :param tokens:
+        list of strings
 
-    Returns
-    -------
-    sib : str or None
-    sib_idx : int or None
+    :param idx:
+        integer index for a single token among tokens.
+
+    :param skip_comma:
+        bool describing whether commas should be "jumped" in addition
+        to whitespace.  Default True.
+
+    :return:
+        A tuple (sib, sib_idx) of the sibling found and the index at which
+        it was found.  If no sibling is found, (None, None) is returned.
     """
     if idx == 0:
         (sib, sib_idx) = (None, None)
