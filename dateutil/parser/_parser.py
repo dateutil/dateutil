@@ -989,7 +989,6 @@ class parser(object):
             else:
                 # 19990101T235959[.59]
 
-                # TODO: Check if res attributes already set.
                 res.set_hour(int(s[:2]))
                 res.set_minute(int(s[2:4]))
                 res.set_second(s[4:])
@@ -1013,8 +1012,6 @@ class parser(object):
             hms_idx = self._find_hms_idx(idx, tokens, info, allow_jump=True)
             (idx, hms) = self._parse_hms(idx, tokens, info, hms_idx)
             if hms is not None:
-                # TODO: checking that hour/minute/second are not
-                # already set?
                 self._assign_hms(res, value_repr, hms)
 
         elif idx + 2 < len_l and tokens[idx + 1] == ':':
