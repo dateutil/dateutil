@@ -1,0 +1,2 @@
+Reorganized ``parser`` methods by functionality.
+Patch by @jbrockmendel (gh pr #882)
