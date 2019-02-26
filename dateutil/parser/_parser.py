@@ -222,6 +222,51 @@ class _timelex(object):
         return nextchar.isspace()
 
 
+class TokenStream(list):
+    """
+    Represents the list of tokens being processed.
+    """
+    def __init__(self, tokens):
+        super(TokenStream, self).__init__(tokens)
+
+        # _assigned: set of indices for tokens that have been processed
+        #  and declared part of a datetime
+        self._assigned = set()
+
+        # _skipped: set of indices for tokens that have been skipped
+        self._skipped = set()
+
+        # _indices: mapping {str: set(indices)} where each key describes part
+        #  of a datetime (e.g. "Y", "m", "d", "H"...)
+        #  and _indices[key] gives the set of indices for tokens that have
+        #  been identified as describing that portion of the datetime
+        self._indices = {}
+
+    def assign(self, idx, target=None):
+        assert 0 <= idx < len(self)
+
+        token = self[idx]
+        is_skipped = target == 'skipped'
+        # We need to set this here just in case the target passed is None
+        #  but the token itself is "skipped"
+        target = target or token
+        # If no target is passed, it defaults to itself.  This is for
+        #  e.g. a comma or "/" for which we don't have another useful
+        #  classification.
+        self._assigned.add(idx)
+        if is_skipped:
+            self._skipped.add(idx)
+        else:
+            self._skipped.discard(idx)
+            # If a re-assignment is occurring to a skipped token,
+            #  un-skip it
+            self._indices.setdefault(target, set()).add(idx)
+
+    def unassigned(self, idx):
+        return (0 <= idx < len(self) and
+                (idx not in self._assigned or idx in self._skipped))
+
+
 class _resultbase(object):
 
     def __init__(self):
@@ -720,6 +765,7 @@ class parser(object):
 
         res = self._result()
         l = _timelex.split(timestr)         # Splits the timestr into tokens
+        l = TokenStream(l)
 
         skipped_idxs = []
 
@@ -745,21 +791,25 @@ class parser(object):
                 # Check weekday
                 elif info.weekday(l[i]) is not None:
                     value = info.weekday(l[i])
+                    l.assign(i, 'weekday')
                     res.weekday = value
 
                 # Check month name
                 elif info.month(l[i]) is not None:
                     value = info.month(l[i])
                     ymd.append(value, 'M')
+                    l.assign(i, 'M')
 
                     if i + 1 < len_l:
                         if l[i + 1] in ('-', '/'):
                             # Jan-01[-99]
                             sep = l[i + 1]
+                            l.assign(i + 1)
                             ymd.append(l[i + 2])
 
                             if i + 3 < len_l and l[i + 3] == sep:
                                 # Jan-01-99
+                                l.assign(i + 3)
                                 ymd.append(l[i + 4])
                                 i += 2
 
@@ -774,6 +824,7 @@ class parser(object):
                                 value = int(l[i + 4])
                                 year = str(info.convertyear(value))
                                 ymd.append(year, 'Y')
+                                l.assign(i + 4, 'Y')
                             else:
                                 # Wrong guess
                                 pass
@@ -783,6 +834,7 @@ class parser(object):
                 # Check am/pm
                 elif info.ampm(l[i]) is not None:
                     value = info.ampm(l[i])
+                    l.assign(i, 'ampm')
                     val_is_ampm = self._ampm_valid(res.hour, res.ampm, fuzzy)
 
                     if val_is_ampm:
@@ -794,6 +846,7 @@ class parser(object):
 
                 # Check for a timezone name
                 elif self._could_be_tzname(res.hour, res.tzname, res.tzoffset, l[i]):
+                    l.assign(i, 'tzname')
                     res.tzname = l[i]
                     res.tzoffset = info.tzoffset(res.tzname)
 
@@ -1055,6 +1108,7 @@ class parser(object):
 
         elif hms == 2:
             (res.second, res.microsecond) = self._parsems(value_repr)
+
 
     def _could_be_tzname(self, hour, tzname, tzoffset, token):
         return (hour is not None and
