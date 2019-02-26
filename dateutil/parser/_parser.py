@@ -571,7 +571,7 @@ class _ymd(list):
         return year, month, day
 
 
-def next_jump(tokens, idx, skip_comma=True):
+def _next_jump(tokens, idx, skip_comma=True):
     """
     Get the next sibling and its index, skipping over whitespace
     and (if specified) commas.
@@ -592,13 +592,13 @@ def next_jump(tokens, idx, skip_comma=True):
 
     .. doctest::
         >>> tokens = ['Dec', ' ', '30', ',', ' ', '2016']
-        >>> next_jump(tokens, 0)
+        >>> _next_jump(tokens, 0)
         ('30', 2)
-        >>> next_jump(tokens, 2)
+        >>> _next_jump(tokens, 2)
         ('2016', 5)
-        >>> next_jump(tokens, 2, skip_comma=False)
+        >>> _next_jump(tokens, 2, skip_comma=False)
         (',', 3)
-        >>> next_jump(tokens, 5)
+        >>> _next_jump(tokens, 5)
         (None, None)
     """
     if idx == len(tokens) - 1:
@@ -607,7 +607,7 @@ def next_jump(tokens, idx, skip_comma=True):
         sib_idx = idx + 1
         sib = tokens[sib_idx]
         if sib.isspace():
-            (sib, sib_idx) = next_jump(tokens, idx + 1)
+            (sib, sib_idx) = _next_jump(tokens, idx + 1)
         elif (skip_comma and sib == ',' and idx + 3 < len(tokens) and
               tokens[idx + 2].isspace()):
             # e.g. if tokens[idx] is the "30" in "Dec 30, 2016" we want to
@@ -1029,7 +1029,7 @@ class parser(object):
             idx += 1
 
         elif (not ymd.has_year and len_li == 4 and
-              info.month(next_jump(tokens, idx)[0] or '')):
+              info.month(_next_jump(tokens, idx)[0] or '')):
             # e.g. this is the "0003" in "0003 Nov 06"
             # unambiguous year, use value_repr instead of value to avoid
             #  dropping leading zeros, e.g. "0031" represents 31 AD,
