@@ -1,0 +1,2 @@
+Converted many tests in ``test_parser`` over to using ``pytest`` style tests.
+Patch by @jbrockmendel (gh pr #735)
