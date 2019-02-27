@@ -165,6 +165,56 @@ def test_parser_default(parsable_text, expected_datetime, assertion_message):
     assert parse(parsable_text, default=datetime(2003, 9, 25)) == expected_datetime, assertion_message
 
 
+@pytest.mark.parametrize('sep', ['-', '.', '/', ' '])
+def test_parse_dayfirst(sep):
+    expected = datetime(2003, 9, 10)
+    fmt = sep.join(['%d', '%m', '%Y'])
+    dstr = expected.strftime(fmt)
+    result = parse(dstr, dayfirst=True)
+    assert result == expected
+
+
+@pytest.mark.parametrize('sep', ['-', '.', '/', ' '])
+def test_parse_yearfirst(sep):
+    expected = datetime(2010, 9, 3)
+    fmt = sep.join(['%Y', '%m', '%d'])
+    dstr = expected.strftime(fmt)
+    result = parse(dstr, yearfirst=True)
+    assert result == expected
+
+
+@pytest.mark.parametrize('dstr,expected', [
+    ("Thu Sep 25 10:36:28 BRST 2003", datetime(2003, 9, 25, 10, 36, 28)),
+    ("1996.07.10 AD at 15:08:56 PDT", datetime(1996, 7, 10, 15, 8, 56)),
+    ("Tuesday, April 12, 1952 AD 3:30:42pm PST", datetime(1952, 4, 12, 15, 30, 42)),  # noqa:E501
+    ("November 5, 1994, 8:15:30 am EST", datetime(1994, 11, 5, 8, 15, 30)),
+    ("1994-11-05T08:15:30-05:00", datetime(1994, 11, 5, 8, 15, 30)),
+    ("1994-11-05T08:15:30Z", datetime(1994, 11, 5, 8, 15, 30)),
+    ("1976-07-04T00:01:02Z", datetime(1976, 7, 4, 0, 1, 2)),
+    ("1986-07-05T08:15:30z", datetime(1986, 7, 5, 8, 15, 30)),
+    ("Tue Apr 4 00:22:12 PDT 1995", datetime(1995, 4, 4, 0, 22, 12)),
+])
+def test_parse_ignoretz(dstr, expected):
+    result = parse(dstr, ignoretz=True)
+    assert result == expected
+
+
+_brsttz = tzoffset("BRST", -10800)
+
+
+@pytest.mark.parametrize('dstr,expected', [
+    ("20030925T104941-0300", datetime(2003, 9, 25, 10, 49, 41, tzinfo=_brsttz)),
+    ("Thu, 25 Sep 2003 10:49:41 -0300", datetime(2003, 9, 25, 10, 49, 41, tzinfo=_brsttz)),  # noqa:#501
+    ("2003-09-25T10:49:41.5-03:00", datetime(2003, 9, 25, 10, 49, 41, 500000, tzinfo=_brsttz)),  # noqa:#501
+    ("2003-09-25T10:49:41-03:00", datetime(2003, 9, 25, 10, 49, 41, tzinfo=_brsttz)),  # noqa:#501
+    ("20030925T104941.5-0300", datetime(2003, 9, 25, 10, 49, 41, 500000, tzinfo=_brsttz)),  # noqa:#501
+])
+def test_parse_with_tzoffset(dstr, expected):
+    # In these cases, we are _not_ passing a tzinfos arg
+    result = parse(dstr)
+    assert result == expected
+
+
 class TestFormat(object):
 
     def test_ybd(self):
@@ -315,77 +365,15 @@ class ParserTest(unittest.TestCase):
                              datetime(2003, 9, 25, 10, 36, 28,
                                       tzinfo=self.brsttz))
 
-    def testDateCommandFormatIgnoreTz(self):
-        self.assertEqual(parse("Thu Sep 25 10:36:28 BRST 2003",
-                               ignoretz=True),
-                         datetime(2003, 9, 25, 10, 36, 28))
-
-    def testDateRCommandFormat(self):
-        self.assertEqual(parse("Thu, 25 Sep 2003 10:49:41 -0300"),
-                         datetime(2003, 9, 25, 10, 49, 41,
-                                  tzinfo=self.brsttz))
-
-    def testISOFormat(self):
-        self.assertEqual(parse("2003-09-25T10:49:41.5-03:00"),
-                         datetime(2003, 9, 25, 10, 49, 41, 500000,
-                                  tzinfo=self.brsttz))
-
-    def testISOFormatStrip1(self):
-        self.assertEqual(parse("2003-09-25T10:49:41-03:00"),
-                         datetime(2003, 9, 25, 10, 49, 41,
-                                  tzinfo=self.brsttz))
-
     def testISOFormatStrip2(self):
         self.assertEqual(parse("2003-09-25T10:49:41+03:00"),
                          datetime(2003, 9, 25, 10, 49, 41,
                                   tzinfo=tzoffset(None, 10800)))
 
-    def testISOStrippedFormat(self):
-        self.assertEqual(parse("20030925T104941.5-0300"),
-                         datetime(2003, 9, 25, 10, 49, 41, 500000,
-                                  tzinfo=self.brsttz))
-
-    def testISOStrippedFormatStrip1(self):
-        self.assertEqual(parse("20030925T104941-0300"),
-                         datetime(2003, 9, 25, 10, 49, 41,
-                                  tzinfo=self.brsttz))
-
     def testISOStrippedFormatStrip2(self):
         self.assertEqual(parse("20030925T104941+0300"),
                          datetime(2003, 9, 25, 10, 49, 41,
                                   tzinfo=tzoffset(None, 10800)))
-
-    def testDateWithDash8(self):
-        self.assertEqual(parse("10-09-2003", dayfirst=True),
-                         datetime(2003, 9, 10))
-
-    def testDateWithDash11(self):
-        self.assertEqual(parse("10-09-03", yearfirst=True),
-                         datetime(2010, 9, 3))
-
-    def testDateWithDot8(self):
-        self.assertEqual(parse("10.09.2003", dayfirst=True),
-                         datetime(2003, 9, 10))
-
-    def testDateWithDot11(self):
-        self.assertEqual(parse("10.09.03", yearfirst=True),
-                         datetime(2010, 9, 3))
-
-    def testDateWithSlash8(self):
-        self.assertEqual(parse("10/09/2003", dayfirst=True),
-                         datetime(2003, 9, 10))
-
-    def testDateWithSlash11(self):
-        self.assertEqual(parse("10/09/03", yearfirst=True),
-                         datetime(2010, 9, 3))
-
-    def testDateWithSpace8(self):
-        self.assertEqual(parse("10 09 2003", dayfirst=True),
-                         datetime(2003, 9, 10))
-
-    def testDateWithSpace11(self):
-        self.assertEqual(parse("10 09 03", yearfirst=True),
-                         datetime(2010, 9, 3))
 
     def testAMPMNoHour(self):
         with pytest.raises(ValueError):
@@ -448,44 +436,6 @@ class ParserTest(unittest.TestCase):
         with pytest.warns(UnknownTimezoneWarning):
             res = parse(s1, fuzzy=True)
         self.assertEqual(res, datetime(1945, 1, 29, 14, 45))
-
-    def testRandomFormat2(self):
-        self.assertEqual(parse("1996.07.10 AD at 15:08:56 PDT",
-                               ignoretz=True),
-                         datetime(1996, 7, 10, 15, 8, 56))
-
-    def testRandomFormat4(self):
-        self.assertEqual(parse("Tuesday, April 12, 1952 AD 3:30:42pm PST",
-                               ignoretz=True),
-                         datetime(1952, 4, 12, 15, 30, 42))
-
-    def testRandomFormat5(self):
-        self.assertEqual(parse("November 5, 1994, 8:15:30 am EST",
-                               ignoretz=True),
-                         datetime(1994, 11, 5, 8, 15, 30))
-
-    def testRandomFormat6(self):
-        self.assertEqual(parse("1994-11-05T08:15:30-05:00",
-                               ignoretz=True),
-                         datetime(1994, 11, 5, 8, 15, 30))
-
-    def testRandomFormat7(self):
-        self.assertEqual(parse("1994-11-05T08:15:30Z",
-                               ignoretz=True),
-                         datetime(1994, 11, 5, 8, 15, 30))
-
-    def testRandomFormat17(self):
-        self.assertEqual(parse("1976-07-04T00:01:02Z", ignoretz=True),
-                         datetime(1976, 7, 4, 0, 1, 2))
-
-    def testRandomFormat18(self):
-        self.assertEqual(parse("1986-07-05T08:15:30z",
-                               ignoretz=True),
-                         datetime(1986, 7, 5, 8, 15, 30))
-
-    def testRandomFormat20(self):
-        self.assertEqual(parse("Tue Apr 4 00:22:12 PDT 1995", ignoretz=True),
-                         datetime(1995, 4, 4, 0, 22, 12))
 
     def testRandomFormat24(self):
         self.assertEqual(parse("0:00 PM, PST", default=self.default,
