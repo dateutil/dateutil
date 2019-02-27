@@ -813,45 +813,42 @@ class TestParseUnimplementedCases(object):
         assert res == expected
 
 
-@pytest.mark.skipif(IS_WIN, reason='Windows does not use TZ var')
-def test_parse_unambiguous_nonexistent_local():
-    # When dates are specified "EST" even when they should be "EDT" in the
-    # local time zone, we should still assign the local time zone
-    with TZEnvContext('EST+5EDT,M3.2.0/2,M11.1.0/2'):
-        dt_exp = datetime(2011, 8, 1, 12, 30, tzinfo=tz.tzlocal())
-        dt = parse('2011-08-01T12:30 EST')
+@pytest.mark.skipif(IS_WIN, reason="Windows does not use TZ var")
+class TestTZVar(object):
+    def test_parse_unambiguous_nonexistent_local(self):
+        # When dates are specified "EST" even when they should be "EDT" in the
+        # local time zone, we should still assign the local time zone
+        with TZEnvContext('EST+5EDT,M3.2.0/2,M11.1.0/2'):
+            dt_exp = datetime(2011, 8, 1, 12, 30, tzinfo=tz.tzlocal())
+            dt = parse('2011-08-01T12:30 EST')
 
-        assert dt.tzname() == 'EDT'
-        assert dt == dt_exp
+            assert dt.tzname() == 'EDT'
+            assert dt == dt_exp
 
+    def test_tzlocal_in_gmt(self):
+        # GH #318
+        with TZEnvContext('GMT0BST,M3.5.0,M10.5.0'):
+            # This is an imaginary datetime in tz.tzlocal() but should still
+            # parse using the GMT-as-alias-for-UTC rule
+            dt = parse('2004-05-01T12:00 GMT')
+            dt_exp = datetime(2004, 5, 1, 12, tzinfo=tz.tzutc())
 
-@pytest.mark.skipif(IS_WIN, reason='Windows does not use TZ var')
-def test_tzlocal_in_gmt():
-    # GH #318
-    with TZEnvContext('GMT0BST,M3.5.0,M10.5.0'):
-        # This is an imaginary datetime in tz.tzlocal() but should still
-        # parse using the GMT-as-alias-for-UTC rule
-        dt = parse('2004-05-01T12:00 GMT')
-        dt_exp = datetime(2004, 5, 1, 12, tzinfo=tz.tzutc())
+            assert dt == dt_exp
 
-        assert dt == dt_exp
+    def test_tzlocal_parse_fold(self):
+        # One manifestion of GH #318
+        with TZEnvContext('EST+5EDT,M3.2.0/2,M11.1.0/2'):
+            dt_exp = datetime(2011, 11, 6, 1, 30, tzinfo=tz.tzlocal())
+            dt_exp = tz.enfold(dt_exp, fold=1)
+            dt = parse('2011-11-06T01:30 EST')
 
-
-@pytest.mark.skipif(IS_WIN, reason='Windows does not use TZ var')
-def test_tzlocal_parse_fold():
-    # One manifestion of GH #318
-    with TZEnvContext('EST+5EDT,M3.2.0/2,M11.1.0/2'):
-        dt_exp = datetime(2011, 11, 6, 1, 30, tzinfo=tz.tzlocal())
-        dt_exp = tz.enfold(dt_exp, fold=1)
-        dt = parse('2011-11-06T01:30 EST')
-
-        # Because this is ambiguous, kuntil `tz.tzlocal() is tz.tzlocal()`
-        # we'll just check the attributes we care about rather than
-        # dt == dt_exp
-        assert dt.tzname() == dt_exp.tzname()
-        assert dt.replace(tzinfo=None) == dt_exp.replace(tzinfo=None)
-        assert getattr(dt, 'fold') == getattr(dt_exp, 'fold')
-        assert dt.astimezone(tz.tzutc()) == dt_exp.astimezone(tz.tzutc())
+            # Because this is ambiguous, kuntil `tz.tzlocal() is tz.tzlocal()`
+            # we'll just check the attributes we care about rather than
+            # dt == dt_exp
+            assert dt.tzname() == dt_exp.tzname()
+            assert dt.replace(tzinfo=None) == dt_exp.replace(tzinfo=None)
+            assert getattr(dt, 'fold') == getattr(dt_exp, 'fold')
+            assert dt.astimezone(tz.tzutc()) == dt_exp.astimezone(tz.tzutc())
 
 
 def test_parse_tzinfos_fold():
