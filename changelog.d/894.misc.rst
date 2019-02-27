@@ -1,0 +1,2 @@
+Parametrized parser test cases.
+Patch by @jbrockmendel (gh pr #894)
