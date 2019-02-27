@@ -70,6 +70,7 @@ PARSER_TEST_CASES = [
     ("July 4, 1976", datetime(1976, 7, 4), "random format"),
     ("7 4 1976", datetime(1976, 7, 4), "random format"),
     ("4 jul 1976", datetime(1976, 7, 4), "random format"),
+    ("4 Jul 1976", datetime(1976, 7, 4), "'%-d %b %Y' format"),
     ("7-4-76", datetime(1976, 7, 4), "random format"),
     ("19760704", datetime(1976, 7, 4), "random format"),
     ("0:01:02 on July 4, 1976", datetime(1976, 7, 4, 0, 1, 2), "random format"),
