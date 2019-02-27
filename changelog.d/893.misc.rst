@@ -1,0 +1,2 @@
+Fix tests if TZ not change allowed.
+Patch by @shadchin (gh pr #893)
