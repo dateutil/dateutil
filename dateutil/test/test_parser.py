@@ -42,7 +42,6 @@ PARSER_TEST_CASES = [
     ("2003-09-25 10:49:41,502", datetime(2003, 9, 25, 10, 49, 41, 502000), "python logger format"),
     ("199709020908", datetime(1997, 9, 2, 9, 8), "no separator"),
     ("19970902090807", datetime(1997, 9, 2, 9, 8, 7), "no separator"),
-    ("2003-09-25", datetime(2003, 9, 25), "date with dash"),
     ("09-25-2003", datetime(2003, 9, 25), "date with dash"),
     ("25-09-2003", datetime(2003, 9, 25), "date with dash"),
     ("10-09-2003", datetime(2003, 10, 9), "date with dash"),
@@ -74,7 +73,6 @@ PARSER_TEST_CASES = [
     ("7-4-76", datetime(1976, 7, 4), "random format"),
     ("19760704", datetime(1976, 7, 4), "random format"),
     ("0:01:02 on July 4, 1976", datetime(1976, 7, 4, 0, 1, 2), "random format"),
-    ("0:01:02 on July 4, 1976", datetime(1976, 7, 4, 0, 1, 2), "random format"),
     ("July 4, 1976 12:01:02 am", datetime(1976, 7, 4, 0, 1, 2), "random format"),
     ("Mon Jan  2 04:24:27 1995", datetime(1995, 1, 2, 4, 24, 27), "random format"),
     ("04.04.95 00:22", datetime(1995, 4, 4, 0, 22), "random format"),
@@ -90,6 +88,8 @@ PARSER_TEST_CASES = [
     ('0003-03-04', datetime(3, 3, 4), "pre 12 year same month (See GH PR #293)"),
     ('December.0031.30', datetime(31, 12, 30), "BYd corner case (GH#687)")
 ]
+# Check that we don't have any duplicates
+assert len(set([x[0] for x in PARSER_TEST_CASES])) == len(PARSER_TEST_CASES)
 
 
 @pytest.mark.parametrize("parsable_text,expected_datetime,assertion_message", PARSER_TEST_CASES)
@@ -145,6 +145,8 @@ PARSER_DEFAULT_TEST_CASES = [
     ("01m02h", datetime(2003, 9, 25, 2, 1), "random format"),
     ("2004 10 Apr 11h30m", datetime(2004, 4, 10, 11, 30), "random format")
 ]
+# Check that we don't have any duplicates
+assert len(set([x[0] for x in PARSER_DEFAULT_TEST_CASES])) == len(PARSER_DEFAULT_TEST_CASES)
 
 
 @pytest.mark.parametrize("parsable_text,expected_datetime,assertion_message", PARSER_DEFAULT_TEST_CASES)
@@ -180,7 +182,7 @@ class TestFormat(object):
             assert res == actual
 
 
-class TestInputFormats(object):
+class TestInputTypes(object):
     def test_empty_string_invalid(self):
         with pytest.raises(ValueError):
             parse('')
@@ -284,12 +286,6 @@ class ParserTest(unittest.TestCase):
         assert parse(pstring) == datetime(1924, 8, 29)
 
     def testDateCommandFormat(self):
-        self.assertEqual(parse("Thu Sep 25 10:36:28 BRST 2003",
-                               tzinfos=self.tzinfos),
-                         datetime(2003, 9, 25, 10, 36, 28,
-                                  tzinfo=self.brsttz))
-
-    def testDateCommandFormatUnicode(self):
         self.assertEqual(parse("Thu Sep 25 10:36:28 BRST 2003",
                                tzinfos=self.tzinfos),
                          datetime(2003, 9, 25, 10, 36, 28,
