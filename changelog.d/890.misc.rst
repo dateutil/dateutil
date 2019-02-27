@@ -1,0 +1,2 @@
+Removed duplicate tests in test_parser and renamed one test class.
+Patch by @jbrockmendel (gh pr #890)
