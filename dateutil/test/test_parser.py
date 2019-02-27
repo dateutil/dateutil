@@ -27,6 +27,13 @@ try:
 except ValueError:
     PLATFORM_HAS_DASH_D = False
 
+
+@pytest.fixture(params=[True, False])
+def fuzzy(request):
+    """Fixture to pass fuzzy=True or fuzzy=False to parse"""
+    return request.param
+
+
 # Parser test cases using no keyword arguments. Format: (parsable_text, expected_datetime, assertion_message)
 PARSER_TEST_CASES = [
     ("Thu Sep 25 10:36:28 2003", datetime(2003, 9, 25, 10, 36, 28), "date command format strip"),
@@ -491,10 +498,6 @@ class ParserTest(unittest.TestCase):
 
         self.assertEqual(res, datetime(1990, 6, 13, 5, 50))
 
-    def testInvalidDay(self):
-        with pytest.raises(ValueError):
-            parse("Feb 30, 2007")
-
     def testUnspecifiedDayFallback(self):
         # Test that for an unspecified day, the fallback behavior is correct.
         self.assertEqual(parse("April 2009", default=datetime(2010, 1, 31)),
@@ -673,6 +676,37 @@ class ParserTest(unittest.TestCase):
         dstr = 'AD2001'
         res = parse(dstr)
         assert res.year == 2001, res
+
+
+class TestOutOfBounds(object):
+
+    def test_no_year_zero(self):
+        with pytest.raises(ValueError):
+            parse("0000 Jun 20")
+
+    def test_out_of_bound_day(self):
+        with pytest.raises(ValueError):
+            parse("Feb 30, 2007")
+
+    def test_day_sanity(self, fuzzy):
+        dstr = "2014-15-25"
+        with pytest.raises(ValueError):
+            parse(dstr, fuzzy=fuzzy)
+
+    def test_minute_sanity(self, fuzzy):
+        dstr = "2014-02-28 22:64"
+        with pytest.raises(ValueError):
+            parse(dstr, fuzzy=fuzzy)
+
+    def test_hour_sanity(self, fuzzy):
+        dstr = "2014-02-28 25:16 PM"
+        with pytest.raises(ValueError):
+            parse(dstr, fuzzy=fuzzy)
+
+    def test_second_sanity(self, fuzzy):
+        dstr = "2014-02-28 22:14:64"
+        with pytest.raises(ValueError):
+            parse(dstr, fuzzy=fuzzy)
 
 
 class TestParseUnimplementedCases(object):
