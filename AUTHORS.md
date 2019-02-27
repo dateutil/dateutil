@@ -19,6 +19,7 @@ switch, and thus all their contributions are dual-licensed.
 - Alex Verdyan <verdyan@MASKED>
 - Alex Willmer <alex@moreati.org.uk> (gh: @moreati) **R**
 - Alexander Brugh <alexander.brugh@MASKED> (gh: @abrugh)
+- Alexander Shadchin <alexandr.shadchin@gmail.com> (gh: @shadchin) **D**
 - Alistair McMaster <alistair@MASKED> (gh: @alimcmaster1 ) **D**
 - Allison Quinlan <aquinlan82@gmail.com> (gh: @aquinlan) **D**
 - Andrew Bennett (gh: @andrewcbennett) **D**
