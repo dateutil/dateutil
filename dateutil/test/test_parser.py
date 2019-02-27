@@ -186,7 +186,8 @@ def test_parse_yearfirst(sep):
 @pytest.mark.parametrize('dstr,expected', [
     ("Thu Sep 25 10:36:28 BRST 2003", datetime(2003, 9, 25, 10, 36, 28)),
     ("1996.07.10 AD at 15:08:56 PDT", datetime(1996, 7, 10, 15, 8, 56)),
-    ("Tuesday, April 12, 1952 AD 3:30:42pm PST", datetime(1952, 4, 12, 15, 30, 42)),  # noqa:E501
+    ("Tuesday, April 12, 1952 AD 3:30:42pm PST",
+     datetime(1952, 4, 12, 15, 30, 42)),
     ("November 5, 1994, 8:15:30 am EST", datetime(1994, 11, 5, 8, 15, 30)),
     ("1994-11-05T08:15:30-05:00", datetime(1994, 11, 5, 8, 15, 30)),
     ("1994-11-05T08:15:30Z", datetime(1994, 11, 5, 8, 15, 30)),
@@ -203,11 +204,16 @@ _brsttz = tzoffset("BRST", -10800)
 
 
 @pytest.mark.parametrize('dstr,expected', [
-    ("20030925T104941-0300", datetime(2003, 9, 25, 10, 49, 41, tzinfo=_brsttz)),
-    ("Thu, 25 Sep 2003 10:49:41 -0300", datetime(2003, 9, 25, 10, 49, 41, tzinfo=_brsttz)),  # noqa:#501
-    ("2003-09-25T10:49:41.5-03:00", datetime(2003, 9, 25, 10, 49, 41, 500000, tzinfo=_brsttz)),  # noqa:#501
-    ("2003-09-25T10:49:41-03:00", datetime(2003, 9, 25, 10, 49, 41, tzinfo=_brsttz)),  # noqa:#501
-    ("20030925T104941.5-0300", datetime(2003, 9, 25, 10, 49, 41, 500000, tzinfo=_brsttz)),  # noqa:#501
+    ("20030925T104941-0300",
+     datetime(2003, 9, 25, 10, 49, 41, tzinfo=_brsttz)),
+    ("Thu, 25 Sep 2003 10:49:41 -0300",
+     datetime(2003, 9, 25, 10, 49, 41, tzinfo=_brsttz)),
+    ("2003-09-25T10:49:41.5-03:00",
+     datetime(2003, 9, 25, 10, 49, 41, 500000, tzinfo=_brsttz)),
+    ("2003-09-25T10:49:41-03:00",
+     datetime(2003, 9, 25, 10, 49, 41, tzinfo=_brsttz)),
+    ("20030925T104941.5-0300",
+     datetime(2003, 9, 25, 10, 49, 41, 500000, tzinfo=_brsttz)),
 ])
 def test_parse_with_tzoffset(dstr, expected):
     # In these cases, we are _not_ passing a tzinfos arg
@@ -241,6 +247,46 @@ class TestFormat(object):
             dstr = actual.strftime(fmt)
             res = parse(dstr)
             assert res == actual
+
+    # TODO: some redundancy with PARSER_TEST_CASES cases
+    @pytest.mark.parametrize("fmt,dstr", [
+        ("%a %b %d %Y", "Thu Sep 25 2003"),
+        ("%b %d %Y", "Sep 25 2003"),
+        ("%Y-%m-%d", "2003-09-25"),
+        ("%Y%m%d", "20030925"),
+        ("%Y-%b-%d", "2003-Sep-25"),
+        ("%d-%b-%Y", "25-Sep-2003"),
+        ("%b-%d-%Y", "Sep-25-2003"),
+        ("%m-%d-%Y", "09-25-2003"),
+        ("%d-%m-%Y", "25-09-2003"),
+        ("%Y.%m.%d", "2003.09.25"),
+        ("%Y.%b.%d", "2003.Sep.25"),
+        ("%d.%b.%Y", "25.Sep.2003"),
+        ("%b.%d.%Y", "Sep.25.2003"),
+        ("%m.%d.%Y", "09.25.2003"),
+        ("%d.%m.%Y", "25.09.2003"),
+        ("%Y/%m/%d", "2003/09/25"),
+        ("%Y/%b/%d", "2003/Sep/25"),
+        ("%d/%b/%Y", "25/Sep/2003"),
+        ("%b/%d/%Y", "Sep/25/2003"),
+        ("%m/%d/%Y", "09/25/2003"),
+        ("%d/%m/%Y", "25/09/2003"),
+        ("%Y %m %d", "2003 09 25"),
+        ("%Y %b %d", "2003 Sep 25"),
+        ("%d %b %Y", "25 Sep 2003"),
+        ("%m %d %Y", "09 25 2003"),
+        ("%d %m %Y", "25 09 2003"),
+        ("%y %d %b", "03 25 Sep",),
+    ])
+    def test_strftime_formats_2003Sep25(self, fmt, dstr):
+        expected = datetime(2003, 9, 25)
+
+        # First check that the format strings behave as expected
+        #  (not strictly necessary, but nice to have)
+        assert expected.strftime(fmt) == dstr
+
+        res = parse(dstr)
+        assert res == expected
 
 
 class TestInputTypes(object):
