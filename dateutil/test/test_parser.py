@@ -842,7 +842,7 @@ class TestTZVar(object):
             dt_exp = tz.enfold(dt_exp, fold=1)
             dt = parse('2011-11-06T01:30 EST')
 
-            # Because this is ambiguous, kuntil `tz.tzlocal() is tz.tzlocal()`
+            # Because this is ambiguous, until `tz.tzlocal() is tz.tzlocal()`
             # we'll just check the attributes we care about rather than
             # dt == dt_exp
             assert dt.tzname() == dt_exp.tzname()
