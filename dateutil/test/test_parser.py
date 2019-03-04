@@ -27,6 +27,13 @@ try:
 except ValueError:
     PLATFORM_HAS_DASH_D = False
 
+
+@pytest.fixture(params=[True, False])
+def fuzzy(request):
+    """Fixture to pass fuzzy=True or fuzzy=False to parse"""
+    return request.param
+
+
 # Parser test cases using no keyword arguments. Format: (parsable_text, expected_datetime, assertion_message)
 PARSER_TEST_CASES = [
     ("Thu Sep 25 10:36:28 2003", datetime(2003, 9, 25, 10, 36, 28), "date command format strip"),
@@ -70,6 +77,7 @@ PARSER_TEST_CASES = [
     ("July 4, 1976", datetime(1976, 7, 4), "random format"),
     ("7 4 1976", datetime(1976, 7, 4), "random format"),
     ("4 jul 1976", datetime(1976, 7, 4), "random format"),
+    ("4 Jul 1976", datetime(1976, 7, 4), "'%-d %b %Y' format"),
     ("7-4-76", datetime(1976, 7, 4), "random format"),
     ("19760704", datetime(1976, 7, 4), "random format"),
     ("0:01:02 on July 4, 1976", datetime(1976, 7, 4, 0, 1, 2), "random format"),
@@ -86,7 +94,10 @@ PARSER_TEST_CASES = [
     ("20080227T21:26:01.123456789", datetime(2008, 2, 27, 21, 26, 1, 123456), "high precision seconds"),
     ('13NOV2017', datetime(2017, 11, 13), "dBY (See GH360)"),
     ('0003-03-04', datetime(3, 3, 4), "pre 12 year same month (See GH PR #293)"),
-    ('December.0031.30', datetime(31, 12, 30), "BYd corner case (GH#687)")
+    ('December.0031.30', datetime(31, 12, 30), "BYd corner case (GH#687)"),
+
+    # Cases with legacy h/m/s format, candidates for deprecation (GH#886)
+    ("2016-12-21 04.2h", datetime(2016, 12, 21, 4, 12), "Fractional Hours"),
 ]
 # Check that we don't have any duplicates
 assert len(set([x[0] for x in PARSER_TEST_CASES])) == len(PARSER_TEST_CASES)
@@ -487,10 +498,6 @@ class ParserTest(unittest.TestCase):
 
         self.assertEqual(res, datetime(1990, 6, 13, 5, 50))
 
-    def testInvalidDay(self):
-        with pytest.raises(ValueError):
-            parse("Feb 30, 2007")
-
     def testUnspecifiedDayFallback(self):
         # Test that for an unspecified day, the fallback behavior is correct.
         self.assertEqual(parse("April 2009", default=datetime(2010, 1, 31)),
@@ -669,6 +676,37 @@ class ParserTest(unittest.TestCase):
         dstr = 'AD2001'
         res = parse(dstr)
         assert res.year == 2001, res
+
+
+class TestOutOfBounds(object):
+
+    def test_no_year_zero(self):
+        with pytest.raises(ValueError):
+            parse("0000 Jun 20")
+
+    def test_out_of_bound_day(self):
+        with pytest.raises(ValueError):
+            parse("Feb 30, 2007")
+
+    def test_day_sanity(self, fuzzy):
+        dstr = "2014-15-25"
+        with pytest.raises(ValueError):
+            parse(dstr, fuzzy=fuzzy)
+
+    def test_minute_sanity(self, fuzzy):
+        dstr = "2014-02-28 22:64"
+        with pytest.raises(ValueError):
+            parse(dstr, fuzzy=fuzzy)
+
+    def test_hour_sanity(self, fuzzy):
+        dstr = "2014-02-28 25:16 PM"
+        with pytest.raises(ValueError):
+            parse(dstr, fuzzy=fuzzy)
+
+    def test_second_sanity(self, fuzzy):
+        dstr = "2014-02-28 22:14:64"
+        with pytest.raises(ValueError):
+            parse(dstr, fuzzy=fuzzy)
 
 
 class TestParseUnimplementedCases(object):

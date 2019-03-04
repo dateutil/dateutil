@@ -1,0 +1,2 @@
+Added test cases for parser.
+Patch by @jbrockmendel (gh pr #892)
