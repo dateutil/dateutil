@@ -399,6 +399,7 @@ class parserinfo(object):
 
 class _ymd(list):
     def __init__(self, *args, **kwargs):
+        self.disallow_mdy = kwargs.pop('disallow_mdy', False)
         super(self.__class__, self).__init__(*args, **kwargs)
         self.century_specified = False
         self.dstridx = None
@@ -573,7 +574,7 @@ class _ymd(list):
                     else:
                         year, month, day = self
                         order = 'ymd'
-                elif self[0] > 12 or (dayfirst and self[1] <= 12):
+                elif self[0] > 12 or (dayfirst and self[1] <= 12) or self.disallow_mdy:
                     # 13-01-01
                     day, month, year = self
                     order = 'dmy'
@@ -681,7 +682,7 @@ class parser(object):
                      "tzname", "tzoffset", "ampm","any_unused_tokens"]
 
     def _parse(self, timestr, dayfirst=None, yearfirst=None, fuzzy=False,
-               fuzzy_with_tokens=False):
+               fuzzy_with_tokens=False, disallow_mdy=False):
         """
         Private method which performs the heavy lifting of parsing, called from
         ``parse()``, which passes on its ``kwargs`` to this function.
@@ -738,7 +739,7 @@ class parser(object):
         skipped_idxs = []
 
         # year/month/day list
-        ymd = _ymd()
+        ymd = _ymd(disallow_mdy=disallow_mdy)
 
         len_l = len(l)
         i = 0
