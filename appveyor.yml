@@ -2,7 +2,6 @@ build: false
 environment:
   matrix:
     - PYTHON_VERSION: 27
-    - PYTHON_VERSION: 33
     - PYTHON_VERSION: 34
     - PYTHON_VERSION: 35
     - PYTHON_VERSION: 36
@@ -13,8 +12,6 @@ platform:
 matrix:
   fast_finish: true
   exclude:
-    - platform: x86
-      PYTHON_VERSION: 33
     - platform: x86
       PYTHON_VERSION: 34
     - platform: x86

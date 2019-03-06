@@ -3,7 +3,6 @@ language: python
 cache: pip
 python:
   - "2.7"
-  - "3.3"
   - "3.4"
   - "3.5"
   - "3.6"
@@ -33,8 +32,6 @@ matrix:
 
 install:
   - pip install -U six && pip install -U tox
-  - if [[ $TRAVIS_PYTHON_VERSION == "3.3" ]]; then pip install 'virtualenv<16.0'; fi
-  - if [[ $TRAVIS_PYTHON_VERSION == "3.3" ]]; then pip install 'setuptools<40.0'; fi
   - if [[ $TOXENV == "py" ]]; then ./ci_tools/retry.sh python updatezinfo.py; fi
 
 script:
