@@ -355,6 +355,10 @@ class ParserTest(unittest.TestCase):
                          datetime(2003, 9, 25, 10, 49, 41,
                                   tzinfo=tzoffset(None, 10800)))
 
+    def testISOStrippedFormatReversed(self):
+        self.assertEqual(parse("25092003"),
+                         datetime(2003, 9, 25))
+
     def testDateWithDash8(self):
         self.assertEqual(parse("10-09-2003", dayfirst=True),
                          datetime(2003, 9, 10))
