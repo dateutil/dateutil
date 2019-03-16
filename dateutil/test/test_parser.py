@@ -165,6 +165,62 @@ def test_parser_default(parsable_text, expected_datetime, assertion_message):
     assert parse(parsable_text, default=datetime(2003, 9, 25)) == expected_datetime, assertion_message
 
 
+@pytest.mark.parametrize('sep', ['-', '.', '/', ' '])
+def test_parse_dayfirst(sep):
+    expected = datetime(2003, 9, 10)
+    fmt = sep.join(['%d', '%m', '%Y'])
+    dstr = expected.strftime(fmt)
+    result = parse(dstr, dayfirst=True)
+    assert result == expected
+
+
+@pytest.mark.parametrize('sep', ['-', '.', '/', ' '])
+def test_parse_yearfirst(sep):
+    expected = datetime(2010, 9, 3)
+    fmt = sep.join(['%Y', '%m', '%d'])
+    dstr = expected.strftime(fmt)
+    result = parse(dstr, yearfirst=True)
+    assert result == expected
+
+
+@pytest.mark.parametrize('dstr,expected', [
+    ("Thu Sep 25 10:36:28 BRST 2003", datetime(2003, 9, 25, 10, 36, 28)),
+    ("1996.07.10 AD at 15:08:56 PDT", datetime(1996, 7, 10, 15, 8, 56)),
+    ("Tuesday, April 12, 1952 AD 3:30:42pm PST",
+     datetime(1952, 4, 12, 15, 30, 42)),
+    ("November 5, 1994, 8:15:30 am EST", datetime(1994, 11, 5, 8, 15, 30)),
+    ("1994-11-05T08:15:30-05:00", datetime(1994, 11, 5, 8, 15, 30)),
+    ("1994-11-05T08:15:30Z", datetime(1994, 11, 5, 8, 15, 30)),
+    ("1976-07-04T00:01:02Z", datetime(1976, 7, 4, 0, 1, 2)),
+    ("1986-07-05T08:15:30z", datetime(1986, 7, 5, 8, 15, 30)),
+    ("Tue Apr 4 00:22:12 PDT 1995", datetime(1995, 4, 4, 0, 22, 12)),
+])
+def test_parse_ignoretz(dstr, expected):
+    result = parse(dstr, ignoretz=True)
+    assert result == expected
+
+
+_brsttz = tzoffset("BRST", -10800)
+
+
+@pytest.mark.parametrize('dstr,expected', [
+    ("20030925T104941-0300",
+     datetime(2003, 9, 25, 10, 49, 41, tzinfo=_brsttz)),
+    ("Thu, 25 Sep 2003 10:49:41 -0300",
+     datetime(2003, 9, 25, 10, 49, 41, tzinfo=_brsttz)),
+    ("2003-09-25T10:49:41.5-03:00",
+     datetime(2003, 9, 25, 10, 49, 41, 500000, tzinfo=_brsttz)),
+    ("2003-09-25T10:49:41-03:00",
+     datetime(2003, 9, 25, 10, 49, 41, tzinfo=_brsttz)),
+    ("20030925T104941.5-0300",
+     datetime(2003, 9, 25, 10, 49, 41, 500000, tzinfo=_brsttz)),
+])
+def test_parse_with_tzoffset(dstr, expected):
+    # In these cases, we are _not_ passing a tzinfos arg
+    result = parse(dstr)
+    assert result == expected
+
+
 class TestFormat(object):
 
     def test_ybd(self):
@@ -191,6 +247,46 @@ class TestFormat(object):
             dstr = actual.strftime(fmt)
             res = parse(dstr)
             assert res == actual
+
+    # TODO: some redundancy with PARSER_TEST_CASES cases
+    @pytest.mark.parametrize("fmt,dstr", [
+        ("%a %b %d %Y", "Thu Sep 25 2003"),
+        ("%b %d %Y", "Sep 25 2003"),
+        ("%Y-%m-%d", "2003-09-25"),
+        ("%Y%m%d", "20030925"),
+        ("%Y-%b-%d", "2003-Sep-25"),
+        ("%d-%b-%Y", "25-Sep-2003"),
+        ("%b-%d-%Y", "Sep-25-2003"),
+        ("%m-%d-%Y", "09-25-2003"),
+        ("%d-%m-%Y", "25-09-2003"),
+        ("%Y.%m.%d", "2003.09.25"),
+        ("%Y.%b.%d", "2003.Sep.25"),
+        ("%d.%b.%Y", "25.Sep.2003"),
+        ("%b.%d.%Y", "Sep.25.2003"),
+        ("%m.%d.%Y", "09.25.2003"),
+        ("%d.%m.%Y", "25.09.2003"),
+        ("%Y/%m/%d", "2003/09/25"),
+        ("%Y/%b/%d", "2003/Sep/25"),
+        ("%d/%b/%Y", "25/Sep/2003"),
+        ("%b/%d/%Y", "Sep/25/2003"),
+        ("%m/%d/%Y", "09/25/2003"),
+        ("%d/%m/%Y", "25/09/2003"),
+        ("%Y %m %d", "2003 09 25"),
+        ("%Y %b %d", "2003 Sep 25"),
+        ("%d %b %Y", "25 Sep 2003"),
+        ("%m %d %Y", "09 25 2003"),
+        ("%d %m %Y", "25 09 2003"),
+        ("%y %d %b", "03 25 Sep",),
+    ])
+    def test_strftime_formats_2003Sep25(self, fmt, dstr):
+        expected = datetime(2003, 9, 25)
+
+        # First check that the format strings behave as expected
+        #  (not strictly necessary, but nice to have)
+        assert expected.strftime(fmt) == dstr
+
+        res = parse(dstr)
+        assert res == expected
 
 
 class TestInputTypes(object):
@@ -315,77 +411,15 @@ class ParserTest(unittest.TestCase):
                              datetime(2003, 9, 25, 10, 36, 28,
                                       tzinfo=self.brsttz))
 
-    def testDateCommandFormatIgnoreTz(self):
-        self.assertEqual(parse("Thu Sep 25 10:36:28 BRST 2003",
-                               ignoretz=True),
-                         datetime(2003, 9, 25, 10, 36, 28))
-
-    def testDateRCommandFormat(self):
-        self.assertEqual(parse("Thu, 25 Sep 2003 10:49:41 -0300"),
-                         datetime(2003, 9, 25, 10, 49, 41,
-                                  tzinfo=self.brsttz))
-
-    def testISOFormat(self):
-        self.assertEqual(parse("2003-09-25T10:49:41.5-03:00"),
-                         datetime(2003, 9, 25, 10, 49, 41, 500000,
-                                  tzinfo=self.brsttz))
-
-    def testISOFormatStrip1(self):
-        self.assertEqual(parse("2003-09-25T10:49:41-03:00"),
-                         datetime(2003, 9, 25, 10, 49, 41,
-                                  tzinfo=self.brsttz))
-
     def testISOFormatStrip2(self):
         self.assertEqual(parse("2003-09-25T10:49:41+03:00"),
                          datetime(2003, 9, 25, 10, 49, 41,
                                   tzinfo=tzoffset(None, 10800)))
 
-    def testISOStrippedFormat(self):
-        self.assertEqual(parse("20030925T104941.5-0300"),
-                         datetime(2003, 9, 25, 10, 49, 41, 500000,
-                                  tzinfo=self.brsttz))
-
-    def testISOStrippedFormatStrip1(self):
-        self.assertEqual(parse("20030925T104941-0300"),
-                         datetime(2003, 9, 25, 10, 49, 41,
-                                  tzinfo=self.brsttz))
-
     def testISOStrippedFormatStrip2(self):
         self.assertEqual(parse("20030925T104941+0300"),
                          datetime(2003, 9, 25, 10, 49, 41,
                                   tzinfo=tzoffset(None, 10800)))
-
-    def testDateWithDash8(self):
-        self.assertEqual(parse("10-09-2003", dayfirst=True),
-                         datetime(2003, 9, 10))
-
-    def testDateWithDash11(self):
-        self.assertEqual(parse("10-09-03", yearfirst=True),
-                         datetime(2010, 9, 3))
-
-    def testDateWithDot8(self):
-        self.assertEqual(parse("10.09.2003", dayfirst=True),
-                         datetime(2003, 9, 10))
-
-    def testDateWithDot11(self):
-        self.assertEqual(parse("10.09.03", yearfirst=True),
-                         datetime(2010, 9, 3))
-
-    def testDateWithSlash8(self):
-        self.assertEqual(parse("10/09/2003", dayfirst=True),
-                         datetime(2003, 9, 10))
-
-    def testDateWithSlash11(self):
-        self.assertEqual(parse("10/09/03", yearfirst=True),
-                         datetime(2010, 9, 3))
-
-    def testDateWithSpace8(self):
-        self.assertEqual(parse("10 09 2003", dayfirst=True),
-                         datetime(2003, 9, 10))
-
-    def testDateWithSpace11(self):
-        self.assertEqual(parse("10 09 03", yearfirst=True),
-                         datetime(2010, 9, 3))
 
     def testAMPMNoHour(self):
         with pytest.raises(ValueError):
@@ -448,44 +482,6 @@ class ParserTest(unittest.TestCase):
         with pytest.warns(UnknownTimezoneWarning):
             res = parse(s1, fuzzy=True)
         self.assertEqual(res, datetime(1945, 1, 29, 14, 45))
-
-    def testRandomFormat2(self):
-        self.assertEqual(parse("1996.07.10 AD at 15:08:56 PDT",
-                               ignoretz=True),
-                         datetime(1996, 7, 10, 15, 8, 56))
-
-    def testRandomFormat4(self):
-        self.assertEqual(parse("Tuesday, April 12, 1952 AD 3:30:42pm PST",
-                               ignoretz=True),
-                         datetime(1952, 4, 12, 15, 30, 42))
-
-    def testRandomFormat5(self):
-        self.assertEqual(parse("November 5, 1994, 8:15:30 am EST",
-                               ignoretz=True),
-                         datetime(1994, 11, 5, 8, 15, 30))
-
-    def testRandomFormat6(self):
-        self.assertEqual(parse("1994-11-05T08:15:30-05:00",
-                               ignoretz=True),
-                         datetime(1994, 11, 5, 8, 15, 30))
-
-    def testRandomFormat7(self):
-        self.assertEqual(parse("1994-11-05T08:15:30Z",
-                               ignoretz=True),
-                         datetime(1994, 11, 5, 8, 15, 30))
-
-    def testRandomFormat17(self):
-        self.assertEqual(parse("1976-07-04T00:01:02Z", ignoretz=True),
-                         datetime(1976, 7, 4, 0, 1, 2))
-
-    def testRandomFormat18(self):
-        self.assertEqual(parse("1986-07-05T08:15:30z",
-                               ignoretz=True),
-                         datetime(1986, 7, 5, 8, 15, 30))
-
-    def testRandomFormat20(self):
-        self.assertEqual(parse("Tue Apr 4 00:22:12 PDT 1995", ignoretz=True),
-                         datetime(1995, 4, 4, 0, 22, 12))
 
     def testRandomFormat24(self):
         self.assertEqual(parse("0:00 PM, PST", default=self.default,
@@ -817,45 +813,42 @@ class TestParseUnimplementedCases(object):
         assert res == expected
 
 
-@pytest.mark.skipif(IS_WIN, reason='Windows does not use TZ var')
-def test_parse_unambiguous_nonexistent_local():
-    # When dates are specified "EST" even when they should be "EDT" in the
-    # local time zone, we should still assign the local time zone
-    with TZEnvContext('EST+5EDT,M3.2.0/2,M11.1.0/2'):
-        dt_exp = datetime(2011, 8, 1, 12, 30, tzinfo=tz.tzlocal())
-        dt = parse('2011-08-01T12:30 EST')
+@pytest.mark.skipif(IS_WIN, reason="Windows does not use TZ var")
+class TestTZVar(object):
+    def test_parse_unambiguous_nonexistent_local(self):
+        # When dates are specified "EST" even when they should be "EDT" in the
+        # local time zone, we should still assign the local time zone
+        with TZEnvContext('EST+5EDT,M3.2.0/2,M11.1.0/2'):
+            dt_exp = datetime(2011, 8, 1, 12, 30, tzinfo=tz.tzlocal())
+            dt = parse('2011-08-01T12:30 EST')
 
-        assert dt.tzname() == 'EDT'
-        assert dt == dt_exp
+            assert dt.tzname() == 'EDT'
+            assert dt == dt_exp
 
+    def test_tzlocal_in_gmt(self):
+        # GH #318
+        with TZEnvContext('GMT0BST,M3.5.0,M10.5.0'):
+            # This is an imaginary datetime in tz.tzlocal() but should still
+            # parse using the GMT-as-alias-for-UTC rule
+            dt = parse('2004-05-01T12:00 GMT')
+            dt_exp = datetime(2004, 5, 1, 12, tzinfo=tz.tzutc())
 
-@pytest.mark.skipif(IS_WIN, reason='Windows does not use TZ var')
-def test_tzlocal_in_gmt():
-    # GH #318
-    with TZEnvContext('GMT0BST,M3.5.0,M10.5.0'):
-        # This is an imaginary datetime in tz.tzlocal() but should still
-        # parse using the GMT-as-alias-for-UTC rule
-        dt = parse('2004-05-01T12:00 GMT')
-        dt_exp = datetime(2004, 5, 1, 12, tzinfo=tz.tzutc())
+            assert dt == dt_exp
 
-        assert dt == dt_exp
+    def test_tzlocal_parse_fold(self):
+        # One manifestion of GH #318
+        with TZEnvContext('EST+5EDT,M3.2.0/2,M11.1.0/2'):
+            dt_exp = datetime(2011, 11, 6, 1, 30, tzinfo=tz.tzlocal())
+            dt_exp = tz.enfold(dt_exp, fold=1)
+            dt = parse('2011-11-06T01:30 EST')
 
-
-@pytest.mark.skipif(IS_WIN, reason='Windows does not use TZ var')
-def test_tzlocal_parse_fold():
-    # One manifestion of GH #318
-    with TZEnvContext('EST+5EDT,M3.2.0/2,M11.1.0/2'):
-        dt_exp = datetime(2011, 11, 6, 1, 30, tzinfo=tz.tzlocal())
-        dt_exp = tz.enfold(dt_exp, fold=1)
-        dt = parse('2011-11-06T01:30 EST')
-
-        # Because this is ambiguous, kuntil `tz.tzlocal() is tz.tzlocal()`
-        # we'll just check the attributes we care about rather than
-        # dt == dt_exp
-        assert dt.tzname() == dt_exp.tzname()
-        assert dt.replace(tzinfo=None) == dt_exp.replace(tzinfo=None)
-        assert getattr(dt, 'fold') == getattr(dt_exp, 'fold')
-        assert dt.astimezone(tz.tzutc()) == dt_exp.astimezone(tz.tzutc())
+            # Because this is ambiguous, until `tz.tzlocal() is tz.tzlocal()`
+            # we'll just check the attributes we care about rather than
+            # dt == dt_exp
+            assert dt.tzname() == dt_exp.tzname()
+            assert dt.replace(tzinfo=None) == dt_exp.replace(tzinfo=None)
+            assert getattr(dt, 'fold') == getattr(dt_exp, 'fold')
+            assert dt.astimezone(tz.tzutc()) == dt_exp.astimezone(tz.tzutc())
 
 
 def test_parse_tzinfos_fold():
