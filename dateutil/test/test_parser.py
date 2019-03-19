@@ -348,17 +348,21 @@ class TestInputTypes(object):
 
 
 class TestTzinfoInputTypes(object):
+    def assert_equal_same_tz(self, dt1, dt2):
+        assert dt1 == dt2
+        assert dt1.tzinfo is dt2.tzinfo
+
     def test_tzinfo_dict_could_return_none(self):
         dstr = "2017-02-03 12:40 BRST"
         result = parse(dstr, tzinfos={"BRST": None})
         expected = datetime(2017, 2, 3, 12, 40)
-        assert result == expected
+        self.assert_equal_same_tz(result, expected)
 
     def test_tzinfos_callable_could_return_none(self):
         dstr = "2017-02-03 12:40 BRST"
         result = parse(dstr, tzinfos=lambda *args: None)
         expected = datetime(2017, 2, 3, 12, 40)
-        assert result == expected
+        self.assert_equal_same_tz(result, expected)
 
     def test_invalid_tzinfo_input(self):
         dstr = "2014 January 19 09:00 UTC"
@@ -372,15 +376,14 @@ class TestTzinfoInputTypes(object):
         tzinfos = {"UTC": tz.UTC}
         expected = datetime(2014, 1, 19, 9, tzinfo=tz.UTC)
         res = parse(dstr, tzinfos=tzinfos)
-        assert res == expected
-        assert res.tzinfo is expected.tzinfo
+        self.assert_equal_same_tz(res, expected)
 
     def test_valid_tzinfo_unicode_input(self):
         dstr = "2014 January 19 09:00 UTC"
         tzinfos = {u"UTC": u"UTC+0"}
-        expected = datetime(2014, 1, 19, 9, tzinfo=tz.UTC)
+        expected = datetime(2014, 1, 19, 9, tzinfo=tz.tzstr("UTC+0"))
         res = parse(dstr, tzinfos=tzinfos)
-        assert res == expected
+        self.assert_equal_same_tz(res, expected)
 
     def test_valid_tzinfo_callable_input(self):
         dstr = "2014 January 19 09:00 UTC"
@@ -390,8 +393,7 @@ class TestTzinfoInputTypes(object):
 
         expected = datetime(2014, 1, 19, 9, tzinfo=tz.tzstr("UTC+0"))
         res = parse(dstr, tzinfos=tzinfos)
-        assert res == expected
-        assert res.tzinfo is expected.tzinfo
+        self.assert_equal_same_tz(res, expected)
 
 
 class ParserTest(unittest.TestCase):
