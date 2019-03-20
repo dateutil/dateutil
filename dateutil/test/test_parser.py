@@ -360,6 +360,14 @@ class TestTzinfoInputTypes(object):
         expected = datetime(2017, 2, 3, 12, 40)
         assert result == expected
 
+    @pytest.mark.xfail(reason="Incorrect error raised with bad tzinfo")
+    def test_invalid_tzinfo_input(self):
+        dstr = "2014 January 19 09:00 UTC"
+        # Pass an absurd tzinfos object
+        tzinfos = {"UTC": ValueError}
+        with pytest.raises(TypeError):
+            parse(dstr, tzinfos=tzinfos)
+
     def test_valid_tzinfo_tzinfo_input(self):
         dstr = "2014 January 19 09:00 UTC"
         tzinfos = {"UTC": tz.UTC}
