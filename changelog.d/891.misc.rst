@@ -1,0 +1,2 @@
+Added tests for tzinfos input types.
+Patch by @jbrockmendel (gh pr #891)

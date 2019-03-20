@@ -1,0 +1,4 @@
+``parser.parse`` will now raise ``TypeError`` when ``tzinfos`` is passed a type
+that cannot be interpreted as a time zone. Prior to this change, it would raise
+an ``UnboundLocalError`` instead.
+Patch by @jbrockmendel (gh pr #891)
