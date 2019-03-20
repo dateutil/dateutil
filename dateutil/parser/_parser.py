@@ -1172,6 +1172,9 @@ class parser(object):
             tzinfo = tz.tzstr(tzdata)
         elif isinstance(tzdata, integer_types):
             tzinfo = tz.tzoffset(tzname, tzdata)
+        else:
+            raise TypeError("Offset must be tzinfo subclass, tz string, "
+                            "or int offset.")
         return tzinfo
 
     def _build_tzaware(self, naive, res, tzinfos):
