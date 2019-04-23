@@ -123,6 +123,12 @@ class tzutc(datetime.tzinfo):
     __reduce__ = object.__reduce__
 
 
+#: Convenience constant providing a :class:`tzutc()` instance
+#:
+#: .. versionadded:: 2.7.0
+UTC = tzutc()
+
+
 @six.add_metaclass(_TzOffsetFactory)
 class tzoffset(datetime.tzinfo):
     """
