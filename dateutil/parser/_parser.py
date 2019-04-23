@@ -651,7 +651,10 @@ class parser(object):
         if len(res) == 0:
             raise ParserError("String does not contain a date: %s", timestr)
 
-        ret = self._build_naive(res, default)
+        try:
+            ret = self._build_naive(res, default)
+        except ValueError as e:
+            six.raise_from(ParserError(e.args[0] + ": %s", timestr), e)
 
         if not ignoretz:
             ret = self._build_tzaware(ret, res, tzinfos)

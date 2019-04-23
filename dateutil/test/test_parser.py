@@ -722,7 +722,6 @@ class ParserTest(unittest.TestCase):
         res = parse(dstr)
         assert res.year == 2001, res
 
-    @pytest.mark.xfail
     def test_includes_timestr(self):
         timestr = "2020-13-97T44:61:83"
 
