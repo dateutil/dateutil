@@ -50,7 +50,7 @@ steps:
   condition: in(variables.PYTHON, 'pypy', 'pypy3')
 
 - bash: |
-    $PYTHON -m pip install -U six && $PYTHON -m pip install -U tox
+    $PYTHON -m pip install -U six && $PYTHON -m pip install -U 'tox < 3.8.0'
     if [[ $PYTHON_VERSION == "3.3" ]]; then pip install 'virtualenv<16.0'; fi
     if [[ $PYTHON_VERSION == "3.3" ]]; then pip install 'setuptools<40.0'; fi
   displayName: Ensure prereqs
