@@ -1195,10 +1195,10 @@ class parser(object):
             # This is mostly relevant for winter GMT zones parsed in the UK
             if (aware.tzname() != res.tzname and
                     res.tzname in self.info.UTCZONE):
-                aware = aware.replace(tzinfo=tz.tzutc())
+                aware = aware.replace(tzinfo=tz.UTC)
 
         elif res.tzoffset == 0:
-            aware = naive.replace(tzinfo=tz.tzutc())
+            aware = naive.replace(tzinfo=tz.UTC)
 
         elif res.tzoffset:
             aware = naive.replace(tzinfo=tz.tzoffset(res.tzname, res.tzoffset))
