@@ -9,6 +9,7 @@ import sys
 from dateutil import tz
 from dateutil.tz import tzoffset
 from dateutil.parser import parse, parserinfo
+from dateutil.parser import ParserError
 from dateutil.parser import UnknownTimezoneWarning
 
 from ._common import TZEnvContext
@@ -291,7 +292,7 @@ class TestFormat(object):
 
 class TestInputTypes(object):
     def test_empty_string_invalid(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ParserError):
             parse('')
 
     def test_none_invalid(self):
@@ -478,17 +479,17 @@ class ParserTest(unittest.TestCase):
                                   tzinfo=tzoffset(None, 10800)))
 
     def testAMPMNoHour(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ParserError):
             parse("AM")
 
-        with pytest.raises(ValueError):
+        with pytest.raises(ParserError):
             parse("Jan 20, 2015 PM")
 
     def testAMPMRange(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ParserError):
             parse("13:44 AM")
 
-        with pytest.raises(ValueError):
+        with pytest.raises(ParserError):
             parse("January 25, 1921 23:13 PM")
 
     def testPertain(self):
@@ -564,15 +565,15 @@ class ParserTest(unittest.TestCase):
                          datetime(2008, 2, 29))
 
     def testErrorType01(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ParserError):
             parse('shouldfail')
 
     def testCorrectErrorOnFuzzyWithTokens(self):
-        assertRaisesRegex(self, ValueError, 'Unknown string format',
+        assertRaisesRegex(self, ParserError, 'Unknown string format',
                           parse, '04/04/32/423', fuzzy_with_tokens=True)
-        assertRaisesRegex(self, ValueError, 'Unknown string format',
+        assertRaisesRegex(self, ParserError, 'Unknown string format',
                           parse, '04/04/04 +32423', fuzzy_with_tokens=True)
-        assertRaisesRegex(self, ValueError, 'Unknown string format',
+        assertRaisesRegex(self, ParserError, 'Unknown string format',
                           parse, '04/04/0d4', fuzzy_with_tokens=True)
 
     def testIncreasingCTime(self):
@@ -713,7 +714,7 @@ class ParserTest(unittest.TestCase):
     def test_validate_hour(self):
         # See GH353
         invalid = "201A-01-01T23:58:39.239769+03:00"
-        with pytest.raises(ValueError):
+        with pytest.raises(ParserError):
             parse(invalid)
 
     def test_era_trailing_year(self):
@@ -721,35 +722,45 @@ class ParserTest(unittest.TestCase):
         res = parse(dstr)
         assert res.year == 2001, res
 
+    def test_includes_timestr(self):
+        timestr = "2020-13-97T44:61:83"
+
+        try:
+            parse(timestr)
+        except ParserError as e:
+            assert e.args[1] == timestr
+        else:
+            pytest.fail("Failed to raise ParserError")
+
 
 class TestOutOfBounds(object):
 
     def test_no_year_zero(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ParserError):
             parse("0000 Jun 20")
 
     def test_out_of_bound_day(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ParserError):
             parse("Feb 30, 2007")
 
     def test_day_sanity(self, fuzzy):
         dstr = "2014-15-25"
-        with pytest.raises(ValueError):
+        with pytest.raises(ParserError):
             parse(dstr, fuzzy=fuzzy)
 
     def test_minute_sanity(self, fuzzy):
         dstr = "2014-02-28 22:64"
-        with pytest.raises(ValueError):
+        with pytest.raises(ParserError):
             parse(dstr, fuzzy=fuzzy)
 
     def test_hour_sanity(self, fuzzy):
         dstr = "2014-02-28 25:16 PM"
-        with pytest.raises(ValueError):
+        with pytest.raises(ParserError):
             parse(dstr, fuzzy=fuzzy)
 
     def test_second_sanity(self, fuzzy):
         dstr = "2014-02-28 22:14:64"
-        with pytest.raises(ValueError):
+        with pytest.raises(ParserError):
             parse(dstr, fuzzy=fuzzy)
 
 
@@ -802,7 +813,7 @@ class TestParseUnimplementedCases(object):
     @pytest.mark.xfail
     def test_non_date_number(self):
         dstr = '1,700'
-        with pytest.raises(ValueError):
+        with pytest.raises(ParserError):
             parse(dstr)
 
     @pytest.mark.xfail
@@ -924,7 +935,7 @@ def test_rounding_floatlike_strings(dtstr, dt):
 
 @pytest.mark.parametrize('value', ['1: test', 'Nan'])
 def test_decimal_error(value):
-    # GH 632, GH 662 - decimal.Decimal raises some non-ValueError exception when
-    # constructed with an invalid value
-    with pytest.raises(ValueError):
+    # GH 632, GH 662 - decimal.Decimal raises some non-ParserError exception
+    # when constructed with an invalid value
+    with pytest.raises(ParserError):
         parse(value)
