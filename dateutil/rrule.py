@@ -21,7 +21,6 @@ from six.moves import _thread, range
 import heapq
 
 from ._common import weekday as weekdaybase
-from .tz import tzutc, tzlocal
 
 # For warning about deprecation of until and count
 from warnings import warn
