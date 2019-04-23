@@ -9,6 +9,7 @@ import sys
 from dateutil import tz
 from dateutil.tz import tzoffset
 from dateutil.parser import parse, parserinfo
+from dateutil.parser import ParserError
 from dateutil.parser import UnknownTimezoneWarning
 
 from ._common import TZEnvContext
@@ -720,6 +721,17 @@ class ParserTest(unittest.TestCase):
         dstr = 'AD2001'
         res = parse(dstr)
         assert res.year == 2001, res
+
+    @pytest.mark.xfail
+    def test_includes_timestr(self):
+        timestr = "2020-13-97T44:61:83"
+
+        try:
+            parse(timestr)
+        except ParserError as e:
+            assert e.args[1] == timestr
+        else:
+            pytest.fail("Failed to raise ParserError")
 
 
 class TestOutOfBounds(object):
