@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 from datetime import datetime, timedelta, date, time
 import itertools as it
 
-from dateutil.tz import tz
+from dateutil import tz
 from dateutil.parser import isoparser, isoparse
 
 import pytest
