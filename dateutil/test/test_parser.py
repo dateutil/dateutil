@@ -890,7 +890,7 @@ class TestTZVar(object):
             # This is an imaginary datetime in tz.tzlocal() but should still
             # parse using the GMT-as-alias-for-UTC rule
             dt = parse('2004-05-01T12:00 GMT')
-            dt_exp = datetime(2004, 5, 1, 12, tzinfo=tz.tzutc())
+            dt_exp = datetime(2004, 5, 1, 12, tzinfo=tz.UTC)
 
             assert dt == dt_exp
 
@@ -907,7 +907,7 @@ class TestTZVar(object):
             assert dt.tzname() == dt_exp.tzname()
             assert dt.replace(tzinfo=None) == dt_exp.replace(tzinfo=None)
             assert getattr(dt, 'fold') == getattr(dt_exp, 'fold')
-            assert dt.astimezone(tz.tzutc()) == dt_exp.astimezone(tz.tzutc())
+            assert dt.astimezone(tz.UTC) == dt_exp.astimezone(tz.UTC)
 
 
 def test_parse_tzinfos_fold():
@@ -920,7 +920,7 @@ def test_parse_tzinfos_fold():
     assert dt == dt_exp
     assert dt.tzinfo is dt_exp.tzinfo
     assert getattr(dt, 'fold') == getattr(dt_exp, 'fold')
-    assert dt.astimezone(tz.tzutc()) == dt_exp.astimezone(tz.tzutc())
+    assert dt.astimezone(tz.UTC) == dt_exp.astimezone(tz.UTC)
 
 
 @pytest.mark.parametrize('dtstr,dt', [

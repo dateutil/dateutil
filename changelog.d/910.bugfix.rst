@@ -1,0 +1,2 @@
+Updated many modules to use ``tz.UTC`` in favor of ``tz.tzutc()`` internally,
+to avoid an unnecessary function call.

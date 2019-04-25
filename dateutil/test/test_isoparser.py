@@ -4,13 +4,13 @@ from __future__ import unicode_literals
 from datetime import datetime, timedelta, date, time
 import itertools as it
 
-from dateutil.tz import tz
+from dateutil import tz
+from dateutil.tz import UTC
 from dateutil.parser import isoparser, isoparse
 
 import pytest
 import six
 
-UTC = tz.tzutc()
 
 def _generate_tzoffsets(limited):
     def _mkoffset(hmtuple, fmt):
@@ -36,7 +36,7 @@ def _generate_tzoffsets(limited):
     out += [_mkoffset(hm, fmt) for hm in hm_out for fmt in fmts]
 
     # Also add in UTC and naive
-    out.append((tz.tzutc(), 'Z'))
+    out.append((UTC, 'Z'))
     out.append((None, ''))
 
     return out
@@ -227,9 +227,9 @@ def test_iso_ordinal(isoord, dt_expected):
     (b'2014-02-04T12:30:15.224', datetime(2014, 2, 4, 12, 30, 15, 224000)),
     (b'20140204T123015.224', datetime(2014, 2, 4, 12, 30, 15, 224000)),
     (b'2014-02-04T12:30:15.224Z', datetime(2014, 2, 4, 12, 30, 15, 224000,
-                                           tz.tzutc())),
+                                           UTC)),
     (b'2014-02-04T12:30:15.224z', datetime(2014, 2, 4, 12, 30, 15, 224000,
-                                           tz.tzutc())),
+                                           UTC)),
     (b'2014-02-04T12:30:15.224+05:00',
         datetime(2014, 2, 4, 12, 30, 15, 224000,
                  tzinfo=tz.tzoffset(None, timedelta(hours=5))))])
@@ -333,7 +333,7 @@ def test_parse_tzstr(tzoffset):
 @pytest.mark.parametrize('zero_as_utc', [True, False])
 def test_parse_tzstr_zero_as_utc(tzstr, zero_as_utc):
     tzi = isoparser().parse_tzstr(tzstr, zero_as_utc=zero_as_utc)
-    assert tzi == tz.tzutc()
+    assert tzi == UTC
     assert (type(tzi) == tz.tzutc) == zero_as_utc
 
 

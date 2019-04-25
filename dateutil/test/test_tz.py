@@ -198,8 +198,8 @@ class TzFoldMixin(object):
         with self._gettz_context(tzname):
             SYD = self.gettz(tzname)
 
-            t0_u = datetime(2012, 3, 31, 15, 30, tzinfo=tz.tzutc())  # AEST
-            t1_u = datetime(2012, 3, 31, 16, 30, tzinfo=tz.tzutc())  # AEDT
+            t0_u = datetime(2012, 3, 31, 15, 30, tzinfo=tz.UTC)  # AEST
+            t1_u = datetime(2012, 3, 31, 16, 30, tzinfo=tz.UTC)  # AEDT
 
             t0_syd0 = t0_u.astimezone(SYD)
             t1_syd1 = t1_u.astimezone(SYD)
@@ -220,8 +220,8 @@ class TzFoldMixin(object):
         with self._gettz_context(tzname):
             SYD = self.gettz(tzname)
 
-            t0_u = datetime(2012, 10, 6, 15, 30, tzinfo=tz.tzutc())  # AEST
-            t1_u = datetime(2012, 10, 6, 16, 30, tzinfo=tz.tzutc())  # AEDT
+            t0_u = datetime(2012, 10, 6, 15, 30, tzinfo=tz.UTC)  # AEST
+            t1_u = datetime(2012, 10, 6, 16, 30, tzinfo=tz.UTC)  # AEDT
 
             t0 = t0_u.astimezone(SYD)
             t1 = t1_u.astimezone(SYD)
@@ -242,8 +242,8 @@ class TzFoldMixin(object):
             with self._gettz_context(tzname):
                 TOR = self.gettz(tzname)
 
-                t0_u = datetime(2011, 11, 6, 5, 30, tzinfo=tz.tzutc())
-                t1_u = datetime(2011, 11, 6, 6, 30, tzinfo=tz.tzutc())
+                t0_u = datetime(2011, 11, 6, 5, 30, tzinfo=tz.UTC)
+                t1_u = datetime(2011, 11, 6, 6, 30, tzinfo=tz.UTC)
 
                 t0_tor = t0_u.astimezone(TOR)
                 t1_tor = t1_u.astimezone(TOR)
@@ -265,8 +265,8 @@ class TzFoldMixin(object):
         with self._gettz_context(tzname):
             TOR = self.gettz(tzname)
 
-            t0_u = datetime(2011, 3, 13, 6, 30, tzinfo=tz.tzutc())
-            t1_u = datetime(2011, 3, 13, 7, 30, tzinfo=tz.tzutc())
+            t0_u = datetime(2011, 3, 13, 6, 30, tzinfo=tz.UTC)
+            t1_u = datetime(2011, 3, 13, 7, 30, tzinfo=tz.UTC)
 
             t0 = t0_u.astimezone(TOR)
             t1 = t1_u.astimezone(TOR)
@@ -286,7 +286,7 @@ class TzFoldMixin(object):
 
         with self._gettz_context(tzname):
             LON = self.gettz(tzname)
-            UTC = tz.tzutc()
+            UTC = tz.UTC
 
             t0_u = datetime(2013, 10, 27, 0, 30, tzinfo=UTC)   # BST
             t1_u = datetime(2013, 10, 27, 1, 30, tzinfo=UTC)   # GMT
@@ -308,7 +308,7 @@ class TzFoldMixin(object):
 
         with self._gettz_context(tzname):
             NYC = self.gettz(tzname)
-            UTC = tz.tzutc()
+            UTC = tz.UTC
             hour = timedelta(hours=1)
 
             # Firmly 2015-11-01 0:30 EDT-4
@@ -339,7 +339,7 @@ class TzFoldMixin(object):
 
         with self._gettz_context(tzname):
             NYC = self.gettz(tzname)
-            UTC = tz.tzutc()
+            UTC = tz.UTC
 
             dt0 = datetime(2011, 11, 6, 1, 30, tzinfo=NYC)
             dt1 = tz.enfold(dt0, fold=1)
@@ -425,7 +425,7 @@ class TzFoldMixin(object):
             SYD0 = self.gettz(tzname)
             SYD1 = self.gettz(tzname)
 
-            t0_u = datetime(2012, 3, 31, 14, 30, tzinfo=tz.tzutc())  # AEST
+            t0_u = datetime(2012, 3, 31, 14, 30, tzinfo=tz.UTC)  # AEST
 
             t0_syd0 = t0_u.astimezone(SYD0)
             t0_syd1 = t0_u.astimezone(SYD1)
@@ -454,13 +454,13 @@ class TzWinFoldMixin(object):
         if gap:
             t_n = dston - timedelta(minutes=30)
 
-            t0_u = t_n.replace(tzinfo=tzi).astimezone(tz.tzutc())
+            t0_u = t_n.replace(tzinfo=tzi).astimezone(tz.UTC)
             t1_u = t0_u + timedelta(hours=1)
         else:
             # Get 1 hour before the first ambiguous date
             t_n = dstoff - timedelta(minutes=30)
 
-            t0_u = t_n.replace(tzinfo=tzi).astimezone(tz.tzutc())
+            t0_u = t_n.replace(tzinfo=tzi).astimezone(tz.UTC)
             t_n += timedelta(hours=1)                   # Naive ambiguous date
             t0_u = t0_u + timedelta(hours=1)            # First ambiguous date
             t1_u = t0_u + timedelta(hours=1)            # Second ambiguous date
@@ -561,7 +561,7 @@ class TzWinFoldMixin(object):
 
         with self.context(tzname):
             NYC = self.tzclass(*args)
-            UTC = tz.tzutc()
+            UTC = tz.UTC
             hour = timedelta(hours=1)
 
             # Firmly 2015-11-01 0:30 EDT-4
@@ -596,7 +596,7 @@ class TzWinFoldMixin(object):
 
         with self.context(tzname):
             NYC = self.tzclass(*args)
-            UTC = tz.tzutc()
+            UTC = tz.UTC
 
             t_n, t0_u, t1_u = self.get_utc_transitions(NYC, 2011, False)
 
@@ -700,7 +700,7 @@ class TzOffsetTest(unittest.TestCase):
         self.assertEqual(utc, gmt)
 
     def testUTCEquality(self):
-        utc = tz.tzutc()
+        utc = tz.UTC
         o_utc = tz.tzoffset('UTC', 0)
 
         self.assertEqual(utc, o_utc)
@@ -955,7 +955,7 @@ class TzLocalNixTest(unittest.TestCase, TzFoldMixin):
 
     def testUTCEquality(self):
         with TZEnvContext(self.UTC):
-            assert tz.tzlocal() == tz.tzutc()
+            assert tz.tzlocal() == tz.UTC
 
 
 # TODO: Maybe a better hack than this?
@@ -1316,7 +1316,7 @@ class TZRangeTest(unittest.TestCase, TzFoldMixin):
     def testBrokenIsDstHandling(self):
         # tzrange._isdst() was using a date() rather than a datetime().
         # Issue reported by Lennart Regebro.
-        dt = datetime(2007, 8, 6, 4, 10, tzinfo=tz.tzutc())
+        dt = datetime(2007, 8, 6, 4, 10, tzinfo=tz.UTC)
         self.assertEqual(dt.astimezone(tz=tz.gettz("GMT+2")),
                           datetime(2007, 8, 6, 6, 10, tzinfo=tz.tzstr("GMT+2")))
 
@@ -2034,7 +2034,7 @@ class TZTest(unittest.TestCase):
     def testGMTOffset(self):
         # GMT and UTC offsets have inverted signal when compared to the
         # usual TZ variable handling.
-        dt = datetime(2007, 8, 6, 4, 10, tzinfo=tz.tzutc())
+        dt = datetime(2007, 8, 6, 4, 10, tzinfo=tz.UTC)
         self.assertEqual(dt.astimezone(tz=tz.tzstr("GMT+2")),
                           datetime(2007, 8, 6, 6, 10, tzinfo=tz.tzstr("GMT+2")))
         self.assertEqual(dt.astimezone(tz=tz.gettz("UTC-2")),
@@ -2175,7 +2175,7 @@ class TzWinTest(unittest.TestCase, TzWinFoldMixin):
     def testTzWinEqualityInvalid(self):
         # Compare to objects that do not implement comparison with this
         # (should default to False)
-        UTC = tz.tzutc()
+        UTC = tz.UTC
         EST = tz.tzwin('Eastern Standard Time')
 
         self.assertFalse(EST == UTC)
@@ -2719,7 +2719,7 @@ def test_resolve_imaginary_ambiguous(dt):
     datetime(2017, 12, 2, 12, 30, tzinfo=tz.gettz('America/New_York')),
     datetime(2018, 12, 2, 9, 30, tzinfo=tz.gettz('Europe/London')),
     datetime(2017, 6, 2, 16, 30, tzinfo=tz.gettz('Australia/Sydney')),
-    datetime(2025, 9, 25, 1, 17, tzinfo=tz.tzutc()),
+    datetime(2025, 9, 25, 1, 17, tzinfo=tz.UTC),
     datetime(2025, 9, 25, 1, 17, tzinfo=tz.tzoffset('EST', -18000)),
     datetime(2019, 3, 4, tzinfo=None)
 ])

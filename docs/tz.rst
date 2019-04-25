@@ -11,6 +11,8 @@ Objects
 
     A convenience instance of :class:`dateutil.tz.tzutc`.
 
+    .. versionadded:: 2.7.0
+
 Functions
 ---------
 

@@ -123,6 +123,12 @@ class tzutc(datetime.tzinfo):
     __reduce__ = object.__reduce__
 
 
+#: Convenience constant providing a :class:`tzutc()` instance
+#:
+#: .. versionadded:: 2.7.0
+UTC = tzutc()
+
+
 @six.add_metaclass(_TzOffsetFactory)
 class tzoffset(datetime.tzinfo):
     """
@@ -1655,7 +1661,7 @@ def __get_gettz():
                                     break
                             else:
                                 if name in ("GMT", "UTC"):
-                                    tz = tzutc()
+                                    tz = UTC
                                 elif name in time.tzname:
                                     tz = tzlocal()
             return tz
@@ -1695,7 +1701,7 @@ def datetime_exists(dt, tz=None):
 
     # This is essentially a test of whether or not the datetime can survive
     # a round trip to UTC.
-    dt_rt = dt.replace(tzinfo=tz).astimezone(tzutc()).astimezone(tz)
+    dt_rt = dt.replace(tzinfo=tz).astimezone(UTC).astimezone(tz)
     dt_rt = dt_rt.replace(tzinfo=None)
 
     return dt == dt_rt
