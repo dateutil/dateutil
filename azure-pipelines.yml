@@ -27,30 +27,21 @@ strategy:
       POOL_IMAGE: vs2017-win2016
       installzic: 'windows'
     PyPy:
-      PYTHON: 'pypy'
+      python.version: 'pypy2'
     PyPy3:
-      PYTHON: 'pypy3'
+      python.version: 'pypy3'
 
 variables:
   TOXENV: py
   POOL_IMAGE: ubuntu-16.04
-  PYTHON: 'python'
 
 steps:
 - task: UsePythonVersion@0
   inputs:
     versionSpec: $(python.version)
-  condition: notIn(variables.PYTHON, 'pypy', 'pypy3')
 
 - bash: |
-    PYPYDIR=$(dirname $(dirname $(readlink -f $(which $PYTHON))))
-    sudo chmod a+rwX -R $PYPYDIR
-    $PYTHON -m ensurepip
-  displayName: Ensure pip
-  condition: in(variables.PYTHON, 'pypy', 'pypy3')
-
-- bash: |
-    $PYTHON -m pip install -U six && $PYTHON -m pip install -U 'tox < 3.8.0'
+    python -m pip install -U six && python -m pip install -U 'tox < 3.8.0'
     if [[ $PYTHON_VERSION == "3.3" ]]; then pip install 'virtualenv<16.0'; fi
     if [[ $PYTHON_VERSION == "3.3" ]]; then pip install 'setuptools<40.0'; fi
   displayName: Ensure prereqs
@@ -65,11 +56,11 @@ steps:
 
 - bash: |
     if [[ $TOXENV == "py" ]]; then
-      ./ci_tools/retry.sh $PYTHON updatezinfo.py
-      $PYTHON -m tox -- dateutil/test --cov-config=tox.ini --cov=dateutil --junitxml=unittests/TEST-$(Agent.JobName).xml
-      $PYTHON -m tox -e coverage,codecov
+      ./ci_tools/retry.sh python updatezinfo.py
+      python -m tox -- dateutil/test --cov-config=tox.ini --cov=dateutil --junitxml=unittests/TEST-$(Agent.JobName).xml
+      python -m tox -e coverage,codecov
     else
-      $PYTHON -m tox
+      python -m tox
     fi
   displayName: Run tox
 
