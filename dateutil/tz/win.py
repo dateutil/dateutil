@@ -282,11 +282,11 @@ class tzwinlocal(tzwinbase):
             self._dst_abbr = keydict["DaylightName"]
 
             try:
-                try:
+                if 'TimeZoneKeyName' in keydict:
                     # NOTE: This works from Windows 7 onwards, strip trailing NUL characters for some systems
                     tzkeyname = text_type('{kn}\\{sn}').format(kn=TZKEYNAME,
                                                                sn=keydict["TimeZoneKeyName"].rstrip('\0'))
-                except KeyError:
+                else:
                     # NOTE: Backward compatibility for pre Windows 7 (but suffers from #210)
                     tzkeyname = text_type('{kn}\\{sn}').format(kn=TZKEYNAME,
                                                                sn=self._std_abbr)
