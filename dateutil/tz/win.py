@@ -282,8 +282,14 @@ class tzwinlocal(tzwinbase):
             self._dst_abbr = keydict["DaylightName"]
 
             try:
-                tzkeyname = text_type('{kn}\\{sn}').format(kn=TZKEYNAME,
-                                                          sn=self._std_abbr)
+                try:
+                    # NOTE: This works from Windows 7 onwards
+                    tzkeyname = text_type('{kn}\\{sn}').format(kn=TZKEYNAME,
+                                                               sn=keydict["TimeZoneKeyName"])
+                except KeyError:
+                    # NOTE: Backward compatibility for pre Windows 7 (but suffers from #210)
+                    tzkeyname = text_type('{kn}\\{sn}').format(kn=TZKEYNAME,
+                                                               sn=self._std_abbr)
                 with winreg.OpenKey(handle, tzkeyname) as tzkey:
                     _keydict = valuestodict(tzkey)
                     self._display = _keydict["Display"]
