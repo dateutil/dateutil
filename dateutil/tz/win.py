@@ -283,9 +283,9 @@ class tzwinlocal(tzwinbase):
 
             try:
                 try:
-                    # NOTE: This works from Windows 7 onwards
+                    # NOTE: This works from Windows 7 onwards, strip trailing NUL characters for some systems
                     tzkeyname = text_type('{kn}\\{sn}').format(kn=TZKEYNAME,
-                                                               sn=keydict["TimeZoneKeyName"])
+                                                               sn=keydict["TimeZoneKeyName"].rstrip('\0'))
                 except KeyError:
                     # NOTE: Backward compatibility for pre Windows 7 (but suffers from #210)
                     tzkeyname = text_type('{kn}\\{sn}').format(kn=TZKEYNAME,
