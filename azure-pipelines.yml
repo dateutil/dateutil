@@ -22,7 +22,7 @@ strategy:
     macOS:
       python.version: '3.6'
       POOL_IMAGE: macos-10.13
-    Windows:
+    Windows36:
       python.version: '3.6'
       POOL_IMAGE: vs2017-win2016
       installzic: 'windows'
@@ -30,6 +30,14 @@ strategy:
       python.version: 'pypy2'
     PyPy3:
       python.version: 'pypy3'
+    WindowsPyPy2:
+      python.version: 'pypy2'
+      POOL_IMAGE: vs2017-win2016
+      installzic: 'windows'
+    WindowsPyPy3:
+      python.version: 'pypy3'
+      POOL_IMAGE: vs2017-win2016
+      installzic: 'windows'
 
 variables:
   TOXENV: py
