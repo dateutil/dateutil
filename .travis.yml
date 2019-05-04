@@ -32,7 +32,7 @@ install:
       pip install -U "pip==10.0.1"
       PIP_ARGS="-c requirements/3.3/constraints.txt"
     fi
-  - pip install -U "tox<3.8.0" $PIP_ARGS
+  - pip install -U "tox" $PIP_ARGS
   - if [[ $TOXENV == "py" ]]; then ./ci_tools/retry.sh python updatezinfo.py; fi
 
 script:
