@@ -50,7 +50,7 @@ if [ -d tz ]; then
 fi
 
 if [ "$DIR_EXISTS" = false ]; then
-    git clone ${UPSTREAM_URL}
+    git clone ${UPSTREAM_URL} --depth=1
     cd tz
 fi
 
