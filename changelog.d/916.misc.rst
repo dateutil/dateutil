@@ -1,0 +1,3 @@
+The Azure pipelines script now allows the ``tox -e coverage,codecov`` invocation
+to fail without error, since codecov integration with Azure pipelines is not
+yet set up.
