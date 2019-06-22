@@ -375,7 +375,7 @@ class relativedelta(object):
                 year -= 1
                 month += 12
             if self.months != int(self.months):
-                self.days += calendar.monthlen(year, month) * (self.months % 1)
+                self.days += calendar.monthrange(year, month)[1] * (self.months % 1)
         day = min(calendar.monthrange(year, month)[1],
                   self.day or other.day)
         repl = {"year": year, "month": month, "day": day}
