@@ -1,0 +1,1 @@
+Fixed issue where ``test_tzlocal_offset_equal`` would fail in certain environments (such as FreeBSD) due to an invalid assumption about what time zone names are provided. Reported and fixed by Kubilay Kocak (gh issue #918, pr #928).
