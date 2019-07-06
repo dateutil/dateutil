@@ -1,0 +1,1 @@
+Pinned all test dependencies on Python 3.3.

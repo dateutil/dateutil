@@ -3,7 +3,6 @@ language: python
 cache: pip
 python:
   - "2.7"
-  - "3.3"
   - "3.4"
   - "3.5"
   - "3.6"
@@ -16,6 +15,8 @@ env:
 matrix:
   fast_finish: true
   include:
+    - python: 3.3
+      env: TOXENV=py33   # Needed because "py" won't invoke testenv:py33
     - python: 3.6
       env: TOXENV=docs
     - python: 3.6
@@ -32,9 +33,12 @@ matrix:
     - python: "nightly"
 
 install:
-  - pip install -U six && pip install -U 'tox<3.8.0'
-  - if [[ $TRAVIS_PYTHON_VERSION == "3.3" ]]; then pip install 'virtualenv<16.0'; fi
-  - if [[ $TRAVIS_PYTHON_VERSION == "3.3" ]]; then pip install 'setuptools<40.0'; fi
+  - |
+    if [[ $TRAVIS_PYTHON_VERSION == "3.3" ]]; then
+      pip install -U "pip==10.0.1"
+      PIP_ARGS="-c requirements/3.3/constraints.txt"
+    fi
+  - pip install -U "tox<3.8.0" $PIP_ARGS
   - if [[ $TOXENV == "py" ]]; then ./ci_tools/retry.sh python updatezinfo.py; fi
 
 script:
