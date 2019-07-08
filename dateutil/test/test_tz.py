@@ -1103,6 +1103,36 @@ def test_gettz_badzone_unicode():
 
 
 @pytest.mark.gettz
+@pytest.mark.parametrize(
+    "badzone,exc_reason",
+    [
+        pytest.param(
+            b"America/New_York",
+            ".*should be str, not bytes.*",
+            id="bytes on Python 3",
+            marks=[
+                pytest.mark.skipif(
+                    PY2, reason="bytes arguments accepted in Python 2"
+                )
+            ],
+        ),
+        pytest.param(
+            object(),
+            None,
+            id="no startswith()",
+            marks=[
+                pytest.mark.xfail(reason="AttributeError instead of TypeError",
+                                  raises=AttributeError),
+            ],
+        ),
+    ],
+)
+def test_gettz_zone_wrong_type(badzone, exc_reason):
+    with pytest.raises(TypeError, match=exc_reason):
+        tz.gettz(badzone)
+
+
+@pytest.mark.gettz
 @pytest.mark.xfail(IS_WIN, reason='zoneinfo separately cached')
 def test_gettz_cache_clear():
     NYC1 = tz.gettz('America/New_York')
