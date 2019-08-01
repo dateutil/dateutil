@@ -99,6 +99,12 @@ else:
         def fold(self):
             return 1
 
+        # Because pandas._libs.tslibs.conversion.convert_datetime_to_tsobject
+        # requires a .nanosecond attribute.
+        @property
+        def nanosecond(self):
+            return self.microsecond * 1000
+ 
     def enfold(dt, fold=1):
         """
         Provides a unified interface for assigning the ``fold`` attribute to
