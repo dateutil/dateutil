@@ -1025,7 +1025,7 @@ class parser(object):
             hms_idx = idx + 2
 
         elif idx > 0 and info.hms(tokens[idx-1]) is not None:
-            # There is a "h", "m", or "s" preceeding this token.  Since neither
+            # There is a "h", "m", or "s" preceding this token.  Since neither
             # of the previous cases was hit, there is no label following this
             # token, so we use the previous label.
             # e.g. the "04" in "12h04"
