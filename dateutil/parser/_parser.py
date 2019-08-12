@@ -571,7 +571,92 @@ class _ymd(list):
         return year, month, day
 
 
+class ParseState(_resultbase):
+    """
+    Performs validation on components of the parsed result.
+
+    To override with a subclassed SubclassedParseState, override the
+    _result attribute of the customized with SubclassedParser class to
+    `SubclassedParser._result = SubclassedParseState`
+    """
+    __slots__ = ["year", "month", "day", "weekday",
+                 "hour", "minute", "second", "microsecond",
+                 "tzname", "tzoffset", "ampm", "any_unused_tokens"]
+
+    def set_meridian(self, meridian, hour):
+        # 12am
+        if self.ampm is not None:  # pragma: no cover
+            raise ValueError(self.ampm, meridian)
+        hour = int(hour)
+        if hour < 12 and meridian == 1:
+            hour += 12
+        elif hour == 12 and meridian == 0:
+            hour = 0
+        elif meridian == 0 and hour > 12:  # pragma: no cover
+            raise ValueError(meridian, hour)
+
+        # NB: We do not use self.set_hour because that would raise if
+        #  self.hour is not currently None.
+        self.hour = hour
+        self.ampm = meridian
+
+    def set_hour(self, value):
+        if self.hour is not None:  # pragma: no cover
+            raise ValueError(self.hour, value)
+        if 0 <= value < 24:
+            hour = int(value)
+            self.hour = hour
+            if value % 1:
+                value2 = 60 * (value % 1)
+                self.set_minute(value2)
+        else:  # pragma: no cover
+            raise ValueError
+
+    def set_second(self, value_repr):
+        if self.second is not None:  # pragma: no cover
+            raise ValueError(self.second, value_repr)
+        (seconds, microseconds) = self._parsems(value_repr)
+        if 0 <= seconds < 60:
+            self.second = seconds
+            self.microsecond = microseconds
+        else:  # pragma: no cover
+            raise ValueError
+
+    def set_minute(self, value):
+        if self.minute is not None:  # pragma: no cover
+            raise ValueError(self.minute, value)
+        if 0 <= value < 60:
+            minute = int(value)
+            self.minute = minute
+            if value % 1:
+                self.second = int(60 * (value % 1))
+        else:  # pragma: no cover
+            raise ValueError
+
+    def set_second(self, value_repr):
+        if self.second is not None:  # pragma: no cover
+            raise ValueError(self.second, value_repr)
+        (seconds, microseconds) = self._parsems(value_repr)
+        if 0 <= seconds < 60:
+            self.second = seconds
+            self.microsecond = microseconds
+        else:  # pragma: no cover
+            raise ValueError
+
+    def _parsems(self, value):
+        """Parse a I[.F] seconds value into (seconds, microseconds)."""
+        if "." not in value:
+            return int(value), 0
+        else:
+            i, f = value.split(".")
+            return int(i), int(f.ljust(6, "0")[:6])
+
+
 class parser(object):
+    # _result is a class attribute to facilitate customization.
+    #   See ParseState.__doc__
+    _result = ParseState
+
     def __init__(self, info=None):
         self.info = info or parserinfo()
 
@@ -663,11 +748,6 @@ class parser(object):
             return ret, skipped_tokens
         else:
             return ret
-
-    class _result(_resultbase):
-        __slots__ = ["year", "month", "day", "weekday",
-                     "hour", "minute", "second", "microsecond",
-                     "tzname", "tzoffset", "ampm","any_unused_tokens"]
 
     def _parse(self, timestr, dayfirst=None, yearfirst=None, fuzzy=False,
                fuzzy_with_tokens=False):
@@ -789,8 +869,7 @@ class parser(object):
                     val_is_ampm = self._ampm_valid(res.hour, res.ampm, fuzzy)
 
                     if val_is_ampm:
-                        res.hour = self._adjust_ampm(res.hour, value)
-                        res.ampm = value
+                        res.set_meridian(value, res.hour)
 
                     elif fuzzy:
                         skipped_idxs.append(i)
@@ -897,10 +976,10 @@ class parser(object):
               info.hms(tokens[idx + 1]) is None))):
             # 19990101T23[59]
             s = tokens[idx]
-            res.hour = int(s[:2])
+            res.set_hour(int(s[:2]))
 
             if len_li == 4:
-                res.minute = int(s[2:])
+                res.set_minute(int(s[2:4]))
 
         elif len_li == 6 or (len_li > 6 and tokens[idx].find('.') == 6):
             # YYMMDD or HHMMSS[.ss]
@@ -913,10 +992,9 @@ class parser(object):
             else:
                 # 19990101T235959[.59]
 
-                # TODO: Check if res attributes already set.
-                res.hour = int(s[:2])
-                res.minute = int(s[2:4])
-                res.second, res.microsecond = self._parsems(s[4:])
+                res.set_hour(int(s[:2]))
+                res.set_minute(int(s[2:4]))
+                res.set_second(s[4:])
 
         elif len_li in (8, 12, 14):
             # YYYYMMDD
@@ -926,29 +1004,27 @@ class parser(object):
             ymd.append(s[6:8])
 
             if len_li > 8:
-                res.hour = int(s[8:10])
-                res.minute = int(s[10:12])
+                res.set_hour(int(s[8:10]))
+                res.set_minute(int(s[10:12]))
 
                 if len_li > 12:
-                    res.second = int(s[12:])
+                    res.set_second(s[12:])
 
         elif self._find_hms_idx(idx, tokens, info, allow_jump=True) is not None:
             # HH[ ]h or MM[ ]m or SS[.ss][ ]s
             hms_idx = self._find_hms_idx(idx, tokens, info, allow_jump=True)
             (idx, hms) = self._parse_hms(idx, tokens, info, hms_idx)
             if hms is not None:
-                # TODO: checking that hour/minute/second are not
-                # already set?
                 self._assign_hms(res, value_repr, hms)
 
         elif idx + 2 < len_l and tokens[idx + 1] == ':':
             # HH:MM[:SS[.ss]]
-            res.hour = int(value)
+            res.set_hour(int(value))
             value = self._to_decimal(tokens[idx + 2])  # TODO: try/except for this?
-            (res.minute, res.second) = self._parse_min_sec(value)
+            res.set_minute(value)
 
             if idx + 4 < len_l and tokens[idx + 3] == ':':
-                res.second, res.microsecond = self._parsems(tokens[idx + 4])
+                res.set_second(tokens[idx + 4])
 
                 idx += 2
 
@@ -987,8 +1063,7 @@ class parser(object):
         elif idx + 1 >= len_l or info.jump(tokens[idx + 1]):
             if idx + 2 < len_l and info.ampm(tokens[idx + 2]) is not None:
                 # 12 am
-                hour = int(value)
-                res.hour = self._adjust_ampm(hour, info.ampm(tokens[idx + 2]))
+                res.set_meridian(info.ampm(tokens[idx + 2]), hour=int(value))
                 idx += 1
             else:
                 # Year, month or day
@@ -997,8 +1072,7 @@ class parser(object):
 
         elif info.ampm(tokens[idx + 1]) is not None and (0 <= value < 24):
             # 12am
-            hour = int(value)
-            res.hour = self._adjust_ampm(hour, info.ampm(tokens[idx + 1]))
+            res.set_meridian(info.ampm(tokens[idx + 1]), hour=int(value))
             idx += 1
 
         elif ymd.could_be_day(value):
@@ -1049,15 +1123,13 @@ class parser(object):
 
         if hms == 0:
             # Hour
-            res.hour = int(value)
-            if value % 1:
-                res.minute = int(60*(value % 1))
+            res.set_hour(value)
 
         elif hms == 1:
-            (res.minute, res.second) = self._parse_min_sec(value)
+            res.set_minute(value)
 
         elif hms == 2:
-            (res.second, res.microsecond) = self._parsems(value_repr)
+            res.set_second(value_repr)
 
     def _could_be_tzname(self, hour, tzname, tzoffset, token):
         return (hour is not None and
@@ -1095,25 +1167,6 @@ class parser(object):
 
         return val_is_ampm
 
-    def _adjust_ampm(self, hour, ampm):
-        if hour < 12 and ampm == 1:
-            hour += 12
-        elif hour == 12 and ampm == 0:
-            hour = 0
-        return hour
-
-    def _parse_min_sec(self, value):
-        # TODO: Every usage of this function sets res.second to the return
-        # value. Are there any cases where second will be returned as None and
-        # we *dont* want to set res.second = None?
-        minute = int(value)
-        second = None
-
-        sec_remainder = value % 1
-        if sec_remainder:
-            second = int(60 * sec_remainder)
-        return (minute, second)
-
     def _parse_hms(self, idx, tokens, info, hms_idx):
         # TODO: Is this going to admit a lot of false-positives for when we
         # just happen to have digits and "h", "m" or "s" characters in non-date
@@ -1135,14 +1188,6 @@ class parser(object):
     # ------------------------------------------------------------------
     # Handling for individual tokens.  These are kept as methods instead
     #  of functions for the sake of customizability via subclassing.
-
-    def _parsems(self, value):
-        """Parse a I[.F] seconds value into (seconds, microseconds)."""
-        if "." not in value:
-            return int(value), 0
-        else:
-            i, f = value.split(".")
-            return int(i), int(f.ljust(6, "0")[:6])
 
     def _to_decimal(self, val):
         try:
