@@ -44,7 +44,8 @@ def sign():
 
 
 @cli.command()
-@click.option('--passfile', default=None)
+@click.option('--passfile', default=None,
+              help='File path to read and decrypt with gpg.')
 @click.option('--release/--no-release', default=False)
 def upload(passfile, release):
     if release:
