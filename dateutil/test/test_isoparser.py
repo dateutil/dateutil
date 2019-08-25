@@ -306,7 +306,7 @@ def test_isoparser_invalid_sep(sep):
 
 
 # This only fails on Python 3
-@pytest.mark.xfail(six.PY3, reason="Fails on Python 3 only")
+@pytest.mark.xfail(not six.PY2, reason="Fails on Python 3 only")
 def test_isoparser_byte_sep():
     dt = datetime(2017, 12, 6, 12, 30, 45)
     dt_str = dt.isoformat(sep=str('T'))
@@ -356,7 +356,7 @@ def __make_date_examples():
         date(2016, 2, 1)
     ]
 
-    if six.PY3:
+    if not six.PY2:
         # strftime does not support dates before 1900 in Python 2
         dates_no_day.append(date(1000, 11, 1))
 
