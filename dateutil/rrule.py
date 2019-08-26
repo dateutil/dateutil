@@ -177,7 +177,7 @@ class rrulebase(object):
                     return False
         return False
 
-    # __len__() introduces a large performance penality.
+    # __len__() introduces a large performance penalty.
     def count(self):
         """ Returns the number of recurrences in this set. It will have go
             trough the whole recurrence, if this hasn't been done before. """

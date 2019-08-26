@@ -474,7 +474,7 @@ class RelativeDeltaTest(WarningTestMixin, unittest.TestCase):
 
         self.assertEqual(rd1.normalized(), relativedelta(days=2, hours=18))
 
-        # Equvalent to (days=1, hours=11, minutes=31, seconds=12)
+        # Equivalent to (days=1, hours=11, minutes=31, seconds=12)
         rd2 = relativedelta(days=1.48)
 
         self.assertEqual(rd2.normalized(),
