@@ -1,4 +1,3 @@
-sudo: false
 language: python
 cache: pip
 python:
@@ -6,9 +5,11 @@ python:
   - "3.4"
   - "3.5"
   - "3.6"
+  - "3.7"
   - "nightly"
-  - "pypy-5.4"
-  - "pypy3"
+  - "pypy"
+  - "pypy3.5"
+  - "pypy3.6"
 env:
   TOXENV=py
 
@@ -16,21 +17,18 @@ matrix:
   fast_finish: true
   include:
     - python: 3.3
+      # This is required to run Python 3.3 on Travis
+      dist: trusty
       env: TOXENV=py33   # Needed because "py" won't invoke testenv:py33
     - python: 3.6
       env: TOXENV=docs
     - python: 3.6
       env: TOXENV=tz
     - python: 3.7
-      # This is required until Travis has a default image that
-      # can run Python 3.7
-      dist: xenial
-      sudo: required
-    - python: 3.7
       env: TOXENV=build
-      dist: xenial
   allow_failures:
     - python: "nightly"
+    - python: "pypy3.6"
 
 install:
   - |
