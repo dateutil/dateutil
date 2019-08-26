@@ -5,6 +5,7 @@ python:
   - "3.4"
   - "3.5"
   - "3.6"
+  - "3.7"
   - "nightly"
   - "pypy-5.4"
   - "pypy3"
@@ -22,7 +23,6 @@ matrix:
       env: TOXENV=docs
     - python: 3.6
       env: TOXENV=tz
-    - python: 3.7
     - python: 3.7
       env: TOXENV=build
   allow_failures:
