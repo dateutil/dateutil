@@ -23,11 +23,8 @@ matrix:
     - python: 3.6
       env: TOXENV=tz
     - python: 3.7
-      # This is required to run Python 3.7 on Travis
-      dist: xenial
     - python: 3.7
       env: TOXENV=build
-      dist: xenial
   allow_failures:
     - python: "nightly"
 
