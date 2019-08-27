@@ -51,6 +51,7 @@ switch, and thus all their contributions are dual-licensed.
 - Grant Garrett-Grossman <grantlycee@gmail.com> (gh: @FakeNameSE) **D**
 - Gustavo Niemeyer <gustavo@niemeyer.net> (gh: @niemeyer)
 - Holger Joukl <holger.joukl@MASKED> (gh: @hjoukl)
+- Hugo van Kemenade (gh: @hugovk) **D**
 - Igor <mrigor83@MASKED>
 - Ionuț Ciocîrlan <jdxlark@MASKED>
 - Jacqueline Chen <jacqueline415@outlook.com> (gh: @jachen20) **D**
