@@ -4,7 +4,7 @@ from ._common import WarningTestMixin
 
 from datetime import datetime, date
 import unittest
-from six import PY3
+from six import PY2
 
 from dateutil import tz
 from dateutil.rrule import (
@@ -2284,7 +2284,7 @@ class RRuleTest(WarningTestMixin, unittest.TestCase):
                           datetime(2010, 3, 22, 14, 1)])
 
     def testLongIntegers(self):
-        if not PY3:  # There is no longs in python3
+        if PY2:  # There are no longs in python3
             self.assertEqual(list(rrule(MINUTELY,
                                   count=long(2),
                                   interval=long(2),
@@ -4579,7 +4579,7 @@ class RRuleTest(WarningTestMixin, unittest.TestCase):
                               dtstart=datetime(1997, 9, 2, 9, 0)))
 
     def testToStrLongIntegers(self):
-        if not PY3:  # There is no longs in python3
+        if PY2:  # There are no longs in python3
             self._rrulestr_reverse_test(rrule(MINUTELY,
                                   count=long(2),
                                   interval=long(2),

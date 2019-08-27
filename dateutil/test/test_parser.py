@@ -14,7 +14,7 @@ from dateutil.parser import UnknownTimezoneWarning
 
 from ._common import TZEnvContext
 
-from six import assertRaisesRegex, PY3
+from six import assertRaisesRegex, PY2
 from io import StringIO
 
 import pytest
@@ -462,7 +462,7 @@ class ParserTest(unittest.TestCase):
                                   tzinfo=self.brsttz))
 
     def testDateCommandFormatWithLong(self):
-        if not PY3:
+        if PY2:
             self.assertEqual(parse("Thu Sep 25 10:36:28 BRST 2003",
                                    tzinfos={"BRST": long(-10800)}),
                              datetime(2003, 9, 25, 10, 36, 28,
