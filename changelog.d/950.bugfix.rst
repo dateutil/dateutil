@@ -1,0 +1,1 @@
+Changed compatibility logic to support a potential Python 4.0 release. Patch by Hugo van Kemenade (gh pr #950)
