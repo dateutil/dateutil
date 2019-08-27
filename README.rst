@@ -63,14 +63,14 @@ https://dateutil.readthedocs.io/en/stable/
 
 Code
 ====
-The code and issue tracker are hosted on Github:
+The code and issue tracker are hosted on GitHub:
 https://github.com/dateutil/dateutil/
 
 Features
 ========
 
 * Computing of relative deltas (next month, next year,
-  next monday, last week of month, etc);
+  next Monday, last week of month, etc);
 * Computing of relative deltas between two given
   date and/or datetime objects;
 * Computing of dates based on very flexible recurrence rules,

@@ -1,0 +1,1 @@
+Fixed many misspellings, typos and styling errors in the comments and documentation. Patch by Hugo van Kemenade (gh pr #952)

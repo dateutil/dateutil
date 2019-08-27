@@ -837,7 +837,7 @@ class TestParseUnimplementedCases(object):
     def test_extraneous_year_tokens(self):
         # This was found in the wild at insidertrading.org
         # Unlike in the case above, identifying the first "2012" as the year
-        # would not be a problem, but infering that the latter 2012 is hhmm
+        # would not be a problem, but inferring that the latter 2012 is hhmm
         # is a problem.
         dstr = "2012 MARTIN CHILDREN'S IRREVOCABLE TRUST u/a/d NOVEMBER 7, 2012"
         expected = datetime(2012, 11, 7)

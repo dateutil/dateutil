@@ -2239,7 +2239,7 @@ class TzWinLocalTest(unittest.TestCase, TzWinFoldMixin):
     def testLocal(self):
         # Not sure how to pin a local time zone, so for now we're just going
         # to run this and make sure it doesn't raise an error
-        # See Github Issue #135: https://github.com/dateutil/dateutil/issues/135
+        # See GitHub Issue #135: https://github.com/dateutil/dateutil/issues/135
         datetime.now(tzwin.tzwinlocal())
 
     def testTzwinLocalUTCOffset(self):

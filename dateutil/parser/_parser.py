@@ -423,7 +423,7 @@ class _ymd(list):
         elif not self.has_month:
             return 1 <= value <= 31
         elif not self.has_year:
-            # Be permissive, assume leapyear
+            # Be permissive, assume leap year
             month = self[self.mstridx]
             return 1 <= value <= monthrange(2000, month)[1]
         else:
@@ -539,7 +539,7 @@ class _ymd(list):
                     year, month, day = self
                 else:
                     # 01-Jan-01
-                    # Give precendence to day-first, since
+                    # Give precedence to day-first, since
                     # two-digit years is usually hand-written.
                     day, month, year = self
 
@@ -1025,7 +1025,7 @@ class parser(object):
             hms_idx = idx + 2
 
         elif idx > 0 and info.hms(tokens[idx-1]) is not None:
-            # There is a "h", "m", or "s" preceeding this token.  Since neither
+            # There is a "h", "m", or "s" preceding this token.  Since neither
             # of the previous cases was hit, there is no label following this
             # token, so we use the previous label.
             # e.g. the "04" in "12h04"
@@ -1105,7 +1105,7 @@ class parser(object):
     def _parse_min_sec(self, value):
         # TODO: Every usage of this function sets res.second to the return
         # value. Are there any cases where second will be returned as None and
-        # we *dont* want to set res.second = None?
+        # we *don't* want to set res.second = None?
         minute = int(value)
         second = None
 

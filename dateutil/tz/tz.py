@@ -385,7 +385,7 @@ class _tzfile(object):
 
 class tzfile(_tzinfo):
     """
-    This is a ``tzinfo`` subclass thant allows one to use the ``tzfile(5)``
+    This is a ``tzinfo`` subclass that allows one to use the ``tzfile(5)``
     format timezone files to extract current and historical zone information.
 
     :param fileobj:
