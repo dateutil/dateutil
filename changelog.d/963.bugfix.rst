@@ -1,0 +1,2 @@
+Fixed issue where ``dateutil.tz`` was using a backport of ``contextlib.nullcontext``
+even in Python 3.7 due to a malformed import statement.
