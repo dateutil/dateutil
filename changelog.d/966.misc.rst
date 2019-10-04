@@ -1,0 +1,2 @@
+Fix typo in setup.cfg causing PendingDeprecationWarning to not be explicitly
+specified as an error in the warnings filter.
