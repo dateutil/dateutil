@@ -1,0 +1,2 @@
+Fixed issue where part of the date string was eaten away when using underscore delimiter.
+Reported by @danhamill (gh issue #959). Fixed by @Cheukting (gh pr #967)
