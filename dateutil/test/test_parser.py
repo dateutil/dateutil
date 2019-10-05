@@ -732,6 +732,11 @@ class ParserTest(unittest.TestCase):
         else:
             pytest.fail("Failed to raise ParserError")
 
+    def test_parsing_with_underscore_delimiter(self):
+        dt = parse("somedate 2004_09_17", fuzzy=True)
+        #dt = parse("somedate 17_09_2014", fuzzy=True, dayfirst=True)
+        assert dt == datetime(2004, 9, 17)
+
 
 class TestOutOfBounds(object):
 

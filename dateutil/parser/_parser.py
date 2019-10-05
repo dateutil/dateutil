@@ -263,7 +263,7 @@ class parserinfo(object):
     """
 
     # m from a.m/p.m, t from ISO T separator
-    JUMP = [" ", ".", ",", ";", "-", "/", "'",
+    JUMP = [" ", ".", ",", ";", "-", "_", "/", "'",
             "at", "on", "and", "ad", "m", "t", "of",
             "st", "nd", "rd", "th"]
 
