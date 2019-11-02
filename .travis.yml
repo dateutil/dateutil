@@ -1,34 +1,15 @@
 language: python
 cache: pip
 python:
-  - "2.7"
-  - "3.4"
-  - "3.5"
-  - "3.6"
   - "3.7"
-  - "nightly"
-  - "pypy"
-  - "pypy3.5"
-  - "pypy3.6"
 env:
   TOXENV=py
 
 matrix:
   fast_finish: true
   include:
-    - python: 3.3
-      # This is required to run Python 3.3 on Travis
-      dist: trusty
-      env: TOXENV=py33   # Needed because "py" won't invoke testenv:py33
-    - python: 3.6
-      env: TOXENV=docs
-    - python: 3.6
-      env: TOXENV=tz
     - python: 3.7
       env: TOXENV=build
-  allow_failures:
-    - python: "nightly"
-    - python: "pypy3.6"
 
 install:
   - |
@@ -41,7 +22,9 @@ install:
 
 script:
   - tox
-  - if [[ $TOXENV == "build" ]]; then [ ! -e "dist/*.whl" ] && [ ! -e "dist/*.tar.gz" ]; fi
+  - echo $TOXENV
+  - if [[ $TOXENV == "build" ]]; then echo "Hi" && [ ! -e "dist/*.whl" ] && [ ! -e "dist/*.tar.gz" ]; fi
+  - ls dist
 
 after_success:
   - if [[ $TOXENV == "py" ]]; then tox -e coverage,codecov; fi
