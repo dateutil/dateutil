@@ -6,6 +6,8 @@ import warnings
 import tempfile
 import pickle
 
+import pytest
+
 
 class PicklableMixin(object):
     def _get_nobj_bytes(self, obj, dump_kwargs, load_kwargs):
@@ -85,7 +87,11 @@ class TZContextBase(object):
 
     def __enter__(self):
         if not self.tz_change_allowed():
-            raise ValueError(self.tz_change_disallowed_message())
+            msg = self.tz_change_disallowed_message()
+            pytest.skip(msg)
+
+            # If this is used outside of a test suite, we still want an error.
+            raise ValueError(msg)  # pragma: no cover
 
         self._old_tz = self.get_current_tz()
         self.set_current_tz(self.tzval)
