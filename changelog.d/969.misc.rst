@@ -1,0 +1,1 @@
+Switched from using assertWarns to using pytest.warns in the test suite. (gh pr #969)
