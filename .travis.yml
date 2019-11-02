@@ -22,9 +22,11 @@ install:
 
 script:
   - tox
-  - echo $TOXENV
-  - if [[ $TOXENV == "build" ]]; then echo "Hi" && [ ! -e "dist/*.whl" ] && [ ! -e "dist/*.tar.gz" ]; fi
-  - ls dist
+  - if [[ $TOXENV == "build" ]]; then
+     # Check that exactly one tarball and one wheel are created
+     [ $(find . -iwholename 'dist/*.tar.gz' | wc -l) -eq 1 ]
+     [ $(find . -iwholename 'dist/*.whl' | wc -l) -eq 1 ]
+    fi
 
 after_success:
   - if [[ $TOXENV == "py" ]]; then tox -e coverage,codecov; fi
