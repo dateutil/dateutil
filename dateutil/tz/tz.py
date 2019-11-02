@@ -1615,8 +1615,15 @@ def __get_gettz():
                 else:
                     tz = tzlocal()
             else:
-                if name.startswith(":"):
-                    name = name[1:]
+                try:
+                    if name.startswith(":"):
+                        name = name[1:]
+                except TypeError as e:
+                    if isinstance(name, bytes):
+                        new_msg = "gettz argument should be str, not bytes"
+                        six.raise_from(TypeError(new_msg), e)
+                    else:
+                        raise
                 if os.path.isabs(name):
                     if os.path.isfile(name):
                         tz = tzfile(name)

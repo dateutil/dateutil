@@ -115,7 +115,7 @@ switch, and thus all their contributions are dual-licensed.
 - bjv <brandon.vanvaerenbergh@MASKED> (@bjamesvERT)
 - gl <gl@MASKED>
 - gfyoung <gfyoung17@gmail.com> **D**
-- labrys <labrys@MASKED> (gh: @labrys) **R**
+- Labrys <labrys.git@gmail.com> (gh: @labrys) **R**
 - ms-boom <ms-boom@MASKED>
 - ryanss <ryanssdev@MASKED> (gh: @ryanss) **R**
 
