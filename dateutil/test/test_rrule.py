@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-from ._common import WarningTestMixin
 
 from datetime import datetime, date
 import unittest
@@ -20,7 +19,7 @@ import pytest
 
 
 @pytest.mark.rrule
-class RRuleTest(WarningTestMixin, unittest.TestCase):
+class RRuleTest(unittest.TestCase):
     def _rrulestr_reverse_test(self, rule):
         """
         Call with an `rrule` and it will test that `str(rrule)` generates a
@@ -2372,7 +2371,7 @@ class RRuleTest(WarningTestMixin, unittest.TestCase):
         See rfc-5545 3.3.10 - This checks for the deprecation warning, and will
         eventually check for an error.
         """
-        with self.assertWarns(DeprecationWarning):
+        with pytest.warns(DeprecationWarning):
             rrule(DAILY, dtstart=datetime(1997, 9, 2, 9, 0),
                          count=3, until=datetime(1997, 9, 4, 9, 0))
 

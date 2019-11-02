@@ -2,7 +2,6 @@
 from __future__ import unicode_literals
 from ._common import PicklableMixin
 from ._common import TZEnvContext, TZWinContext
-from ._common import WarningTestMixin
 from ._common import ComparesEqual
 
 from datetime import datetime, timedelta
@@ -1159,7 +1158,7 @@ def test_gettz_weakref():
     assert NYC_ref() is None    # Should have been pushed out
     assert tz.gettz('America/New_York') is not NYC_ref()
 
-class ZoneInfoGettzTest(GettzTest, WarningTestMixin):
+class ZoneInfoGettzTest(GettzTest):
     def gettz(self, name):
         zoneinfo_file = zoneinfo.get_zonefile_instance()
         return zoneinfo_file.get(name)
@@ -1219,11 +1218,11 @@ class ZoneInfoGettzTest(GettzTest, WarningTestMixin):
         self.assertIs(zif_1, zif_2)
 
     def testZoneInfoDeprecated(self):
-        with self.assertWarns(DeprecationWarning):
+        with pytest.warns(DeprecationWarning):
             zoneinfo.gettz('US/Eastern')
 
     def testZoneInfoMetadataDeprecated(self):
-        with self.assertWarns(DeprecationWarning):
+        with pytest.warns(DeprecationWarning):
             zoneinfo.gettz_db_metadata()
 
 
