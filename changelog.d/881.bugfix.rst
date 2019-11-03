@@ -1,3 +1,0 @@
-Parsing errors will now raise ``ParserError``, a subclass of ``ValueError``,
-which has a nicer string representation.
-Patch by @gfyoung (gh pr #881)

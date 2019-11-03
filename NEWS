@@ -1,3 +1,83 @@
+Version 2.8.1 (2019-11-03)
+==========================
+
+Data updates
+------------
+
+- Updated tzdata version to 2019c.
+
+
+Bugfixes
+--------
+
+- Fixed a race condition in the ``tzoffset`` and ``tzstr`` "strong" caches on
+  Python 2.7. Reported by @kainjow (gh issue #901).
+- Parsing errors will now raise ``ParserError``, a subclass of ``ValueError``,
+  which has a nicer string representation. Patch by @gfyoung (gh pr #881).
+- ``parser.parse`` will now raise ``TypeError`` when ``tzinfos`` is passed a
+  type that cannot be interpreted as a time zone. Prior to this change, it
+  would raise an ``UnboundLocalError`` instead.  Patch by @jbrockmendel (gh pr
+  #891).
+- Changed error message raised when when passing a ``bytes`` object as the time
+  zone name to gettz in Python 3.  Reported and fixed by @labrys () (gh issue
+  #927, gh pr #935).
+- Changed compatibility logic to support a potential Python 4.0 release. Patch
+  by Hugo van Kemenade (gh pr #950).
+- Updated many modules to use ``tz.UTC`` in favor of ``tz.tzutc()`` internally,
+  to avoid an unnecessary function call. (gh pr #910).
+- Fixed issue where ``dateutil.tz`` was using a backported version of
+  ``contextlib.nullcontext`` even in Python 3.7 due to a malformed import
+  statement. (gh pr #963).
+
+
+Tests
+-----
+
+- Switched from using assertWarns to using pytest.warns in the test suite. (gh
+  pr #969).
+- Fix typo in setup.cfg causing PendingDeprecationWarning to not be explicitly
+  specified as an error in the warnings filter. (gh pr #966)
+- Fixed issue where ``test_tzlocal_offset_equal`` would fail in certain
+  environments (such as FreeBSD) due to an invalid assumption about what time
+  zone names are provided. Reported and fixed by Kubilay Kocak (gh issue #918,
+  pr #928).
+- Fixed a minor bug in ``test_isoparser`` related to ``bytes``/``str``
+  handling. Fixed by @fhuang5 (gh issue #776, gh pr #879).
+- Explicitly listed all markers used in the pytest configuration. (gh pr #915)
+- Extensive improvements to the parser test suite, including the adoption of
+  ``pytest``-style tests and the addition of parametrization of several test
+  cases. Patches by @jbrockmendel (gh prs #735, #890, #892, #894).
+- Added tests for tzinfos input types. Patch by @jbrockmendel (gh pr #891).
+- Fixed failure of test suite when changing the TZ variable is forbidden.
+  Patch by @shadchin (gh pr #893).
+- Pinned all test dependencies on Python 3.3. (gh prs #934, #962)
+
+
+Documentation changes
+---------------------
+
+- Fixed many misspellings, typos and styling errors in the comments and
+  documentation. Patch by Hugo van Kemenade (gh pr #952).
+
+
+Misc
+----
+
+- Added Python 3.8 to the trove classifiers. (gh pr #970)
+- Moved as many keys from ``setup.py`` to ``setup.cfg`` as possible.  Fixed by
+  @FakeNameSE, @aquinlan82, @jachen20, and @gurgenz221 (gh issue #871, gh pr
+  #880).
+- Reorganized ``parser`` methods by functionality. Patch by @jbrockmendel (gh
+  pr #882).
+- Switched ``release.py`` over to using ``pep517.build`` for creating releases,
+  rather than direct invocations of ``setup.py``. Fixed by @smeng10 (gh issue
+  #869, gh pr #875).
+- Added a "build" environment into the tox configuration, to handle dependency
+  management when making releases. Fixed by @smeng10 (gh issue #870,r
+  gh pr #876).
+- GH #916, GH #971
+
+
 Version 2.8.0 (2019-02-04)
 ==========================
 

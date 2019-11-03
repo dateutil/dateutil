@@ -1,1 +1,0 @@
-Added Python 3.8 to the trove classifiers and Travis CI builds. (gh pr #970)

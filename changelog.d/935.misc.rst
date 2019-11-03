@@ -1,1 +1,0 @@
-Raise a more helpful TypeError message when passing a bytes zonename to gettz in Python 3.  Reported by @labrys (gh issue #927). Fixed by @labrys (gh pr #935)

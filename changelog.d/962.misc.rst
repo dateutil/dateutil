@@ -1,1 +1,0 @@
-Pin colorama in the Python 3.3 dependencies.
