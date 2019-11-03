@@ -51,7 +51,7 @@ Installation
 `dateutil` can be installed from PyPI using `pip` (note that the package name is
 different from the importable name)::
 
-	pip install python-dateutil
+    pip install python-dateutil
 
 Download
 ========
