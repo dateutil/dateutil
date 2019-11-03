@@ -1,1 +1,0 @@
-Fixed a race condition in the ``tzoffset`` and ``tzstr`` "strong" caches on Python 2.7. Reported by @kainjow (gh issue #901).

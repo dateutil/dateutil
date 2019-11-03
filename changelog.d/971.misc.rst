@@ -1,1 +1,0 @@
-Updated the release procedure and added tox environments to help with releasing. (gh pr #971)
