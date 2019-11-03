@@ -993,7 +993,7 @@ def test_tzlocal_local_time_trim_colon():
 @mark_tzlocal_nix
 @pytest.mark.parametrize('tzvar, tzoff', [
     ('EST5', tz.tzoffset('EST', -18000)),
-    ('GMT', tz.tzoffset('GMT', 0)),
+    ('GMT0', tz.tzoffset('GMT', 0)),
     ('YAKT-9', tz.tzoffset('YAKT', timedelta(hours=9))),
     ('JST-9', tz.tzoffset('JST', timedelta(hours=9))),
 ])
