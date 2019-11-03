@@ -44,5 +44,5 @@ build-backend = "setuptools.build_meta"
     [[tool.towncrier.type]]
         directory = "misc"
         name = "Misc"
-        showcontent = false
+        showcontent = true
 

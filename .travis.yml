@@ -42,7 +42,22 @@ install:
 
 script:
   - tox
-  - if [[ $TOXENV == "build" ]]; then [ ! -e "dist/*.whl" ] && [ ! -e "dist/*.tar.gz" ]; fi
+  - |
+    if [[ $TOXENV == "build" ]]; then
+      exactly_one() {
+        value=$(find dist -iname $1 | wc -l)
+        if [ $value -ne 1 ]; then
+          echo "Found $value instances of $1, not 1"
+          return 1
+        else
+          echo "Found exactly 1 instance of $value"
+        fi
+      }
+
+      # Check that exactly one tarball and one wheel are created
+      exactly_one '*.tar.gz'
+      exactly_one '*.whl'
+    fi
 
 after_success:
   - if [[ $TOXENV == "py" ]]; then tox -e coverage,codecov; fi
