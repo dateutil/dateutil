@@ -1,0 +1,2 @@
+Move test suite towards pytest and away from unittest.
+Reported and fixed by @jpurviance (gh pr #978)
