@@ -70,6 +70,7 @@ switch, and thus all their contributions are dual-licensed.
 - Lauren Oldja <oldja@MASKED> (gh: @loldja) **D**
 - Luca Ferocino <luca.ferox@MASKED> (gh: @lucaferocino) **D**
 - Mario Corchero <mcorcherojim@MASKED> (gh: @mariocj89) **R**
+- Mark Bailey <msb@MASKED> **D**
 - Mateusz Dziedzic (gh: @m-dz) **D**
 - Matt Cooper <vtbassmatt@MASKED> (gh: @vtbassmatt) **D**
 - Matthew Schinckel <matt@MASKED>

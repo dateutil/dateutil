@@ -1,0 +1,4 @@
+Fixed a bug in the parser where non-``ValueError`` exceptions would be raised
+during exception handling; this would happen, for example, if an
+``IllegalMonthError`` was raised in ``dateutil`` code. Fixed by Mark Bailey.
+(gh issue #981, pr #987).

@@ -654,7 +654,7 @@ class parser(object):
         try:
             ret = self._build_naive(res, default)
         except ValueError as e:
-            six.raise_from(ParserError(e.args[0] + ": %s", timestr), e)
+            six.raise_from(ParserError(str(e) + ": %s", timestr), e)
 
         if not ignoretz:
             ret = self._build_tzaware(ret, res, tzinfos)
