@@ -1,0 +1,1 @@
+Python 3.4 coverage is no longer uploaded on Appveyor.
