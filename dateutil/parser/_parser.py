@@ -1593,7 +1593,13 @@ def _parsetz(tzstr):
 
 
 class ParserError(ValueError):
-    """Error class for representing failure to parse a datetime string."""
+    """Exception subclass used for any failure to parse a datetime string.
+
+    This is a subclass of :py:exc:`ValueError`, and should be raised any time
+    earlier versions of ``dateutil`` would have raised ``ValueError``.
+
+    .. versionadded:: 2.8.1
+    """
     def __str__(self):
         try:
             return self.args[0] % self.args[1:]
@@ -1606,5 +1612,8 @@ class ParserError(ValueError):
 
 
 class UnknownTimezoneWarning(RuntimeWarning):
-    """Raised when the parser finds a timezone it cannot parse into a tzinfo"""
+    """Raised when the parser finds a timezone it cannot parse into a tzinfo.
+
+    .. versionadded:: 2.7.0
+    """
 # vim:ts=4:sw=4:et
