@@ -20,11 +20,11 @@ value falls back to the end of the month.
 Additional resources about date/time string formats can be found below:
 
 - `A summary of the international standard date and time notation
-  <http://www.cl.cam.ac.uk/~mgk25/iso-time.html>`_
-- `W3C Date and Time Formats <http://www.w3.org/TR/NOTE-datetime>`_
+  <https://www.cl.cam.ac.uk/~mgk25/iso-time.html>`_
+- `W3C Date and Time Formats <https://www.w3.org/TR/NOTE-datetime>`_
 - `Time Formats (Planetary Rings Node) <https://pds-rings.seti.org:443/tools/time_formats.html>`_
 - `CPAN ParseDate module
-  <http://search.cpan.org/~muir/Time-modules-2013.0912/lib/Time/ParseDate.pm>`_
+  <https://metacpan.org/pod/release/MUIR/Time-modules-2013.0912/lib/Time/ParseDate.pm>`_
 - `Java SimpleDateFormat Class
   <https://docs.oracle.com/javase/6/docs/api/java/text/SimpleDateFormat.html>`_
 """
