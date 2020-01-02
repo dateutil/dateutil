@@ -1359,10 +1359,10 @@ def parse(timestr, parserinfo=None, **kwargs):
         first element being a :class:`datetime.datetime` object, the second
         a tuple containing the fuzzy tokens.
 
-    :raises ValueError:
-        Raised for invalid or unknown string format, if the provided
-        :class:`tzinfo` is not in a valid format, or if an invalid date
-        would be created.
+    :raises ParserError:
+        Raised for invalid or unknown string formats, if the provided
+        :class:`tzinfo` is not in a valid format, or if an invalid date would
+        be created.
 
     :raises OverflowError:
         Raised if the parsed date exceeds the largest valid C integer on
