@@ -1600,8 +1600,9 @@ class ParserError(ValueError):
         except (TypeError, IndexError):
             return super(ParserError, self).__str__()
 
-        def __repr__(self):
-            return "%s(%s)" % (self.__class__.__name__, str(self))
+    def __repr__(self):
+        args = ", ".join("'%s'" % arg for arg in self.args)
+        return "%s(%s)" % (self.__class__.__name__, args)
 
 
 class UnknownTimezoneWarning(RuntimeWarning):

@@ -943,3 +943,12 @@ def test_decimal_error(value):
     # when constructed with an invalid value
     with pytest.raises(ParserError):
         parse(value)
+
+def test_parsererror_repr():
+    # GH 991 — the __repr__ was not properly indented and so was never defined.
+    # This tests the current behavior of the ParserError __repr__, but the
+    # precise format is not guaranteed to be stable and may change even in
+    # minor versions. This test exists to avoid regressions.
+    s = repr(ParserError("Problem with string: %s", "2019-01-01"))
+
+    assert s == "ParserError('Problem with string: %s', '2019-01-01')"
