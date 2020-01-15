@@ -1262,7 +1262,6 @@ class parser(object):
         """
         skipped_tokens = []
         date_tokens = []
-        skipped_idxs = sorted(skipped_idxs)
         prev = None
         for idx, token in enumerate(tokens):
             if idx in skipped_idxs:
