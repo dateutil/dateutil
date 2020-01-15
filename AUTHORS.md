@@ -79,6 +79,7 @@ switch, and thus all their contributions are dual-licensed.
 - Michael Aquilina <michaelaquilina@MASKED> (gh: @MichaelAquilina)
 - Michael J. Schultz <mjschultz@MASKED>
 - Mike Gilbert <floppym@MASKED>
+- Mike Rans  (gh @mcarans) **D**
 - Nicholas Herrriot <Nicholas.Herriot@gmail.com> **D**
 - Nicolas Évrard (gh: @nicoe) **D**
 - Nick Smith <nick.smith@MASKED>
