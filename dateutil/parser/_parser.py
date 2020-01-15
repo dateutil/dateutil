@@ -643,7 +643,7 @@ class parser(object):
             default = datetime.datetime.now().replace(hour=0, minute=0,
                                                       second=0, microsecond=0)
 
-        res, skipped_tokens = self._parse(timestr, **kwargs)
+        res, skipped_tokens, date_tokens = self._parse(timestr, **kwargs)
 
         if res is None:
             raise ParserError("Unknown string format: %s", timestr)
@@ -660,7 +660,7 @@ class parser(object):
             ret = self._build_tzaware(ret, res, tzinfos)
 
         if kwargs.get('fuzzy_with_tokens', False):
-            return ret, skipped_tokens
+            return ret, skipped_tokens, date_tokens
         else:
             return ret
 
@@ -867,16 +867,16 @@ class parser(object):
             res.day = day
 
         except (IndexError, ValueError):
-            return None, None
+            return None, None, None
 
         if not info.validate(res):
-            return None, None
+            return None, None, None
 
         if fuzzy_with_tokens:
-            skipped_tokens = self._recombine_skipped(l, skipped_idxs)
-            return res, tuple(skipped_tokens)
+            skipped_tokens, date_tokens = self._recombine_skipped_date(l, skipped_idxs)
+            return res, tuple(skipped_tokens), tuple(date_tokens)
         else:
-            return res, None
+            return res, None, None
 
     def _parse_numeric_token(self, tokens, idx, info, ymd, res, fuzzy):
         # Token is a number
@@ -1253,21 +1253,32 @@ class parser(object):
 
         return dt
 
-    def _recombine_skipped(self, tokens, skipped_idxs):
+    def _recombine_skipped_date(self, tokens, skipped_idxs):
         """
         >>> tokens = ["foo", " ", "bar", " ", "19June2000", "baz"]
         >>> skipped_idxs = [0, 1, 2, 5]
-        >>> _recombine_skipped(tokens, skipped_idxs)
-        ["foo bar", "baz"]
+        >>> _recombine_skipped_date(tokens, skipped_idxs)
+        ["foo bar", "baz"], ["19June2000"]
         """
         skipped_tokens = []
-        for i, idx in enumerate(sorted(skipped_idxs)):
-            if i > 0 and idx - 1 == skipped_idxs[i - 1]:
-                skipped_tokens[-1] = skipped_tokens[-1] + tokens[idx]
+        date_tokens = []
+        skipped_idxs = sorted(skipped_idxs)
+        prev = None
+        for idx, token in enumerate(tokens):
+            if idx in skipped_idxs:
+                if prev is None or prev == 'date':
+                    skipped_tokens.append(token)
+                else:
+                    skipped_tokens[-1] = skipped_tokens[-1] + token
+                prev = 'skipped'
             else:
-                skipped_tokens.append(tokens[idx])
+                if prev is None or prev == 'skipped':
+                    date_tokens.append(token)
+                else:
+                    date_tokens[-1] = date_tokens[-1] + token
+                prev = 'date'
 
-        return skipped_tokens
+        return skipped_tokens, date_tokens
 
 
 DEFAULTPARSER = parser()
