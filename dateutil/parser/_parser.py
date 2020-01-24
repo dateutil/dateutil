@@ -1359,6 +1359,30 @@ def parse(timestr, parserinfo=None, **kwargs):
             >>> parse("Today is January 1, 2047 at 8:21:00AM", fuzzy_with_tokens=True)
             (datetime.datetime(2047, 1, 1, 8, 21), (u'Today is ', u' ', u'at '))
 
+    :param require_year:
+        If ``True``, will raise a :class:`ValueError` when the ``timestr`` is missing
+        the year (defaults to ``False``)
+
+    :param require_month:
+        If ``True``, will raise a :class:`ValueError` when the ``timestr`` is missing
+        the month (defaults to ``False``)
+
+    :param require_day:
+        If ``True``, will raise a :class:`ValueError` when the ``timestr`` is missing
+        the day (defaults to ``False``)
+
+    :param require_hour:
+        If ``True``, will raise a :class:`ValueError` when the ``timestr`` is missing
+        the hour (defaults to ``False``)
+
+    :param require_minute:
+        If ``True``, will raise a :class:`ValueError` when the ``timestr`` is missing
+        the minute (defaults to ``False``)
+
+    :param require_second:
+        If ``True``, will raise a :class:`ValueError` when the ``timestr`` is missing
+        the second (defaults to ``False``)
+
     :return:
         Returns a :class:`datetime.datetime` object or, if the
         ``fuzzy_with_tokens`` option is ``True``, returns a tuple, the
