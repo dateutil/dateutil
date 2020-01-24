@@ -952,3 +952,37 @@ def test_parsererror_repr():
     s = repr(ParserError("Problem with string: %s", "2019-01-01"))
 
     assert s == "ParserError('Problem with string: %s', '2019-01-01')"
+
+
+@pytest.mark.parametrize('required_components,datestr,valid', [
+    ({'require_year': True}, 'January 20th 2020 at 12:34:56.7890', True),
+    ({'require_year': True}, 'January 20th at 12:34:56.7890', False),
+    ({'require_year': False}, 'January 20th at 12:34:56.7890', True),
+    ({'require_month': True}, 'January 20th 2020 at 12:34:56.7890', True),
+    ({'require_month': True}, '2020 at 12:34:56.7890', False),
+    ({'require_month': False}, '2020 at 12:34:56.7890', True),
+    ({'require_day': True}, 'January 20th 2020 at 12:34:56.7890', True),
+    ({'require_day': True}, 'January 2020 at 12:34:56.7890', False),
+    ({'require_day': False}, 'January 2020 at 12:34:56.7890', True),
+    ({'require_hour': True}, 'January 20th 2020 at 12:34:56.7890', True),
+    ({'require_hour': True}, 'January 20th 2020', False),
+    ({'require_hour': False}, 'January 20th 2020', True),
+    ({'require_minute': True}, 'January 20th 2020 at 12:34:56.7890', True),
+    ({'require_minute': True}, 'January 20th 2020 at 12', False),
+    ({'require_minute': False}, 'January 20th 2020 at 12', True),
+    ({'require_second': True}, 'January 20th 2020 at 12:34:56.7890', True),
+    ({'require_second': True}, 'January 20th 2020 at 12:34', False),
+    ({'require_second': False}, 'January 20th 2020 at 12:34', True),
+    ({'require_year': True, 'require_month': True, 'require_day': True}, 'January 20th 2020 at 12:34:56.7890', True),
+    ({'require_year': True, 'require_month': True, 'require_day': True}, 'January 20th at 12:34:56.7890', False),
+    ({'require_year': True, 'require_month': True, 'require_day': True}, 'January 2020 at 12:34:56.7890', False),
+    ({'require_hour': True, 'require_minute': True, 'require_second': True}, 'January 20th 2020 at 12:34:56.7890', True),
+    ({'require_hour': True, 'require_minute': True, 'require_second': True}, 'January 20th 2020 at 12:34', False),
+    ({'require_hour': True, 'require_minute': True, 'require_second': True}, 'January 20th 2020', False),
+])
+def test_parse_required_components(required_components, datestr, valid):
+    if valid:
+        parse(datestr, **required_components)
+    else:
+        with pytest.raises(ParserError):
+            parse(datestr, **required_components)
