@@ -66,6 +66,7 @@ switch, and thus all their contributions are dual-licensed.
 - Kevin Nguyen <kvn219@MASKED> **D**
 - Kirit Thadaka <kirit.thadaka@gmail.com> (gh: @kirit93) **D**
 - Kubilay Kocak <koobs@MASKED>
+- Kyle Johnson <kyle@MASKED> (gh: @kjpc-tech) **D**
 - Laszlo Kiss Kollar <kiss.kollar.laszlo@MASKED> (gh: @lkollar) **D**
 - Lauren Oldja <oldja@MASKED> (gh: @loldja) **D**
 - Luca Ferocino <luca.ferox@MASKED> (gh: @lucaferocino) **D**
