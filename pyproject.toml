@@ -5,6 +5,7 @@ requires = [
     "wheel",
     "setuptools_scm"
 ]
+build-backend = "setuptools.build_meta"
 
 [tool.towncrier]
     package = "dateutil"
@@ -43,5 +44,5 @@ requires = [
     [[tool.towncrier.type]]
         directory = "misc"
         name = "Misc"
-        showcontent = false
+        showcontent = true
 

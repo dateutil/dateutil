@@ -1,1 +1,0 @@
-Fixed test coverage communication so that only one ``pytest`` invocation is necessary to avoid ``xfail`` tests contributing to the code coverage. (gh pr #836)

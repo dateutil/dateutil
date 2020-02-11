@@ -7,7 +7,7 @@ This document outlines the ways to contribute to `python-dateutil`. This is a fa
 ### Bug reports
 Bug reports are an important type of contribution - it's important to get feedback about how the library is failing, and there's no better way to do that than to hear about real-life failure cases. A good bug report will include:
 
-1. A minimal, reproducible example - a small, self-contained script that can reproduce the behavior is the best way to get your bug fixed. For more information and tips on how to structure these, read [StackOverflow's guide to creating a minimal, complete, verified example](https://stackoverflow.com/help/mcve).
+1. A minimal, reproducible example - a small, self-contained script that can reproduce the behavior is the best way to get your bug fixed. For more information and tips on how to structure these, read [Stack Overflow's guide to creating a minimal, complete, verified example](https://stackoverflow.com/help/mcve).
 
 2. The platform and versions of everything involved, at a minimum please include operating system, `python` version and `dateutil` version. Instructions on getting your versions:
     - `dateutil`: `python -c 'import dateutil; print(dateutil.__version__)'`
@@ -51,7 +51,7 @@ an invalid value for tzstr. Reported by @pganssle (gh issue #259). Fixed by
 @pablogsal (gh pr #581)
 ```
 
-For bugs reported and fixed by the same person use "Reported and fixed by @{patch submitter}". It is not necessary to create a github issue just for the purpose of mentioning it in the changelog, if the PR *is* the report, mentioning the PR is enough.
+For bugs reported and fixed by the same person use "Reported and fixed by @{patch submitter}". It is not necessary to create a GitHub issue just for the purpose of mentioning it in the changelog, if the PR *is* the report, mentioning the PR is enough.
 
 ## License
 

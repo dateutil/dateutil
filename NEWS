@@ -1,3 +1,171 @@
+Version 2.8.1 (2019-11-03)
+==========================
+
+Data updates
+------------
+
+- Updated tzdata version to 2019c.
+
+
+Bugfixes
+--------
+
+- Fixed a race condition in the ``tzoffset`` and ``tzstr`` "strong" caches on
+  Python 2.7. Reported by @kainjow (gh issue #901).
+- Parsing errors will now raise ``ParserError``, a subclass of ``ValueError``,
+  which has a nicer string representation. Patch by @gfyoung (gh pr #881).
+- ``parser.parse`` will now raise ``TypeError`` when ``tzinfos`` is passed a
+  type that cannot be interpreted as a time zone. Prior to this change, it
+  would raise an ``UnboundLocalError`` instead.  Patch by @jbrockmendel (gh pr
+  #891).
+- Changed error message raised when when passing a ``bytes`` object as the time
+  zone name to gettz in Python 3.  Reported and fixed by @labrys () (gh issue
+  #927, gh pr #935).
+- Changed compatibility logic to support a potential Python 4.0 release. Patch
+  by Hugo van Kemenade (gh pr #950).
+- Updated many modules to use ``tz.UTC`` in favor of ``tz.tzutc()`` internally,
+  to avoid an unnecessary function call. (gh pr #910).
+- Fixed issue where ``dateutil.tz`` was using a backported version of
+  ``contextlib.nullcontext`` even in Python 3.7 due to a malformed import
+  statement. (gh pr #963).
+
+
+Tests
+-----
+
+- Switched from using assertWarns to using pytest.warns in the test suite. (gh
+  pr #969).
+- Fix typo in setup.cfg causing PendingDeprecationWarning to not be explicitly
+  specified as an error in the warnings filter. (gh pr #966)
+- Fixed issue where ``test_tzlocal_offset_equal`` would fail in certain
+  environments (such as FreeBSD) due to an invalid assumption about what time
+  zone names are provided. Reported and fixed by Kubilay Kocak (gh issue #918,
+  pr #928).
+- Fixed a minor bug in ``test_isoparser`` related to ``bytes``/``str``
+  handling. Fixed by @fhuang5 (gh issue #776, gh pr #879).
+- Explicitly listed all markers used in the pytest configuration. (gh pr #915)
+- Extensive improvements to the parser test suite, including the adoption of
+  ``pytest``-style tests and the addition of parametrization of several test
+  cases. Patches by @jbrockmendel (gh prs #735, #890, #892, #894).
+- Added tests for tzinfos input types. Patch by @jbrockmendel (gh pr #891).
+- Fixed failure of test suite when changing the TZ variable is forbidden.
+  Patch by @shadchin (gh pr #893).
+- Pinned all test dependencies on Python 3.3. (gh prs #934, #962)
+
+
+Documentation changes
+---------------------
+
+- Fixed many misspellings, typos and styling errors in the comments and
+  documentation. Patch by Hugo van Kemenade (gh pr #952).
+
+
+Misc
+----
+
+- Added Python 3.8 to the trove classifiers. (gh pr #970)
+- Moved as many keys from ``setup.py`` to ``setup.cfg`` as possible.  Fixed by
+  @FakeNameSE, @aquinlan82, @jachen20, and @gurgenz221 (gh issue #871, gh pr
+  #880).
+- Reorganized ``parser`` methods by functionality. Patch by @jbrockmendel (gh
+  pr #882).
+- Switched ``release.py`` over to using ``pep517.build`` for creating releases,
+  rather than direct invocations of ``setup.py``. Fixed by @smeng10 (gh issue
+  #869, gh pr #875).
+- Added a "build" environment into the tox configuration, to handle dependency
+  management when making releases. Fixed by @smeng10 (gh issue #870,r
+  gh pr #876).
+- GH #916, GH #971
+
+
+Version 2.8.0 (2019-02-04)
+==========================
+
+Data updates
+------------
+
+- Updated tzdata version to to 2018i.
+
+
+Features
+--------
+
+- Added support for ``EXDATE`` parameters when parsing ``rrule`` strings.
+  Reported by @mlorant (gh issue #410), fixed by @nicoe (gh pr #859).
+- Added support for sub-minute time zone offsets in Python 3.6+.
+  Fixed by @cssherry (gh issue #582, pr #763)
+- Switched the ``tzoffset``, ``tzstr`` and ``gettz`` caches over to using weak
+  references, so that the cache expires when no other references to the
+  original ``tzinfo`` objects exist. This cache-expiry behavior is not
+  guaranteed in the public interface and may change in the future. To improve
+  performance in the case where transient references to the same time zones
+  are repeatedly created but no strong reference is continuously held, a
+  smaller "strong value" cache was also added. Weak value cache implemented by
+  @cs-cordero (gh pr #672, #801), strong cache added by
+  Gökçen Nurlu (gh issue #691, gh pr #761)
+
+
+Bugfixes
+--------
+
+- Add support for ISO 8601 times with comma as the decimal separator in the
+  ``dateutil.parser.isoparse`` function. (gh pr #721)
+- Changed handling of ``T24:00`` to be compliant with the standard. ``T24:00``
+  now represents midnight on the *following* day.
+  Fixed by @cheukting (gh issue #658, gh pr #751)
+- Fixed an issue where ``isoparser.parse_isotime`` was unable to handle the
+  ``24:00`` variant representation of midnight. (gh pr #773)
+- Added support for more than 6 fractional digits in `isoparse`.
+  Reported and fixed by @jayschwa (gh issue #786, gh pr #787).
+- Added 'z' (lower case Z) as valid UTC time zone in isoparser.
+  Reported by @cjgibson (gh issue #820). Fixed by @Cheukting (gh pr #822)
+- Fixed a bug with base offset changes during DST in ``tzfile``, and refactored
+  the way base offset changes are detected. Originally reported on
+  Stack Overflow by @MartinThoma. (gh issue #812, gh pr #810)
+- Fixed error condition in ``tz.gettz`` when a non-ASCII timezone is passed on
+  Windows in Python 2.7. (gh issue #802, pr #861)
+- Improved performance and inspection properties of ``tzname`` methods.
+  (gh pr #811)
+- Removed unnecessary binary_type compatibility shims.
+  Added by @jdufresne (gh pr #817)
+- Changed ``python setup.py test`` to print an error to ``stderr`` and exit
+  with 1 instead of 0. Reported and fixed by @hroncok (gh pr #814)
+- Added a ``pyproject.toml`` file with build requirements and an explicitly
+  specified build backend. (gh issue #736, gh prs #746, #863)
+
+
+Documentation changes
+---------------------
+
+- Added documentation for the ``rrule.rrulestr`` function.
+  Fixed by @prdickson (gh issue #623, gh pr #762)
+- Add documentation for the ``dateutil.tz.win`` module and mocked out certain
+  Windows-specific modules so that autodoc can still be run on non-Windows
+  systems. (gh issue #442, pr #715)
+- Added changelog to documentation. (gh issue #692, gh pr #707)
+- Improved documentation on the use of ``until`` and ``count`` parameters in
+  ``rrule``. Fixed by @lucaferocino (gh pr #755).
+- Added an example of how to use a custom ``parserinfo`` subclass to parse
+  non-standard datetime formats in the examples documentation for ``parser``.
+  Added by @prdickson (gh #753)
+- Expanded the description and examples in the ``relativedelta`` class.
+  Contributed by @andrewcbennett (gh pr #759)
+- Improved the contributing documentation to clarify where to put new changelog
+  files. Contributed by @andrewcbennett (gh pr #757)
+- Fixed a broken doctest in the ``relativedelta`` module.
+  Fixed by @nherriot (gh pr #758).
+- Reorganized ``dateutil.tz`` documentation and fixed issue with the
+  ``dateutil.tz`` docstring. (gh pr #714)
+
+
+Misc
+----
+
+- GH #720, GH #723, GH #726, GH #727, GH #740, GH #750, GH #760, GH #767,
+  GH #772, GH #773, GH #780, GH #784, GH #785, GH #791, GH #799, GH #813,
+  GH #836, GH #839, GH #857
+
+
 Version 2.7.5 (2018-10-27)
 ==========================
 
@@ -28,18 +196,19 @@ Data updates
 Bugfixes
 --------
 
-- Fixed an issue where decimal.Decimal would cast `NaN` or infinite value in a
-  parser.parse, which will raise decimal.Decimal-specific errors. Reported and
-  fixed by @amureki (gh issue #662, gh pr #679).
-- Fixed a ValueError being thrown if tzinfos call explicity returns ``None``.
-  Reported by @pganssle (gh issue #661) Fixed by @parsethis (gh pr #681)
-- Fixed incorrect parsing of certain dates earlier than 100 AD when repesented
+- Fixed an issue where ``parser.parse`` would raise ``Decimal``-specific errors
+  instead of a standard ``ValueError`` if certain malformed values were parsed
+  (e.g. ``NaN`` or infinite values). Reported and fixed by
+  @amureki (gh issue #662, gh pr #679).
+- Fixed issue in ``parser`` where a ``tzinfos`` call explicitly returning
+  ``None`` would throw a ``ValueError``.
+  Fixed by @parsethis (gh issue #661, gh pr #681)
+- Fixed incorrect parsing of certain dates earlier than 100 AD when represented
   in the form "%B.%Y.%d", e.g. "December.0031.30". (gh issue #687, pr #700)
-- Fixed a bug where automatically generated DTSTART was naive even if a
-  specified UNTIL had a time zone. Automatically generated DTSTART will now
-  take on the timezone of an UNTIL date, if provided. Reported by @href (gh
-  issue #652). Fixed by @absreim (gh pr #693).
-
+- Added time zone inference when initializing an ``rrule`` with a specified
+  ``UNTIL`` but without an explicitly specified ``DTSTART``; the time zone
+  of the generated ``DTSTART`` will now be taken from the ``UNTIL`` rule.
+  Reported by @href (gh issue #652). Fixed by @absreim (gh pr #693).
 
 Documentation changes
 ---------------------
@@ -59,8 +228,8 @@ Documentation changes
   issue #647). Fixed by @weatherpattern (gh pr #704)
 - Cleaned up malformed RST in the ``tz`` documentation. (gh issue #702, gh pr
   #706)
-- Changed the default theme to sphinx_rtd_theme, and changed the sphinx
-  configuration to go along with that. (gh pr #707)
+- Changed the default theme to ``sphinx_rtd_theme``, and changed the sphinx
+  configuration accordingly. (gh pr #707)
 - Reorganized ``dateutil.tz`` documentation and fixed issue with the
   ``dateutil.tz`` docstring. (gh pr #714)
 
@@ -164,7 +333,7 @@ Version 2.7.0
   and fixed by @jbrockmendel (gh pr #589)
 - Significantly refactored parser code by @jbrockmendel (gh prs #419, #436,
   #490, #498, #539) and @pganssle (gh prs #435, #468)
-- Implementated of __hash__ for relativedelta and weekday, reported and fixed
+- Implemented of __hash__ for relativedelta and weekday, reported and fixed
   by @mrigor (gh pr #389) 
 - Implemented __abs__ for relativedelta. Reported by @binnisb and @pferreir
   (gh issue #350, pr #472)
@@ -250,7 +419,7 @@ Version 2.7.0
 - Fixed dangling parenthesis in tzoffset documentation (gh pr #461)
 - Started including the license file in wheels. Reported and fixed by
   @jdufresne (gh pr #476)
-- Indendation fixes to parser docstring by @jbrockmendel (gh pr #492)
+- Indentation fixes to parser docstring by @jbrockmendel (gh pr #492)
 - Moved many examples from the "examples" documentation into their appropriate
   module documentation pages. Fixed by @Tomasz-Kluczkowski and @jakec-github
   (gh pr #558, #561)
@@ -404,7 +573,7 @@ Version 2.5.0
 - zoneinfo_metadata file version increased to 2.0 - the updated updatezinfo.py
   script will work with older zoneinfo_metadata.json files, but new metadata
   files will not work with older updatezinfo.py versions. Additionally, we have
-  started hosting our own mirror of the Olson databases on a github pages
+  started hosting our own mirror of the Olson databases on a GitHub pages
   site (https://dateutil.github.io/tzdata/) (gh pr #183)
 - dateutil zoneinfo tarballs now contain the full zoneinfo_metadata file used
   to generate them. (gh issue #27, gh pr #85)

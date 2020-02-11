@@ -511,7 +511,7 @@ Every 18 months on the 10th thru 15th of the month for 10 occurrences.
      datetime.datetime(1999, 3, 13, 9, 0)]
 
 
-Every Tuesday, every other month, 6 occurences.
+Every Tuesday, every other month, 6 occurrences.
 
 .. doctest:: rrule
    :options: +NORMALIZE_WHITESPACE
@@ -1209,15 +1209,15 @@ tzutc examples
 .. doctest:: tzutc
 
     >>> from datetime import *
-    >>> from dateutil.tz import *
+    >>> from dateutil import tz
 
     >>> datetime.now()
     datetime.datetime(2003, 9, 27, 9, 40, 1, 521290)
 
-    >>> datetime.now(tzutc())
+    >>> datetime.now(tz.UTC)
     datetime.datetime(2003, 9, 27, 12, 40, 12, 156379, tzinfo=tzutc())
 
-    >>> datetime.now(tzutc()).tzname()
+    >>> datetime.now(tz.UTC).tzname()
     'UTC'
 
 
@@ -1237,7 +1237,7 @@ tzoffset examples
     >>> datetime.now(tzoffset("BRST", -10800)).tzname()
     'BRST'
 
-    >>> datetime.now(tzoffset("BRST", -10800)).astimezone(tzutc())
+    >>> datetime.now(tzoffset("BRST", -10800)).astimezone(UTC)
     datetime.datetime(2003, 9, 27, 12, 53, 11, 446419,
               tzinfo=tzutc())
 
@@ -1383,7 +1383,7 @@ tzfile examples
 .. testsetup:: tzfile
 
     from datetime import datetime
-    from dateutil.tz import tzfile, tzutc
+    from dateutil.tz import tzfile, UTC
 
 .. doctest:: tzfile
    :options: +NORMALIZE_WHITESPACE
@@ -1393,7 +1393,7 @@ tzfile examples
     datetime.datetime(2003, 9, 27, 12, 3, 48, 392138,
               tzinfo=tzfile('/etc/localtime'))
 
-    >>> datetime.now(tz).astimezone(tzutc())
+    >>> datetime.now(tz).astimezone(UTC)
     datetime.datetime(2003, 9, 27, 15, 3, 53, 70863,
               tzinfo=tzutc())
 

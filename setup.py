@@ -29,8 +29,6 @@ class Unsupported(TestCommand):
 
 ###
 # Load metadata
-PACKAGES = find_packages(where='.', exclude=['dateutil.test'])
-
 
 def README():
     with io.open('README.rst', encoding='utf-8') as f:
@@ -48,42 +46,12 @@ def README():
 README = README()  # NOQA
 
 
-setup(name="python-dateutil",
+setup(
       use_scm_version={
           'write_to': 'dateutil/_version.py',
       },
-      description="Extensions to the standard Python datetime module",
-      author="Gustavo Niemeyer",
-      author_email="gustavo@niemeyer.net",
-      maintainer="Paul Ganssle",
-      maintainer_email="dateutil@python.org",
-      url="https://dateutil.readthedocs.io",
-      license="Dual License",
-      long_description=README,
-      long_description_content_type='text/x-rst',
-      packages=PACKAGES,
-      python_requires=">=2.7, !=3.0.*, !=3.1.*, !=3.2.*",
-      package_data={"dateutil.zoneinfo": ["dateutil-zoneinfo.tar.gz"]},
-      zip_safe=True,
-      setup_requires=['setuptools_scm'],
-      install_requires=["six >=1.5"],
-      classifiers=[
-          'Development Status :: 5 - Production/Stable',
-          'Intended Audience :: Developers',
-          'License :: OSI Approved :: BSD License',
-          'License :: OSI Approved :: Apache Software License',
-          'Programming Language :: Python',
-          'Programming Language :: Python :: 2',
-          'Programming Language :: Python :: 2.7',
-          'Programming Language :: Python :: 3',
-          'Programming Language :: Python :: 3.3',
-          'Programming Language :: Python :: 3.4',
-          'Programming Language :: Python :: 3.5',
-          'Programming Language :: Python :: 3.6',
-          'Programming Language :: Python :: 3.7',
-          'Topic :: Software Development :: Libraries',
-      ],
-      test_suite="dateutil.test",
+      ## Needed since doctest not supported by PyPA.
+      long_description = README,
       cmdclass={
           "test": Unsupported
       }

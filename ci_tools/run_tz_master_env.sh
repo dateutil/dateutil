@@ -16,6 +16,10 @@ TMP_TARBALL=${TMP_DIR}/dateutil-zoneinfo.tar.gz
 
 UPSTREAM_URL="https://github.com/eggert/tz.git"
 
+if [ -n "$TF_BUILD" ]; then
+    EXTRA_TEST_ARGS=--junitxml=../unittests/TEST-tz.xml
+fi
+
 function cleanup {
     # Since this script modifies the original repo, whether or not
     # it fails we need to restore the original file so as to not
@@ -89,5 +93,5 @@ ${CITOOLS_DIR}/make_zonefile_metadata.py \
 python ${REPO_DIR}/updatezinfo.py $ZONEFILE_METADATA_NAME
 
 # Run the tests
-python -m pytest ${REPO_DIR}/dateutil/test
+python -m pytest ${REPO_DIR}/dateutil/test $EXTRA_TEST_ARGS
 

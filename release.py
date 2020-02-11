@@ -25,9 +25,8 @@ def build():
             click.echo('Aborting')
             sys.exit(1)
 
-    subprocess.check_call(['python', 'setup.py', 'bdist_wheel'])
-    subprocess.check_call(['python', 'setup.py', 'sdist',
-                           '--formats=gztar'])
+    subprocess.check_call(['python', '-m', 'pep517.build',
+                           '--binary', '--source', '.'])
 
 @cli.command()
 def sign():
@@ -45,7 +44,8 @@ def sign():
 
 
 @cli.command()
-@click.option('--passfile', default=None)
+@click.option('--passfile', default=None,
+              help='File path to read and decrypt with gpg.')
 @click.option('--release/--no-release', default=False)
 def upload(passfile, release):
     if release:
@@ -71,7 +71,7 @@ def upload(passfile, release):
             raise ValueError('Missing signature file for: {}'.format(dist_file))
 
     args = ['twine', 'upload', '-r', repository] + dist_files
-    
+
     p = subprocess.Popen(args, env=env)
     p.wait()
 
