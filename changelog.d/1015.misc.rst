@@ -1,0 +1,2 @@
+Fixed tox not testing solutions under docs/exercises.
+Reported and fixed by @ffe4 (gh pr #1015)
