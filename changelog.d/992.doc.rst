@@ -1,0 +1,2 @@
+Rearranged parser documentation into "Functions", "Classes" and "Warnings and
+Exceptions" categories. (gh issue #992, pr #994).

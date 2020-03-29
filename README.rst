@@ -27,8 +27,8 @@ dateutil - powerful extensions to datetime
     :target: https://dev.azure.com/pythondateutilazure/dateutil/_build/latest?definitionId=1&branchName=master
     :alt: azure pipelines build status
 
-.. |coverage| image:: https://codecov.io/github/dateutil/dateutil/coverage.svg?branch=master
-    :target: https://codecov.io/github/dateutil/dateutil?branch=master
+.. |coverage| image:: https://codecov.io/gh/dateutil/dateutil/branch/master/graphs/badge.svg?branch=master
+    :target: https://codecov.io/gh/dateutil/dateutil?branch=master
     :alt: Code coverage
 
 .. |gitter| image:: https://badges.gitter.im/dateutil/dateutil.svg
@@ -153,7 +153,7 @@ Releases     Signing key fingerprint
 Contact
 =======
 Our mailing list is available at `dateutil@python.org <https://mail.python.org/mailman/listinfo/dateutil>`_. As it is hosted by the PSF, it is subject to the `PSF code of
-conduct <https://www.python.org/psf/codeofconduct/>`_.
+conduct <https://www.python.org/psf/conduct/>`_.
 
 License
 =======
