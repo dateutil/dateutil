@@ -20,11 +20,11 @@ value falls back to the end of the month.
 Additional resources about date/time string formats can be found below:
 
 - `A summary of the international standard date and time notation
-  <http://www.cl.cam.ac.uk/~mgk25/iso-time.html>`_
-- `W3C Date and Time Formats <http://www.w3.org/TR/NOTE-datetime>`_
+  <https://www.cl.cam.ac.uk/~mgk25/iso-time.html>`_
+- `W3C Date and Time Formats <https://www.w3.org/TR/NOTE-datetime>`_
 - `Time Formats (Planetary Rings Node) <https://pds-rings.seti.org:443/tools/time_formats.html>`_
 - `CPAN ParseDate module
-  <http://search.cpan.org/~muir/Time-modules-2013.0912/lib/Time/ParseDate.pm>`_
+  <https://metacpan.org/pod/release/MUIR/Time-modules-2013.0912/lib/Time/ParseDate.pm>`_
 - `Java SimpleDateFormat Class
   <https://docs.oracle.com/javase/6/docs/api/java/text/SimpleDateFormat.html>`_
 """
@@ -1359,10 +1359,10 @@ def parse(timestr, parserinfo=None, **kwargs):
         first element being a :class:`datetime.datetime` object, the second
         a tuple containing the fuzzy tokens.
 
-    :raises ValueError:
-        Raised for invalid or unknown string format, if the provided
-        :class:`tzinfo` is not in a valid format, or if an invalid date
-        would be created.
+    :raises ParserError:
+        Raised for invalid or unknown string formats, if the provided
+        :class:`tzinfo` is not in a valid format, or if an invalid date would
+        be created.
 
     :raises OverflowError:
         Raised if the parsed date exceeds the largest valid C integer on
@@ -1593,7 +1593,13 @@ def _parsetz(tzstr):
 
 
 class ParserError(ValueError):
-    """Error class for representing failure to parse a datetime string."""
+    """Exception subclass used for any failure to parse a datetime string.
+
+    This is a subclass of :py:exc:`ValueError`, and should be raised any time
+    earlier versions of ``dateutil`` would have raised ``ValueError``.
+
+    .. versionadded:: 2.8.1
+    """
     def __str__(self):
         try:
             return self.args[0] % self.args[1:]
@@ -1606,5 +1612,8 @@ class ParserError(ValueError):
 
 
 class UnknownTimezoneWarning(RuntimeWarning):
-    """Raised when the parser finds a timezone it cannot parse into a tzinfo"""
+    """Raised when the parser finds a timezone it cannot parse into a tzinfo.
+
+    .. versionadded:: 2.7.0
+    """
 # vim:ts=4:sw=4:et
