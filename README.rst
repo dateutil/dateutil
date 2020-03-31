@@ -5,7 +5,7 @@ dateutil - powerful extensions to datetime
 
 |gitter| |readthedocs|
 
-|travis| |appveyor| |pipelines| |coverage|
+|travis| |appveyor| |pipelines| |coverage| |gha pypy|
 
 .. |pypi| image:: https://img.shields.io/pypi/v/python-dateutil.svg?style=flat-square
     :target: https://pypi.org/project/python-dateutil/
@@ -14,6 +14,10 @@ dateutil - powerful extensions to datetime
 .. |support| image:: https://img.shields.io/pypi/pyversions/python-dateutil.svg?style=flat-square
     :target: https://pypi.org/project/python-dateutil/
     :alt: supported Python version
+
+.. |gha pypy| image:: https://github.com/dateutil/dateutil/workflows/PyPy/badge.svg
+    :target: https://github.com/dateutil/dateutil/actions?query=workflow%3A%22PyPy%22
+    :alt: PyPy build status
 
 .. |travis| image:: https://img.shields.io/travis/dateutil/dateutil/master.svg?style=flat-square&label=Travis%20Build
     :target: https://travis-ci.org/dateutil/dateutil
