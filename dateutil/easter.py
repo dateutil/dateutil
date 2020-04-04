@@ -24,12 +24,12 @@ def easter(year, method=EASTER_WESTERN):
     This algorithm implements three different Easter
     calculation methods:
 
-    1 - Original calculation in Julian calendar, valid in
-        dates after 326 AD
-    2 - Original method, with date converted to Gregorian
-        calendar, valid in years 1583 to 4099
-    3 - Revised method, in Gregorian calendar, valid in
-        years 1583 to 4099 as well
+    1. Original calculation in Julian calendar, valid in
+       dates after 326 AD
+    2. Original method, with date converted to Gregorian
+       calendar, valid in years 1583 to 4099
+    3. Revised method, in Gregorian calendar, valid in
+       years 1583 to 4099 as well
 
     These methods are represented by the constants:
 
