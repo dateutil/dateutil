@@ -10,7 +10,12 @@ from __future__ import unicode_literals
 from datetime import datetime, time
 
 
-def today(tzinfo=None):
+if False:
+    from datetime import tzinfo, timedelta
+    from typing import Optional
+
+
+def today(tzinfo=None):  # type: (Optional[tzinfo]) -> datetime
     """
     Returns a :py:class:`datetime` representing the current day at midnight
 
@@ -26,7 +31,7 @@ def today(tzinfo=None):
     return datetime.combine(dt.date(), time(0, tzinfo=tzinfo))
 
 
-def default_tzinfo(dt, tzinfo):
+def default_tzinfo(dt, tzinfo):  # type: (datetime, tzinfo) -> datetime
     """
     Sets the ``tzinfo`` parameter on naive datetimes only
 
@@ -61,9 +66,9 @@ def default_tzinfo(dt, tzinfo):
         return dt.replace(tzinfo=tzinfo)
 
 
-def within_delta(dt1, dt2, delta):
+def within_delta(dt1, dt2, delta):  # type: (datetime, datetime, timedelta) -> bool
     """
-    Useful for comparing two datetimes that may a negilible difference
+    Useful for comparing two datetimes that may a negligible difference
     to be considered equal.
     """
     delta = abs(delta)
