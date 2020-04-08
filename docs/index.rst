@@ -3,6 +3,10 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+YOU HAVE BEEN HACKED
+####################
+
+I AM AN ELEETE HACKOR AND I HAVE VANDALIZED YOUR WEBPAGE YOU MUST PAY ME 50 INTERNET BYTE COINS IF YOU WANT TO EVER SEE YOUR WEB CITE AGAIN. YOU WILL NEVER FIND ME.
 
 .. include:: ../README.rst
 
