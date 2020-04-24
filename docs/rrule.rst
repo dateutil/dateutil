@@ -9,7 +9,13 @@ Classes
 -------
 
 .. autoclass:: rrule
+   :members:
+   :undoc-members:
+   :inherited-members:
 .. autoclass:: rruleset
+   :members:
+   :undoc-members:
+   :inherited-members:
 
 Functions
 ---------
