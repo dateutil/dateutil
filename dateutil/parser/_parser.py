@@ -8,7 +8,7 @@ returning a datetime object even for dates which are ambiguous. If an element
 of a date/time stamp is omitted, the following rules are applied:
 
 - If AM or PM is left unspecified, a 24-hour clock is assumed, however, an hour
-  on a 12-hour clock (``0 <= hour <= 12``) *must* be specified if AM or PM is
+  on a 12-hour clock (``0 <= hour <= 12``) *must* be specified if AM is
   specified.
 - If a time zone is omitted, a timezone-naive datetime is returned.
 
@@ -786,7 +786,7 @@ class parser(object):
                 # Check am/pm
                 elif info.ampm(l[i]) is not None:
                     value = info.ampm(l[i])
-                    val_is_ampm = self._ampm_valid(res.hour, res.ampm, fuzzy)
+                    val_is_ampm = self._ampm_valid(value, res.hour, res.ampm, fuzzy)
 
                     if val_is_ampm:
                         res.hour = self._adjust_ampm(res.hour, value)
@@ -1067,7 +1067,7 @@ class parser(object):
                 (all(x in string.ascii_uppercase for x in token)
                  or token in self.info.UTCZONE))
 
-    def _ampm_valid(self, hour, ampm, fuzzy):
+    def _ampm_valid(self, value, hour, ampm, fuzzy):
         """
         For fuzzy parsing, 'a' or 'am' (both valid English words)
         may erroneously trigger the AM/PM flag. Deal with that
@@ -1085,13 +1085,13 @@ class parser(object):
                 val_is_ampm = False
             else:
                 raise ValueError('No hour specified with AM or PM flag.')
-        elif not 0 <= hour <= 12:
-            # If AM/PM is found, it's a 12 hour clock, so raise
+        elif value == 0 and not 0 <= hour <= 12:
+            # If AM is found, it's a 12 hour clock, so raise
             # an error for invalid range
             if fuzzy:
                 val_is_ampm = False
             else:
-                raise ValueError('Invalid hour specified for 12-hour clock.')
+                raise ValueError('Invalid hour specified for AM flag.')
 
         return val_is_ampm
 

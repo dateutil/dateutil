@@ -96,6 +96,7 @@ PARSER_TEST_CASES = [
     ('13NOV2017', datetime(2017, 11, 13), "dBY (See GH360)"),
     ('0003-03-04', datetime(3, 3, 4), "pre 12 year same month (See GH PR #293)"),
     ('December.0031.30', datetime(31, 12, 30), "BYd corner case (GH#687)"),
+    ('January 25, 1921 23:13 PM', datetime(1921, 1, 25, 23, 13), "24hr time w PM (issue #1042)"),
 
     # Cases with legacy h/m/s format, candidates for deprecation (GH#886)
     ("2016-12-21 04.2h", datetime(2016, 12, 21, 4, 12), "Fractional Hours"),
@@ -155,7 +156,8 @@ PARSER_DEFAULT_TEST_CASES = [
     ("01h02s", datetime(2003, 9, 25, 1, 0, 2), "random format"),
     ("01m02", datetime(2003, 9, 25, 0, 1, 2), "random format"),
     ("01m02h", datetime(2003, 9, 25, 2, 1), "random format"),
-    ("2004 10 Apr 11h30m", datetime(2004, 4, 10, 11, 30), "random format")
+    ("2004 10 Apr 11h30m", datetime(2004, 4, 10, 11, 30), "random format"),
+    ("22:01 PM", datetime(2003, 9, 25, 22, 1), '24hr time w PM (issue #1042)')
 ]
 # Check that we don't have any duplicates
 assert len(set([x[0] for x in PARSER_DEFAULT_TEST_CASES])) == len(PARSER_DEFAULT_TEST_CASES)
@@ -490,7 +492,7 @@ class ParserTest(unittest.TestCase):
             parse("13:44 AM")
 
         with pytest.raises(ParserError):
-            parse("January 25, 1921 23:13 PM")
+            parse("January 25, 1921 23:13 AM")
 
     def testPertain(self):
         self.assertEqual(parse("Sep 03", default=self.default),

@@ -1,0 +1,1 @@
+Add parser support for 24-hour times with PM flag (gh issue #1042)
