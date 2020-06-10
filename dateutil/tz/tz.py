@@ -196,7 +196,8 @@ class tzoffset(datetime.tzinfo):
                                repr(self._name),
                                int(self._offset.total_seconds()))
 
-    __reduce__ = object.__reduce__
+    def __reduce__(self):
+        return (self.__class__, (self._name, self._offset))
 
 
 class tzlocal(_tzinfo):
