@@ -120,7 +120,8 @@ class tzutc(datetime.tzinfo):
     def __repr__(self):
         return "%s()" % self.__class__.__name__
 
-    __reduce__ = object.__reduce__
+    def __reduce__(self):
+        return (self.__class__, tuple())
 
 
 #: Convenience constant providing a :class:`tzutc()` instance
