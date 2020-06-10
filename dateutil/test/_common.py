@@ -33,15 +33,17 @@ class PicklableMixin(object):
                         dump_kwargs=None, load_kwargs=None):
         """
         Assert that an object can be pickled and unpickled. This assertion
-        assumes that the desired behavior is that the unpickled object compares
-        equal to the original object, but is not the same object.
+        assumes that the desired behavior is that the unpickled object is the same
+        as the original, when singleton=True.
         """
         get_nobj = self._get_nobj_file if asfile else self._get_nobj_bytes
         dump_kwargs = dump_kwargs or {}
         load_kwargs = load_kwargs or {}
 
         nobj = get_nobj(obj, dump_kwargs, load_kwargs)
-        if not singleton:
+        if singleton:
+            self.assertIs(obj, nobj)
+        else:
             self.assertIsNot(obj, nobj)
         self.assertEqual(obj, nobj)
 
