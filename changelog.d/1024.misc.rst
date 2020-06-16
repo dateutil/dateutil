@@ -1,0 +1,2 @@
+Fixed tz.gettz() not returning local time when passed an empty string.
+Reported by @labrys (gh issues #925, #926). Fixed by @ffe4 (gh pr #1024)

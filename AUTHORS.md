@@ -105,6 +105,7 @@ switch, and thus all their contributions are dual-licensed.
 - Thomas A Caswell <tcaswell@MASKED> (gh: @tacaswell) **R**
 - Thomas Achtemichuk <tom@MASKED>
 - Thomas Kluyver <takowl@MASKED> (gh: @takluyver)
+- Tim Gates <tim.gates@iress.com> (gh: timgates42)
 - Tomasz Kluczkowski (gh: @Tomasz-Kluczkowski) **D**
 - Tomi Pieviläinen <tomi.pievilainen@iki.fi>
 - Unrud <Unrud@MASKED> (gh: @unrud)
