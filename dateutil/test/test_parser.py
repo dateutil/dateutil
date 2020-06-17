@@ -833,7 +833,7 @@ class TestParseUnimplementedCases(object):
     def test_extraneous_year(self):
         # This was found in the wild at insidertrading.org
         dstr = "2011 MARTIN CHILDREN'S IRREVOCABLE TRUST u/a/d NOVEMBER 7, 2012"
-        res = parse(dstr, fuzzy_with_tokens=True)
+        res = parse(dstr, fuzzy=True)
         expected = datetime(2012, 11, 7)
         assert res == expected
 
@@ -854,7 +854,7 @@ class TestParseUnimplementedCases(object):
         # This was found in the wild at insidertrading.org
         dstr = ("Berylson Amy Smith 1998 Grantor Retained Annuity Trust "
                 "u/d/t November 2, 1998 f/b/o Jennifer L Berylson")
-        res = parse(dstr, fuzzy_with_tokens=True)
+        res = parse(dstr, fuzzy=True)
         expected = datetime(1998, 11, 2)
         assert res == expected
 
@@ -862,7 +862,7 @@ class TestParseUnimplementedCases(object):
     def test_extraneous_year3(self):
         # This was found in the wild at insidertrading.org
         dstr = "SMITH R &  WEISS D 94 CHILD TR FBO M W SMITH UDT 12/1/1994"
-        res = parse(dstr, fuzzy_with_tokens=True)
+        res = parse(dstr, fuzzy=True)
         expected = datetime(1994, 12, 1)
         assert res == expected
 
