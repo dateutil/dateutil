@@ -875,6 +875,15 @@ class TestParseUnimplementedCases(object):
         expected = datetime(2017, 12, 1)
         assert res == expected
 
+    @pytest.mark.xfail
+    def test_extraneous_numerical_content(self):
+        # ref: https://github.com/dateutil/dateutil/issues/1029
+        # parser interprets price and percentage as parts of the date
+        dstr = "£14.99 (25% off, until April 20)"
+        res = parse(dstr, fuzzy=True, default=datetime(2000, 1, 1))
+        expected = datetime(2000, 4, 20)
+        assert res == expected
+
 
 @pytest.mark.skipif(IS_WIN, reason="Windows does not use TZ var")
 class TestTZVar(object):
