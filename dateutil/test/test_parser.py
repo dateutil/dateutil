@@ -7,7 +7,7 @@ import unittest
 import sys
 
 from dateutil import tz
-from dateutil.tz import tzoffset
+from dateutil.tz import tzoffset, gettz
 from dateutil.parser import parse, parserinfo
 from dateutil.parser import ParserError
 from dateutil.parser import UnknownTimezoneWarning
@@ -775,8 +775,8 @@ class TestParseUnimplementedCases(object):
         # The parser is choosing the wrong part for hour
         # causing datetime to raise an exception.
         dtstr = '1237 PM BRST Mon Oct 30 2017'
-        res = parse(dtstr, tzinfo=self.tzinfos)
-        assert res == datetime(2017, 10, 30, 12, 37, tzinfo=self.tzinfos)
+        res = parse(dtstr, tzinfos={"BRST": gettz("America/Sao_Paolo")})
+        assert res == datetime(2017, 10, 30, 12, 37, tzinfo=gettz("America/Sao_Paolo"))
 
     @pytest.mark.xfail
     def test_YmdH_M_S(self):
