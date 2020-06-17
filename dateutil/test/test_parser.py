@@ -800,12 +800,13 @@ class TestParseUnimplementedCases(object):
         assert res.year == 2001, res
 
     @pytest.mark.xfail
-    def test_ad_nospace(self):
+    @pytest.mark.parametrize(
+        "dstr", [" 6AD May 19", " 06AD May 19", " 006AD May 19", " 0006AD May 19"]
+    )
+    def test_ad_nospace(self, dstr):
         expected = datetime(6, 5, 19)
-        for dstr in [' 6AD May 19', ' 06AD May 19',
-                     ' 006AD May 19', ' 0006AD May 19']:
-            res = parse(dstr)
-            assert res == expected, (dstr, res)
+        res = parse(dstr)
+        assert res == expected, (dstr, res)
 
     @pytest.mark.xfail
     def test_four_letter_day(self):
