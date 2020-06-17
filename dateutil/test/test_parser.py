@@ -166,6 +166,15 @@ def test_parser_default(parsable_text, expected_datetime, assertion_message):
     assert parse(parsable_text, default=datetime(2003, 9, 25)) == expected_datetime, assertion_message
 
 
+@pytest.mark.parametrize("parsable_text", ["2000-01-01T16:04:10", "20000101T160410"])
+def test_parser_default_with_milliseconds(parsable_text):
+    # https://github.com/dateutil/dateutil/issues/1032
+    # If microseconds were not part of the date string but seconds were
+    # parser would set the microseconds to zero instead of the default.
+    expected_datetime = datetime(2000, 1, 1, 16, 4, 10, 999999)
+    assert parse(parsable_text, default=expected_datetime) == expected_datetime
+
+
 @pytest.mark.parametrize('sep', ['-', '.', '/', ' '])
 def test_parse_dayfirst(sep):
     expected = datetime(2003, 9, 10)
