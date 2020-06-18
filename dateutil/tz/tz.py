@@ -385,7 +385,7 @@ class _tzfile(object):
 
 class tzfile(_tzinfo):
     """
-    This is a ``tzinfo`` subclass thant allows one to use the ``tzfile(5)``
+    This is a ``tzinfo`` subclass that allows one to use the ``tzfile(5)``
     format timezone files to extract current and historical zone information.
 
     :param fileobj:
@@ -1596,7 +1596,7 @@ def __get_gettz():
                     name = os.environ["TZ"]
                 except KeyError:
                     pass
-            if name is None or name == ":":
+            if name is None or name in ("", ":"):
                 for filepath in TZFILES:
                     if not os.path.isabs(filepath):
                         filename = filepath
@@ -1615,8 +1615,15 @@ def __get_gettz():
                 else:
                     tz = tzlocal()
             else:
-                if name.startswith(":"):
-                    name = name[1:]
+                try:
+                    if name.startswith(":"):
+                        name = name[1:]
+                except TypeError as e:
+                    if isinstance(name, bytes):
+                        new_msg = "gettz argument should be str, not bytes"
+                        six.raise_from(TypeError(new_msg), e)
+                    else:
+                        raise
                 if os.path.isabs(name):
                     if os.path.isfile(name):
                         tz = tzfile(name)
@@ -1823,7 +1830,7 @@ else:
 
 try:
     # Python 3.7 feature
-    from contextmanager import nullcontext as _nullcontext
+    from contextlib import nullcontext as _nullcontext
 except ImportError:
     class _nullcontext(object):
         """

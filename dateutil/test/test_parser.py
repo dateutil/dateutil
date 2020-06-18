@@ -14,7 +14,7 @@ from dateutil.parser import UnknownTimezoneWarning
 
 from ._common import TZEnvContext
 
-from six import assertRaisesRegex, PY3
+from six import assertRaisesRegex, PY2
 from io import StringIO
 
 import pytest
@@ -462,7 +462,7 @@ class ParserTest(unittest.TestCase):
                                   tzinfo=self.brsttz))
 
     def testDateCommandFormatWithLong(self):
-        if not PY3:
+        if PY2:
             self.assertEqual(parse("Thu Sep 25 10:36:28 BRST 2003",
                                    tzinfos={"BRST": long(-10800)}),
                              datetime(2003, 9, 25, 10, 36, 28,
@@ -743,6 +743,10 @@ class TestOutOfBounds(object):
         with pytest.raises(ParserError):
             parse("Feb 30, 2007")
 
+    def test_illegal_month_error(self):
+        with pytest.raises(ParserError):
+            parse("0-100")
+
     def test_day_sanity(self, fuzzy):
         dstr = "2014-15-25"
         with pytest.raises(ParserError):
@@ -837,7 +841,7 @@ class TestParseUnimplementedCases(object):
     def test_extraneous_year_tokens(self):
         # This was found in the wild at insidertrading.org
         # Unlike in the case above, identifying the first "2012" as the year
-        # would not be a problem, but infering that the latter 2012 is hhmm
+        # would not be a problem, but inferring that the latter 2012 is hhmm
         # is a problem.
         dstr = "2012 MARTIN CHILDREN'S IRREVOCABLE TRUST u/a/d NOVEMBER 7, 2012"
         expected = datetime(2012, 11, 7)
@@ -939,3 +943,12 @@ def test_decimal_error(value):
     # when constructed with an invalid value
     with pytest.raises(ParserError):
         parse(value)
+
+def test_parsererror_repr():
+    # GH 991 — the __repr__ was not properly indented and so was never defined.
+    # This tests the current behavior of the ParserError __repr__, but the
+    # precise format is not guaranteed to be stable and may change even in
+    # minor versions. This test exists to avoid regressions.
+    s = repr(ParserError("Problem with string: %s", "2019-01-01"))
+
+    assert s == "ParserError('Problem with string: %s', '2019-01-01')"

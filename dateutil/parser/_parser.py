@@ -20,11 +20,11 @@ value falls back to the end of the month.
 Additional resources about date/time string formats can be found below:
 
 - `A summary of the international standard date and time notation
-  <http://www.cl.cam.ac.uk/~mgk25/iso-time.html>`_
-- `W3C Date and Time Formats <http://www.w3.org/TR/NOTE-datetime>`_
+  <https://www.cl.cam.ac.uk/~mgk25/iso-time.html>`_
+- `W3C Date and Time Formats <https://www.w3.org/TR/NOTE-datetime>`_
 - `Time Formats (Planetary Rings Node) <https://pds-rings.seti.org:443/tools/time_formats.html>`_
 - `CPAN ParseDate module
-  <http://search.cpan.org/~muir/Time-modules-2013.0912/lib/Time/ParseDate.pm>`_
+  <https://metacpan.org/pod/release/MUIR/Time-modules-2013.0912/lib/Time/ParseDate.pm>`_
 - `Java SimpleDateFormat Class
   <https://docs.oracle.com/javase/6/docs/api/java/text/SimpleDateFormat.html>`_
 """
@@ -423,7 +423,7 @@ class _ymd(list):
         elif not self.has_month:
             return 1 <= value <= 31
         elif not self.has_year:
-            # Be permissive, assume leapyear
+            # Be permissive, assume leap year
             month = self[self.mstridx]
             return 1 <= value <= monthrange(2000, month)[1]
         else:
@@ -539,7 +539,7 @@ class _ymd(list):
                     year, month, day = self
                 else:
                     # 01-Jan-01
-                    # Give precendence to day-first, since
+                    # Give precedence to day-first, since
                     # two-digit years is usually hand-written.
                     day, month, year = self
 
@@ -654,7 +654,7 @@ class parser(object):
         try:
             ret = self._build_naive(res, default)
         except ValueError as e:
-            six.raise_from(ParserError(e.args[0] + ": %s", timestr), e)
+            six.raise_from(ParserError(str(e) + ": %s", timestr), e)
 
         if not ignoretz:
             ret = self._build_tzaware(ret, res, tzinfos)
@@ -1025,7 +1025,7 @@ class parser(object):
             hms_idx = idx + 2
 
         elif idx > 0 and info.hms(tokens[idx-1]) is not None:
-            # There is a "h", "m", or "s" preceeding this token.  Since neither
+            # There is a "h", "m", or "s" preceding this token.  Since neither
             # of the previous cases was hit, there is no label following this
             # token, so we use the previous label.
             # e.g. the "04" in "12h04"
@@ -1105,7 +1105,7 @@ class parser(object):
     def _parse_min_sec(self, value):
         # TODO: Every usage of this function sets res.second to the return
         # value. Are there any cases where second will be returned as None and
-        # we *dont* want to set res.second = None?
+        # we *don't* want to set res.second = None?
         minute = int(value)
         second = None
 
@@ -1359,10 +1359,10 @@ def parse(timestr, parserinfo=None, **kwargs):
         first element being a :class:`datetime.datetime` object, the second
         a tuple containing the fuzzy tokens.
 
-    :raises ValueError:
-        Raised for invalid or unknown string format, if the provided
-        :class:`tzinfo` is not in a valid format, or if an invalid date
-        would be created.
+    :raises ParserError:
+        Raised for invalid or unknown string formats, if the provided
+        :class:`tzinfo` is not in a valid format, or if an invalid date would
+        be created.
 
     :raises OverflowError:
         Raised if the parsed date exceeds the largest valid C integer on
@@ -1593,17 +1593,27 @@ def _parsetz(tzstr):
 
 
 class ParserError(ValueError):
-    """Error class for representing failure to parse a datetime string."""
+    """Exception subclass used for any failure to parse a datetime string.
+
+    This is a subclass of :py:exc:`ValueError`, and should be raised any time
+    earlier versions of ``dateutil`` would have raised ``ValueError``.
+
+    .. versionadded:: 2.8.1
+    """
     def __str__(self):
         try:
             return self.args[0] % self.args[1:]
         except (TypeError, IndexError):
             return super(ParserError, self).__str__()
 
-        def __repr__(self):
-            return "%s(%s)" % (self.__class__.__name__, str(self))
+    def __repr__(self):
+        args = ", ".join("'%s'" % arg for arg in self.args)
+        return "%s(%s)" % (self.__class__.__name__, args)
 
 
 class UnknownTimezoneWarning(RuntimeWarning):
-    """Raised when the parser finds a timezone it cannot parse into a tzinfo"""
+    """Raised when the parser finds a timezone it cannot parse into a tzinfo.
+
+    .. versionadded:: 2.7.0
+    """
 # vim:ts=4:sw=4:et

@@ -19,6 +19,7 @@ switch, and thus all their contributions are dual-licensed.
 - Alex Verdyan <verdyan@MASKED>
 - Alex Willmer <alex@moreati.org.uk> (gh: @moreati) **R**
 - Alexander Brugh <alexander.brugh@MASKED> (gh: @abrugh)
+- Alexander Shadchin <alexandr.shadchin@gmail.com> (gh: @shadchin) **D**
 - Alistair McMaster <alistair@MASKED> (gh: @alimcmaster1 ) **D**
 - Allison Quinlan <aquinlan82@gmail.com> (gh: @aquinlan) **D**
 - Andrew Bennett (gh: @andrewcbennett) **D**
@@ -37,6 +38,7 @@ switch, and thus all their contributions are dual-licensed.
 - Claudio Canepa <ccanepacc@MASKED>
 - Corey Girard <corey.r.girard@gmail.com> (gh: @coreygirard) **D**
 - Cosimo Lupo <cosimo@anthrotype.com> (gh: @anthrotype) **D**
+- Daniel Lemm (gh: @ffe4) **D**
 - Daniel Lepage <dplepage@MASKED>
 - David Lehrian <david@MASKED>
 - Dean Allsopp (gh: @daplantagenet) **D**
@@ -51,6 +53,7 @@ switch, and thus all their contributions are dual-licensed.
 - Grant Garrett-Grossman <grantlycee@gmail.com> (gh: @FakeNameSE) **D**
 - Gustavo Niemeyer <gustavo@niemeyer.net> (gh: @niemeyer)
 - Holger Joukl <holger.joukl@MASKED> (gh: @hjoukl)
+- Hugo van Kemenade (gh: @hugovk) **D**
 - Igor <mrigor83@MASKED>
 - Ionuț Ciocîrlan <jdxlark@MASKED>
 - Jacqueline Chen <jacqueline415@outlook.com> (gh: @jachen20) **D**
@@ -68,6 +71,7 @@ switch, and thus all their contributions are dual-licensed.
 - Lauren Oldja <oldja@MASKED> (gh: @loldja) **D**
 - Luca Ferocino <luca.ferox@MASKED> (gh: @lucaferocino) **D**
 - Mario Corchero <mcorcherojim@MASKED> (gh: @mariocj89) **R**
+- Mark Bailey <msb@MASKED> **D**
 - Mateusz Dziedzic (gh: @m-dz) **D**
 - Matt Cooper <vtbassmatt@MASKED> (gh: @vtbassmatt) **D**
 - Matthew Schinckel <matt@MASKED>
@@ -101,6 +105,7 @@ switch, and thus all their contributions are dual-licensed.
 - Thomas A Caswell <tcaswell@MASKED> (gh: @tacaswell) **R**
 - Thomas Achtemichuk <tom@MASKED>
 - Thomas Kluyver <takowl@MASKED> (gh: @takluyver)
+- Tim Gates <tim.gates@iress.com> (gh: timgates42)
 - Tomasz Kluczkowski (gh: @Tomasz-Kluczkowski) **D**
 - Tomi Pieviläinen <tomi.pievilainen@iki.fi>
 - Unrud <Unrud@MASKED> (gh: @unrud)
@@ -114,9 +119,9 @@ switch, and thus all their contributions are dual-licensed.
 - bjv <brandon.vanvaerenbergh@MASKED> (@bjamesvERT)
 - gl <gl@MASKED>
 - gfyoung <gfyoung17@gmail.com> **D**
-- labrys <labrys@MASKED> (gh: @labrys) **R**
+- Labrys <labrys.git@gmail.com> (gh: @labrys) **R**
 - ms-boom <ms-boom@MASKED>
 - ryanss <ryanssdev@MASKED> (gh: @ryanss) **R**
 - Watchful1
 
-Unless someone has deliberately given permission to publish their e-mail, I have masked the domain names. If you are not on this list and believe you should be, or you *are* on this list and your information is inaccurate, please e-mail the current maintainer or the mailing list (dateutil@python.org) with your name, e-mail (if desired) and github (if desired / applicable), as you would like them displayed. Additionally, please indicate if you are willing to dual license your old contributions under Apache 2.0.
+Unless someone has deliberately given permission to publish their e-mail, I have masked the domain names. If you are not on this list and believe you should be, or you *are* on this list and your information is inaccurate, please e-mail the current maintainer or the mailing list (dateutil@python.org) with your name, e-mail (if desired) and GitHub (if desired / applicable), as you would like them displayed. Additionally, please indicate if you are willing to dual license your old contributions under Apache 2.0.

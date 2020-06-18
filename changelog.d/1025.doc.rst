@@ -1,0 +1,1 @@
+Fixed methods in the ``rrule`` module not being displayed in the docs. (gh pr #1025)

@@ -27,8 +27,8 @@ dateutil - powerful extensions to datetime
     :target: https://dev.azure.com/pythondateutilazure/dateutil/_build/latest?definitionId=1&branchName=master
     :alt: azure pipelines build status
 
-.. |coverage| image:: https://codecov.io/github/dateutil/dateutil/coverage.svg?branch=master
-    :target: https://codecov.io/github/dateutil/dateutil?branch=master
+.. |coverage| image:: https://codecov.io/gh/dateutil/dateutil/branch/master/graphs/badge.svg?branch=master
+    :target: https://codecov.io/gh/dateutil/dateutil?branch=master
     :alt: Code coverage
 
 .. |gitter| image:: https://badges.gitter.im/dateutil/dateutil.svg
@@ -51,7 +51,7 @@ Installation
 `dateutil` can be installed from PyPI using `pip` (note that the package name is
 different from the importable name)::
 
-	pip install python-dateutil
+    pip install python-dateutil
 
 Download
 ========
@@ -63,14 +63,14 @@ https://dateutil.readthedocs.io/en/stable/
 
 Code
 ====
-The code and issue tracker are hosted on Github:
+The code and issue tracker are hosted on GitHub:
 https://github.com/dateutil/dateutil/
 
 Features
 ========
 
 * Computing of relative deltas (next month, next year,
-  next monday, last week of month, etc);
+  next Monday, last week of month, etc);
 * Computing of relative deltas between two given
   date and/or datetime objects;
 * Computing of dates based on very flexible recurrence rules,
@@ -146,14 +146,14 @@ previous release. A table of release signing keys can be found below:
 ===========  ============================
 Releases     Signing key fingerprint
 ===========  ============================
-2.4.1-       `6B49 ACBA DCF6 BD1C A206 67AB CD54 FCE3 D964 BEFB`_ (|pgp_mirror|_)
+2.4.1-       `6B49 ACBA DCF6 BD1C A206 67AB CD54 FCE3 D964 BEFB`_ 
 ===========  ============================
 
 
 Contact
 =======
 Our mailing list is available at `dateutil@python.org <https://mail.python.org/mailman/listinfo/dateutil>`_. As it is hosted by the PSF, it is subject to the `PSF code of
-conduct <https://www.python.org/psf/codeofconduct/>`_.
+conduct <https://www.python.org/psf/conduct/>`_.
 
 License
 =======
@@ -163,6 +163,3 @@ All contributions after December 1, 2017 released under dual license - either `A
 
 .. _6B49 ACBA DCF6 BD1C A206 67AB CD54 FCE3 D964 BEFB:
    https://pgp.mit.edu/pks/lookup?op=vindex&search=0xCD54FCE3D964BEFB
-
-.. |pgp_mirror| replace:: mirror
-.. _pgp_mirror: https://sks-keyservers.net/pks/lookup?op=vindex&search=0xCD54FCE3D964BEFB

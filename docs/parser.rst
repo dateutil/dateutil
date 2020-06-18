@@ -1,12 +1,29 @@
 ======
 parser
 ======
+
 .. automodule:: dateutil.parser
 
-   .. automethod:: dateutil.parser.parse
+Functions
+---------
 
-   .. autoclass:: dateutil.parser.parserinfo
-      :members:
-      :undoc-members:
+.. automethod:: dateutil.parser.parse
 
-   .. automethod:: dateutil.parser.isoparse
+.. automethod:: dateutil.parser.isoparse
+
+
+Classes
+-------
+
+.. autoclass:: dateutil.parser.parserinfo
+  :members:
+  :undoc-members:
+
+
+Warnings and Exceptions
+-----------------------
+
+.. autoclass:: dateutil.parser.ParserError
+
+.. autoclass:: dateutil.parser.UnknownTimezoneWarning
+

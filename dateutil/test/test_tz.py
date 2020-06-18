@@ -2,7 +2,6 @@
 from __future__ import unicode_literals
 from ._common import PicklableMixin
 from ._common import TZEnvContext, TZWinContext
-from ._common import WarningTestMixin
 from ._common import ComparesEqual
 
 from datetime import datetime, timedelta
@@ -852,8 +851,6 @@ def test_tzoffset_is_not():
 
 @pytest.mark.tzlocal
 @unittest.skipIf(IS_WIN, "requires Unix")
-@unittest.skipUnless(TZEnvContext.tz_change_allowed(),
-                     TZEnvContext.tz_change_disallowed_message())
 class TzLocalNixTest(unittest.TestCase, TzFoldMixin):
     # This is a set of tests for `tzlocal()` on *nix systems
 
@@ -963,8 +960,6 @@ def mark_tzlocal_nix(f):
     marks = [
         pytest.mark.tzlocal,
         pytest.mark.skipif(IS_WIN, reason='requires Unix'),
-        pytest.mark.skipif(not TZEnvContext.tz_change_allowed,
-                           reason=TZEnvContext.tz_change_disallowed_message())
     ]
 
     for mark in reversed(marks):
@@ -998,7 +993,7 @@ def test_tzlocal_local_time_trim_colon():
 @mark_tzlocal_nix
 @pytest.mark.parametrize('tzvar, tzoff', [
     ('EST5', tz.tzoffset('EST', -18000)),
-    ('GMT', tz.tzoffset('GMT', 0)),
+    ('GMT0', tz.tzoffset('GMT', 0)),
     ('YAKT-9', tz.tzoffset('YAKT', timedelta(hours=9))),
     ('JST-9', tz.tzoffset('JST', timedelta(hours=9))),
 ])
@@ -1085,6 +1080,15 @@ class GettzTest(unittest.TestCase, TzFoldMixin):
 
 
 @pytest.mark.gettz
+def test_gettz_same_result_for_none_and_empty_string():
+    local_from_none = tz.gettz()
+    local_from_empty_string = tz.gettz("")
+    assert local_from_none is not None
+    assert local_from_empty_string is not None
+    assert local_from_none == local_from_empty_string
+
+
+@pytest.mark.gettz
 @pytest.mark.parametrize('badzone', [
     'Fake.Region/Abcdefghijklmnop',  # Violates several tz project name rules
 ])
@@ -1100,6 +1104,36 @@ def test_gettz_badzone_unicode():
     # When fixed, combine this with test_gettz_badzone
     tzi = tz.gettz('🐼')
     assert tzi is None
+
+
+@pytest.mark.gettz
+@pytest.mark.parametrize(
+    "badzone,exc_reason",
+    [
+        pytest.param(
+            b"America/New_York",
+            ".*should be str, not bytes.*",
+            id="bytes on Python 3",
+            marks=[
+                pytest.mark.skipif(
+                    PY2, reason="bytes arguments accepted in Python 2"
+                )
+            ],
+        ),
+        pytest.param(
+            object(),
+            None,
+            id="no startswith()",
+            marks=[
+                pytest.mark.xfail(reason="AttributeError instead of TypeError",
+                                  raises=AttributeError),
+            ],
+        ),
+    ],
+)
+def test_gettz_zone_wrong_type(badzone, exc_reason):
+    with pytest.raises(TypeError, match=exc_reason):
+        tz.gettz(badzone)
 
 
 @pytest.mark.gettz
@@ -1159,7 +1193,7 @@ def test_gettz_weakref():
     assert NYC_ref() is None    # Should have been pushed out
     assert tz.gettz('America/New_York') is not NYC_ref()
 
-class ZoneInfoGettzTest(GettzTest, WarningTestMixin):
+class ZoneInfoGettzTest(GettzTest):
     def gettz(self, name):
         zoneinfo_file = zoneinfo.get_zonefile_instance()
         return zoneinfo_file.get(name)
@@ -1219,11 +1253,11 @@ class ZoneInfoGettzTest(GettzTest, WarningTestMixin):
         self.assertIs(zif_1, zif_2)
 
     def testZoneInfoDeprecated(self):
-        with self.assertWarns(DeprecationWarning):
+        with pytest.warns(DeprecationWarning):
             zoneinfo.gettz('US/Eastern')
 
     def testZoneInfoMetadataDeprecated(self):
-        with self.assertWarns(DeprecationWarning):
+        with pytest.warns(DeprecationWarning):
             zoneinfo.gettz_db_metadata()
 
 
@@ -2041,8 +2075,6 @@ class TZTest(unittest.TestCase):
                           datetime(2007, 8, 6, 2, 10, tzinfo=tz.tzstr("UTC-2")))
 
     @unittest.skipIf(IS_WIN, "requires Unix")
-    @unittest.skipUnless(TZEnvContext.tz_change_allowed(),
-                         TZEnvContext.tz_change_disallowed_message())
     def testTZSetDoesntCorrupt(self):
         # if we start in non-UTC then tzset UTC make sure parse doesn't get
         # confused
@@ -2225,8 +2257,6 @@ class TzWinTest(unittest.TestCase, TzWinFoldMixin):
 
 
 @unittest.skipUnless(IS_WIN, "Requires Windows")
-@unittest.skipUnless(TZWinContext.tz_change_allowed(),
-                     TZWinContext.tz_change_disallowed_message())
 class TzWinLocalTest(unittest.TestCase, TzWinFoldMixin):
 
     def setUp(self):
@@ -2239,7 +2269,7 @@ class TzWinLocalTest(unittest.TestCase, TzWinFoldMixin):
     def testLocal(self):
         # Not sure how to pin a local time zone, so for now we're just going
         # to run this and make sure it doesn't raise an error
-        # See Github Issue #135: https://github.com/dateutil/dateutil/issues/135
+        # See GitHub Issue #135: https://github.com/dateutil/dateutil/issues/135
         datetime.now(tzwin.tzwinlocal())
 
     def testTzwinLocalUTCOffset(self):

@@ -1,0 +1,2 @@
+Removed broken link to pgp mirror that made the travis build fail.
+Reported and fixed by @ffe4 (gh pr #1017)

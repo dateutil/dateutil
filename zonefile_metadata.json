@@ -4,9 +4,9 @@
         "https://dateutil.github.io/tzdata/tzdata/",
         "ftp://ftp.iana.org/tz/releases/"
     ],
-    "tzdata_file": "tzdata2019a.tar.gz",
-    "tzdata_file_sha512": "d8eb5b2b68abee08bd2b0d2134bce85b5c0aee85168e9697a607604ed5be7d1539ac60fda9b37e0c9c793ef6251978bc250563a0af59497fde775499964bb5aa",
-    "tzversion": "2019a",
+    "tzdata_file": "tzdata2020a.tar.gz",
+    "tzdata_file_sha512": "2a2fc2e3ad8a6e4c574242296c847ad582c2c1d86add9c556e65c812d19b9528522e3c4dddb5239017091825d2acc5a2ccaf21dc41b900b6c300ef4264cc5a9d",
+    "tzversion": "2020a",
     "zonegroups": [
         "africa",
         "antarctica",

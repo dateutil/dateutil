@@ -1,0 +1,8 @@
+virtualenv<16.0
+setuptools<40.0
+tox<3.8.0
+pytest<3.3
+freezegun<0.3.11
+hypothesis >= 3.30
+coverage
+pytest-cov >= 2.0.0
