@@ -1,0 +1,2 @@
+Fixed a bug in the rrule to return proper error message for invalid rrule. Fixed by Krithika Balu.
+(gh issue #960, pr #1069).
