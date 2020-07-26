@@ -4912,3 +4912,8 @@ class WeekdayTest(unittest.TestCase):
 
         for repstr, wday in zip(with_n_reprs, with_n_wdays):
             self.assertEqual(repr(wday), repstr)
+
+    def testUnsupportedRuleErrorWhenNoMatchFound(self):
+        rule = "FREQ=YEARLY;WKST=MO;UNTIL=2019-03-29T00:59:59+01:00"
+        with self.assertRaises(ValueError, msg="unsupported rule: " + rule):
+            rrulestr(rule, dtstart=datetime(1997, 9, 2, 9, 0))

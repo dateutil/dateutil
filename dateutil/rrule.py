@@ -1697,7 +1697,7 @@ class _rrulestr(object):
                                          value)
                     dtstart = dtvals[0]
                 else:
-                    raise ValueError("unsupported property: "+name)
+                    raise ValueError("unsupported rule: "+s)
             if (forceset or len(rrulevals) > 1 or rdatevals
                     or exrulevals or exdatevals):
                 if not parser and (rdatevals or exdatevals):
