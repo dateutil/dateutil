@@ -1697,7 +1697,9 @@ class _rrulestr(object):
                                          value)
                     dtstart = dtvals[0]
                 else:
-                    raise ValueError("unsupported rule: "+s)
+                    raise ValueError("Unsupported rule: " + s + ". Check if property is supported and time "
+                                                                "format does not have delimiters "
+                                                                "according to RFC5545")
             if (forceset or len(rrulevals) > 1 or rdatevals
                     or exrulevals or exdatevals):
                 if not parser and (rdatevals or exdatevals):
