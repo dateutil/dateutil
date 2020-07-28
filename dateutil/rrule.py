@@ -1664,16 +1664,15 @@ class _rrulestr(object):
                     name = "RRULE"
                     value = line
                 else:
+                    if line.count(':') > 1:
+                        raise ValueError("Malformed rule: " + line)
                     name, value = line.split(':', 1)
                 parms = name.split(';')
                 if not parms:
                     raise ValueError("empty property name")
                 name = parms[0]
                 parms = parms[1:]
-                valid_name_pattern = re.compile("^[A-Z]+$")
-                if not valid_name_pattern.match(name):
-                    raise ValueError("Malformed rule: " + line)
-                elif name == "RRULE":
+                if name == "RRULE":
                     for parm in parms:
                         raise ValueError("unsupported RRULE parm: "+parm)
                     rrulevals.append(value)
