@@ -4913,18 +4913,16 @@ class WeekdayTest(unittest.TestCase):
         for repstr, wday in zip(with_n_reprs, with_n_wdays):
             self.assertEqual(repr(wday), repstr)
 
-    def testUnsupportedRuleErrorWhenTimeFormatIsNotCorrect(self):
+    def testMalformedRuleErrorWhenTimeFormatIsNotCorrect(self):
         rule = "FREQ=YEARLY;WKST=MO;UNTIL=2019-03-29T00:59:59+01:00"
         with pytest.raises(ValueError) as exception:
             rrulestr(rule, dtstart=datetime(1997, 9, 2, 9, 0))
-        self.assertEqual("Unsupported rule: " + rule + ". Check if property is supported and time format does not have "
-                                                       "delimiters according to RFC5545",
+        self.assertEqual("Malformed rule: " + rule,
                          str(exception.value))
 
-    def testUnsupportedRuleErrorWhenRuleNameIsNotCorrect(self):
+    def testUnsupportedPropertyErrorWhenRuleNameIsNotCorrect(self):
         rule = "XYZ:19970902T090000"
         with pytest.raises(ValueError) as exception:
             rrulestr(rule, dtstart=datetime(1997, 9, 2, 9, 0))
-        self.assertEqual("Unsupported rule: " + rule + ". Check if property is supported and time format does not have "
-                                                       "delimiters according to RFC5545",
+        self.assertEqual("unsupported property: " + "XYZ",
                          str(exception.value))

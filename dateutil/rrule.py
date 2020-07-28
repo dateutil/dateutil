@@ -1670,7 +1670,10 @@ class _rrulestr(object):
                     raise ValueError("empty property name")
                 name = parms[0]
                 parms = parms[1:]
-                if name == "RRULE":
+                valid_name_pattern = re.compile("^[A-Z]+$")
+                if not valid_name_pattern.match(name):
+                    raise ValueError("Malformed rule: " + line)
+                elif name == "RRULE":
                     for parm in parms:
                         raise ValueError("unsupported RRULE parm: "+parm)
                     rrulevals.append(value)
@@ -1697,9 +1700,7 @@ class _rrulestr(object):
                                          value)
                     dtstart = dtvals[0]
                 else:
-                    raise ValueError("Unsupported rule: " + s + ". Check if property is supported and time "
-                                                                "format does not have delimiters "
-                                                                "according to RFC5545")
+                    raise ValueError("unsupported property: " + name)
             if (forceset or len(rrulevals) > 1 or rdatevals
                     or exrulevals or exdatevals):
                 if not parser and (rdatevals or exdatevals):
