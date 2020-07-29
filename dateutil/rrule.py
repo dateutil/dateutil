@@ -1664,8 +1664,6 @@ class _rrulestr(object):
                     name = "RRULE"
                     value = line
                 else:
-                    if line.count(':') > 1:
-                        raise ValueError("Malformed rule: " + line)
                     name, value = line.split(':', 1)
                 parms = name.split(';')
                 if not parms:
@@ -1699,7 +1697,9 @@ class _rrulestr(object):
                                          value)
                     dtstart = dtvals[0]
                 else:
-                    raise ValueError("unsupported property: " + name)
+                    self.__raise_error_if_unsupported_property(name)
+                    self.__raise_error_if_incorrect_timestamp(line)
+                    raise ValueError("Rule cannot be parsed correctly: " + line)
             if (forceset or len(rrulevals) > 1 or rdatevals
                     or exrulevals or exdatevals):
                 if not parser and (rdatevals or exdatevals):
@@ -1729,6 +1729,19 @@ class _rrulestr(object):
                                              cache=cache,
                                              ignoretz=ignoretz,
                                              tzinfos=tzinfos)
+
+    @staticmethod
+    def __raise_error_if_unsupported_property(name):
+        valid_pattern = re.compile("^([A-Z]|[a-z]|-)+$")
+        if valid_pattern.match(name):
+            raise ValueError("unsupported property: " + name)
+
+    @staticmethod
+    def __raise_error_if_incorrect_timestamp(line):
+        hour_min_sec_format = ".*([\\d]{2}:[\\d]{2}:[\\d]{2}).*"
+        time_pattern = re.compile(hour_min_sec_format)
+        if time_pattern.match(line):
+            raise ValueError("Incorrect timestamp format in rule: " + line + ". Timestamp should not have ':'")
 
     def __call__(self, s, **kwargs):
         return self._parse_rfc(s, **kwargs)
