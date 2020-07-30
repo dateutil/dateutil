@@ -66,6 +66,7 @@ switch, and thus all their contributions are dual-licensed.
 - Jonas Neubert <jonas@MASKED> (gh: @jonemo) **R**
 - Kevin Nguyen <kvn219@MASKED> **D**
 - Kirit Thadaka <kirit.thadaka@gmail.com> (gh: @kirit93) **D**
+- Krithika Balu (gh: @krithikabalu) **D**
 - Kubilay Kocak <koobs@MASKED>
 - Laszlo Kiss Kollar <kiss.kollar.laszlo@MASKED> (gh: @lkollar) **D**
 - Lauren Oldja <oldja@MASKED> (gh: @loldja) **D**
