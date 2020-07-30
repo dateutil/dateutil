@@ -4913,30 +4913,10 @@ class WeekdayTest(unittest.TestCase):
         for repstr, wday in zip(with_n_reprs, with_n_wdays):
             self.assertEqual(repr(wday), repstr)
 
-    def testIncorrectTimestampWhenTimeFormatIsNotCorrect(self):
-        rule = "FREQ=YEARLY;WKST=MO;UNTIL=2019-03-29T00:59:59+01:00"
-        with pytest.raises(ValueError) as exception:
-            rrulestr(rule, dtstart=datetime(1997, 9, 2, 9, 0))
-        self.assertEqual("Incorrect timestamp format in rule: " + rule + ". Timestamp should not have ':'",
-                         str(exception.value))
-
-    def testIncorrectTimestampWhenTimeFormatIsNotCorrectWithoutTimeZone(self):
-        rule = "FREQ=YEARLY;WKST=MO;UNTIL=2019-03-29T00:59:59"
-        with pytest.raises(ValueError) as exception:
-            rrulestr(rule, dtstart=datetime(1997, 9, 2, 9, 0))
-        self.assertEqual("Incorrect timestamp format in rule: " + rule + ". Timestamp should not have ':'",
-                         str(exception.value))
-
-    def testUnsupportedPropertyErrorWhenRuleNameIsNotCorrect(self):
+    def testRaisesCorrectErrorForUnsupportedProperty(self):
         rule = "X-ABC-MMSUBJ:19970902T090000"
-        with pytest.raises(ValueError) as exception:
-            rrulestr(rule, dtstart=datetime(1997, 9, 2, 9, 0))
-        self.assertEqual("unsupported property: " + "X-ABC-MMSUBJ",
-                         str(exception.value))
+        self.assertRaisesRegex(ValueError, "unsupported property", rrulestr, rule, dtstart=datetime(1997, 9, 2, 9, 0))
 
-    def testMalformedRuleErrorWhenOnlyOneColonPresentInRule(self):
-        rule = "FREQ=YEARLY;UNTIL=20190329T005959+01:00"
-        with pytest.raises(ValueError) as exception:
-            rrulestr(rule, dtstart=datetime(1997, 9, 2, 9, 0))
-        self.assertEqual("Rule cannot be parsed correctly: " + rule,
-                         str(exception.value))
+    def testRaisesCorrectErrorIfDatetimeContainsColons(self):
+        rule = "FREQ=YEARLY;WKST=MO;UNTIL=2019-03-29T00:59:59"
+        self.assertRaises(ValueError, rrulestr, rule, dtstart=datetime(1997, 9, 2, 9, 0))
