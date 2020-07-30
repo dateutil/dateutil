@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 from datetime import datetime, date
 import unittest
-from six import PY2
+from six import PY2, assertRaisesRegex
 
 from dateutil import tz
 from dateutil.rrule import (
@@ -4614,6 +4614,14 @@ class RRuleTest(unittest.TestCase):
         self.assertEqual(list(newrr),
                              [datetime(1997, 1, 6)])
 
+    def testRaisesCorrectErrorForUnsupportedProperty(self):
+        rule = "X-ABC-MMSUBJ:19970902T090000"
+        assertRaisesRegex(self, ValueError, "unsupported property", rrulestr, rule, dtstart=datetime(1997, 9, 2, 9, 0))
+
+    def testRaisesCorrectErrorIfDatetimeContainsColons(self):
+        rule = "FREQ=YEARLY;WKST=MO;UNTIL=2019-03-29T00:59:59"
+        self.assertRaises(ValueError, rrulestr, rule, dtstart=datetime(1997, 9, 2, 9, 0))
+
 
 @pytest.mark.rrule
 @freeze_time(datetime(2018, 3, 6, 5, 36, tzinfo=tz.UTC))
@@ -4912,11 +4920,3 @@ class WeekdayTest(unittest.TestCase):
 
         for repstr, wday in zip(with_n_reprs, with_n_wdays):
             self.assertEqual(repr(wday), repstr)
-
-    def testRaisesCorrectErrorForUnsupportedProperty(self):
-        rule = "X-ABC-MMSUBJ:19970902T090000"
-        self.assertRaisesRegex(ValueError, "unsupported property", rrulestr, rule, dtstart=datetime(1997, 9, 2, 9, 0))
-
-    def testRaisesCorrectErrorIfDatetimeContainsColons(self):
-        rule = "FREQ=YEARLY;WKST=MO;UNTIL=2019-03-29T00:59:59"
-        self.assertRaises(ValueError, rrulestr, rule, dtstart=datetime(1997, 9, 2, 9, 0))
