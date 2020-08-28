@@ -1,0 +1,1 @@
+Changed some relative links in the exercise documentation to refer to the document locations in the input tree, rather than the generated HTML files in the HTML output tree (which presumably will not exist in non-HTML output formats). GH PR #1078.
