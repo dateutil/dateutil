@@ -354,6 +354,9 @@ class isoparser(object):
                 if (has_sep and pos < len_str and
                         timestr[pos:pos + 1] == self._TIME_SEP):
                     pos += 1
+                elif pos > len_str:
+                    raise ValueError(
+                        "Must specify 2-digit hours, minutes and seconds")
 
             if comp == 3:
                 # Fraction of a second
