@@ -41,6 +41,14 @@ def _generate_tzoffsets(limited):
 
     return out
 
+
+def _xfail_short_time(args):
+    """Mark a test as xfailing due to GH-1074"""
+    return pytest.param(*args, marks=pytest.mark.xfail(
+        reason="GH-1074: isoparse accepts single-digit minutes and seconds at "
+               + "end of string"))
+
+
 FULL_TZOFFSETS = _generate_tzoffsets(False)
 FULL_TZOFFSETS_AWARE = [x for x in FULL_TZOFFSETS if x[1]]
 TZOFFSETS = _generate_tzoffsets(True)
@@ -252,6 +260,8 @@ def test_bytes(isostr, dt):
     ('20120411T03:30+1234567', ValueError),     # Time zone too long
     ('20120411T03:30-25:40', ValueError),       # Time zone invalid
     ('2012-1a', ValueError),                    # Invalid month
+    _xfail_short_time(('20120411T03:3', ValueError)),       # HH:M is invalid
+    _xfail_short_time(('20120411T03:30:1', ValueError)),    # HH:MM:S is invalid
     ('20120411T03:30+00:60', ValueError),       # Time zone invalid minutes
     ('20120411T03:30+00:61', ValueError),       # Time zone invalid minutes
     ('20120411T033030.123456012:00',            # No sign in time zone
@@ -486,7 +496,9 @@ def test_isotime_midnight(isostr):
     ('1430:15', ValueError),                    # Inconsistent separator use
     ('25', ValueError),                         # Invalid hours
     ('25:15', ValueError),                      # Invalid hours
+    _xfail_short_time(('12:3', ValueError)),    # Minutes too short
     ('14:60', ValueError),                      # Invalid minutes
+    _xfail_short_time(('14:59:4', ValueError)), # Seconds too short
     ('14:59:61', ValueError),                   # Invalid seconds
     ('14:30:15.34468305:00', ValueError),       # No sign in time zone
     ('14:30:15+', ValueError),                  # Time zone too short
