@@ -69,7 +69,7 @@ set -e
 mv $TARBALL_NAME $ORIG_DIR
 
 # Install everything else
-make TOPDIR=$TMP_DIR/tzdir install
+make ZFLAGS='-b fat' TOPDIR="$TMP_DIR/tzdir" install
 
 #
 # Make the zoneinfo tarball
