@@ -19,7 +19,7 @@ Martin Luther King Day
 
     `Martin Luther King, Jr Day <https://en.wikipedia.org/wiki/Martin_Luther_King_Jr._Day>`_ is a US holiday that occurs every year on the third Monday in January?
 
-    How would you generate a `recurrence rule <../rrule.html>`_ that generates Martin Luther King Day, starting from its first observance in 1986?
+    How would you generate a :doc:`recurrence rule <../rrule>` that generates Martin Luther King Day, starting from its first observance in 1986?
 
 
 **Test Script**
@@ -74,7 +74,7 @@ A solution to this problem is provided :doc:`here <solutions/mlk-day-rrule>`.
 Next Monday meeting
 -------------------
 
-    A team has a meeting at 10 AM every Monday and wants a function that tells them, given a ``datetime.datetime`` object, what is the date and time of the *next* Monday meeting? This is probably best accomplished using a `relativedelta <../relativedelta.html>`_.
+    A team has a meeting at 10 AM every Monday and wants a function that tells them, given a ``datetime.datetime`` object, what is the date and time of the *next* Monday meeting? This is probably best accomplished using a :doc:`relativedelta <../relativedelta>`.
 
 **Test Script**
 
@@ -125,7 +125,7 @@ To solve this exercise, copy-paste this script into a document, change anything 
 Parsing a local tzname
 ----------------------
 
-    Three-character time zone abbreviations are *not* unique in that they do not explicitly map to a time zone. A list of time zone abbreviations in use can be found `here <https://www.timeanddate.com/time/zones/>`_. This means that parsing a datetime string such as ``'2018-01-01 12:30:30 CST'`` is ambiguous without context. Using `dateutil.parser <../parser.html>`_ and `dateutil.tz <../tz.html>`_, it is possible to provide a context such that these local names are converted to proper time zones.
+    Three-character time zone abbreviations are *not* unique in that they do not explicitly map to a time zone. A list of time zone abbreviations in use can be found `here <https://www.timeanddate.com/time/zones/>`_. This means that parsing a datetime string such as ``'2018-01-01 12:30:30 CST'`` is ambiguous without context. Using :mod:`dateutil.parser` and :mod:`dateutil.tz`, it is possible to provide a context such that these local names are converted to proper time zones.
 
 Problem 1
 *********
