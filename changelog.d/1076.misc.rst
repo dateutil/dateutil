@@ -1,0 +1,1 @@
+Changed the tests against the upstream tz database to always generate fat binaries, since until GH-590 and GH-1059 are resolved, "slim" zic binaries will cause problems in many zones, causing the tests to fail. This also updates ``zoneinfo.rebuild`` to always generate fat binaries. GH PR #1076.
