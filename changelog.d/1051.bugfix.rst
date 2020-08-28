@@ -1,0 +1,2 @@
+Fixed issue where unpickling ``tzutc`` and ``tzoffset`` would bypass the singleton-generation logic. Unpickling a ``tzutc`` will now give the ``dateutil.tz.UTC`` singleton, and similarly unpickling at ``tzoffset`` will give you the same object that you would get by calling ``tzoffset(name, offset)``. Reported and fixed by @masipcat (gh issue #1051, gh pr #1053).
+
