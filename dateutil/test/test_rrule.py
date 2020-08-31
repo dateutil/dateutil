@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import re
 from datetime import datetime, date
 import unittest
 from six import PY2, assertRaisesRegex
@@ -4615,12 +4616,13 @@ class RRuleTest(unittest.TestCase):
                              [datetime(1997, 1, 6)])
 
     def testRaisesCorrectErrorForUnsupportedProperty(self):
-        rule = "X-ABC-MMSUBJ:19970902T090000"
-        assertRaisesRegex(self, ValueError, "unsupported property", rrulestr, rule, dtstart=datetime(1997, 9, 2, 9, 0))
+        with pytest.raises(ValueError, match=re.escape("X-ABC-MMSUBJ")):
+            rrulestr("X-ABC-MMSUBJ:19970902T090000")
 
     def testRaisesCorrectErrorIfDatetimeContainsColons(self):
         rule = "FREQ=YEARLY;WKST=MO;UNTIL=2019-03-29T00:59:59"
-        self.assertRaises(ValueError, rrulestr, rule, dtstart=datetime(1997, 9, 2, 9, 0))
+        with pytest.raises(ValueError, match=re.escape(rule)):
+            rrulestr(rule)
 
 
 @pytest.mark.rrule

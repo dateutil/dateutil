@@ -1699,7 +1699,13 @@ class _rrulestr(object):
                 else:
                     if re.match("^[A-Za-z0-9-]+$", name):
                         raise ValueError("unsupported property: " + name)
-                    raise ValueError("RRULE line contains invalid colon or property: " + line)
+                    raise ValueError(
+                        "RRULE contains invalid property or stray colon:\n"
+                        + line + "\n\n"
+                        + "This commonly occurs when specifying a datetime "
+                        + "using delimiters, e.g. 2025-06-07T12:34:56; RFC "
+                        + "5545 requires datetimes specified with no "
+                        + "delimiters, e.g. 20250607T123456")
             if (forceset or len(rrulevals) > 1 or rdatevals
                     or exrulevals or exdatevals):
                 if not parser and (rdatevals or exdatevals):
