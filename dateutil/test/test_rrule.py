@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 import re
 from datetime import datetime, date
 import unittest
-from six import PY2, assertRaisesRegex
+from six import PY2
 
 from dateutil import tz
 from dateutil.rrule import (
