@@ -79,6 +79,7 @@ switch, and thus all their contributions are dual-licensed.
 - Maxime Lorant <maxime.lorant@MASKED>
 - Michael Aquilina <michaelaquilina@MASKED> (gh: @MichaelAquilina)
 - Michael J. Schultz <mjschultz@MASKED>
+- Michael Käufl (gh: @michael-k)
 - Mike Gilbert <floppym@MASKED>
 - Nicholas Herrriot <Nicholas.Herriot@gmail.com> **D**
 - Nicolas Évrard (gh: @nicoe) **D**
