@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 #
 # dateutil documentation build configuration file, created by
 # sphinx-quickstart on Thu Nov 20 23:18:41 2014.
@@ -188,7 +187,7 @@ htmlhelp_basename = 'dateutildoc'
 
 # -- Options for autodoc -------------------------------------------------
 
-autodoc_mock_imports = ['ctypes.wintypes', 'six.moves.winreg']
+autodoc_mock_imports = ['ctypes.wintypes', 'winreg']
 
 # Need to mock this out specifically to avoid errors
 import ctypes

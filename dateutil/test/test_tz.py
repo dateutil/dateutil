@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
 from ._common import PicklableMixin
 from ._common import TZEnvContext, TZWinContext
 from ._common import ComparesEqual
@@ -7,7 +5,6 @@ from ._common import ComparesEqual
 from datetime import datetime, timedelta
 from datetime import time as dt_time
 from datetime import tzinfo
-from six import PY2
 from io import BytesIO, StringIO
 import unittest
 
@@ -168,7 +165,7 @@ def get_timezone_tuple(dt):
 
 ###
 # Mix-ins
-class context_passthrough(object):
+class context_passthrough:
     def __init__(*args, **kwargs):
         pass
 
@@ -179,7 +176,7 @@ class context_passthrough(object):
         pass
 
 
-class TzFoldMixin(object):
+class TzFoldMixin:
     """ Mix-in class for testing ambiguous times """
     def gettz(self, tzname):
         raise NotImplementedError
@@ -434,11 +431,11 @@ class TzFoldMixin(object):
             self.assertEqual(t0_syd0, t0_syd1)
 
 
-class TzWinFoldMixin(object):
+class TzWinFoldMixin:
     def get_args(self, tzname):
         return (tzname, )
 
-    class context(object):
+    class context:
         def __init__(*args, **kwargs):
             pass
 
@@ -1114,11 +1111,6 @@ def test_gettz_badzone_unicode():
             b"America/New_York",
             ".*should be str, not bytes.*",
             id="bytes on Python 3",
-            marks=[
-                pytest.mark.skipif(
-                    PY2, reason="bytes arguments accepted in Python 2"
-                )
-            ],
         ),
         pytest.param(
             object(),

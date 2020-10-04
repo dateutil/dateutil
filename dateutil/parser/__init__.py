@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from ._parser import parse, parser, parserinfo, ParserError
 from ._parser import DEFAULTPARSER, DEFAULTTZPARSER
 from ._parser import UnknownTimezoneWarning

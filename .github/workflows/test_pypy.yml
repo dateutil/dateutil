@@ -12,7 +12,7 @@ jobs:
   test:
     strategy:
       matrix:
-        python-version: [pypy2, pypy3]
+        python-version: [pypy3]
         os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     env:

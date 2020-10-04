@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
 import itertools
 from datetime import datetime, timedelta
 import unittest
@@ -14,7 +11,6 @@ from dateutil.parser import UnknownTimezoneWarning
 
 from ._common import TZEnvContext
 
-from six import assertRaisesRegex, PY2
 from io import StringIO
 
 import pytest
@@ -222,7 +218,7 @@ def test_parse_with_tzoffset(dstr, expected):
     assert result == expected
 
 
-class TestFormat(object):
+class TestFormat:
 
     def test_ybd(self):
         # If we have a 4-digit year, a non-numeric month (abbreviated or not),
@@ -290,7 +286,7 @@ class TestFormat(object):
         assert res == expected
 
 
-class TestInputTypes(object):
+class TestInputTypes:
     def test_empty_string_invalid(self):
         with pytest.raises(ParserError):
             parse('')
@@ -307,7 +303,7 @@ class TestInputTypes(object):
         # We want to support arbitrary classes that implement the stream
         # interface.
 
-        class StringPassThrough(object):
+        class StringPassThrough:
             def __init__(self, stream):
                 self.stream = stream
 
@@ -348,7 +344,7 @@ class TestInputTypes(object):
         assert res == expected
 
 
-class TestTzinfoInputTypes(object):
+class TestTzinfoInputTypes:
     def assert_equal_same_tz(self, dt1, dt2):
         assert dt1 == dt2
         assert dt1.tzinfo is dt2.tzinfo
@@ -442,9 +438,6 @@ class ParserTest(unittest.TestCase):
         assert res  == expected
 
     def testParseWithNulls(self):
-        # This relies on the from __future__ import unicode_literals, because
-        # explicitly specifying a unicode literal is a syntax error in Py 3.2
-        # May want to switch to u'...' if we ever drop Python 3.2 support.
         pstring = '\x00\x00August 29, 1924'
 
         assert parse(pstring) == datetime(1924, 8, 29)
@@ -460,13 +453,6 @@ class ParserTest(unittest.TestCase):
                                tzinfos=self.tzinfos),
                          datetime(2003, 9, 25, 10, 36, 28,
                                   tzinfo=self.brsttz))
-
-    def testDateCommandFormatWithLong(self):
-        if PY2:
-            self.assertEqual(parse("Thu Sep 25 10:36:28 BRST 2003",
-                                   tzinfos={"BRST": long(-10800)}),
-                             datetime(2003, 9, 25, 10, 36, 28,
-                                      tzinfo=self.brsttz))
 
     def testISOFormatStrip2(self):
         self.assertEqual(parse("2003-09-25T10:49:41+03:00"),
@@ -569,12 +555,12 @@ class ParserTest(unittest.TestCase):
             parse('shouldfail')
 
     def testCorrectErrorOnFuzzyWithTokens(self):
-        assertRaisesRegex(self, ParserError, 'Unknown string format',
-                          parse, '04/04/32/423', fuzzy_with_tokens=True)
-        assertRaisesRegex(self, ParserError, 'Unknown string format',
-                          parse, '04/04/04 +32423', fuzzy_with_tokens=True)
-        assertRaisesRegex(self, ParserError, 'Unknown string format',
-                          parse, '04/04/0d4', fuzzy_with_tokens=True)
+        self.assertRaisesRegex(ParserError, 'Unknown string format',
+                               parse, '04/04/32/423', fuzzy_with_tokens=True)
+        self.assertRaisesRegex(ParserError, 'Unknown string format',
+                               parse, '04/04/04 +32423', fuzzy_with_tokens=True)
+        self.assertRaisesRegex(ParserError, 'Unknown string format',
+                               parse, '04/04/0d4', fuzzy_with_tokens=True)
 
     def testIncreasingCTime(self):
         # This test will check 200 different years, every month, every day,
@@ -733,7 +719,7 @@ class ParserTest(unittest.TestCase):
             pytest.fail("Failed to raise ParserError")
 
 
-class TestOutOfBounds(object):
+class TestOutOfBounds:
 
     def test_no_year_zero(self):
         with pytest.raises(ParserError):
@@ -768,7 +754,7 @@ class TestOutOfBounds(object):
             parse(dstr, fuzzy=fuzzy)
 
 
-class TestParseUnimplementedCases(object):
+class TestParseUnimplementedCases:
     @pytest.mark.xfail
     def test_somewhat_ambiguous_string(self):
         # Ref: github issue #487
@@ -877,7 +863,7 @@ class TestParseUnimplementedCases(object):
 
 
 @pytest.mark.skipif(IS_WIN, reason="Windows does not use TZ var")
-class TestTZVar(object):
+class TestTZVar:
     def test_parse_unambiguous_nonexistent_local(self):
         # When dates are specified "EST" even when they should be "EDT" in the
         # local time zone, we should still assign the local time zone

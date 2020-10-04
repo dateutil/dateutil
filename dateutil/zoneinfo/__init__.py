@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import warnings
 import json
 
@@ -27,7 +26,7 @@ def getzoneinfofile_stream():
         return None
 
 
-class ZoneInfoFile(object):
+class ZoneInfoFile:
     def __init__(self, zonefile_stream=None):
         if zonefile_stream is not None:
             with TarFile.open(fileobj=zonefile_stream) as tf:

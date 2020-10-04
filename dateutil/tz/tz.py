@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 This module offers timezone implementations subclassing the abstract
 :py:class:`datetime.tzinfo` type. There are classes to handle tzfile format
@@ -7,6 +6,7 @@ etc), TZ environment string (in all known formats), given ranges (with help
 from relative deltas), local machine timezone, fixed offset timezone, and UTC
 timezone.
 """
+import _thread
 import datetime
 import struct
 import time
@@ -16,10 +16,8 @@ import bisect
 import weakref
 from collections import OrderedDict
 
-import six
-from six import string_types
-from six.moves import _thread
-from ._common import tzname_in_python2, _tzinfo
+
+from ._common import _tzinfo
 from ._common import tzrangebase, enfold
 from ._common import _validate_fromutc_inputs
 
@@ -38,8 +36,7 @@ EPOCH = datetime.datetime.utcfromtimestamp(0)
 EPOCHORDINAL = EPOCH.toordinal()
 
 
-@six.add_metaclass(_TzSingleton)
-class tzutc(datetime.tzinfo):
+class tzutc(datetime.tzinfo, metaclass=_TzSingleton):
     """
     This is a tzinfo object that represents the UTC time zone.
 
@@ -77,7 +74,6 @@ class tzutc(datetime.tzinfo):
     def dst(self, dt):
         return ZERO
 
-    @tzname_in_python2
     def tzname(self, dt):
         return "UTC"
 
@@ -129,8 +125,7 @@ class tzutc(datetime.tzinfo):
 UTC = tzutc()
 
 
-@six.add_metaclass(_TzOffsetFactory)
-class tzoffset(datetime.tzinfo):
+class tzoffset(datetime.tzinfo, metaclass=_TzOffsetFactory):
     """
     A simple class for representing a fixed offset from UTC.
 
@@ -157,7 +152,6 @@ class tzoffset(datetime.tzinfo):
     def dst(self, dt):
         return ZERO
 
-    @tzname_in_python2
     def tzname(self, dt):
         return self._name
 
@@ -233,7 +227,6 @@ class tzlocal(_tzinfo):
         else:
             return ZERO
 
-    @tzname_in_python2
     def tzname(self, dt):
         return self._tznames[self._isdst(dt)]
 
@@ -325,7 +318,7 @@ class tzlocal(_tzinfo):
     __reduce__ = object.__reduce__
 
 
-class _ttinfo(object):
+class _ttinfo:
     __slots__ = ["offset", "delta", "isdst", "abbr",
                  "isstd", "isgmt", "dstoffset"]
 
@@ -370,7 +363,7 @@ class _ttinfo(object):
                 setattr(self, name, state[name])
 
 
-class _tzfile(object):
+class _tzfile:
     """
     Lightweight class for holding the relevant transition and time zone
     information read from binary tzfiles.
@@ -459,7 +452,7 @@ class tzfile(_tzinfo):
         super(tzfile, self).__init__()
 
         file_opened_here = False
-        if isinstance(fileobj, string_types):
+        if isinstance(fileobj, str):
             self._filename = fileobj
             fileobj = open(fileobj, 'rb')
             file_opened_here = True
@@ -843,7 +836,6 @@ class tzfile(_tzinfo):
         # be constant for every dt.
         return tti.dstoffset
 
-    @tzname_in_python2
     def tzname(self, dt):
         if not self._ttinfo_std or dt is None:
             return None
@@ -1033,8 +1025,7 @@ class tzrange(tzrangebase):
         return self._dst_base_offset_
 
 
-@six.add_metaclass(_TzStrFactory)
-class tzstr(tzrange):
+class tzstr(tzrange, metaclass=_TzStrFactory):
     """
     ``tzstr`` objects are time zone objects specified by a time-zone string as
     it would be passed to a ``TZ`` variable on POSIX-style systems (see
@@ -1153,7 +1144,7 @@ class tzstr(tzrange):
         return "%s(%s)" % (self.__class__.__name__, repr(self._s))
 
 
-class _tzicalvtzcomp(object):
+class _tzicalvtzcomp:
     def __init__(self, tzoffsetfrom, tzoffsetto, isdst,
                  tzname=None, rrule=None):
         self.tzoffsetfrom = datetime.timedelta(seconds=tzoffsetfrom)
@@ -1240,7 +1231,6 @@ class _tzicalvtz(_tzinfo):
         else:
             return ZERO
 
-    @tzname_in_python2
     def tzname(self, dt):
         return self._find_comp(dt).tzname
 
@@ -1250,7 +1240,7 @@ class _tzicalvtz(_tzinfo):
     __reduce__ = object.__reduce__
 
 
-class tzical(object):
+class tzical:
     """
     This object is designed to parse an iCalendar-style ``VTIMEZONE`` structure
     as set out in `RFC 5545`_ Section 4.6.5 into one or more `tzinfo` objects.
@@ -1265,7 +1255,7 @@ class tzical(object):
         global rrule
         from dateutil import rrule
 
-        if isinstance(fileobj, string_types):
+        if isinstance(fileobj, str):
             self._s = fileobj
             # ical should be encoded in UTF-8 with CRLF
             fileobj = open(fileobj, 'r')
@@ -1472,7 +1462,7 @@ def __get_gettz():
     if tzwinlocal is not None:
         tzlocal_classes += (tzwinlocal,)
 
-    class GettzFunc(object):
+    class GettzFunc:
         """
         Retrieve a time zone object from a string representation
 
@@ -1621,7 +1611,7 @@ def __get_gettz():
                 except TypeError as e:
                     if isinstance(name, bytes):
                         new_msg = "gettz argument should be str, not bytes"
-                        six.raise_from(TypeError(new_msg), e)
+                        raise TypeError(new_msg) from e
                     else:
                         raise
                 if os.path.isabs(name):
@@ -1646,8 +1636,7 @@ def __get_gettz():
                         if tzwin is not None:
                             try:
                                 tz = tzwin(name)
-                            except (WindowsError, UnicodeEncodeError):
-                                # UnicodeEncodeError is for Python 2.7 compat
+                            except WindowsError:
                                 tz = None
 
                         if not tz:
@@ -1832,7 +1821,7 @@ try:
     # Python 3.7 feature
     from contextlib import nullcontext as _nullcontext
 except ImportError:
-    class _nullcontext(object):
+    class _nullcontext:
         """
         Class for wrapping contexts so that they are passed through in a
         with statement.

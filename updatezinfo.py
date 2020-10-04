@@ -1,11 +1,9 @@
 #!/usr/bin/env python
-import os
 import hashlib
-import json
 import io
-
-from six.moves.urllib import request
-from six.moves.urllib import error as urllib_error
+import json
+import os
+from urllib import error as urllib_error, request
 
 from dateutil.zoneinfo import rebuild
 
@@ -47,12 +45,13 @@ def main(metadata_file):
         assert metadata['tzdata_file_sha512'] == sha_512_file, "SHA failed for"
     print("Updating timezone information...")
     rebuild.rebuild(metadata['tzdata_file'], zonegroups=metadata['zonegroups'],
-            metadata=metadata)
+                    metadata=metadata)
     print("Done.")
 
 
 if __name__ == "__main__":
     import argparse
+
     parser = argparse.ArgumentParser()
     parser.add_argument('metadata', metavar='METADATA_FILE',
                         default=METADATA_FILE,

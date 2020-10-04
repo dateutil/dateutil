@@ -1,23 +1,14 @@
 #!/usr/bin/python
-from os.path import isfile
-import os
-
-import setuptools
-from setuptools import setup, find_packages
-from setuptools.command.test import test as TestCommand
-
-from distutils.version import LooseVersion
-import warnings
-
 import io
+import os
 import sys
+from os.path import isfile
+
+from setuptools import setup
+from setuptools.command.test import test as TestCommand
 
 if isfile("MANIFEST"):
     os.unlink("MANIFEST")
-
-if LooseVersion(setuptools.__version__) <= LooseVersion("24.3"):
-    warnings.warn("python_requires requires setuptools version > 24.3",
-                  UserWarning)
 
 
 class Unsupported(TestCommand):
@@ -43,16 +34,17 @@ def README():
             lines_out.append(line)
 
     return ''.join(lines_out)
+
+
 README = README()  # NOQA
 
-
 setup(
-      use_scm_version={
-          'write_to': 'dateutil/_version.py',
-      },
-      ## Needed since doctest not supported by PyPA.
-      long_description = README,
-      cmdclass={
-          "test": Unsupported
-      }
-      )
+        use_scm_version={
+            'write_to': 'dateutil/_version.py',
+        },
+        ## Needed since doctest not supported by PyPA.
+        long_description=README,
+        cmdclass={
+            "test": Unsupported
+        }
+)

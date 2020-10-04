@@ -8,10 +8,6 @@ def pytest_collection_modifyitems(items):
     for item in items:
         marker_getter = getattr(item, 'get_closest_marker', None)
 
-        # Python 3.3 support
-        if marker_getter is None:
-            marker_getter = item.get_marker
-
         marker = marker_getter('xfail')
 
         # Need to query the args because conditional xfail tests still have

@@ -1,9 +1,6 @@
 build: false
 environment:
   matrix:
-    - PYTHON_VERSION: 27
-    - PYTHON_VERSION: 34
-    - PYTHON_VERSION: 35
     - PYTHON_VERSION: 36
     - PYTHON_VERSION: 37
     - PYTHON_VERSION: 38
@@ -15,11 +12,11 @@ matrix:
   fast_finish: true
   exclude:
     - platform: x86
-      PYTHON_VERSION: 34
-    - platform: x86
-      PYTHON_VERSION: 35
-    - platform: x86
       PYTHON_VERSION: 36
+    - platform: x86
+      PYTHON_VERSION: 37
+    - platform: x86
+      PYTHON_VERSION: 38
 
 install:
   # set env variables
@@ -43,5 +40,4 @@ test_script:
   - C:\Python36\scripts\tox
 
 after_test:
-  # Uploading coverage on Python 3.4 on Windows is not worth the effort.
-  - if NOT %PYTHON_VERSION% == 34 (C:\Python36\scripts\tox -e coverage,codecov)
+  - C:\Python36\scripts\tox -e coverage,codecov
