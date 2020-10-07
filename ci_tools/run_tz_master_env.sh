@@ -6,8 +6,8 @@
 
 set -e
 
-TMP_DIR=${1}
-REPO_DIR=${2}
+TMP_DIR=$(readlink -m ${1})
+REPO_DIR=$(readlink -m ${2})
 ORIG_DIR=$(pwd)
 CITOOLS_DIR=$REPO_DIR/ci_tools
 
@@ -50,7 +50,7 @@ if [ -d tz ]; then
 fi
 
 if [ "$DIR_EXISTS" = false ]; then
-    git clone ${UPSTREAM_URL}
+    git clone ${UPSTREAM_URL} --depth=1
     cd tz
 fi
 
