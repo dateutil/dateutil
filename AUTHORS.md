@@ -86,6 +86,7 @@ switch, and thus all their contributions are dual-licensed.
 - Nick Smith <nick.smith@MASKED>
 - Orson Adams <orson.network@MASKED> (gh: @parsethis) **D**
 - Paul Dickson (gh @prdickson) **D**
+- Paul Eggert <eggert@cs.ucla.edu> (gh: @eggert)
 - Paul Ganssle <paul@ganssle.io> (gh: @pganssle) **R**
 - Pascal van Kooten <kootenpv@MASKED> (gh: @kootenpv) **R**
 - Pavel Ponomarev <comrad.awsum@MASKED>
