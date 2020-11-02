@@ -9,25 +9,26 @@ on:
 jobs:
   tests:
       # These are tests for EOL and dev versions of Python
-      fail-fast: false
-      matrix:
-        python-version: ["3.3", "3.4", "3.5", "3.9-dev", "3.10-dev"]
-        os: "ubuntu-latest"
-      runs-on: ${{ matrix.os }}
-      env:
-        TOXENV: py
-      steps:
-        - uses: actions/checkout@v2
-        - name: ${{ matrix.python-version }} - ${{ matrix.os }}
-          uses: deadsnakes/action@v1.0.0
-          with:
-            python-version: ${{ matrix.python-version }}
-        - name: Install dependencies
-          run: |
-            if [[ ${{ matrix.python-version }} == "3.3" ]]; then
-              python -m pip install -U "pip==10.0.1"
-              export PIP_CONSTRAINT="requirements/3.3/constraints.txt"
-            fi
-            python -m pip install tox
-        - name: Run tests
-          run: python -m tox
+    strategy:
+        fail-fast: false
+        matrix:
+          python-version: ["3.3", "3.4", "3.5", "3.9-dev", "3.10-dev"]
+          os: "ubuntu-latest"
+    runs-on: ${{ matrix.os }}
+    env:
+      TOXENV: py
+    steps:
+      - uses: actions/checkout@v2
+      - name: ${{ matrix.python-version }} - ${{ matrix.os }}
+        uses: deadsnakes/action@v1.0.0
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          if [[ ${{ matrix.python-version }} == "3.3" ]]; then
+            python -m pip install -U "pip==10.0.1"
+            export PIP_CONSTRAINT="requirements/3.3/constraints.txt"
+          fi
+          python -m pip install tox
+      - name: Run tests
+        run: python -m tox
