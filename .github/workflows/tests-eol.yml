@@ -24,10 +24,10 @@ jobs:
             python-version: ${{ matrix.python-version }}
         - name: Install dependencies
           run: |
-          if [[ ${{ matrix.python-version }} == "3.3" ]]; then
-            python -m pip install -U "pip==10.0.1"
-            export PIP_CONSTRAINT="requirements/3.3/constraints.txt"
-          fi
-          python -m pip install tox
+            if [[ ${{ matrix.python-version }} == "3.3" ]]; then
+              python -m pip install -U "pip==10.0.1"
+              export PIP_CONSTRAINT="requirements/3.3/constraints.txt"
+            fi
+            python -m pip install tox
         - name: Run tests
           run: python -m tox
