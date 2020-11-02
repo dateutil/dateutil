@@ -26,7 +26,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: ${{ matrix.python-version }} - ${{ matrix.os }}
         if: "startsWith(matrix.python-version, '3.3')"
-        uses: "pganssle/action@cce0b102ddcfd703fbd7ab91f79a150d647cc818"
+        uses: "pganssle/action@ec0e87c91e5815e7537d6d5dd11cb582b9b647a4"
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
