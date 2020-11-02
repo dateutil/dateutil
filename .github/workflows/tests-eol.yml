@@ -2,9 +2,9 @@ name: EOL and dev tests
 
 on:
   - pull_request
-  # - schedule:
-  #   # Run at 00:30 daily
-  #   - cron: 30 0 * * *
+  - schedule:
+    # Run at 00:30 daily
+    - cron: 30 0 * * *
 
 jobs:
   tests:
