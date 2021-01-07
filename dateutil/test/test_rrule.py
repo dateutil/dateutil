@@ -2874,6 +2874,17 @@ class RRuleTest(unittest.TestCase):
                             datetime(1997, 9, 9, 9, 0, tzinfo=BXL),
                             datetime(1997, 9, 16, 9, 0, tzinfo=BXL)]
 
+    def testStrSetRDateWithTZID(self):
+        BXL = tz.gettz('Europe/Brussels')
+        rr = rrulestr("DTSTART;TZID=Europe/Brussels:19970902T090000\n"
+                      "RRULE:FREQ=YEARLY;COUNT=1\n"
+                      "RDATE;TZID=Europe/Brussels:19970904T090000\n"
+                      "RDATE;TZID=Europe/Brussels:19970911T090000\n")
+
+        assert list(rr) == [datetime(1997, 9, 2, 9, 0, tzinfo=BXL),
+                            datetime(1997, 9, 4, 9, 0, tzinfo=BXL),
+                            datetime(1997, 9, 11, 9, 0, tzinfo=BXL)]
+
     def testStrSetExDateValueDateTimeNoTZID(self):
         rrstr = '\n'.join([
             "DTSTART:19970902T090000",
