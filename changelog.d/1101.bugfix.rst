@@ -1,0 +1,2 @@
+Extended support of RDATE: TZID parameter, VALUE=DATE
+Reported by @raguiar2 (gh issue #853). Fixed by @neoden (gh pr #1101)

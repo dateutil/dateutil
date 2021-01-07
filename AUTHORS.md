@@ -69,6 +69,7 @@ switch, and thus all their contributions are dual-licensed.
 - Kubilay Kocak <koobs@MASKED>
 - Laszlo Kiss Kollar <kiss.kollar.laszlo@MASKED> (gh: @lkollar) **D**
 - Lauren Oldja <oldja@MASKED> (gh: @loldja) **D**
+- Lenar Imamutdinov <lenar.imamutdinov@MASKED> (gh: @neoden) **D**
 - Luca Ferocino <luca.ferox@MASKED> (gh: @lucaferocino) **D**
 - Mario Corchero <mcorcherojim@MASKED> (gh: @mariocj89) **R**
 - Mark Bailey <msb@MASKED> **D**
