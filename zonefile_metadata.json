@@ -2,7 +2,8 @@
     "metadata_version": 2.0,
     "releases_url": [
         "https://dateutil.github.io/tzdata/tzdata/",
-        "ftp://ftp.iana.org/tz/releases/"
+        "ftp://ftp.iana.org/tz/releases/",
+        "https://www.ietf.org/timezones/releases/"
     ],
     "tzdata_file": "tzdata2020f.tar.gz",
     "tzdata_file_sha512": "dd312def18c807452fda2e697514e2064c5f51ebdbedd0cfe6f231252c76ee5d4409f653b295ed5657b7d30b868690047fdb70a10942e69eaa40b77473e3f9ca",
