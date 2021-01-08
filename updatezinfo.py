@@ -5,11 +5,17 @@ import json
 import io
 
 from six.moves.urllib import request
-from six.moves.urllib import error as urllib_error
+from six.moves.urllib.error import URLError, HTTPError
 
 from dateutil.zoneinfo import rebuild
 
 METADATA_FILE = "zonefile_metadata.json"
+
+
+def retrieve_file(url, filename):
+    resp = request.urlopen(url)
+    with open(filename, 'wb') as f:
+        f.write(resp.read())
 
 
 def main(metadata_file):
@@ -26,10 +32,10 @@ def main(metadata_file):
         for ii, releases_url in enumerate(releases_urls):
             print("Downloading tz file from mirror {ii}".format(ii=ii))
             try:
-                request.urlretrieve(os.path.join(releases_url,
-                                                 metadata['tzdata_file']),
-                                    metadata['tzdata_file'])
-            except urllib_error.URLError as e:
+                retrieve_file(os.path.join(releases_url,
+                                           metadata['tzdata_file']),
+                              metadata['tzdata_file'])
+            except (URLError, HTTPError) as e:
                 print("Download failed, trying next mirror.")
                 last_error = e
                 continue
