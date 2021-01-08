@@ -23,9 +23,9 @@ import pytest
 IS_WIN = sys.platform.startswith('win')
 
 try:
-    datetime.now().strftime('%-d')
+    assert datetime(2000, 2, 1).strftime('%-d') == '1'
     PLATFORM_HAS_DASH_D = True
-except ValueError:
+except (ValueError, AssertionError):
     PLATFORM_HAS_DASH_D = False
 
 
