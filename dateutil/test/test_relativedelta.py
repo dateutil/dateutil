@@ -123,7 +123,7 @@ class RelativeDeltaTest(unittest.TestCase):
         self.assertEqual(self.today+relativedelta(weekday=WE),
                          date(2003, 9, 17))
 
-    def testNextWenesdayNotToday(self):
+    def testNextWednesdayNotToday(self):
         self.assertEqual(self.today+relativedelta(days=+1, weekday=WE),
                          date(2003, 9, 24))
 
