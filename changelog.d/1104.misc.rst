@@ -1,0 +1,3 @@
+Added two explicit tests for ``relativedelta(day=31)`` to test that it really returns the last
+day of the month for February, which doesn't have 31 days, including leap years.
+Reported by @MrRawbin (gh issue #1104). Fixed by @MrRawbin (gh pr #1105)
