@@ -25,6 +25,7 @@ switch, and thus all their contributions are dual-licensed.
 - Andrew Bennett (gh: @andrewcbennett) **D**
 - Andrew Murray <radarhere@MASKED>
 - Aritro Nandi <gurgenz221@gmail.com> (gh: @gurgenz221) **D**
+- Bartłomiej Kurzeja (gh: @b3ql)
 - Bernat Gabor <bgabor8@bloomberg.net> (gh: @gaborbernat) **D**
 - Bradlee Speice <bradlee@speice.io> (gh: @bspeice) **D**
 - Brandon W Maister <quodlibetor@MASKED>
