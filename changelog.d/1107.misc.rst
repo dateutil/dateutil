@@ -1,0 +1,1 @@
+Particularize package licensing types. Fixed by @b3ql (gh pr #1107)
