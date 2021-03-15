@@ -289,8 +289,8 @@ class parserinfo(object):
     HMS = [("h", "hour", "hours"),
            ("m", "minute", "minutes"),
            ("s", "second", "seconds")]
-    AMPM = [("am", "a"),
-            ("pm", "p")]
+    AMPM = [("am", "a", "午前"),
+            ("pm", "p", "午後")]
     UTCZONE = ["UTC", "GMT", "Z", "z"]
     PERTAIN = ["of"]
     TZOFFSET = {}
