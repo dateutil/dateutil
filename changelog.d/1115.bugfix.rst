@@ -1,0 +1,1 @@
+Fixed issue when multiplying and dividing relativedelta by fractional numbers produces integer values with truncate. Reported by @wahuneke (gh issue #1114). Fixed by @ByPort (gh pr #1115)
