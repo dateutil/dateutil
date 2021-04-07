@@ -498,22 +498,29 @@ class relativedelta(object):
         except TypeError:
             return NotImplemented
 
-        return self.__class__(years=int(self.years * f),
-                             months=int(self.months * f),
-                             days=int(self.days * f),
-                             hours=int(self.hours * f),
-                             minutes=int(self.minutes * f),
-                             seconds=int(self.seconds * f),
-                             microseconds=int(self.microseconds * f),
-                             leapdays=self.leapdays,
-                             year=self.year,
-                             month=self.month,
-                             day=self.day,
-                             weekday=self.weekday,
-                             hour=self.hour,
-                             minute=self.minute,
-                             second=self.second,
-                             microsecond=self.microsecond)
+        # Check for non-integer values in integer-only quantities
+        years = self.years * f
+        months = self.months * f
+        if not years.is_integer() or not months.is_integer():
+            raise ValueError("Non-integer years and months are "
+                             "ambiguous and not currently supported.")
+
+        return self.__class__(years=int(years),
+                              months=int(months),
+                              days=self.days * f,
+                              hours=self.hours * f,
+                              minutes=self.minutes * f,
+                              seconds=self.seconds * f,
+                              microseconds=self.microseconds * f,
+                              leapdays=self.leapdays,
+                              year=self.year,
+                              month=self.month,
+                              day=self.day,
+                              weekday=self.weekday,
+                              hour=self.hour,
+                              minute=self.minute,
+                              second=self.second,
+                              microsecond=self.microsecond)
 
     __rmul__ = __mul__
 
