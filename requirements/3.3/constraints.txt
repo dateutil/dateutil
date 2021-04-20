@@ -6,7 +6,7 @@ freezegun==0.3.10
 hypothesis==3.30.4
 pip==10.0.1
 pluggy==0.5.2
-py==1.4.34
+py==1.10.0
 pytest==3.2.5
 pytest-cov==2.5.1
 setuptools==39.2.0
