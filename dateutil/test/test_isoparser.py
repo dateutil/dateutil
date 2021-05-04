@@ -403,6 +403,18 @@ def test_isodate_raises(isostr, exception):
         isoparser().parse_isodate(isostr)
 
 
+def test_parse_isodate_error_text():
+    with pytest.raises(ValueError) as excinfo:
+        isoparser().parse_isodate('2014-0423')
+
+    # ensure the error message does not contain b' prefixes
+    if six.PY2:
+        expected_error = "String contains unknown ISO components: u'2014-0423'"
+    else:
+        expected_error = "String contains unknown ISO components: '2014-0423'"
+    assert expected_error == str(excinfo.value)
+
+
 ###
 # Test parse_isotime
 def __make_time_examples():
