@@ -84,6 +84,7 @@ switch, and thus all their contributions are dual-licensed.
 - Nicholas Herrriot <Nicholas.Herriot@gmail.com> **D**
 - Nicolas Évrard (gh: @nicoe) **D**
 - Nick Smith <nick.smith@MASKED>
+- Niko Fink (gh: N-Coder) **D**
 - Orson Adams <orson.network@MASKED> (gh: @parsethis) **D**
 - Paul Dickson (gh @prdickson) **D**
 - Paul Ganssle <paul@ganssle.io> (gh: @pganssle) **R**
