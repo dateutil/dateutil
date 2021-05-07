@@ -16,7 +16,6 @@ from functools import wraps
 from warnings import warn
 
 from six import advance_iterator, integer_types
-
 from six.moves import _thread, range
 
 from ._common import weekday as weekdaybase
@@ -759,6 +758,32 @@ class rrule(rrulebase):
         output.append('RRULE:' + ';'.join(parts))
         return '\n'.join(output)
 
+    def to_dict(self):
+        """
+        Return a dict containing all values defined in this rrule, such that
+        rrule(**my_rrule.to_dict()) == my_rrule.
+        """
+        d = {
+            "interval": self._interval,
+            "count": self._count,
+            "dtstart": self._dtstart,
+            "freq": self._freq,
+            "until": self._until,
+            "wkst": self._wkst,
+        }
+        d.update(self._original_rule)
+        return d
+
+    def __repr__(self):
+        return "rrule(%s)" % ", ".join("%s=%r" % (k, v) for k, v in self.to_dict().items())
+
+    def __eq__(self, other):
+        if not isinstance(other, rrule): return False
+        return self.to_dict() == other.to_dict()
+
+    def __hash__(self):
+        return hash(tuple(self.to_dict().items()))
+
     def replace(self, **kwargs):
         """Return new rrule with same attributes except for those attributes given new
            values by whichever keyword arguments are specified."""
@@ -1411,6 +1436,35 @@ class rruleset(rrulebase):
             if rlist and rlist[0] is ritem:
                 heapq.heapreplace(rlist, ritem)
         self._len = total
+
+    def __str__(self):
+        out = ""
+        for rrule in self._rrule:
+            out += str(rrule) + "\n"
+        for exrule in self._exrule:
+            out += "EX" + str(exrule)[1:] + "\n"
+        for rdate in self._rdate:
+            out += str(rdate) + "\n"
+        for exdate in self._exdate:
+            out += str(exdate) + "\n"
+        return out
+
+    def __repr__(self):
+        return "rruleset(rrule=%s, exrule=%s, rdate=%r, exdate=%r)" \
+               % (self._rrule, self._exrule, self._rdate, self._exdate)
+
+    def __eq__(self, other):
+        if not isinstance(other, rruleset): return False
+        return self._rrule == other._rrule and self._rdate == other._rdate \
+               and self._exrule == other._exrule and self._exdate == other._exdate
+
+    def __hash__(self):
+        return hash((
+            tuple(self._rrule),
+            tuple(self._rdate),
+            tuple(self._exrule),
+            tuple(self._exdate),
+        ))
 
 
 
