@@ -388,6 +388,7 @@ def test_parse_isodate(d, dt_fmt, as_bytes):
     ('2013-02-29', ValueError),                 # Not a leap year
     ('2014/12/03', ValueError),                 # Wrong separators
     ('2014-04-19T', ValueError),                # Unknown components
+    ('201202', ValueError),                     # Invalid format
 ])
 def test_isodate_raises(isostr, exception):
     with pytest.raises(exception):
@@ -491,16 +492,6 @@ def test_isotime_midnight(isostr):
     ('24:00:00.000001', ValueError),            # 24 used for non-midnight time
 ])
 def test_isotime_raises(isostr, exception):
-    iparser = isoparser()
-    with pytest.raises(exception):
-        iparser.parse_isotime(isostr)
-
-
-@pytest.mark.xfail() 
-@pytest.mark.parametrize('isostr,exception', [  # pragma: nocover
-    ('201202', ValueError)                      # Invalid ISO format
-])
-def test_isotime_raises_xfail(isostr, exception):
     iparser = isoparser()
     with pytest.raises(exception):
         iparser.parse_isotime(isostr)
