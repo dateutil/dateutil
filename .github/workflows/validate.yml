@@ -1,4 +1,4 @@
-name: PyPy
+name: Validate
 
 on:
   push:
@@ -12,7 +12,15 @@ jobs:
   test:
     strategy:
       matrix:
-        python-version: [pypy2, pypy3]
+        python-version: [
+          "3.5",
+          "3.6",
+          "3.7",
+          "3.8",
+          "3.9",
+          "pypy2",
+          "pypy3",
+        ]
         os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     env:
