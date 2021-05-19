@@ -16,9 +16,7 @@ ZONEFILE_METADATA_TEMPLATE = """{{
         "europe",
         "northamerica",
         "southamerica",
-        "pacificnew",
         "etcetera",
-        "systemv",
         "factory",
         "backzone",
         "backward"
