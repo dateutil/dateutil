@@ -22,11 +22,12 @@ import pytest
 # Platform info
 IS_WIN = sys.platform.startswith('win')
 
+PLATFORM_HAS_DASH_D = False
 try:
-    datetime.now().strftime('%-d')
-    PLATFORM_HAS_DASH_D = True
+    if datetime.now().strftime('%-d'):
+        PLATFORM_HAS_DASH_D = True
 except ValueError:
-    PLATFORM_HAS_DASH_D = False
+    pass
 
 
 @pytest.fixture(params=[True, False])
