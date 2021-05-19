@@ -1,7 +1,6 @@
 build: false
 environment:
   matrix:
-    - PYTHON_VERSION: 27
     - PYTHON_VERSION: 34
 platform:
   - x64
