@@ -1198,11 +1198,26 @@ class ZoneInfoGettzTest(GettzTest):
         zoneinfo_file = zoneinfo.get_zonefile_instance()
         return zoneinfo_file.get(name)
 
+    @pytest.mark.xfail(reason="Gap logic currently does not match PEP 495")
     def testZoneInfoFileStart1(self):
-        tz = self.gettz("EST5EDT")
-        self.assertEqual(datetime(2003, 4, 6, 1, 59, tzinfo=tz).tzname(), "EST",
-                         MISSING_TARBALL)
-        self.assertEqual(datetime(2003, 4, 6, 2, 00, tzinfo=tz).tzname(), "EDT")
+        tzc = self.gettz("EST5EDT")
+        self.assertEqual(
+            datetime(2003, 4, 6, 1, 59, tzinfo=tzc).tzname(),
+            "EST",
+            MISSING_TARBALL,
+        )
+
+        self.assertEqual(
+            tz.enfold(datetime(2003, 4, 6, 2, tzinfo=tzc), fold=0).tzname(),
+            "EST",
+        )
+
+        self.assertEqual(
+            tz.enfold(datetime(2003, 4, 6, 2, tzinfo=tzc), fold=1).tzname(),
+            "EDT",
+        )
+
+        self.assertEqual(datetime(2003, 4, 6, 3, 0, tzinfo=tzc).tzname(), "EDT")
 
     def testZoneInfoFileEnd1(self):
         tzc = self.gettz("EST5EDT")
@@ -1988,10 +2003,19 @@ class TZICalTest(unittest.TestCase, TzFoldMixin):
 
 
 class TZTest(unittest.TestCase):
+    @pytest.mark.xfail(reason="Gap logic currently does not match PEP 495")
     def testFileStart1(self):
         tzc = tz.tzfile(BytesIO(base64.b64decode(TZFILE_EST5EDT)))
         self.assertEqual(datetime(2003, 4, 6, 1, 59, tzinfo=tzc).tzname(), "EST")
-        self.assertEqual(datetime(2003, 4, 6, 2, 00, tzinfo=tzc).tzname(), "EDT")
+        self.assertEqual(
+            tz.enfold(datetime(2003, 4, 6, 2, 0, tzinfo=tzc), fold=0).tzname(),
+            "EST",
+        )
+        self.assertEqual(
+            tz.enfold(datetime(2003, 4, 6, 2, 0, tzinfo=tzc), fold=1).tzname(),
+            "EDT",
+        )
+        self.assertEqual(datetime(2003, 4, 6, 3, 0, tzinfo=tzc).tzname(), "EDT")
 
     def testFileEnd1(self):
         tzc = tz.tzfile(BytesIO(base64.b64decode(TZFILE_EST5EDT)))
