@@ -1,4 +1,4 @@
-name: PyPy
+name: Validate
 
 on:
   push:
@@ -12,7 +12,16 @@ jobs:
   test:
     strategy:
       matrix:
-        python-version: [pypy2, pypy3]
+        python-version: [
+          "2.7",
+          "3.5",
+          "3.6",
+          "3.7",
+          "3.8",
+          "3.9",
+          "pypy2",
+          "pypy3",
+        ]
         os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     env:
@@ -23,6 +32,8 @@ jobs:
         uses: actions/setup-python@v1
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Update pip and setuptools
+        run: python -m pip install -U pip setuptools
       - name: Install dependencies
         run: python -m pip install -U tox
       - name: Install zic (Windows)
