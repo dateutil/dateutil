@@ -24,6 +24,7 @@ switch, and thus all their contributions are dual-licensed.
 - Allison Quinlan <aquinlan82@gmail.com> (gh: @aquinlan) **D**
 - Andrew Bennett (gh: @andrewcbennett) **D**
 - Andrew Murray <radarhere@MASKED>
+- Arclight <arclight@MASKED> (gh: @arclightslavik)
 - Aritro Nandi <gurgenz221@gmail.com> (gh: @gurgenz221) **D**
 - Bernat Gabor <bgabor8@bloomberg.net> (gh: @gaborbernat) **D**
 - Bradlee Speice <bradlee@speice.io> (gh: @bspeice) **D**

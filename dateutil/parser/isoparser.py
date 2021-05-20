@@ -333,7 +333,7 @@ class isoparser(object):
         pos = 0
         comp = -1
 
-        if len(timestr) < 2:
+        if len_str < 2:
             raise ValueError('ISO time too short')
 
         has_sep = len_str >= 3 and timestr[2:3] == self._TIME_SEP

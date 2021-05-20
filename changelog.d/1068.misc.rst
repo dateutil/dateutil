@@ -1,0 +1,2 @@
+Use the already created len variable instead of calling len.
+Reported and fixed by @arclightslavik (gh issue #1067 gh pr #1068)
