@@ -2067,22 +2067,6 @@ class TZTest(unittest.TestCase):
         remaining_tzfile_content = fileobj.read()
         self.assertEqual(len(remaining_tzfile_content), 0)
 
-    def testIsStd(self):
-        # NEW_YORK tzfile contains this isstd information:
-        isstd_expected = (0, 0, 0, 1)
-        tzc = tz.tzfile(BytesIO(base64.b64decode(NEW_YORK)))
-        # gather the actual information as parsed by the tzfile class
-        isstd = []
-        for ttinfo in tzc._ttinfo_list:
-            # ttinfo objects contain boolean values
-            isstd.append(int(ttinfo.isstd))
-        # ttinfo list may contain more entries than isstd file content
-        isstd = tuple(isstd[:len(isstd_expected)])
-        self.assertEqual(
-            isstd_expected, isstd,
-            "isstd UTC/local indicators parsed: %s != tzfile contents: %s"
-            % (isstd, isstd_expected))
-
     def testGMTHasNoDaylight(self):
         # tz.tzstr("GMT+2") improperly considered daylight saving time.
         # Issue reported by Lennart Regebro.
