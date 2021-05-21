@@ -25,8 +25,10 @@ def build():
             click.echo('Aborting')
             sys.exit(1)
 
-    subprocess.check_call(['python', '-m', 'pep517.build',
-                           '--binary', '--source', '.'])
+    subprocess.check_call(['python', '-m', 'build',
+                           '--wheel', '--sdist',
+                           '--outdir', DIST_PATH,
+                           '.'])
 
 @cli.command()
 def sign():
