@@ -32,8 +32,6 @@ jobs:
         uses: actions/setup-python@v1
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Update pip and setuptools
-        run: python -m pip install -U pip setuptools
       - name: Install dependencies
         run: python -m pip install -U tox
       - name: Install zic (Windows)
