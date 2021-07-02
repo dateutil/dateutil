@@ -244,6 +244,8 @@ def test_bytes(isostr, dt):
     ('2012-0425', ValueError),                  # Inconsistent date separators
     ('201204-25', ValueError),                  # Inconsistent date separators
     ('20120425T0120:00', ValueError),           # Inconsistent time separators
+    ('20120425T01:2000', ValueError),           # Inconsistent time separators
+    ('14:3015', ValueError),                    # Inconsistent time separator
     ('20120425T012500-334', ValueError),        # Wrong microsecond separator
     ('2001-1', ValueError),                     # YYYY-M not valid
     ('2012-04-9', ValueError),                  # YYYY-MM-D not valid
@@ -284,17 +286,6 @@ def test_iso_with_sep_raises(sep_act, valid_sep, exception):
     isostr = '2012-04-25' + sep_act + '01:25:00'
     with pytest.raises(exception):
         parser.isoparse(isostr)
-
-
-@pytest.mark.xfail() 
-@pytest.mark.parametrize('isostr,exception', [  # pragma: nocover
-    ('20120425T01:2000', ValueError),           # Inconsistent time separators
-])
-def test_iso_raises_failing(isostr, exception):
-    # These are test cases where the current implementation is too lenient
-    # and need to be fixed
-    with pytest.raises(exception):
-        isoparse(isostr)
 
 
 ###
@@ -397,6 +388,7 @@ def test_parse_isodate(d, dt_fmt, as_bytes):
     ('2013-02-29', ValueError),                 # Not a leap year
     ('2014/12/03', ValueError),                 # Wrong separators
     ('2014-04-19T', ValueError),                # Unknown components
+    ('201202', ValueError),                     # Invalid format
 ])
 def test_isodate_raises(isostr, exception):
     with pytest.raises(exception):
@@ -512,17 +504,6 @@ def test_isotime_midnight(isostr):
     ('24:00:00.000001', ValueError),            # 24 used for non-midnight time
 ])
 def test_isotime_raises(isostr, exception):
-    iparser = isoparser()
-    with pytest.raises(exception):
-        iparser.parse_isotime(isostr)
-
-
-@pytest.mark.xfail() 
-@pytest.mark.parametrize('isostr,exception', [  # pragma: nocover
-    ('14:3015', ValueError),                    # Inconsistent separator use
-    ('201202', ValueError)                      # Invalid ISO format
-])
-def test_isotime_raises_xfail(isostr, exception):
     iparser = isoparser()
     with pytest.raises(exception):
         iparser.parse_isotime(isostr)

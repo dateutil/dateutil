@@ -336,7 +336,7 @@ class isoparser(object):
         if len_str < 2:
             raise ValueError('ISO time too short')
 
-        has_sep = len_str >= 3 and timestr[2:3] == self._TIME_SEP
+        has_sep = False
 
         while pos < len_str and comp < 5:
             comp += 1
@@ -347,13 +347,18 @@ class isoparser(object):
                 pos = len_str
                 break
 
+            if comp == 1 and timestr[pos:pos+1] == self._TIME_SEP:
+                has_sep = True
+                pos += 1
+            elif comp == 2 and has_sep:
+                if timestr[pos:pos+1] != self._TIME_SEP:
+                    raise ValueError('Inconsistent use of colon separator')
+                pos += 1
+
             if comp < 3:
                 # Hour, minute, second
                 components[comp] = int(timestr[pos:pos + 2])
                 pos += 2
-                if (has_sep and pos < len_str and
-                        timestr[pos:pos + 1] == self._TIME_SEP):
-                    pos += 1
 
             if comp == 3:
                 # Fraction of a second
