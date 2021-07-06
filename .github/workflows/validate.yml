@@ -91,9 +91,9 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v2
         with:
-          python-version: 3.7
+          python-version: "3.9"
       - name: Install tox
         run: python -m pip install -U tox
       - name: Run tox
