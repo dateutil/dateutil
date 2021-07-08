@@ -1,8 +1,10 @@
 Version 2.8.2 (2021-07-08)
+==========================
+
 Data updates
 ------------
 
-- Updated tzdata version to 2020a. (gh pr #1034)
+- Updated tzdata version to 2021a. (gh pr #1128)
 
 
 Bugfixes
@@ -12,47 +14,46 @@ Bugfixes
   during exception handling; this would happen, for example, if an
   ``IllegalMonthError`` was raised in ``dateutil`` code. Fixed by Mark Bailey.
   (gh issue #981, pr #987).
-- Fixed the custom ``repr`` for ``dateutil.parser.ParserError``, which was not defined due to an indentation error. (gh issue #991, gh pr #993)
-- Fixed a bug that caused b' prefixes to appear in parse_isodate exception messages.
-- Make `isoparse` raise when trying to parse times with inconsistent use of `:` separator. Reported and fixed by @mariocj89 (gh pr #1125).
+- Fixed the custom ``repr`` for ``dateutil.parser.ParserError``, which was not
+  defined due to an indentation error. (gh issue #991, gh pr #993)
+- Fixed a bug that caused ``b'`` prefixes to appear in parse_isodate exception
+  messages. Reported and fixed by Paul Brown (@pawl) (gh pr #1122)
+- Make ``isoparse`` raise when trying to parse times with inconsistent use of
+  `:` separator. Reported and fixed by @mariocj89 (gh pr #1125).
+- Fixed ``tz.gettz()`` not returning local time when passed an empty string.
+  Reported by @labrys (gh issues #925, #926). Fixed by @ffe4 (gh pr #1024)
 
 
 Documentation changes
 ---------------------
 
-- - Fixes a small typo in dateutil/utils.py.
 - Rearranged parser documentation into "Functions", "Classes" and "Warnings and
   Exceptions" categories. (gh issue #992, pr #994).
 - Updated ``parser.parse`` documentation to reflect the switch from
   ``ValueError`` to ``ParserError``. (gh issue #992, pr #994).
-- Fixed methods in the ``rrule`` module not being displayed in the docs. (gh pr #1025)
+- Fixed methods in the ``rrule`` module not being displayed in the docs. (gh pr
+  #1025)
+- Changed some relative links in the exercise documentation to refer to the
+  document locations in the input tree, rather than the generated HTML files in
+  the HTML output tree (which presumably will not exist in non-HTML output
+  formats). (gh pr #1078).
 
 
 Misc
 ----
 
-- Added project_urls for documentation and source. Patch by @andriyor (gh pr #975).
-- Move test suite towards pytest and away from unittest.
-  Reported and fixed by @jpurviance (gh pr #978)
-- Dropped Python 3.3 and added Python 3.7 and 3.8 to the Appveyor builds.
-- Python 3.4 coverage is no longer uploaded on Appveyor.
-- Fixed tox not testing solutions under docs/exercises.
-  Reported and fixed by @ffe4 (gh pr #1015)
-- Removed broken link to pgp mirror that made the travis build fail.
-  Reported and fixed by @ffe4 (gh pr #1017)
-- Migrate PyPy CI from Travis to Github Actions. (gh issue #1019)
-- Fixed tz.gettz() not returning local time when passed an empty string.
-  Reported by @labrys (gh issues #925, #926). Fixed by @ffe4 (gh pr #1024)
-- Simplify handling of bytes and bytearray in _parser._timelex. Reported and fixed by @frenzymadness (gh issue #1060).
-- Use the already created len variable instead of calling len.
-  Reported and fixed by @arclightslavik (gh issue #1067 gh pr #1068)
-- Changed the tests against the upstream tz database to always generate fat binaries, since until GH-590 and GH-1059 are resolved, "slim" zic binaries will cause problems in many zones, causing the tests to fail. This also updates ``zoneinfo.rebuild`` to always generate fat binaries. GH PR #1076.
-- Changed some relative links in the exercise documentation to refer to the document locations in the input tree, rather than the generated HTML files in the HTML output tree (which presumably will not exist in non-HTML output formats). GH PR #1078.
-- Added Python 3.9 to the test matrix and trove classifiers.  Fixed by @michael-k (gh pr #1083)
-- Added two explicit tests for ``relativedelta(day=31)`` to test that it really returns the last
-  day of the month for February, which doesn't have 31 days, including leap years.
-  Reported by @MrRawbin (gh issue #1104). Fixed by @MrRawbin (gh pr #1105)
-- Move sdist and wheel generation to use `python-build`. Reported and fixed by @mariocj89 (gh pr #1133).
+- Moved ``test_imports.py``, ``test_internals.py`` and ``test_utils.py`` to
+  pytest.  Reported and fixed by @jpurviance (gh pr #978)
+- Added project_urls for documentation and source. Patch by @andriyor (gh pr
+  #975).
+- Simplified handling of bytes and bytearray in ``_parser._timelex``. Reported
+  and fixed by @frenzymadness (gh issue #1060).
+- Changed the tests against the upstream tz database to always generate fat
+  binaries, since until GH-590 and GH-1059 are resolved, "slim" zic binaries
+  will cause problems in many zones, causing the tests to fail. This also
+  updates ``zoneinfo.rebuild`` to always generate fat binaries. (gh pr #1076).
+- Moved sdist and wheel generation to use `python-build`. Reported and fixed by
+  @mariocj89 (gh pr #1133).
 
 
 Version 2.8.1 (2019-11-03)
@@ -357,7 +358,7 @@ Version 2.7.0
   reported by @nealmcb (gh issue #94)
 - Added dedicated ISO 8601 parsing function isoparse (gh issue #424).
   Initial implementation by @pganssle in gh pr #489 and #622, with a
-  pre-release fix by @kirit93 (gh issue #546, gh pr #573). 
+  pre-release fix by @kirit93 (gh issue #546, gh pr #573).
 - Moved parser module into parser/_parser.py and officially deprecated the use
   of several private functions and classes from that module. (gh pr #501, #515)
 - Tweaked parser error message to include rejected string format, added by
@@ -391,7 +392,7 @@ Version 2.7.0
 - Significantly refactored parser code by @jbrockmendel (gh prs #419, #436,
   #490, #498, #539) and @pganssle (gh prs #435, #468)
 - Implemented of __hash__ for relativedelta and weekday, reported and fixed
-  by @mrigor (gh pr #389) 
+  by @mrigor (gh pr #389)
 - Implemented __abs__ for relativedelta. Reported by @binnisb and @pferreir
   (gh issue #350, pr #472)
 - Fixed relativedelta.weeks property getter and setter to work for both
@@ -426,7 +427,7 @@ Version 2.7.0
   gh pr #581)
 - Fixed issue with tz.gettz for TZ variables that start with a colon. Reported
   and fixed by @lapointexavier (gh pr #601)
-- Added a lock to tz.tzical's cache. Reported and fixed by @Unrud (gh pr #430) 
+- Added a lock to tz.tzical's cache. Reported and fixed by @Unrud (gh pr #430)
 - Fixed an issue with fold support on certain Python 3 implementations that
   used the pre-3.6 pure Python implementation of datetime.replace, most
   notably pypy3 (gh pr #446).
