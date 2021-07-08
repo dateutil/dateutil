@@ -1,2 +1,0 @@
-Updated ``parser.parse`` documentation to reflect the switch from
-``ValueError`` to ``ParserError``. (gh issue #992, pr #994).

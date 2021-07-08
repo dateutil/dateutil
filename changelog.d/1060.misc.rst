@@ -1,1 +1,0 @@
-Simplify handling of bytes and bytearray in _parser._timelex. Reported and fixed by @frenzymadness (gh issue #1060).

@@ -1,3 +1,60 @@
+Version 2.8.2 (2021-07-08)
+Data updates
+------------
+
+- Updated tzdata version to 2020a. (gh pr #1034)
+
+
+Bugfixes
+--------
+
+- Fixed a bug in the parser where non-``ValueError`` exceptions would be raised
+  during exception handling; this would happen, for example, if an
+  ``IllegalMonthError`` was raised in ``dateutil`` code. Fixed by Mark Bailey.
+  (gh issue #981, pr #987).
+- Fixed the custom ``repr`` for ``dateutil.parser.ParserError``, which was not defined due to an indentation error. (gh issue #991, gh pr #993)
+- Fixed a bug that caused b' prefixes to appear in parse_isodate exception messages.
+- Make `isoparse` raise when trying to parse times with inconsistent use of `:` separator. Reported and fixed by @mariocj89 (gh pr #1125).
+
+
+Documentation changes
+---------------------
+
+- - Fixes a small typo in dateutil/utils.py.
+- Rearranged parser documentation into "Functions", "Classes" and "Warnings and
+  Exceptions" categories. (gh issue #992, pr #994).
+- Updated ``parser.parse`` documentation to reflect the switch from
+  ``ValueError`` to ``ParserError``. (gh issue #992, pr #994).
+- Fixed methods in the ``rrule`` module not being displayed in the docs. (gh pr #1025)
+
+
+Misc
+----
+
+- Added project_urls for documentation and source. Patch by @andriyor (gh pr #975).
+- Move test suite towards pytest and away from unittest.
+  Reported and fixed by @jpurviance (gh pr #978)
+- Dropped Python 3.3 and added Python 3.7 and 3.8 to the Appveyor builds.
+- Python 3.4 coverage is no longer uploaded on Appveyor.
+- Fixed tox not testing solutions under docs/exercises.
+  Reported and fixed by @ffe4 (gh pr #1015)
+- Removed broken link to pgp mirror that made the travis build fail.
+  Reported and fixed by @ffe4 (gh pr #1017)
+- Migrate PyPy CI from Travis to Github Actions. (gh issue #1019)
+- Fixed tz.gettz() not returning local time when passed an empty string.
+  Reported by @labrys (gh issues #925, #926). Fixed by @ffe4 (gh pr #1024)
+- Simplify handling of bytes and bytearray in _parser._timelex. Reported and fixed by @frenzymadness (gh issue #1060).
+- Use the already created len variable instead of calling len.
+  Reported and fixed by @arclightslavik (gh issue #1067 gh pr #1068)
+- Changed the tests against the upstream tz database to always generate fat binaries, since until GH-590 and GH-1059 are resolved, "slim" zic binaries will cause problems in many zones, causing the tests to fail. This also updates ``zoneinfo.rebuild`` to always generate fat binaries. GH PR #1076.
+- Changed some relative links in the exercise documentation to refer to the document locations in the input tree, rather than the generated HTML files in the HTML output tree (which presumably will not exist in non-HTML output formats). GH PR #1078.
+- Added Python 3.9 to the test matrix and trove classifiers.  Fixed by @michael-k (gh pr #1083)
+- Added two explicit tests for ``relativedelta(day=31)`` to test that it really returns the last
+  day of the month for February, which doesn't have 31 days, including leap years.
+  Reported by @MrRawbin (gh issue #1104). Fixed by @MrRawbin (gh pr #1105)
+- Move sdist and wheel generation to use `python-build`. Reported and fixed by @mariocj89 (gh pr #1133).
+
+
 Version 2.8.1 (2019-11-03)
 ==========================
 

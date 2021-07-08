@@ -1,1 +1,0 @@
-Added Python 3.9 to the test matrix and trove classifiers.  Fixed by @michael-k (gh pr #1083)
