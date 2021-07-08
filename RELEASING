@@ -6,7 +6,7 @@ Release Checklist
     release from https://www.iana.org/time-zones.
 [ ] If necessary, update the tzdata mirror at https://github.com/dateutil/tzdata
 [ ] Update NEWS with list of changes:
-    [ ] Invoke `tox -e towncrier -- --version <NEXT_VERSION>`
+    [ ] Invoke `tox -e news -- --version <NEXT_VERSION>`
     [ ] Make sure that only `template.rst` remains in changelog.d/
     [ ] Manually clean up the new NEWS file.
     [ ] Replace entries in the "Misc" section that are not likely to be
