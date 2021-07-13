@@ -1,1 +1,0 @@
-Added project_urls for documentation and source. Patch by @andriyor (gh pr #975).

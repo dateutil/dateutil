@@ -1,1 +1,0 @@
-Fixed the custom ``repr`` for ``dateutil.parser.ParserError``, which was not defined due to an indentation error. (gh issue #991, gh pr #993)
