@@ -28,7 +28,7 @@ install:
   - "ci_tools/retry.bat %PYTHON% updatezinfo.py"
   # This environment variable tells the test suite it's OK to mess with the time zone.
   - set DATEUTIL_MAY_CHANGE_TZ=1
-  - C:\Python36\python -m pip install -U tox
+  - C:\Python36\python -m pip install -U tox virtualenv==20.4.7
 
 test_script:
   - C:\Python36\scripts\tox
