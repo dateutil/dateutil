@@ -93,5 +93,5 @@ ${CITOOLS_DIR}/make_zonefile_metadata.py \
 python ${REPO_DIR}/updatezinfo.py $ZONEFILE_METADATA_NAME
 
 # Run the tests
-python -m pytest ${REPO_DIR}/src/dateutil/test $EXTRA_TEST_ARGS
+python -m pytest ${REPO_DIR}/tests $EXTRA_TEST_ARGS
 
