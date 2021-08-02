@@ -10,7 +10,7 @@ Bug reports are an important type of contribution - it's important to get feedba
 1. A minimal, reproducible example - a small, self-contained script that can reproduce the behavior is the best way to get your bug fixed. For more information and tips on how to structure these, read [Stack Overflow's guide to creating a minimal, complete, verified example](https://stackoverflow.com/help/mcve).
 
 2. The platform and versions of everything involved, at a minimum please include operating system, `python` version and `dateutil` version. Instructions on getting your versions:
-    - `dateutil`: `python -c 'import dateutil; print(dateutil.__version__)'`
+    - `dateutil`: `python -c "import dateutil; print(dateutil.__version__)"`
     - `Python`: `python --version`
 
 3. A description of the problem - what *is* happening and what *should* happen.
