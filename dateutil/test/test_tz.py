@@ -2809,3 +2809,61 @@ def test_resolve_imaginary(tzi, dt, dt_exp):
     assert dt_r == dt_exp
     assert dt_r.tzname() == dt_exp.tzname()
     assert dt_r.utcoffset() == dt_exp.utcoffset()
+
+
+INVALID_OFFSETS = [
+    timedelta(hours=-24),
+    timedelta(hours=24),
+    timedelta(hours=-25),
+    timedelta(hours=25),
+    timedelta(hours=-1000),
+    timedelta(hours=1000),
+    -86400,
+    86400,
+    90000,
+    -90000
+]
+
+VALID_OFFSETS = [
+    0,
+    -3600,
+    3600,
+    timedelta(hours=0),
+    timedelta(hours=-6),
+    timedelta(),
+    timedelta(hours=6),
+    timedelta(hours=23, minutes=59, seconds=59, microseconds=999999),
+    -timedelta(hours=23, minutes=59, seconds=59, microseconds=999999),
+]
+
+
+@pytest.mark.tzrange
+@pytest.mark.parametrize("delta", INVALID_OFFSETS)
+def test_invalid_tzrange_stdoffset(delta):
+    with pytest.raises(ValueError):
+        tz.tzrange("", delta)
+
+
+@pytest.mark.tzrange
+@pytest.mark.parametrize("delta", INVALID_OFFSETS)
+def test_invalid_tzrange_dstoffset(delta):
+    with pytest.raises(ValueError):
+        tz.tzrange("", timedelta(), "", dstoffset=delta)
+
+
+@pytest.mark.tzrange
+@pytest.mark.parametrize("delta", VALID_OFFSETS)
+def test_valid_tzrange_stdoffset(delta):
+    tz.tzrange("", delta)
+
+
+@pytest.mark.tzrange
+@pytest.mark.parametrize("delta", VALID_OFFSETS)
+def test_valid_tzrange_dstoffset(delta):
+    tz.tzrange("", timedelta(), "", dstoffset=delta)
+
+
+@pytest.mark.tzrange
+def test_invalid_tzrange_implicit_dstoffset():
+    with pytest.raises(ValueError):
+        tz.tzrange("XST", timedelta(hours=23, minutes=30), "XDT")
