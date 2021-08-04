@@ -1,0 +1,2 @@
+Add the missing __str__, __repr__, __eq__, and __hash__ methods to rrule and rruleset.
+Fixed by @N-Coder (gh pr #1123)
