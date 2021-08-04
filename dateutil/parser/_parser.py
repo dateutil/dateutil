@@ -352,7 +352,7 @@ class parserinfo(object):
         return name.lower() in self._utczone
 
     def tzoffset(self, name):
-        if name in self._utczone:
+        if name.lower() in self._utczone:
             return 0
 
         return self.TZOFFSET.get(name)
