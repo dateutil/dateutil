@@ -1456,15 +1456,37 @@ class tzical(object):
         return "%s(%s)" % (self.__class__.__name__, repr(self._s))
 
 
-if sys.platform != "win32":
-    TZFILES = ["/etc/localtime", "localtime"]
-    TZPATHS = ["/usr/share/zoneinfo",
-               "/usr/lib/zoneinfo",
-               "/usr/share/lib/zoneinfo",
-               "/etc/zoneinfo"]
-else:
-    TZFILES = []
-    TZPATHS = []
+def __get_tz_files():
+    env_value = os.environ.get('DATEUTIL_TZFILES')
+    if env_value:
+        return env_value.split(os.pathsep)
+
+    if sys.platform == "win32":
+        return []
+
+    return ["/etc/localtime", "localtime"]
+
+
+def __get_tz_paths():
+    env_value = os.environ.get('PYTHONTZPATH')
+    if env_value:
+        return env_value.split(os.pathsep)
+
+    if sys.platform == "win32":
+        return []
+
+    return ["/usr/share/zoneinfo",
+            "/usr/lib/zoneinfo",
+            "/usr/share/lib/zoneinfo",
+            "/etc/zoneinfo"]
+
+
+TZFILES = __get_tz_files()
+TZPATHS = __get_tz_paths()
+
+
+del __get_tz_files
+del __get_tz_paths
 
 
 def __get_gettz():

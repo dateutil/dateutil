@@ -11,6 +11,7 @@ from six import PY2
 from io import BytesIO, StringIO
 import unittest
 
+import os
 import sys
 import base64
 import copy
@@ -2809,3 +2810,11 @@ def test_resolve_imaginary(tzi, dt, dt_exp):
     assert dt_r == dt_exp
     assert dt_r.tzname() == dt_exp.tzname()
     assert dt_r.utcoffset() == dt_exp.utcoffset()
+
+
+@pytest.mark.skipif(
+    not os.environ.get("PYTHONTZPATH"),
+    reason="Skipping as env var not set",
+)
+def test_tzpath_env_var_changes_TZPATHS():
+    assert tz.TZPATHS == os.environ["PYTHONTZPATH"].split(os.pathsep)

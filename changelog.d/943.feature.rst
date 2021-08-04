@@ -1,0 +1,2 @@
+Allow users to configure the source of tzdata via `PYTHONTZPATH`
+environment variable and localtime via `DATEUTIL_TZFILES`.
