@@ -1180,6 +1180,9 @@ class parser(object):
             aware = naive.replace(tzinfo=tzinfo)
             aware = self._assign_tzname(aware, res.tzname)
 
+        elif res.tzoffset == 0:
+            aware = naive.replace(tzinfo=tz.UTC)
+
         elif res.tzname and res.tzname in time.tzname:
             aware = naive.replace(tzinfo=tz.tzlocal())
 
@@ -1190,9 +1193,6 @@ class parser(object):
             if (aware.tzname() != res.tzname and
                     res.tzname in self.info.UTCZONE):
                 aware = aware.replace(tzinfo=tz.UTC)
-
-        elif res.tzoffset == 0:
-            aware = naive.replace(tzinfo=tz.UTC)
 
         elif res.tzoffset:
             aware = naive.replace(tzinfo=tz.tzoffset(res.tzname, res.tzoffset))

@@ -924,6 +924,25 @@ class TestTZVar(object):
             assert dt.astimezone(tz.UTC) == dt_exp.astimezone(tz.UTC)
 
 
+@pytest.mark.skipif(IS_WIN, reason="Windows does not use TZ var")
+@pytest.mark.parametrize("dtstr", [
+    "2015-08-20T00:20:45.000000+00:00",
+    "2015-08-20T00:20:45Z",
+])
+def test_use_utc_over_tzlocal(dtstr):
+    """
+    Parser should use tzutc() instead of tzlocal() in cases where both are accurate.
+
+    see: https://github.com/dateutil/dateutil/issues/349
+         https://github.com/dateutil/dateutil/issues/842
+    """
+    with TZEnvContext("UTC"):
+        dt_exp = datetime(2015, 8, 20, 0, 20, 45, tzinfo=tz.tzutc())
+        dt_act = parse(dtstr)
+        assert dt_act == dt_exp
+        assert dt_act.tzinfo is dt_exp.tzinfo
+
+
 def test_parse_tzinfos_fold():
     NYC = tz.gettz('America/New_York')
     tzinfos = {'EST': NYC, 'EDT': NYC}
