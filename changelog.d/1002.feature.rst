@@ -1,0 +1,1 @@
+Added keyword arguments to the ``parse`` method to allow for requiring date components. (gh pr #1002)

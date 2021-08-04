@@ -637,6 +637,10 @@ class parser(object):
             default = datetime.datetime.now().replace(hour=0, minute=0,
                                                       second=0, microsecond=0)
 
+        required_components = {}
+        for attr in ("year", "month", "day", "hour", "minute", "second"):
+            required_components[attr] = kwargs.pop("require_{attr}".format(attr=attr), False)
+
         res, skipped_tokens = self._parse(timestr, **kwargs)
 
         if res is None:
@@ -646,7 +650,7 @@ class parser(object):
             raise ParserError("String does not contain a date: %s", timestr)
 
         try:
-            ret = self._build_naive(res, default)
+            ret = self._build_naive(res, default, **required_components)
         except ValueError as e:
             six.raise_from(ParserError(str(e) + ": %s", timestr), e)
 
@@ -1214,13 +1218,15 @@ class parser(object):
 
         return aware
 
-    def _build_naive(self, res, default):
+    def _build_naive(self, res, default, **required_components):
         repl = {}
         for attr in ("year", "month", "day", "hour",
                      "minute", "second", "microsecond"):
             value = getattr(res, attr)
             if value is not None:
                 repl[attr] = value
+            elif required_components.get(attr, False):
+                raise ValueError("String is missing components")
 
         if 'day' not in repl:
             # If the default day exceeds the last day of the month, fall back
@@ -1346,6 +1352,30 @@ def parse(timestr, parserinfo=None, **kwargs):
             >>> from dateutil.parser import parse
             >>> parse("Today is January 1, 2047 at 8:21:00AM", fuzzy_with_tokens=True)
             (datetime.datetime(2047, 1, 1, 8, 21), (u'Today is ', u' ', u'at '))
+
+    :param require_year:
+        If ``True``, will raise a :class:`ValueError` when the ``timestr`` is missing
+        the year (defaults to ``False``)
+
+    :param require_month:
+        If ``True``, will raise a :class:`ValueError` when the ``timestr`` is missing
+        the month (defaults to ``False``)
+
+    :param require_day:
+        If ``True``, will raise a :class:`ValueError` when the ``timestr`` is missing
+        the day (defaults to ``False``)
+
+    :param require_hour:
+        If ``True``, will raise a :class:`ValueError` when the ``timestr`` is missing
+        the hour (defaults to ``False``)
+
+    :param require_minute:
+        If ``True``, will raise a :class:`ValueError` when the ``timestr`` is missing
+        the minute (defaults to ``False``)
+
+    :param require_second:
+        If ``True``, will raise a :class:`ValueError` when the ``timestr`` is missing
+        the second (defaults to ``False``)
 
     :return:
         Returns a :class:`datetime.datetime` object or, if the
