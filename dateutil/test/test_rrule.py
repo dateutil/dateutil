@@ -4639,6 +4639,67 @@ def test_generated_aware_dtstart_rrulestr():
     assert list(rrule_r) == list(rrule_without_dtstart)
 
 
+@pytest.mark.rrule
+def test_bymonth_out_of_range():
+    with pytest.raises(ValueError):
+        rrule(freq=MONTHLY, count=4, dtstart=datetime(2018, 8, 8), bymonth=(0,1,2,3))
+
+
+@pytest.mark.rrule
+def test_bymonthday_out_of_range():
+    with pytest.raises(ValueError):
+        rrule(freq=DAILY, count=3, bymonthday=32)
+
+
+@pytest.mark.rrule
+def test_byyearday_out_of_range():
+    with pytest.raises(ValueError):
+        rrule(freq=DAILY, count=1, byyearday=0)
+
+
+@pytest.mark.rrule
+@pytest.mark.rrulestr
+def test_byeaster_out_of_range():
+    with pytest.raises(ValueError):
+        rrulestr("RRULE:FREQ=DAILY;COUNT=1;BYEASTER=-367")
+
+
+@pytest.mark.rrule
+def test_byweekno_out_of_range():
+    with pytest.raises(ValueError):
+        rrule(freq=WEEKLY, count=1, byweekno=54)
+
+
+@pytest.mark.rrule
+def test_byweekday_out_of_range():
+    with pytest.raises(ValueError):
+        rrule(freq=DAILY, count=3, byweekday=(0,7), bymonthday=1)
+
+
+@pytest.mark.rrule
+def test_byhour_out_of_range():
+    with pytest.raises(ValueError):
+        rrule(freq=SECONDLY, count=3, byhour=24, byminute=59, bysecond=59)
+
+
+@pytest.mark.rrule
+def test_byminute_out_of_range():
+    with pytest.raises(ValueError):
+        rrule(freq=MINUTELY, count=2, byhour=(0,1,2,3), byminute=(0,15,30,45,60))
+
+
+@pytest.mark.rrule
+def test_bysecond_out_of_range():
+    with pytest.raises(ValueError):
+        rrule(freq=HOURLY, count=3, bysecond=61)
+
+
+@pytest.mark.rrule
+def test_multiple_out_of_range():
+    with pytest.raises(ValueError):
+        rrule(freq=SECONDLY, count=3, byhour=24, byminute=61, bysecond=-1)
+
+
 @pytest.mark.rruleset
 class RRuleSetTest(unittest.TestCase):
     def testSet(self):
