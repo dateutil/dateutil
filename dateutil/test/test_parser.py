@@ -97,6 +97,8 @@ PARSER_TEST_CASES = [
     ('13NOV2017', datetime(2017, 11, 13), "dBY (See GH360)"),
     ('0003-03-04', datetime(3, 3, 4), "pre 12 year same month (See GH PR #293)"),
     ('December.0031.30', datetime(31, 12, 30), "BYd corner case (GH#687)"),
+    ("0031 Nov 03", datetime(31, 11, 3), "first century (GH#883)"),
+    ("0031Nov03", datetime(31, 11, 3), "first century, no spaces (GH#883)"),
 
     # Cases with legacy h/m/s format, candidates for deprecation (GH#886)
     ("2016-12-21 04.2h", datetime(2016, 12, 21, 4, 12), "Fractional Hours"),
@@ -787,12 +789,6 @@ class TestParseUnimplementedCases(object):
         res = parse(dstr)
         assert res == expected, (res, expected)
 
-    @pytest.mark.xfail
-    def test_first_century(self):
-        dstr = '0031 Nov 03'
-        expected = datetime(31, 11, 3)
-        res = parse(dstr)
-        assert res == expected, res
 
     @pytest.mark.xfail
     def test_era_trailing_year_with_dots(self):

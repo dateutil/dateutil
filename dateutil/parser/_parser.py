@@ -565,6 +565,53 @@ class _ymd(list):
         return year, month, day
 
 
+def _next_jump(tokens, idx, skip_comma=True):
+    """
+    Get the next sibling and its index, skipping over whitespace
+    and (if specified) commas.
+
+    :param tokens:
+        list of strings
+
+    :param idx:
+        integer index for a single token among tokens.
+
+    :param skip_comma:
+        bool describing whether commas should be "jumped" in addition
+        to whitespace.  Default True.
+
+    :return:
+        A tuple (sib, sib_idx) of the sibling found and the index at which
+        it was found.  If no sibling is found, (None, None) is returned.
+
+    .. doctest::
+        >>> tokens = ['Dec', ' ', '30', ',', ' ', '2016']
+        >>> _next_jump(tokens, 0)
+        ('30', 2)
+        >>> _next_jump(tokens, 2)
+        ('2016', 5)
+        >>> _next_jump(tokens, 2, skip_comma=False)
+        (',', 3)
+        >>> _next_jump(tokens, 5)
+        (None, None)
+    """
+    if idx == len(tokens) - 1:
+        (sib, sib_idx) = (None, None)
+    else:
+        sib_idx = idx + 1
+        sib = tokens[sib_idx]
+        if sib.isspace():
+            (sib, sib_idx) = _next_jump(tokens, idx + 1)
+        elif (skip_comma and sib == ',' and idx + 3 < len(tokens) and
+              tokens[idx + 2].isspace()):
+            # e.g. if tokens[idx] is the "30" in "Dec 30, 2016" we want to
+            #  return the "2016"
+            sib_idx = idx + 3
+            sib = tokens[sib_idx]
+
+    return sib, sib_idx
+
+
 class parser(object):
     def __init__(self, info=None):
         self.info = info or parserinfo()
@@ -977,6 +1024,15 @@ class parser(object):
 
                 idx += 1
             idx += 1
+
+        elif (not ymd.has_year and len_li == 4 and
+              info.month(_next_jump(tokens, idx)[0] or '')):
+            # e.g. this is the "0003" in "0003 Nov 06"
+            # unambiguous year, use value_repr instead of value to avoid
+            #  dropping leading zeros, e.g. "0031" represents 31 AD,
+            #  not 2031
+            # Note: this check must come before the check for info.jump below
+            ymd.append(value_repr, 'Y')
 
         elif idx + 1 >= len_l or info.jump(tokens[idx + 1]):
             if idx + 2 < len_l and info.ampm(tokens[idx + 2]) is not None:
