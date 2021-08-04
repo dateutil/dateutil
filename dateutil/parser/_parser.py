@@ -809,40 +809,7 @@ class parser(object):
 
                 # Check for a numbered timezone
                 elif res.hour is not None and l[i] in ('+', '-'):
-                    signal = (-1, 1)[l[i] == '+']
-                    len_li = len(l[i + 1])
-
-                    # TODO: check that l[i + 1] is integer?
-                    if len_li == 4:
-                        # -0300
-                        hour_offset = int(l[i + 1][:2])
-                        min_offset = int(l[i + 1][2:])
-                    elif i + 2 < len_l and l[i + 2] == ':':
-                        # -03:00
-                        hour_offset = int(l[i + 1])
-                        min_offset = int(l[i + 3])  # TODO: Check that l[i+3] is minute-like?
-                        i += 2
-                    elif len_li <= 2:
-                        # -[0]3
-                        hour_offset = int(l[i + 1][:2])
-                        min_offset = 0
-                    else:
-                        raise ValueError(timestr)
-
-                    res.tzoffset = signal * (hour_offset * 3600 + min_offset * 60)
-
-                    # Look for a timezone name between parenthesis
-                    if (i + 5 < len_l and
-                            info.jump(l[i + 2]) and l[i + 3] == '(' and
-                            l[i + 5] == ')' and
-                            3 <= len(l[i + 4]) and
-                            self._could_be_tzname(res.hour, res.tzname,
-                                                  None, l[i + 4])):
-                        # -0300 (BRST)
-                        res.tzname = l[i + 4]
-                        i += 4
-
-                    i += 1
+                    i = self._parse_numbered_tz(l, i, res, info)
 
                 # Check jumps
                 elif not (info.jump(l[i]) or fuzzy):
@@ -1060,6 +1027,45 @@ class parser(object):
                 len(token) <= 5 and
                 (all(x in string.ascii_uppercase for x in token)
                  or token in self.info.UTCZONE))
+
+    def _parse_numbered_tz(self, tokens, idx, res, info):
+        signal = (-1, 1)[tokens[idx] == '+']
+        len_li = len(tokens[idx + 1])
+
+        # TODO: check that l[i + 1] is integer?
+        if len_li == 4:
+            # -0300
+            hour_offset = int(tokens[idx + 1][:2])
+            min_offset = int(tokens[idx + 1][2:])
+        elif idx + 2 < len(tokens) and tokens[idx + 2] == ':':
+            # -03:00
+            hour_offset = int(tokens[idx + 1])
+            # TODO: Check that tokens[idx + 3] is minute-like?
+            min_offset = int(tokens[idx + 3])
+            idx += 2
+        elif len_li <= 2:
+            # -[0]3
+            hour_offset = int(tokens[idx + 1][:2])
+            min_offset = 0
+        else:
+            timestr = ''.join(tokens)
+            raise ValueError(timestr)
+
+        res.tzoffset = signal * (hour_offset * 3600 + min_offset * 60)
+
+        # Look for a timezone name between parenthesis
+        if (idx + 5 < len(tokens) and
+                info.jump(tokens[idx + 2]) and tokens[idx + 3] == '(' and
+                tokens[idx + 5] == ')' and
+                3 <= len(tokens[idx + 4]) and
+                self._could_be_tzname(res.hour, res.tzname,
+                                      None, tokens[idx + 4])):
+            # -0300 (BRST)
+            res.tzname = tokens[idx + 4]
+            idx += 4
+
+        idx += 1
+        return idx
 
     def _ampm_valid(self, hour, ampm, fuzzy):
         """
