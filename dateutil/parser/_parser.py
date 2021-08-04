@@ -1133,7 +1133,7 @@ class parser(object):
     def _parsems(self, value):
         """Parse a I[.F] seconds value into (seconds, microseconds)."""
         if "." not in value:
-            return int(value), 0
+            return int(value), None
         else:
             i, f = value.split(".")
             return int(i), int(f.ljust(6, "0")[:6])

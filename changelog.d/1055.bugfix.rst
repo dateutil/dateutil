@@ -1,0 +1,2 @@
+Fixed parser result not using the microseconds of the supplied default
+datetime if the parsed date string contained seconds. (gh issue #1032, pr #1055)
