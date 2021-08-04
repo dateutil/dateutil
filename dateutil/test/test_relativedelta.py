@@ -20,7 +20,7 @@ class RelativeDeltaTest(unittest.TestCase):
         class rdChildClass(relativedelta):
             pass
 
-        ccRD = rdChildClass(years=1, months=1, days=1, leapdays=1, weeks=1,
+        ccRD = rdChildClass(years=5, months=5, days=1, leapdays=1, weeks=1,
                             hours=1, minutes=1, seconds=1, microseconds=1)
 
         rd = relativedelta(years=1, months=1, days=1, leapdays=1, weeks=1,
@@ -274,12 +274,40 @@ class RelativeDeltaTest(unittest.TestCase):
         self.assertEqual(datetime(2000, 1, 1) + 28 * relativedelta(days=1),
                          datetime(2000, 1, 29))
 
+        self.assertEqual(relativedelta(hours=2) * 3, relativedelta(hours=6))
+        self.assertEqual(relativedelta(hours=2) * 1.5, relativedelta(hours=3))
+        self.assertEqual(relativedelta(hours=2.5) * 2, relativedelta(hours=5))
+        self.assertEqual(relativedelta(hours=2) * 1.2,
+                         relativedelta(hours=2.4))
+
+    def testMultiplicationFractionalYear(self):
+        with self.assertRaises(ValueError):
+            relativedelta(years=1) * 1.5
+
+    def testMultiplicationFractionalMonth(self):
+        with self.assertRaises(ValueError):
+            relativedelta(months=1) * 1.5
+
     def testMultiplicationUnsupportedType(self):
         self.assertIs(relativedelta(days=1) * NotAValue, NotAValue)
 
     def testDivision(self):
         self.assertEqual(datetime(2000, 1, 1) + relativedelta(days=28) / 28,
                          datetime(2000, 1, 2))
+
+        self.assertEqual(relativedelta(hours=2) / 2, relativedelta(hours=1))
+        self.assertEqual(relativedelta(hours=15) / 1.5, relativedelta(hours=10))
+        self.assertEqual(relativedelta(hours=4.5) / 1.5, relativedelta(hours=3))
+        self.assertEqual(relativedelta(hours=1.2) / 0.5,
+                         relativedelta(hours=2.4))
+
+    def testDivisionFractionalYear(self):
+        with self.assertRaises(ValueError):
+            relativedelta(years=1) / 1.5
+
+    def testDivisionFractionalMonth(self):
+        with self.assertRaises(ValueError):
+            relativedelta(months=1) / 1.5
 
     def testDivisionUnsupportedType(self):
         self.assertIs(relativedelta(days=1) / NotAValue, NotAValue)
