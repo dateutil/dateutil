@@ -31,6 +31,7 @@ switch, and thus all their contributions are dual-licensed.
 - Brandon W Maister <quodlibetor@MASKED>
 - Brock Mendel <jbrockmendel@MASKED> (gh: @jbrockmendel) **R**
 - Brook Li (gh: @absreim) **D**
+- Brooklyn Rose Ludlow (gh: @brookcub) **D**
 - Carlos <carlosxl@MASKED>
 - Cheuk Ting Ho <cheukting.ho@gmail.com> (gh: @cheukting) **D**
 - Chris van den Berg (gh: bergvca) **D**
