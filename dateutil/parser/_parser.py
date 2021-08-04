@@ -232,10 +232,24 @@ class _resultbase(object):
 
     def __len__(self):
         return (sum(getattr(self, attr) is not None
-                    for attr in self.__slots__))
+                    for attr in self.__slots__ if attr != "_defaults"))
 
     def __repr__(self):
         return self._repr(self.__class__.__name__)
+
+
+class ParseResult(_resultbase):
+    __slots__ = ["year", "month", "day", "weekday",
+                 "hour", "minute", "second", "microsecond",
+                 "tzname", "tzoffset", "ampm", "any_unused_tokens",
+                 "_defaults"]
+
+    def __init__(self):
+        super(ParseResult, self).__init__()
+        # _defaults describe which fields were filled with default values
+        # as opposed to found in the parsed string.
+        self._defaults = set(["year", "month", "day",
+                              "hour", "minute", "second", "microsecond"])
 
 
 class parserinfo(object):
@@ -566,6 +580,9 @@ class _ymd(list):
 
 
 class parser(object):
+    # _result is a class attribute to facilitate overriding in subclasses
+    _result = ParseResult
+
     def __init__(self, info=None):
         self.info = info or parserinfo()
 
@@ -657,11 +674,6 @@ class parser(object):
             return ret, skipped_tokens
         else:
             return ret
-
-    class _result(_resultbase):
-        __slots__ = ["year", "month", "day", "weekday",
-                     "hour", "minute", "second", "microsecond",
-                     "tzname", "tzoffset", "ampm","any_unused_tokens"]
 
     def _parse(self, timestr, dayfirst=None, yearfirst=None, fuzzy=False,
                fuzzy_with_tokens=False):
@@ -1221,6 +1233,8 @@ class parser(object):
             value = getattr(res, attr)
             if value is not None:
                 repl[attr] = value
+                # TODO: is this the best place to remove these from _defaults?
+                res._defaults.remove(attr)
 
         if 'day' not in repl:
             # If the default day exceeds the last day of the month, fall back
