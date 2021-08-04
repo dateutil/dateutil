@@ -1,0 +1,10 @@
+Added unittests that tests for the edge case where a timezone file is loaded having all ``ttinfo``
+entries with an ``isdst`` byte set to 1.
+
+The tests check two things:
+
+- The tzfile's ``_ttinfo_std`` becomes the same as its ``_ttinfo_dst``. This has an effect on the
+``utcoffset`` function which returns a timedelta of 0 when there is no ``_ttinfo_std``.
+- The tzfile's ``_ttinfo_before`` becomes the same as its first dst ttinfo entry if there are no std
+entries. This has an effect on the ``dst`` function which returns the timedelta of the first ttinfo
+if the input time is before all transitions.
