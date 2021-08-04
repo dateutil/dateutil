@@ -69,7 +69,7 @@ set -e
 mv $TARBALL_NAME $ORIG_DIR
 
 # Install everything else
-make ZFLAGS='-b fat' TOPDIR="$TMP_DIR/tzdir" install
+make TOPDIR="$TMP_DIR/tzdir" install
 
 #
 # Make the zoneinfo tarball
@@ -94,4 +94,3 @@ python ${REPO_DIR}/updatezinfo.py $ZONEFILE_METADATA_NAME
 
 # Run the tests
 python -m pytest ${REPO_DIR}/dateutil/test $EXTRA_TEST_ARGS
-
