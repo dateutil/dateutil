@@ -15,6 +15,7 @@ switch, and thus all their contributions are dual-licensed.
 - Adrien Cossa <cossa@MASKED>
 - Alec Nikolas Reiter <alecreiter@MASKED>
 - Alec Reiter <areiter@MASKED>
+- Aleksei Strizhak <alexei.mifrill.strizhak@MASKED> (gh: @Mifrill)
 - Alex Chamberlain (gh: @alexchamberlain) **D**
 - Alex Verdyan <verdyan@MASKED>
 - Alex Willmer <alex@moreati.org.uk> (gh: @moreati) **R**
