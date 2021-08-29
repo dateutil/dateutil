@@ -650,6 +650,11 @@ class RelativeDeltaTest(unittest.TestCase):
         except:
             self.fail("relativedelta() failed to hash!")
 
+    def testLastDayOfMonthPlus(self):
+        self.assertEqual(date(2021, 2, 28) + relativedelta(months=1), date(2021, 3, 31))
+        self.assertEqual(date(2021, 4, 30) + relativedelta(months=1), date(2021, 5, 31))
+        self.assertEqual(date(2021, 5, 31) + relativedelta(months=1), date(2021, 6, 30))
+
 
 class RelativeDeltaWeeksPropertyGetterTest(unittest.TestCase):
     """Test the weeks property getter"""
