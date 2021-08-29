@@ -48,7 +48,7 @@ class relativedelta(object):
             the corresponding arithmetic operation on the original datetime value
             with the information in the relativedelta.
 
-        weekday: 
+        weekday:
             One of the weekday instances (MO, TU, etc) available in the
             relativedelta module. These instances may receive a parameter N,
             specifying the Nth weekday, which could be positive or negative
@@ -374,8 +374,12 @@ class relativedelta(object):
             elif month < 1:
                 year -= 1
                 month += 12
-        day = min(calendar.monthrange(year, month)[1],
-                  self.day or other.day)
+        monthlastday = calendar.monthrange(year, month)[1]
+        if other.month and other.day == calendar.monthrange(year, other.month)[1]:
+            day = monthlastday
+        else:
+            day = min(monthlastday, self.day or other.day)
+
         repl = {"year": year, "month": month, "day": day}
         for attr in ["hour", "minute", "second", "microsecond"]:
             value = getattr(self, attr)
