@@ -650,11 +650,28 @@ class RelativeDeltaTest(unittest.TestCase):
         except:
             self.fail("relativedelta() failed to hash!")
 
+    def testDayOfMonthPlus(self):
+        self.assertEqual(date(2021, 1, 28) + relativedelta(months=1), date(2021, 2, 28))
+        self.assertEqual(date(2021, 2, 27) + relativedelta(months=1), date(2021, 3, 27))
+        self.assertEqual(date(2021, 4, 29) + relativedelta(months=1), date(2021, 5, 29))
+        self.assertEqual(date(2021, 5, 30) + relativedelta(months=1), date(2021, 6, 30))
+
     def testLastDayOfMonthPlus(self):
         self.assertEqual(date(2021, 1, 31) + relativedelta(months=1), date(2021, 2, 28))
+        self.assertEqual(date(2021, 1, 30) + relativedelta(months=1), date(2021, 2, 28))
+        self.assertEqual(date(2021, 1, 29) + relativedelta(months=1), date(2021, 2, 28))
+        self.assertEqual(date(2021, 1, 28) + relativedelta(months=1), date(2021, 2, 28))
         self.assertEqual(date(2021, 2, 28) + relativedelta(months=1), date(2021, 3, 31))
         self.assertEqual(date(2021, 4, 30) + relativedelta(months=1), date(2021, 5, 31))
         self.assertEqual(date(2021, 5, 31) + relativedelta(months=1), date(2021, 6, 30))
+
+    def testDayOfMonthMinus(self):
+        self.assertEqual(date(2021, 2, 27) - relativedelta(months=1), date(2021, 1, 27))
+        self.assertEqual(date(2021, 3, 30) - relativedelta(months=1), date(2021, 2, 28))
+        self.assertEqual(date(2021, 3, 29) - relativedelta(months=1), date(2021, 2, 28))
+        self.assertEqual(date(2021, 3, 28) - relativedelta(months=1), date(2021, 2, 28))
+        self.assertEqual(date(2021, 5, 30) - relativedelta(months=1), date(2021, 4, 30))
+        self.assertEqual(date(2021, 6, 29) - relativedelta(months=1), date(2021, 5, 29))
 
     def testLastDayOfMonthMinus(self):
         self.assertEqual(date(2021, 2, 28) - relativedelta(months=1), date(2021, 1, 31))
