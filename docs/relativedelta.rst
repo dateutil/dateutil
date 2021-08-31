@@ -91,6 +91,18 @@ boundary.
 
 The logic for years is the same, even on leap years.
 
+Note about last day month:
+
+The "move up to last day of month" is only supposed to happen if
+"same day on a different month" resolves to a date that doesn't exist.
+
+.. doctest::
+
+    >>> date(2003,1,30)+relativedelta(months=+1)
+    datetime.date(2003, 2, 28)
+    >>> date(2003,5,31)+relativedelta(months=-1)
+    datetime.date(2003, 4, 30)
+
 .. doctest:: relativedelta
 
     >>> date(2000,2,28)+relativedelta(years=+1)
