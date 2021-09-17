@@ -179,6 +179,22 @@ class tzfile(_tzinfo):
 
         self._key = key
 
+    @property
+    def key(self):
+        """
+        Read-only attribute returning the ``key`` constructor argument.
+
+        For zones generated from :func:`gettz`, this will be the IANA key
+        passed to ``gettz`` — no normalization is done, so although in most
+        distributions of the time zone database "US/Eastern" is a link to
+        "America/New_York", ``tz.gettz("US/Eastern").key`` should always return
+        ``"US/Eastern"``.
+
+        For zones constructed via another mechanism without specifying ``key``,
+        this returns :obj:`None`.
+        """
+        return self._key
+
     def is_ambiguous(self, dt):
         """
         Whether or not the "wall time" of a given datetime is ambiguous in this

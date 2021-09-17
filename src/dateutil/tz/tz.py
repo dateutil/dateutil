@@ -1095,7 +1095,7 @@ def __get_gettz():
                             if not os.path.isfile(filepath):
                                 continue
                         try:
-                            tz = tzfile(filepath)
+                            tz = tzfile(filepath, key=name)
                             break
                         except (IOError, OSError, ValueError):
                             pass
