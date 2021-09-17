@@ -1078,6 +1078,11 @@ class GettzTest(unittest.TestCase, TzFoldMixin):
 
         assert local1 is not local2
 
+    def test_key_attribute(self):
+        # Also tested more thoroughly in the property tests.
+        NYC = tz.gettz("America/New_York")
+        assert NYC.key == "America/New_York"
+
 
 @pytest.mark.gettz
 def test_gettz_same_result_for_none_and_empty_string():

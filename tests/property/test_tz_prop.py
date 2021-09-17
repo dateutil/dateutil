@@ -12,6 +12,14 @@ NEGATIVE_EPOCHALYPSE = datetime.fromtimestamp(0) - timedelta(seconds=2147483648)
 
 
 @pytest.mark.gettz
+@given(key=st.timezone_keys(allow_prefix=True))
+def test_key_property(key):
+    tzi = tz.gettz(key)
+    assume(isinstance(tzi, tz.tzfile))
+    assert tzi.key == key
+
+
+@pytest.mark.gettz
 @pytest.mark.parametrize("gettz_arg", [None, ""])
 # TODO: Remove bounds when GH #590 is resolved
 @given(
