@@ -1060,11 +1060,11 @@ def __get_gettz():
                         filename = filepath
                         for path in TZPATHS:
                             filepath = os.path.join(path, filename)
-                            if os.path.isfile(filepath):
+                            if _isfile(filepath):
                                 break
                         else:
                             continue
-                    if os.path.isfile(filepath):
+                    if _isfile(filepath):
                         try:
                             tz = tzfile(filepath)
                             break
@@ -1083,16 +1083,16 @@ def __get_gettz():
                     else:
                         raise
                 if os.path.isabs(name):
-                    if os.path.isfile(name):
+                    if _isfile(name):
                         tz = tzfile(name)
                     else:
                         tz = None
                 else:
                     for path in TZPATHS:
                         filepath = os.path.join(path, name)
-                        if not os.path.isfile(filepath):
+                        if not _isfile(filepath):
                             filepath = filepath.replace(' ', '_')
-                            if not os.path.isfile(filepath):
+                            if not _isfile(filepath):
                                 continue
                         try:
                             tz = tzfile(filepath, key=name)
@@ -1284,6 +1284,20 @@ else:
         old_offset = second_offset
         calculated_offset = 60 * ((second_offset + 30) // 60)
         return calculated_offset
+
+
+if sys.version_info < (3, 8):
+
+    def _isfile(path):
+        # bpo-33721: In Python 3.8 non-UTF8 paths return False rather than
+        # raising an error. See https://bugs.python.org/issue33721
+        try:
+            return os.path.isfile(path)
+        except ValueError:
+            return False
+
+else:
+    _isfile = os.path.isfile
 
 
 try:
