@@ -91,10 +91,7 @@ boundary.
 
 The logic for years is the same, even on leap years.
 
-Note about last day month:
-
-The "move up to last day of month" is only supposed to happen if
-"same day on a different month" resolves to a date that doesn't exist.
+If the result falls on a day after the last one of the month, the last day of the month is used instead.
 
 .. doctest::
 
