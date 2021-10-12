@@ -91,6 +91,15 @@ boundary.
 
 The logic for years is the same, even on leap years.
 
+If the result falls on a day after the last one of the month, the last day of the month is used instead.
+
+.. doctest::
+
+    >>> date(2003,1,30)+relativedelta(months=+1)
+    datetime.date(2003, 2, 28)
+    >>> date(2003,5,31)+relativedelta(months=-1)
+    datetime.date(2003, 4, 30)
+
 .. doctest:: relativedelta
 
     >>> date(2000,2,28)+relativedelta(years=+1)
