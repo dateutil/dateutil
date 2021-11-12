@@ -11,6 +11,8 @@ Functions
 
 .. automethod:: dateutil.parser.isoparse
 
+.. automethod:: dateutil.parser.ChainParser
+
 
 Classes
 -------
@@ -26,4 +28,3 @@ Warnings and Exceptions
 .. autoclass:: dateutil.parser.ParserError
 
 .. autoclass:: dateutil.parser.UnknownTimezoneWarning
-
