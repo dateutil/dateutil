@@ -218,6 +218,8 @@ class _timelex(object):
 
 class _resultbase(object):
 
+    __slots__ = ()
+
     def __init__(self):
         for attr in self.__slots__:
             setattr(self, attr, None)
