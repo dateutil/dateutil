@@ -644,7 +644,7 @@ class parser(object):
         if res is None:
             raise ParserError("Unknown string format: %s", timestr)
 
-        if len(res) == 0:
+        if len(res) == 1 and res.century_specified is False:
             raise ParserError("String does not contain a date: %s", timestr)
 
         try:
