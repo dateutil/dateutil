@@ -39,9 +39,6 @@ import warnings
 from calendar import monthrange
 from io import StringIO
 
-import six
-from six import integer_types, text_type
-
 from decimal import Decimal
 
 from warnings import warn
@@ -63,7 +60,7 @@ class _timelex(object):
         if isinstance(instream, (bytes, bytearray)):
             instream = instream.decode()
 
-        if isinstance(instream, text_type):
+        if isinstance(instream, str):
             instream = StringIO(instream)
         elif getattr(instream, 'read', None) is None:
             raise TypeError('Parser must be a string or character stream, not '
@@ -648,7 +645,7 @@ class parser(object):
         try:
             ret = self._build_naive(res, default)
         except ValueError as e:
-            six.raise_from(ParserError(str(e) + ": %s", timestr), e)
+            raise ParserError(str(e) + ": %s", timestr) from e
 
         if not ignoretz:
             ret = self._build_tzaware(ret, res, tzinfos)
@@ -878,7 +875,7 @@ class parser(object):
         try:
             value = self._to_decimal(value_repr)
         except Exception as e:
-            six.raise_from(ValueError('Unknown numeric token'), e)
+            raise ValueError('Unknown numeric token') from e
 
         len_li = len(value_repr)
 
@@ -1147,7 +1144,7 @@ class parser(object):
                 raise ValueError("Converted decimal value is infinite or NaN")
         except Exception as e:
             msg = "Could not convert %s to decimal" % val
-            six.raise_from(ValueError(msg), e)
+            raise ValueError(msg) from e
         else:
             return decimal_value
 
@@ -1165,9 +1162,9 @@ class parser(object):
         # eg tzinfos = {'BRST' : None}
         if isinstance(tzdata, datetime.tzinfo) or tzdata is None:
             tzinfo = tzdata
-        elif isinstance(tzdata, text_type):
+        elif isinstance(tzdata, str):
             tzinfo = tz.tzstr(tzdata)
-        elif isinstance(tzdata, integer_types):
+        elif isinstance(tzdata, int):
             tzinfo = tz.tzoffset(tzname, tzdata)
         else:
             raise TypeError("Offset must be tzinfo subclass, tz string, "

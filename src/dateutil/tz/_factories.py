@@ -2,7 +2,7 @@ from datetime import timedelta
 import weakref
 from collections import OrderedDict
 
-from six.moves import _thread
+import _thread
 
 
 class _TzSingleton(type):
