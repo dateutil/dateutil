@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 import datetime
 import calendar
-
 import operator
 from math import copysign
+import re
 
 from six import integer_types
 from warnings import warn
@@ -591,6 +591,36 @@ class relativedelta(object):
                 l.append("{attr}={value}".format(attr=attr, value=repr(value)))
         return "{classname}({attrs})".format(classname=self.__class__.__name__,
                                              attrs=", ".join(l))
+
+
+# https://en.wikipedia.org/wiki/ISO_8601#Durations
+ISO8601_PATT = r"""
+P   # all ISO8601 interval strings start with P (required)
+((?P<years>[-\d]{1,5})Y)?  # match 1-4 digits for year, with 1 optional place for a negative sign
+((?P<months>[-\d]{1,3})M)? # match 1-2 digits for month, with 1 optional place for a negative sign
+((?P<days>[-\d]{1,3})D)?   # match 1-2 digits for day, with 1 optional place for a negative sign
+(
+    T   # time field separator
+    ((?P<hours>[-\d]{1,3})H)?  # match 1-2 digits for hour, with 1 optional place for a negative sign
+    ((?P<minutes>[-\d]{1,3})M)?    # match 1-2 digits for minute, with 1 optional place for a negative sign
+    ((?P<seconds>[-\d]{1,3})S)?    # match 1-2 digits for seconds, with 1 optional place for a negative sign
+)?
+"""
+ISO8601_RE = re.compile(ISO8601_PATT, re.VERBOSE)
+
+
+def from_iso8601(raw):
+    """
+    Parse an ISO8601 formatted duration into a relativedelta instance
+
+    https://en.wikipedia.org/wiki/ISO_8601#Durations
+    https://dateutil.readthedocs.io/en/stable/relativedelta.html
+    """
+    rd_kwargs = dict(years=0, months=0, weeks=0, days=0, hours=0, minutes=0, seconds=0)
+    matches = re.search(ISO8601_RE, raw)
+    if matches:
+        rd_kwargs.update({field: int(value or 0) for field, value in matches.groupdict().items()})
+    return relativedelta(**rd_kwargs)
 
 
 def _sign(x):
