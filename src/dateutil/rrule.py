@@ -268,7 +268,7 @@ class rrulebase(object):
 
                 yield d
 
-    def between(self, after, before, inc=False, count=1):
+    def between(self, after, before, inc=False):
         """ Returns all the occurrences of the rrule between after and before.
         The inc keyword defines what happens if after and/or before are
         themselves occurrences. With inc=True, they will be included in the
