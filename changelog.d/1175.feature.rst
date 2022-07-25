@@ -1,0 +1,2 @@
+Added support for milliseconds in relativedelta.
+Reported by @isVoid. Fixed by @stereodamage. (gh issue #1175, gh pr #1226)
