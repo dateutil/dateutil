@@ -7,14 +7,14 @@ ISO-8601 specification.
 
 ..versionadded:: 2.7.0
 """
-from datetime import datetime, timedelta, time, date
 import calendar
-from dateutil import tz
-
+import re
+from datetime import date, datetime, time, timedelta
 from functools import wraps
 
-import re
 import six
+
+from dateutil import tz
 
 __all__ = ["isoparse", "isoparser"]
 
@@ -39,7 +39,7 @@ def _takes_ascii(f):
     return func
 
 
-class isoparser(object):
+class isoparser():
     def __init__(self, sep=None):
         """
         :param sep:
@@ -236,8 +236,7 @@ class isoparser(object):
         if pos >= len_str:
             if has_sep:
                 return components, pos
-            else:
-                raise ValueError('Invalid ISO format')
+            raise ValueError('Invalid ISO format')
 
         if has_sep:
             if dt_str[pos:pos + 1] != self._DATE_SEP:
@@ -402,14 +401,13 @@ class isoparser(object):
 
         if zero_as_utc and hours == 0 and minutes == 0:
             return tz.UTC
-        else:
-            if minutes > 59:
-                raise ValueError('Invalid minutes in time zone offset')
+        if minutes > 59:
+            raise ValueError('Invalid minutes in time zone offset')
 
-            if hours > 23:
-                raise ValueError('Invalid hours in time zone offset')
+        if hours > 23:
+            raise ValueError('Invalid hours in time zone offset')
 
-            return tz.tzoffset(None, mult * (hours * 60 + minutes) * 60)
+        return tz.tzoffset(None, mult * (hours * 60 + minutes) * 60)
 
 
 DEFAULT_ISOPARSER = isoparser()

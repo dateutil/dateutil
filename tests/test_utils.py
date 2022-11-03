@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-from datetime import timedelta, datetime
 
-from dateutil import tz
-from dateutil import utils
-from dateutil.tz import UTC
-from dateutil.utils import within_delta
+from datetime import datetime, timedelta
 
 from freezegun import freeze_time
+
+from dateutil import tz, utils
+from dateutil.tz import UTC
+from dateutil.utils import within_delta
 
 NYC = tz.gettz("America/New_York")
 

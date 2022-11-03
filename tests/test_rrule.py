@@ -1,21 +1,17 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from datetime import datetime, date
 import unittest
+from datetime import date, datetime
+
+import pytest
+from freezegun import freeze_time
 from six import PY2
 
 from dateutil import tz
-from dateutil.rrule import (
-    rrule, rruleset, rrulestr,
-    YEARLY, MONTHLY, WEEKLY, DAILY,
-    HOURLY, MINUTELY, SECONDLY,
-    MO, TU, WE, TH, FR, SA, SU
-)
-
-from freezegun import freeze_time
-
-import pytest
+from dateutil.rrule import (DAILY, FR, HOURLY, MINUTELY, MO, MONTHLY, SA,
+                            SECONDLY, SU, TH, TU, WE, WEEKLY, YEARLY, rrule,
+                            rruleset, rrulestr)
 
 
 @pytest.mark.rrule
@@ -2615,7 +2611,8 @@ class RRuleTest(unittest.TestCase):
     def testCachePost(self):
         rr = rrule(DAILY, count=15, cache=True,
                    dtstart=datetime(1997, 9, 2, 9, 0))
-        for x in rr: pass
+        for x in rr:
+            pass
         self.assertEqual(list(rr),
                          [datetime(1997, 9, 2, 9, 0),
                           datetime(1997, 9, 3, 9, 0),
@@ -2636,7 +2633,8 @@ class RRuleTest(unittest.TestCase):
     def testCachePostInternal(self):
         rr = rrule(DAILY, count=15, cache=True,
                    dtstart=datetime(1997, 9, 2, 9, 0))
-        for x in rr: pass
+        for x in rr:
+            pass
         self.assertEqual(rr._cache,
                          [datetime(1997, 9, 2, 9, 0),
                           datetime(1997, 9, 3, 9, 0),
@@ -2662,7 +2660,8 @@ class RRuleTest(unittest.TestCase):
     def testCachePostContains(self):
         rr = rrule(DAILY, count=3, cache=True,
                    dtstart=datetime(1997, 9, 2, 9, 0))
-        for x in rr: pass
+        for x in rr:
+            pass
         self.assertEqual(datetime(1997, 9, 3, 9, 0) in rr, True)
 
     def testStr(self):
@@ -4753,7 +4752,8 @@ class RRuleSetTest(unittest.TestCase):
                           dtstart=datetime(1997, 9, 2, 9, 0)))
         rrset.rrule(rrule(YEARLY, count=1, byweekday=TH,
                           dtstart=datetime(1997, 9, 2, 9, 0)))
-        for x in rrset: pass
+        for x in rrset:
+            pass
         self.assertEqual(list(rrset),
                          [datetime(1997, 9, 2, 9, 0),
                           datetime(1997, 9, 4, 9, 0),
@@ -4765,7 +4765,8 @@ class RRuleSetTest(unittest.TestCase):
                           dtstart=datetime(1997, 9, 2, 9, 0)))
         rrset.rrule(rrule(YEARLY, count=1, byweekday=TH,
                           dtstart=datetime(1997, 9, 2, 9, 0)))
-        for x in rrset: pass
+        for x in rrset:
+            pass
         self.assertEqual(list(rrset._cache),
                          [datetime(1997, 9, 2, 9, 0),
                           datetime(1997, 9, 4, 9, 0),
@@ -4876,13 +4877,13 @@ class WeekdayTest(unittest.TestCase):
     def testWeekdayEqualitySubclass(self):
         # Two weekday objects equal if their "weekday" and "n" attributes are
         # available and the same
-        class BasicWeekday(object):
+        class BasicWeekday():
             def __init__(self, weekday):
                 self.weekday = weekday
 
         class BasicNWeekday(BasicWeekday):
             def __init__(self, weekday, n=None):
-                super(BasicNWeekday, self).__init__(weekday)
+                super().__init__(weekday)
                 self.n = n
 
         MO_Basic = BasicWeekday(0)

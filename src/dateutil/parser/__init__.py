@@ -1,11 +1,8 @@
 # -*- coding: utf-8 -*-
-from ._parser import parse, parser, parserinfo, ParserError
-from ._parser import DEFAULTPARSER, DEFAULTTZPARSER
-from ._parser import UnknownTimezoneWarning
-
-from ._parser import __doc__
-
-from .isoparser import isoparser, isoparse
+from ._parser import (DEFAULTPARSER, DEFAULTTZPARSER, ParserError,
+                      UnknownTimezoneWarning, __doc__, parse, parser,
+                      parserinfo)
+from .isoparser import isoparse, isoparser
 
 __all__ = ['parse', 'parser', 'parserinfo',
            'isoparse', 'isoparser',
@@ -19,8 +16,8 @@ __all__ = ['parse', 'parser', 'parserinfo',
 
 
 def __deprecated_private_func(f):
-    from functools import wraps
     import warnings
+    from functools import wraps
 
     msg = ('{name} is a private function and may break without warning, '
            'it will be moved and or renamed in future versions.')
@@ -45,15 +42,14 @@ def __deprecate_private_class(c):
 
         def __init__(self, *args, **kwargs):
             warnings.warn(msg, DeprecationWarning)
-            super(private_class, self).__init__(*args, **kwargs)
+            super().__init__(*args, **kwargs)
 
     private_class.__name__ = c.__name__
 
     return private_class
 
 
-from ._parser import _timelex, _resultbase
-from ._parser import _tzparser, _parsetz
+from ._parser import _parsetz, _resultbase, _timelex, _tzparser
 
 _timelex = __deprecate_private_class(_timelex)
 _tzparser = __deprecate_private_class(_tzparser)

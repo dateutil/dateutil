@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-from ._common import NotAValue
 
 import calendar
-from datetime import datetime, date, timedelta
 import unittest
+from datetime import date, datetime, timedelta
 
 import pytest
 
-from dateutil.relativedelta import relativedelta, MO, TU, WE, FR, SU
+from dateutil.relativedelta import FR, MO, SU, TU, WE, relativedelta
+
+from ._common import NotAValue
 
 
 class RelativeDeltaTest(unittest.TestCase):
@@ -647,7 +648,7 @@ class RelativeDeltaTest(unittest.TestCase):
     def testHashable(self):
         try:
             {relativedelta(minute=1): 'test'}
-        except:
+        except Exception:
             self.fail("relativedelta() failed to hash!")
 
     def testDayOfMonthPlus(self):

@@ -1,8 +1,8 @@
+import json
 import logging
 import os
-import tempfile
 import shutil
-import json
+import tempfile
 from subprocess import check_call, check_output
 from tarfile import TarFile
 

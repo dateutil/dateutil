@@ -58,4 +58,3 @@ if __name__ == "__main__":
 
     with open(args.out, 'w') as f:
         f.write(metadata_file_text)
-

@@ -1,11 +1,11 @@
 #!/usr/bin/env python
-import os
 import hashlib
-import json
 import io
+import json
+import os
 
-from six.moves.urllib import request
 from six.moves.urllib import error as urllib_error
+from six.moves.urllib import request
 
 try:
     import dateutil

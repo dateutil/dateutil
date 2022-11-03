@@ -57,8 +57,7 @@ def default_tzinfo(dt, tzinfo):
     """
     if dt.tzinfo is not None:
         return dt
-    else:
-        return dt.replace(tzinfo=tzinfo)
+    return dt.replace(tzinfo=tzinfo)
 
 
 def within_delta(dt1, dt2, delta):

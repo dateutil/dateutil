@@ -1,8 +1,9 @@
-from dateutil.easter import easter
-from dateutil.easter import EASTER_WESTERN, EASTER_ORTHODOX, EASTER_JULIAN
-
 from datetime import date
+
 import pytest
+
+from dateutil.easter import (EASTER_JULIAN, EASTER_ORTHODOX, EASTER_WESTERN,
+                             easter)
 
 # List of easters between 1990 and 2050
 western_easter_dates = [

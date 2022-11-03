@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from datetime import datetime, timedelta, date, time
 import itertools as it
-
-from dateutil import tz
-from dateutil.tz import UTC
-from dateutil.parser import isoparser, isoparse
+from datetime import date, datetime, time, timedelta
 
 import pytest
 import six
+
+from dateutil import tz
+from dateutil.parser import isoparse, isoparser
+from dateutil.tz import UTC
 
 
 def _generate_tzoffsets(limited):
@@ -80,10 +80,10 @@ def _isoparse_date_and_time(dt, date_fmt, time_fmt, tzoffset,
         if not fmt.endswith('%f'):  # pragma: nocover
             raise ValueError('Time format has no microseconds!')
 
-        if microsecond_precision != 6: 
+        if microsecond_precision != 6:
             dtstr = dtstr[:-(6 - microsecond_precision)]
         elif microsecond_precision > 6: # pragma: nocover
-            raise ValueError('Precision must be 1-6') 
+            raise ValueError('Precision must be 1-6')
 
     dtstr += offset_str
 
@@ -325,7 +325,7 @@ def test_parse_tzstr(tzoffset):
 def test_parse_tzstr_zero_as_utc(tzstr, zero_as_utc):
     tzi = isoparser().parse_tzstr(tzstr, zero_as_utc=zero_as_utc)
     assert tzi == UTC
-    assert (type(tzi) == tz.tzutc) == zero_as_utc
+    assert (isinstance(tzi, tz.tzutc)) == zero_as_utc
 
 
 @pytest.mark.parametrize('tzstr,exception', [

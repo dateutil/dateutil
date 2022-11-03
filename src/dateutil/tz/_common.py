@@ -1,9 +1,7 @@
-from six import PY2
-
+from datetime import datetime, timedelta, tzinfo
 from functools import wraps
 
-from datetime import datetime, timedelta, tzinfo
-
+from six import PY2
 
 ZERO = timedelta(0)
 
@@ -26,8 +24,7 @@ def tzname_in_python2(namefunc):
             return name
 
         return adjust_encoding
-    else:
-        return namefunc
+    return namefunc
 
 
 # The following is adapted from Alexander Belopolsky's tz library
@@ -125,8 +122,7 @@ else:
 
         if fold:
             return _DatetimeWithFold(*args)
-        else:
-            return datetime(*args)
+        return datetime(*args)
 
 
 def _validate_fromutc_inputs(f):
@@ -294,27 +290,24 @@ class tzrangebase(_tzinfo):
 
         if isdst is None:
             return None
-        elif isdst:
+        if isdst:
             return self._dst_offset
-        else:
-            return self._std_offset
+        return self._std_offset
 
     def dst(self, dt):
         isdst = self._isdst(dt)
 
         if isdst is None:
             return None
-        elif isdst:
+        if isdst:
             return self._dst_base_offset
-        else:
-            return ZERO
+        return ZERO
 
     @tzname_in_python2
     def tzname(self, dt):
         if self._isdst(dt):
             return self._dst_abbr
-        else:
-            return self._std_abbr
+        return self._std_abbr
 
     def fromutc(self, dt):
         """ Given a datetime in UTC, return local time """
@@ -369,12 +362,12 @@ class tzrangebase(_tzinfo):
         start, end = self.transitions(dt.year)
 
         dt = dt.replace(tzinfo=None)
-        return (end <= dt < end + self._dst_base_offset)
+        return end <= dt < end + self._dst_base_offset
 
     def _isdst(self, dt):
         if not self.hasdst:
             return False
-        elif dt is None:
+        if dt is None:
             return None
 
         transitions = self.transitions(dt.year)
@@ -389,8 +382,7 @@ class tzrangebase(_tzinfo):
         # Handle ambiguous dates
         if not isdst and self.is_ambiguous(dt):
             return not self._fold(dt)
-        else:
-            return isdst
+        return isdst
 
     def _naive_isdst(self, dt, transitions):
         dston, dstoff = transitions
@@ -411,7 +403,7 @@ class tzrangebase(_tzinfo):
     __hash__ = None
 
     def __ne__(self, other):
-        return not (self == other)
+        return not self == other
 
     def __repr__(self):
         return "%s(...)" % self.__class__.__name__

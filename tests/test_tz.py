@@ -1,41 +1,38 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-from ._common import PicklableMixin
-from ._common import TZEnvContext, TZWinContext
-from ._common import ComparesEqual
 
-from datetime import datetime, timedelta
-from datetime import time as dt_time
-from datetime import tzinfo
-from six import PY2
-from io import BytesIO, StringIO
-import unittest
-
-import sys
 import base64
 import copy
 import gc
+import sys
+import unittest
 import weakref
-
+from datetime import datetime
+from datetime import time as dt_time
+from datetime import timedelta, tzinfo
 from functools import partial
+from io import BytesIO, StringIO
+
+from six import PY2
+
+from ._common import ComparesEqual, PicklableMixin, TZEnvContext, TZWinContext
 
 IS_WIN = sys.platform.startswith('win')
 
 import pytest
 
-# dateutil imports
-from dateutil.relativedelta import relativedelta, SU, TH
-from dateutil.parser import parse
-from dateutil import tz as tz
+from dateutil import tz 
 from dateutil import zoneinfo
+from dateutil.parser import parse
+# dateutil imports
+from dateutil.relativedelta import SU, TH, relativedelta
 
 try:
     from dateutil import tzwin
 except ImportError as e:
     if IS_WIN:
         raise e
-    else:
-        pass
+    pass
 
 MISSING_TARBALL = ("This test fails if you don't have the dateutil "
                    "timezone file installed. Please read the README")
@@ -168,7 +165,7 @@ def get_timezone_tuple(dt):
 
 ###
 # Mix-ins
-class context_passthrough(object):
+class context_passthrough():
     def __init__(*args, **kwargs):
         pass
 
@@ -179,7 +176,7 @@ class context_passthrough(object):
         pass
 
 
-class TzFoldMixin(object):
+class TzFoldMixin():
     """ Mix-in class for testing ambiguous times """
     def gettz(self, tzname):
         raise NotImplementedError
@@ -235,27 +232,27 @@ class TzFoldMixin(object):
             self.assertEqual(t1.utcoffset(), timedelta(hours=11))
 
     def testFoldNegativeUTCOffset(self):
-            # Test that we can resolve ambiguous times
-            tzname = self._get_tzname('America/Toronto')
+        # Test that we can resolve ambiguous times
+        tzname = self._get_tzname('America/Toronto')
 
-            with self._gettz_context(tzname):
-                TOR = self.gettz(tzname)
+        with self._gettz_context(tzname):
+            TOR = self.gettz(tzname)
 
-                t0_u = datetime(2011, 11, 6, 5, 30, tzinfo=tz.UTC)
-                t1_u = datetime(2011, 11, 6, 6, 30, tzinfo=tz.UTC)
+            t0_u = datetime(2011, 11, 6, 5, 30, tzinfo=tz.UTC)
+            t1_u = datetime(2011, 11, 6, 6, 30, tzinfo=tz.UTC)
 
-                t0_tor = t0_u.astimezone(TOR)
-                t1_tor = t1_u.astimezone(TOR)
+            t0_tor = t0_u.astimezone(TOR)
+            t1_tor = t1_u.astimezone(TOR)
 
-                self.assertEqual(t0_tor.replace(tzinfo=None),
-                                 datetime(2011, 11, 6, 1, 30))
+            self.assertEqual(t0_tor.replace(tzinfo=None),
+                                datetime(2011, 11, 6, 1, 30))
 
-                self.assertEqual(t1_tor.replace(tzinfo=None),
-                                 datetime(2011, 11, 6, 1, 30))
+            self.assertEqual(t1_tor.replace(tzinfo=None),
+                                datetime(2011, 11, 6, 1, 30))
 
-                self.assertNotEqual(t0_tor.tzname(), t1_tor.tzname())
-                self.assertEqual(t0_tor.utcoffset(), timedelta(hours=-4.0))
-                self.assertEqual(t1_tor.utcoffset(), timedelta(hours=-5.0))
+            self.assertNotEqual(t0_tor.tzname(), t1_tor.tzname())
+            self.assertEqual(t0_tor.utcoffset(), timedelta(hours=-4.0))
+            self.assertEqual(t1_tor.utcoffset(), timedelta(hours=-5.0))
 
     def testGapNegativeUTCOffset(self):
         # Test that we don't have a problem around gaps.
@@ -434,11 +431,11 @@ class TzFoldMixin(object):
             self.assertEqual(t0_syd0, t0_syd1)
 
 
-class TzWinFoldMixin(object):
+class TzWinFoldMixin():
     def get_args(self, tzname):
         return (tzname, )
 
-    class context(object):
+    class context():
         def __init__(*args, **kwargs):
             pass
 
@@ -1001,7 +998,7 @@ def test_tzlocal_offset_equal(tzvar, tzoff):
     with TZEnvContext(tzvar):
         # Including both to test both __eq__ and __ne__
         assert tz.tzlocal() == tzoff
-        assert not (tz.tzlocal() != tzoff)
+        assert not tz.tzlocal() != tzoff
 
 
 @mark_tzlocal_nix
@@ -1016,7 +1013,7 @@ def test_tzlocal_offset_unequal(tzvar, tzoff):
     with TZEnvContext(tzvar):
         # Including both to test both __eq__ and __ne__
         assert tz.tzlocal() != tzoff
-        assert not (tz.tzlocal() == tzoff)
+        assert not tz.tzlocal() == tzoff
 
 
 @pytest.mark.gettz
@@ -2455,8 +2452,7 @@ class DatetimeAmbiguousTest(unittest.TestCase):
 
                 if dt_start <= dt_n < dt_end and getattr(dt_n, 'fold', 0):
                     return timedelta(hours=1)
-                else:
-                    return timedelta(0)
+                return timedelta(0)
 
         return FoldingTzInfo
 

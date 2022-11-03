@@ -5,7 +5,7 @@ import six
 from hypothesis import assume, given
 from hypothesis import strategies as st
 
-from dateutil import tz as tz
+from dateutil import tz
 
 EPOCHALYPSE = datetime.fromtimestamp(2147483647)
 NEGATIVE_EPOCHALYPSE = datetime.fromtimestamp(0) - timedelta(seconds=2147483648)

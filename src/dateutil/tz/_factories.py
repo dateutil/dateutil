@@ -1,6 +1,6 @@
-from datetime import timedelta
 import weakref
 from collections import OrderedDict
+from datetime import timedelta
 
 from six.moves import _thread
 
@@ -77,4 +77,3 @@ class _TzStrFactory(_TzFactory):
                 cls.__strong_cache.popitem(last=False)
 
         return instance
-

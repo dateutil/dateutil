@@ -1,10 +1,9 @@
-from hypothesis import given, assume
+import pytest
+from hypothesis import assume, given
 from hypothesis import strategies as st
 
 from dateutil import tz
 from dateutil.parser import isoparse
-
-import pytest
 
 # Strategies
 TIME_ZONE_STRATEGY = st.sampled_from([None, tz.UTC] +

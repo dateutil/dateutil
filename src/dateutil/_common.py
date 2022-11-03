@@ -3,7 +3,7 @@ Common code used in multiple modules.
 """
 
 
-class weekday(object):
+class weekday():
     __slots__ = ["weekday", "n"]
 
     def __init__(self, weekday, n=None):
@@ -13,8 +13,7 @@ class weekday(object):
     def __call__(self, n):
         if n == self.n:
             return self
-        else:
-            return self.__class__(self.weekday, n)
+        return self.__class__(self.weekday, n)
 
     def __eq__(self, other):
         try:
@@ -31,13 +30,12 @@ class weekday(object):
         ))
 
     def __ne__(self, other):
-        return not (self == other)
+        return not self == other
 
     def __repr__(self):
         s = ("MO", "TU", "WE", "TH", "FR", "SA", "SU")[self.weekday]
         if not self.n:
             return s
-        else:
-            return "%s(%+d)" % (s, self.n)
+        return "%s(%+d)" % (s, self.n)
 
 # vim:ts=4:sw=4:et

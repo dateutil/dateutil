@@ -10,8 +10,8 @@ Attempting to import this module on a non-Windows platform will raise an
 import datetime
 import struct
 
-from six.moves import winreg
 from six import text_type
+from six.moves import winreg
 
 try:
     import ctypes
@@ -45,7 +45,7 @@ def _settzkeyname():
 TZKEYNAME = _settzkeyname()
 
 
-class tzres(object):
+class tzres():
     """
     Class for accessing ``tzres.dll``, which contains timezone name related
     resources.
@@ -338,7 +338,7 @@ def picknthweekday(year, month, dayofweek, hour, minute, whichweek):
     # Because 7 % 7 = 0
     weekdayone = first.replace(day=((dayofweek - first.isoweekday()) % 7) + 1)
     wd = weekdayone + ((whichweek - 1) * ONEWEEK)
-    if (wd.month != month):
+    if wd.month != month:
         wd -= ONEWEEK
 
     return wd

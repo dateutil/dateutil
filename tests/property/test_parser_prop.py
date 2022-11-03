@@ -1,7 +1,6 @@
-from hypothesis.strategies import integers
-from hypothesis import given
-
 import pytest
+from hypothesis import given
+from hypothesis.strategies import integers
 
 from dateutil.parser import parserinfo
 

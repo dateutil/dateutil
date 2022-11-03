@@ -35,19 +35,15 @@ import re
 import string
 import time
 import warnings
-
 from calendar import monthrange
+from decimal import Decimal
 from io import StringIO
+from warnings import warn
 
 import six
 from six import integer_types, text_type
 
-from decimal import Decimal
-
-from warnings import warn
-
-from .. import relativedelta
-from .. import tz
+from .. import relativedelta, tz
 
 __all__ = ["parse", "parserinfo", "ParserError"]
 
@@ -55,7 +51,7 @@ __all__ = ["parse", "parserinfo", "ParserError"]
 # TODO: pandas.core.tools.datetimes imports this explicitly.  Might be worth
 # making public and/or figuring out if there is something we can
 # take off their plate.
-class _timelex(object):
+class _timelex():
     # Fractional seconds are sometimes split by a comma
     _split_decimal = re.compile("([.,])")
 
@@ -110,7 +106,7 @@ class _timelex(object):
             if not nextchar:
                 self.eof = True
                 break
-            elif not state:
+            if not state:
                 # First character of the token - determines if we're starting
                 # to parse a word, a number or something else.
                 token = nextchar
@@ -216,7 +212,7 @@ class _timelex(object):
         return nextchar.isspace()
 
 
-class _resultbase(object):
+class _resultbase():
 
     def __init__(self):
         for attr in self.__slots__:
@@ -238,7 +234,7 @@ class _resultbase(object):
         return self._repr(self.__class__.__name__)
 
 
-class parserinfo(object):
+class parserinfo():
     """
     Class which handles what inputs are accepted. Subclass this to customize
     the language and acceptable values for each parameter.
@@ -393,7 +389,7 @@ class parserinfo(object):
 
 class _ymd(list):
     def __init__(self, *args, **kwargs):
-        super(self.__class__, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.century_specified = False
         self.dstridx = None
         self.mstridx = None
@@ -414,16 +410,15 @@ class _ymd(list):
     def could_be_day(self, value):
         if self.has_day:
             return False
-        elif not self.has_month:
+        if not self.has_month:
             return 1 <= value <= 31
-        elif not self.has_year:
+        if not self.has_year:
             # Be permissive, assume leap year
             month = self[self.mstridx]
             return 1 <= value <= monthrange(2000, month)[1]
-        else:
-            month = self[self.mstridx]
-            year = self[self.ystridx]
-            return 1 <= value <= monthrange(year, month)[1]
+        month = self[self.mstridx]
+        year = self[self.ystridx]
+        return 1 <= value <= monthrange(year, month)[1]
 
     def append(self, val, label=None):
         if hasattr(val, '__len__'):
@@ -438,7 +433,7 @@ class _ymd(list):
                 raise ValueError(label)
             label = 'Y'
 
-        super(self.__class__, self).append(int(val))
+        super().append(int(val))
 
         if label == 'M':
             if self.has_month:
@@ -488,7 +483,7 @@ class _ymd(list):
 
         if len_ymd > 3:
             raise ValueError("More than three YMD values")
-        elif len_ymd == 1 or (mstridx is not None and len_ymd == 2):
+        if len_ymd == 1 or (mstridx is not None and len_ymd == 2):
             # One member, or two members with a month string
             if mstridx is not None:
                 month = self[mstridx]
@@ -565,7 +560,7 @@ class _ymd(list):
         return year, month, day
 
 
-class parser(object):
+class parser():
     def __init__(self, info=None):
         self.info = info or parserinfo()
 
@@ -655,8 +650,7 @@ class parser(object):
 
         if kwargs.get('fuzzy_with_tokens', False):
             return ret, skipped_tokens
-        else:
-            return ret
+        return ret
 
     class _result(_resultbase):
         __slots__ = ["year", "month", "day", "weekday",
@@ -869,8 +863,7 @@ class parser(object):
         if fuzzy_with_tokens:
             skipped_tokens = self._recombine_skipped(l, skipped_idxs)
             return res, tuple(skipped_tokens)
-        else:
-            return res, None
+        return res, None
 
     def _parse_numeric_token(self, tokens, idx, info, ymd, res, fuzzy):
         # Token is a number
@@ -1134,9 +1127,8 @@ class parser(object):
         """Parse a I[.F] seconds value into (seconds, microseconds)."""
         if "." not in value:
             return int(value), 0
-        else:
-            i, f = value.split(".")
-            return int(i), int(f.ljust(6, "0")[:6])
+        i, f = value.split(".")
+        return int(i), int(f.ljust(6, "0")[:6])
 
     def _to_decimal(self, val):
         try:
@@ -1364,11 +1356,10 @@ def parse(timestr, parserinfo=None, **kwargs):
     """
     if parserinfo:
         return parser(parserinfo).parse(timestr, **kwargs)
-    else:
-        return DEFAULTPARSER.parse(timestr, **kwargs)
+    return DEFAULTPARSER.parse(timestr, **kwargs)
 
 
-class _tzparser(object):
+class _tzparser():
 
     class _result(_resultbase):
 
@@ -1390,7 +1381,7 @@ class _tzparser(object):
     def parse(self, tzstr):
         res = self._result()
         l = [x for x in re.split(r'([,:.]|[a-zA-Z]+|[0-9]+)',tzstr) if x]
-        used_idxs = list()
+        used_idxs = []
         try:
 
             len_l = len(l)
@@ -1598,7 +1589,7 @@ class ParserError(ValueError):
         try:
             return self.args[0] % self.args[1:]
         except (TypeError, IndexError):
-            return super(ParserError, self).__str__()
+            return super().__str__()
 
     def __repr__(self):
         args = ", ".join("'%s'" % arg for arg in self.args)

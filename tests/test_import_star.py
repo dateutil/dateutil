@@ -6,6 +6,7 @@ import pytest
 
 prev_locals = list(locals())
 from dateutil import *
+
 new_locals = {name:value for name,value in locals().items()
               if name not in prev_locals}
 new_locals.pop('prev_locals')

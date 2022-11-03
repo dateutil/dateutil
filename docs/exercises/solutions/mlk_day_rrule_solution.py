@@ -1,6 +1,7 @@
 # ------- YOUR CODE -------------#
-from dateutil import rrule
 from datetime import datetime
+
+from dateutil import rrule
 
 MLK_DAY = rrule.rrule(
     dtstart=datetime(1986, 1, 20),      # First celebration

@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
-import warnings
 import json
-
-from tarfile import TarFile
-from pkgutil import get_data
+import warnings
 from io import BytesIO
+from pkgutil import get_data
+from tarfile import TarFile
 
 from dateutil.tz import tzfile as _tzfile
 
@@ -27,7 +26,7 @@ def getzoneinfofile_stream():
         return None
 
 
-class ZoneInfoFile(object):
+class ZoneInfoFile():
     def __init__(self, zonefile_stream=None):
         if zonefile_stream is not None:
             with TarFile.open(fileobj=zonefile_stream) as tf:

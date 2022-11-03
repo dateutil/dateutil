@@ -49,7 +49,7 @@ def easter(year, method=EASTER_WESTERN):
 
     """
 
-    if not (1 <= method <= 3):
+    if not 1 <= method <= 3:
         raise ValueError("invalid method")
 
     # g - Golden year - 1
