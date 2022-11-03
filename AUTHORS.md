@@ -75,6 +75,7 @@ switch, and thus all their contributions are dual-licensed.
 - Luca Ferocino <luca.ferox@MASKED> (gh: @lucaferocino) **D**
 - Mario Corchero <mcorcherojim@MASKED> (gh: @mariocj89) **R**
 - Mark Bailey <msb@MASKED> **D**
+- Mark Mayo (gh:marksmayo) **DD**
 - Mateusz Dziedzic (gh: @m-dz) **D**
 - Matt Cooper <vtbassmatt@MASKED> (gh: @vtbassmatt) **D**
 - Matthew Schinckel <matt@MASKED>
