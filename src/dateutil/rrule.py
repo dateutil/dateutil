@@ -102,6 +102,18 @@ class rrulebase(object):
             self._cache_complete = False
             self._len = None
 
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        # dismiss the cache
+        if '_cache_lock' in state:
+            del state['_cache_lock']
+        if '_cache_gen' in state:
+            del state['_cache_gen']
+        state['_cache'] = None
+        state['_cache_complete'] = False
+        state['_len'] = False
+        return state
+
     def __iter__(self):
         if self._cache_complete:
             return iter(self._cache)

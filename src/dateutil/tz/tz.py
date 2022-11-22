@@ -1172,6 +1172,10 @@ class _tzicalvtz(_tzinfo):
         self._comps = comps
         self._cachedate = []
         self._cachecomp = []
+        self._cache_lock = None
+        self.init_lock()
+
+    def init_lock(self):
         self._cache_lock = _thread.allocate_lock()
 
     def _find_comp(self, dt):
@@ -1243,6 +1247,15 @@ class _tzicalvtz(_tzinfo):
     @tzname_in_python2
     def tzname(self, dt):
         return self._find_comp(dt).tzname
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        del state['_cache_lock']
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self.init_lock()
 
     def __repr__(self):
         return "<tzicalvtz %s>" % repr(self._tzid)
