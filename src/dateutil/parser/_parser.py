@@ -664,7 +664,7 @@ class parser(object):
                      "tzname", "tzoffset", "ampm","any_unused_tokens"]
 
     def _parse(self, timestr, dayfirst=None, yearfirst=None, fuzzy=False,
-               fuzzy_with_tokens=False):
+               fuzzy_with_tokens=False, disable_durations=False):
         """
         Private method which performs the heavy lifting of parsing, called from
         ``parse()``, which passes on its ``kwargs`` to this function.
@@ -696,6 +696,10 @@ class parser(object):
             will return a tuple where the first element is the parsed
             :class:`datetime.datetime` datetimestamp and the second element is
             a tuple containing the portions of the string which were ignored:
+
+        :param disable_durations:
+            If ``True``, do not parse duration components e.g. "1m2" as
+            hour=1, minute=2.
 
             .. doctest::
 
@@ -737,7 +741,7 @@ class parser(object):
 
                 if value is not None:
                     # Numeric token
-                    i = self._parse_numeric_token(l, i, info, ymd, res, fuzzy)
+                    i = self._parse_numeric_token(l, i, info, ymd, res, fuzzy, disable_durations=disable_durations)
 
                 # Check weekday
                 elif info.weekday(l[i]) is not None:
@@ -845,7 +849,8 @@ class parser(object):
                     i += 1
 
                 # Check jumps
-                elif not (info.jump(l[i]) or fuzzy):
+                elif not ((i != 0 and info.jump(l[i])) or fuzzy):
+                    # exclude i==0 for e.g. "t2m" the "t" is gibberish GH#1180
                     raise ValueError(timestr)
 
                 else:
@@ -872,7 +877,9 @@ class parser(object):
         else:
             return res, None
 
-    def _parse_numeric_token(self, tokens, idx, info, ymd, res, fuzzy):
+    def _parse_numeric_token(
+        self, tokens, idx, info, ymd, res, fuzzy, disable_durations
+    ):
         # Token is a number
         value_repr = tokens[idx]
         try:
@@ -926,7 +933,7 @@ class parser(object):
                 if len_li > 12:
                     res.second = int(s[12:])
 
-        elif self._find_hms_idx(idx, tokens, info, allow_jump=True) is not None:
+        elif not disable_durations and self._find_hms_idx(idx, tokens, info, allow_jump=True) is not None:
             # HH[ ]h or MM[ ]m or SS[.ss][ ]s
             hms_idx = self._find_hms_idx(idx, tokens, info, allow_jump=True)
             (idx, hms) = self._parse_hms(idx, tokens, info, hms_idx)
