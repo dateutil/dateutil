@@ -15,9 +15,28 @@ EPOCH = datetime(1970, 1, 1)
 EPOCHALYPSE = EPOCH + timedelta(seconds=2**31 - 1)
 NEGATIVE_EPOCHALYPSE = EPOCH - timedelta(seconds=2**31)
 
+try:
+    import zoneinfo
+except ImportError:
+    try:
+        import backports.zoneinfo as zoneinfo
+    except ImportError:
+        zoneinfo = None
+
+
+def __valid_keys():
+    key_list = tz.available_iana_timezones()
+    return tuple(sorted(key_list))
+
+
+VALID_KEYS = __valid_keys()
+del __valid_keys
+
+iana_keys = st.sampled_from(VALID_KEYS)
+
 
 @pytest.mark.gettz
-@given(key=st.timezone_keys(allow_prefix=True))
+@given(key=iana_keys)
 def test_key_property(key):
     tzi = tz.gettz(key)
     assume(isinstance(tzi, tz.tzfile))
