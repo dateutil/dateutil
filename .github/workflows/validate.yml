@@ -37,7 +37,9 @@ jobs:
             os: "ubuntu-20.04"
           - python-version: "3.5"
             os: "ubuntu-20.04"
-          - python-version: "3.6" os: "ubuntu-20.04" runs-on: ${{ matrix.os }}
+          - python-version: "3.6"
+            os: "ubuntu-20.04"
+    runs-on: ${{ matrix.os }}
     env:
       TOXENV: py
     steps:
@@ -76,12 +78,14 @@ jobs:
     runs-on: "ubuntu-latest"
     strategy:
       matrix:
-        toxenv: ["docs", "tz"]
+        toxenv: ["docs", "tz", "precommit"]
     env:
       TOXENV: ${{ matrix.toxenv }}
 
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       - name: ${{ matrix.toxenv }}
         uses: actions/setup-python@v4
         with:
@@ -99,6 +103,19 @@ jobs:
         if: matrix.toxenv == 'tox'
       - name: Run action
         run: tox
+
+  darker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v4
+      - uses: akaihola/darker@1.5.1
+        with:
+          options: "--check --diff --color --isort"
+          src: "."
+          version: "1.5.1"
 
   build-dist:
     runs-on: ubuntu-latest
