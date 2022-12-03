@@ -78,12 +78,16 @@ jobs:
     runs-on: "ubuntu-latest"
     strategy:
       matrix:
-        toxenv: ["docs", "tz"]
+        toxenv: ["docs", "tz", "precommit"]
     env:
       TOXENV: ${{ matrix.toxenv }}
+      PRE_COMMIT_FROM_REF: ${{ github.base_ref }}
+      PRE_COMMIT_TO_REF: "HEAD"
 
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       - name: ${{ matrix.toxenv }}
         uses: actions/setup-python@v4
         with:
