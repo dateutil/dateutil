@@ -37,7 +37,9 @@ jobs:
             os: "ubuntu-20.04"
           - python-version: "3.5"
             os: "ubuntu-20.04"
-          - python-version: "3.6" os: "ubuntu-20.04" runs-on: ${{ matrix.os }}
+          - python-version: "3.6"
+            os: "ubuntu-20.04"
+    runs-on: ${{ matrix.os }}
     env:
       TOXENV: py
     steps:
