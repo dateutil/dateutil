@@ -81,8 +81,6 @@ jobs:
         toxenv: ["docs", "tz", "precommit"]
     env:
       TOXENV: ${{ matrix.toxenv }}
-      PRE_COMMIT_FROM_REF: ${{ github.base_ref }}
-      PRE_COMMIT_TO_REF: "HEAD"
 
     steps:
       - uses: actions/checkout@v3
@@ -105,6 +103,19 @@ jobs:
         if: matrix.toxenv == 'tox'
       - name: Run action
         run: tox
+
+  darker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v4
+      - uses: akaihola/darker@1.5.1
+        with:
+          options: "--check --diff --color --isort"
+          src: "."
+          version: "1.5.1"
 
   build-dist:
     runs-on: ubuntu-latest
