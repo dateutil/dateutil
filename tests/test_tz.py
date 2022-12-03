@@ -1142,7 +1142,6 @@ def test_gettz_zone_wrong_type(badzone, exc_reason):
 
 
 @pytest.mark.gettz
-@pytest.mark.xfail(IS_WIN, reason='zoneinfo separately cached')
 def test_gettz_cache_clear():
     NYC1 = tz.gettz('America/New_York')
     tz.gettz.cache_clear()
@@ -1152,7 +1151,6 @@ def test_gettz_cache_clear():
     assert NYC1 is not NYC2
 
 @pytest.mark.gettz
-@pytest.mark.xfail(IS_WIN, reason='zoneinfo separately cached')
 def test_gettz_set_cache_size():
     tz.gettz.cache_clear()
     tz.gettz.set_cache_size(3)
@@ -1172,7 +1170,6 @@ def test_gettz_set_cache_size():
 
     assert MONACO_ref() is None
 
-@pytest.mark.xfail(IS_WIN, reason="Windows does not use system zoneinfo")
 @pytest.mark.smoke
 @pytest.mark.gettz
 def test_gettz_weakref():
