@@ -1,10 +1,11 @@
-from hypothesis import given, assume
+from datetime import timedelta
+
+import pytest
+from hypothesis import assume, given, settings
 from hypothesis import strategies as st
 
 from dateutil import tz
 from dateutil.parser import isoparse
-
-import pytest
 
 # Strategies
 TIME_ZONE_STRATEGY = st.sampled_from([None, tz.UTC] +
@@ -14,6 +15,7 @@ ASCII_STRATEGY = st.characters(max_codepoint=127)
 
 
 @pytest.mark.isoparser
+@settings(deadline=3000)
 @given(dt=st.datetimes(timezones=TIME_ZONE_STRATEGY), sep=ASCII_STRATEGY)
 def test_timespec_auto(dt, sep):
     if dt.tzinfo is not None:
