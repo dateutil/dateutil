@@ -20,6 +20,7 @@ def test_key_property(key):
 
 
 @pytest.mark.gettz
+@pytest.mark.skipif(six.PY2, reason="Not supported on Python 2")
 @pytest.mark.parametrize("gettz_arg", [None, ""])
 # TODO: Remove bounds when GH #590 is resolved
 @given(
@@ -33,10 +34,7 @@ def test_gettz_returns_local(gettz_arg, dt):
         return
 
     dt_act = dt.astimezone(tz.gettz(gettz_arg))
-    if six.PY2:
-        dt_exp = dt.astimezone(tz.tzlocal())
-    else:
-        dt_exp = dt.astimezone()
+    dt_exp = dt.astimezone()
 
     assert dt_act == dt_exp
     assert dt_act.tzname() == dt_exp.tzname()
