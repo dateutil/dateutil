@@ -1142,6 +1142,74 @@ gettz = __get_gettz()
 del __get_gettz
 
 
+def available_iana_timezones():
+    """Returns a set containing all available IANA time zones keys.
+
+    These are suitable for use with :func:`gettz`. This is essentially a direct
+    port of :py:func:`zoneinfo.available_timezones`.
+
+    :return:
+        Returns a mutable set containing strings of time zones. Each call will
+        return a fresh set.
+
+    .. caution::
+
+        This may attempt to open a large number of files, since the best way to
+        determine if a given file on the time zone search path is to open it
+        and check for the "magic string" at the beginning.
+
+    .. note::
+
+        These values are not designed to be exposed to end-users; for
+        user-facing elements, applications should use something like CLDR (the
+        Unicode Common Locale Data Repository) to get more user-friendly
+        strings.
+    """
+    # Start with loading from the tzdata package if it exists: this has a
+    # pre-assembled list of zones that only requires opening one file.
+    valid_zones = set(_tzdata_impl._load_tzdata_keys())
+
+    def valid_key(fpath):
+        try:
+            with open(fpath, "rb") as f:
+                return f.read(4) == b"TZif"
+        except Exception:  # pragma: nocover
+            return False
+
+    for tz_root in TZPATHS:
+        if not os.path.exists(tz_root):
+            continue
+
+        for root, dirnames, files in os.walk(tz_root):
+            if root == tz_root:
+                # right/ and posix/ are special directories and shouldn't be
+                # included in the output of available zones
+                if "right" in dirnames:
+                    dirnames.remove("right")
+                if "posix" in dirnames:
+                    dirnames.remove("posix")
+
+            for file in files:
+                fpath = os.path.join(root, file)
+
+                key = os.path.relpath(fpath, start=tz_root)
+                if os.sep != "/":  # pragma: nocover
+                    key = key.replace(os.sep, "/")
+
+                if not key or key in valid_zones:
+                    continue
+
+                if valid_key(fpath):
+                    valid_zones.add(key)
+
+    if "posixrules" in valid_zones:
+        # posixrules is a special symlink-only time zone where it exists, it
+        # should not be included in the output
+        valid_zones.remove("posixrules")
+
+    return valid_zones
+
+
 def datetime_exists(dt, tz=None):
     """
     Given a datetime and a time zone, determine whether or not a given datetime
