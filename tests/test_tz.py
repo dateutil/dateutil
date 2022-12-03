@@ -26,6 +26,16 @@ from dateutil import tz as tz
 from dateutil import zoneinfo
 from dateutil.parser import parse
 
+try:
+    import tzdata
+except ImportError:
+    tzdata = None
+
+# The deprecated dateutil.zoneinfo module is a wrapper around tzdata.
+requires_tzdata = pytest.mark.skipif(
+    tzdata is None, reason="dateutil.zoneinfo requires tzdata"
+)
+
 # dateutil imports
 from dateutil.relativedelta import SU, TH, relativedelta
 
@@ -1146,7 +1156,6 @@ def test_gettz_zone_wrong_type(badzone, exc_reason):
 
 
 @pytest.mark.gettz
-@pytest.mark.xfail(IS_WIN, reason='zoneinfo separately cached')
 def test_gettz_cache_clear():
     NYC1 = tz.gettz('America/New_York')
     tz.gettz.cache_clear()
@@ -1156,7 +1165,6 @@ def test_gettz_cache_clear():
     assert NYC1 is not NYC2
 
 @pytest.mark.gettz
-@pytest.mark.xfail(IS_WIN, reason='zoneinfo separately cached')
 def test_gettz_set_cache_size():
     tz.gettz.cache_clear()
     tz.gettz.set_cache_size(3)
@@ -1176,7 +1184,6 @@ def test_gettz_set_cache_size():
 
     assert MONACO_ref() is None
 
-@pytest.mark.xfail(IS_WIN, reason="Windows does not use system zoneinfo")
 @pytest.mark.smoke
 @pytest.mark.gettz
 def test_gettz_weakref():
@@ -1202,6 +1209,7 @@ def test_gettz_weakref():
     assert NYC_ref() is None    # Should have been pushed out
     assert tz.gettz('America/New_York') is not NYC_ref()
 
+@requires_tzdata
 class ZoneInfoGettzTest(GettzTest):
     def gettz(self, name):
         zoneinfo_file = zoneinfo.get_zonefile_instance()
@@ -1282,6 +1290,19 @@ class ZoneInfoGettzTest(GettzTest):
     def testZoneInfoMetadataDeprecated(self):
         with pytest.warns(DeprecationWarning):
             zoneinfo.gettz_db_metadata()
+
+    def testZoneInfoMetadataFreshInstance(self):
+        # gettz_db_metadata must be able to create the module-level
+        # instance itself if gettz has not been called first.
+        old_instances = list(zoneinfo._CLASS_ZONE_INSTANCE)
+        del zoneinfo._CLASS_ZONE_INSTANCE[:]
+        try:
+            with pytest.warns(DeprecationWarning):
+                metadata = zoneinfo.gettz_db_metadata()
+        finally:
+            zoneinfo._CLASS_ZONE_INSTANCE[:] = old_instances
+
+        assert metadata["tzversion"]
 
 
 class TZRangeTest(unittest.TestCase, TzFoldMixin):
@@ -2432,6 +2453,7 @@ class TzPickleTest(PicklableMixin, unittest.TestCase):
     def testPickleTzGettz(self):
         self.assertPicklable(tz.gettz('America/New_York'))
 
+    @requires_tzdata
     def testPickleZoneFileGettz(self):
         zoneinfo_file = zoneinfo.get_zonefile_instance()
         tzi = zoneinfo_file.get('America/New_York')
