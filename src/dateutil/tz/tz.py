@@ -21,6 +21,7 @@ import six
 from six import string_types
 from six.moves import _thread
 
+from .. import _tzdata_impl
 from ._common import (
     _tzinfo,
     _validate_fromutc_inputs,
@@ -1110,8 +1111,24 @@ def __get_gettz():
                                 tz = None
 
                         if not tz:
-                            from dateutil.zoneinfo import get_zonefile_instance
-                            tz = get_zonefile_instance().get(name)
+                            # As with the search path lookup above, also try
+                            # the name with spaces replaced by underscores.
+                            candidates = [name]
+                            if " " in name:
+                                candidates.append(name.replace(" ", "_"))
+
+                            for candidate in candidates:
+                                try:
+                                    with _tzdata_impl._load_tzdata(
+                                        candidate
+                                    ) as f:
+                                        return tzfile(f, key=name)
+                                except ValueError:
+                                    # TZFileNotFound is a ValueError, and so is
+                                    # the error raised for files in tzdata that
+                                    # are not TZif files (e.g. "zone.tab"),
+                                    # which are skipped just as on TZPATH.
+                                    pass
 
                         if not tz:
                             for c in name:
