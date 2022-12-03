@@ -20,6 +20,7 @@ import six
 from six import string_types
 from six.moves import _thread
 
+from .. import _tzdata_impl
 from ._common import (
     _tzinfo,
     _validate_fromutc_inputs,
@@ -1109,8 +1110,11 @@ def __get_gettz():
                                 tz = None
 
                         if not tz:
-                            from dateutil.zoneinfo import get_zonefile_instance
-                            tz = get_zonefile_instance().get(name)
+                            try:
+                                with _tzdata_impl._load_tzdata(name) as f:
+                                    return tzfile(f, key=name)
+                            except _tzdata_impl.TZFileNotFound:
+                                pass
 
                         if not tz:
                             for c in name:
