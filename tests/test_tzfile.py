@@ -1,4 +1,5 @@
 import contextlib
+import functools
 import sys
 import threading
 
@@ -7,6 +8,36 @@ import pytest
 from dateutil import tz
 
 TZPATH_LOCK = threading.Lock()
+
+if sys.version_info < (3, 4):
+
+    def contextdecorator(wrapped):
+        @functools.wraps(wrapped)
+        def wrapper(*args, **kwargs):
+            class ContextDecorator:
+                def __init__(self):
+                    self.cm = contextlib.contextmanager(wrapped)
+
+                def __enter__(self):
+                    return self.cm.__enter__()
+
+                def __exit__(self, *args, **kwargs):
+                    return self.cm.__exit__(*args, **kwargs)
+
+                def __call__(self, f):
+                    @functools.wraps(f)
+                    def inner(*iargs, **ikwargs):
+                        with self.cm:
+                            return f(*iargs, **ikwargs)
+
+                    return inner
+
+            return ContextDecorator()
+
+        return wrapper
+
+else:
+    contextdecorator = contextlib.contextmanager
 
 
 def pop_tzdata_modules():
@@ -20,7 +51,7 @@ def pop_tzdata_modules():
     return tzdata_modules
 
 
-@contextlib.contextmanager
+@contextdecorator
 def set_tzpath(tzpath, block_tzdata=False):
     with TZPATH_LOCK:
         if block_tzdata:
