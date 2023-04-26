@@ -21,6 +21,7 @@ from six import string_types
 from six.moves import _thread
 
 from .. import _tzdata_impl
+from . import _tzpath
 from ._common import (
     _tzinfo,
     _validate_fromutc_inputs,
@@ -915,16 +916,7 @@ class tzical(object):
         return "%s(%s)" % (self.__class__.__name__, repr(self._s))
 
 
-if sys.platform != "win32":
-    TZFILES = ["/etc/localtime", "localtime"]
-    TZPATHS = ["/usr/share/zoneinfo",
-               "/usr/lib/zoneinfo",
-               "/usr/share/lib/zoneinfo",
-               "/etc/zoneinfo"]
-else:
-    TZFILES = []
-    TZPATHS = []
-
+TZFILES = ["/etc/localtime", "localtime"]
 
 def __get_gettz():
     tzlocal_classes = (tzlocal,)
@@ -1059,7 +1051,7 @@ def __get_gettz():
                 for filepath in TZFILES:
                     if not os.path.isabs(filepath):
                         filename = filepath
-                        for path in TZPATHS:
+                        for path in _tzpath.TZPATH:
                             filepath = os.path.join(path, filename)
                             if _isfile(filepath):
                                 break
@@ -1089,7 +1081,7 @@ def __get_gettz():
                     else:
                         tz = None
                 else:
-                    for path in TZPATHS:
+                    for path in _tzpath.TZPATH:
                         filepath = os.path.join(path, name)
                         if not _isfile(filepath):
                             filepath = filepath.replace(' ', '_')
@@ -1176,7 +1168,7 @@ def available_iana_timezones():
         except Exception:  # pragma: nocover
             return False
 
-    for tz_root in TZPATHS:
+    for tz_root in _tzpath.TZPATH:
         if not os.path.exists(tz_root):
             continue
 
