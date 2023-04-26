@@ -1,33 +1,33 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-from ._common import PicklableMixin
-from ._common import TZEnvContext, TZWinContext
-from ._common import ComparesEqual
 
-from datetime import datetime, timedelta
-from datetime import time as dt_time
-from datetime import tzinfo
-from six import PY2
-from io import BytesIO, StringIO
-import unittest
-
-import sys
 import base64
 import copy
 import gc
+import sys
+import threading
+import unittest
 import weakref
-
+from datetime import datetime
+from datetime import time as dt_time
+from datetime import timedelta, tzinfo
 from functools import partial
+from io import BytesIO, StringIO
+
+from six import PY2
+
+from ._common import ComparesEqual, PicklableMixin, TZEnvContext, TZWinContext
 
 IS_WIN = sys.platform.startswith('win')
 
 import pytest
 
-# dateutil imports
-from dateutil.relativedelta import relativedelta, SU, TH
-from dateutil.parser import parse
 from dateutil import tz as tz
 from dateutil import zoneinfo
+from dateutil.parser import parse
+
+# dateutil imports
+from dateutil.relativedelta import SU, TH, relativedelta
 
 try:
     from dateutil import tzwin
