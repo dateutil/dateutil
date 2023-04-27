@@ -1,4 +1,16 @@
 # -*- coding: utf-8 -*-
+"""
+The ``dateutil.zoneinfo`` module was originally designed to work with a tarball
+shipped with ``dateutil``. Since ``dateutil`` now uses data from the same
+sources as :py:mod:`zoneinfo`, this module is no longer necessary.
+
+.. caution::
+    This module is deprecated, and its functionality has been dramatically
+    curtailed. It is recommended that you adopt the standard library module
+    :py:mod:`zoneinfo` or :func:`dateutil.tz.gettz` instead.
+
+"""
+
 import json
 import sys
 import warnings
@@ -11,8 +23,45 @@ from dateutil.tz import tzfile as _tzfile
 
 __all__ = ["get_zonefile_instance", "gettz", "gettz_db_metadata"]
 
-ZONEFILENAME = "dateutil-zoneinfo.tar.gz"
+ZONEFILENAME = None
 METADATA_FN = 'METADATA'
+
+
+def _importer_stacklevel():
+    """The ``stacklevel`` that attributes a warning to the importing code.
+
+    This module can be imported through ``dateutil.__getattr__`` (e.g. by
+    ``from dateutil import zoneinfo``), which calls
+    ``importlib.import_module``; the warnings machinery skips the import
+    system's own frames, but not those two, so skip them here.
+    """
+    level = 1
+    frame = sys._getframe(1)  # The body of this module
+    while frame.f_back is not None:
+        frame = frame.f_back
+        filename = frame.f_code.co_filename
+        if "importlib" in filename and "_bootstrap" in filename:
+            # Since Python 3.5, the warnings machinery skips these frames
+            # without counting them; before that they count like any other.
+            if sys.version_info < (3, 5):
+                level += 1
+            continue
+
+        level += 1
+        if frame.f_globals.get("__name__") not in ("importlib", "dateutil"):
+            return level
+
+    return 2
+
+
+warnings.warn(
+    "The `dateutil.zoneinfo` module has been replaced with a wrapper around "
+    "the tzdata package, and its use is deprecated, to be removed in a future "
+    "version. Use the standard library module `zoneinfo` or `dateutil.tz` "
+    "instead.",
+    DeprecationWarning,
+    stacklevel=_importer_stacklevel(),
+)
 
 
 tzfile = _tzfile
@@ -25,7 +74,16 @@ class ZoneInfoFile(object):
             self._eager_load_tzdata()
 
     def _eager_load_tzdata(self):
-        import tzdata
+        try:
+            import tzdata
+        except ImportError as e:
+            six.raise_from(
+                ImportError(
+                    "The tzdata module is required to use ZoneInfoFile; either add "
+                    "a dependency on tzdata or migrate away from dateutil.zoneinfo."
+                ),
+                e,
+            )
 
         zone_dict = {}
 
@@ -119,8 +177,7 @@ def get_zonefile_instance(new_instance=False):
 
 def gettz(name):
     """
-    This retrieves a time zone from the local zoneinfo tarball that is packaged
-    with dateutil.
+    This retrieves a time zone from the ``tzdata`` package.
 
     :param name:
         An IANA-style time zone name, as found in the zoneinfo file.
@@ -156,9 +213,7 @@ def gettz(name):
 
 
 def gettz_db_metadata():
-    """ Get the zonefile metadata
-
-    See `zonefile_metadata`_
+    """Get the zonefile metadata
 
     :returns:
         A dictionary with the database metadata
