@@ -21,6 +21,7 @@ src/dateutil/_version.py
 
 # Sphinx documentation
 docs/_build/
+docs/docs_venv
 
 # Timezone information
 tzdata*.tar.gz
