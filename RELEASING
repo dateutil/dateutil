@@ -2,8 +2,6 @@ Release Checklist
 -----------------------------------------
 [ ] Update classifiers in setup.cfg to include the latest supported Python
     versions.
-[ ] Update the metadata in zonefile_metadata.json to include the latest tzdata
-    release from https://www.iana.org/time-zones.
 [ ] If necessary, update the tzdata mirror at https://github.com/dateutil/tzdata
 [ ] Update NEWS with list of changes:
     [ ] Invoke `tox -e news -- --version <NEXT_VERSION>`
