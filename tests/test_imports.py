@@ -71,6 +71,9 @@ def test_lazy_import(clean_import, module):
 
 def test_lazy_import_zoneinfo(clean_import):
     """Test that zoneinfo raises a DeprecationWarning when imported lazily."""
+    if sys.version_info < (3, 7):
+        pytest.xfail("Lazy loading does not work for Python < 3.7")
+
     import dateutil
 
     with pytest.warns(DeprecationWarning):
