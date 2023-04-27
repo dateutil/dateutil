@@ -8,6 +8,7 @@ import os
 import sys
 import threading
 import unittest
+import warnings
 import weakref
 from datetime import datetime
 from datetime import time as dt_time
@@ -24,8 +25,11 @@ IS_WIN = sys.platform.startswith('win')
 import pytest
 
 from dateutil import tz as tz
-from dateutil import zoneinfo
 from dateutil.parser import parse
+
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore", category=DeprecationWarning)
+    from dateutil import zoneinfo
 
 # dateutil imports
 from dateutil.relativedelta import SU, TH, relativedelta
