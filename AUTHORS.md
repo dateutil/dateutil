@@ -107,6 +107,7 @@ switch, and thus all their contributions are dual-licensed.
 - Sherry Zhou (gh: @cssherry) **D**
 - Siping Meng (gh: @smeng10) **D**
 - Stefan Bonchev **D**
+- Theodore Dias (gh: @madt2709) **D**
 - Thierry Bastian <thierryb@MASKED>
 - Thomas A Caswell <tcaswell@MASKED> (gh: @tacaswell) **R**
 - Thomas Achtemichuk <tom@MASKED>
