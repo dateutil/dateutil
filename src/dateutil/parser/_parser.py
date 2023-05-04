@@ -631,6 +631,12 @@ class parser(object):
         :raises OverflowError:
             Raised if the parsed date exceeds the largest valid C integer on
             your system.
+
+        .. caution::
+
+            If you parse a string which is not representing a :class:`datetime.datetime` object
+            then it may parse to something or fail outright.
+            
         """
 
         if default is None:
