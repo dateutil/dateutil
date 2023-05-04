@@ -1,0 +1,3 @@
+Added note into docs to be more explicit that passing a non-datetime strings into
+``dateutil.parser.parse`` has undefined behavior.
+Reported by @pganssle (gh issue #1270). Fixed by @madt2709 (gh pr #1281)
