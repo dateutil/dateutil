@@ -93,11 +93,7 @@ jobs:
       - name: Install tox
         run: |
           python -m pip install --upgrade pip
-          if [[ $TOXENV == "tz" ]]; then
-            python -m pip install -U "tox<3.8.0"
-          else
-            python -m pip install -U tox
-          fi
+          python -m pip install -U tox
       - name: Run updatezinfo.py
         run: ./ci_tools/retry.sh python updatezinfo.py
         if: matrix.toxenv == 'tox'
