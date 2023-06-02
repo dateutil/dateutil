@@ -111,7 +111,8 @@ jobs:
         with:
           fetch-depth: 0
       - uses: actions/setup-python@v4
-      - uses: akaihola/darker@1.7.1
+      - uses: akaihola/darker@0fb2501a3f6c1b2d64976afa57885aeec0601182
+        # pinned due to unreleased fix: https://github.com/akaihola/darker/issues/489
         with:
           options: "--check --diff --color --isort"
           src: "."
