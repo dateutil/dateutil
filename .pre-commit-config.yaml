@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/akaihola/darker
-    rev: 1.5.1
+    rev: 1.7.1
     hooks:
     -   id: darker
         args: [--isort]

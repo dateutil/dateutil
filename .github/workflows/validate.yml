@@ -49,7 +49,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
-        run: python -m pip install -U tox
+        run: python -m pip install -U tox six
       - name: Install zic (Windows)
         run: |
           curl https://get.enterprisedb.com/postgresql/postgresql-9.5.21-2-windows-x64-binaries.zip --output $env:GITHUB_WORKSPACE\postgresql9.5.21.zip
@@ -93,14 +93,7 @@ jobs:
       - name: Install tox
         run: |
           python -m pip install --upgrade pip
-          if [[ $TOXENV == "tz" ]]; then
-            python -m pip install -U "tox<3.8.0"
-          else
-            python -m pip install -U tox
-          fi
-      - name: Run updatezinfo.py
-        run: ./ci_tools/retry.sh python updatezinfo.py
-        if: matrix.toxenv == 'tox'
+          python -m pip install -U tox
       - name: Run action
         run: tox
 
@@ -111,11 +104,12 @@ jobs:
         with:
           fetch-depth: 0
       - uses: actions/setup-python@v4
-      - uses: akaihola/darker@1.5.1
+      - uses: akaihola/darker@0fb2501a3f6c1b2d64976afa57885aeec0601182
+        # pinned due to unreleased fix: https://github.com/akaihola/darker/issues/489
         with:
           options: "--check --diff --color --isort"
           src: "."
-          version: "1.5.1"
+          version: "~=1.7.1"
 
   build-dist:
     runs-on: ubuntu-latest
