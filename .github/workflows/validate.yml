@@ -44,7 +44,13 @@ jobs:
       TOXENV: py
     steps:
       - uses: actions/checkout@v3
-      - name: Set up Python ${{ matrix.python-version }} on ${{ matrix.os }}
+      - if: ${{ matrix.python-version == "2.7" }}
+        uses: deadsnakes/action@v3.0.1
+        name: Set up Python ${{ matrix.python-version }} on ${{ matrix.os }}
+        with:
+          python-version: ${{ matrix.python-version }}
+      - if: ${{ matrix.python-version != "2.7" }}
+        name: Set up Python ${{ matrix.python-version }} on ${{ matrix.os }}
         uses: actions/setup-python@v3
         with:
           python-version: ${{ matrix.python-version }}
