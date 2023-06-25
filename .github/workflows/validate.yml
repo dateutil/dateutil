@@ -21,6 +21,7 @@ jobs:
           "3.9",
           "3.10",
           "3.11",
+          "3.12",
           "pypy-2.7",
           "pypy-3.8",
         ]
@@ -48,6 +49,7 @@ jobs:
         uses: actions/setup-python@v3
         with:
           python-version: ${{ matrix.python-version }}
+          allow-prereleases: true
       - name: Install dependencies
         run: python -m pip install -U tox six
       - name: Install zic (Windows)
