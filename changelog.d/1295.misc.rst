@@ -1,0 +1,4 @@
+On Python versions that support it, ``zoneinfo.rebuild`` now uses the
+tarfile ``data`` filter to limit damage in case it's used with a
+malicious tarball, and to avoid a deprecation warning on Python 3.12.
+Reported and fixed by @encukou (gh pr #1295)
