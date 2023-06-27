@@ -4,6 +4,7 @@ import tempfile
 import shutil
 import json
 from subprocess import check_call, check_output
+import tarfile
 from tarfile import TarFile
 
 from dateutil.zoneinfo import METADATA_FN, ZONEFILENAME
@@ -20,6 +21,13 @@ def rebuild(filename, tag=None, format="gz", zonegroups=[], metadata=None):
     moduledir = os.path.dirname(__file__)
     try:
         with TarFile.open(filename) as tf:
+
+            # Limit extraction to safe, plain data files, if this Python
+            # allows it easily. If not, just trust the input.
+            # See: https://docs.python.org/3/library/tarfile.html#supporting-older-python-versions
+            tf.extraction_filter = getattr(tarfile, 'data_filter',
+                                           (lambda member, path: member))
+
             for name in zonegroups:
                 tf.extract(name, tmpdir)
             filepaths = [os.path.join(tmpdir, n) for n in zonegroups]
