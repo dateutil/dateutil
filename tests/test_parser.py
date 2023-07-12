@@ -51,6 +51,7 @@ PARSER_TEST_CASES = [
     ("2003-09-25 10:49:41,502", datetime(2003, 9, 25, 10, 49, 41, 502000), "python logger format"),
     ("199709020908", datetime(1997, 9, 2, 9, 8), "no separator"),
     ("19970902090807", datetime(1997, 9, 2, 9, 8, 7), "no separator"),
+    ("20230807", datetime(2023, 8, 7), "no separator"),
     ("09-25-2003", datetime(2003, 9, 25), "date with dash"),
     ("25-09-2003", datetime(2003, 9, 25), "date with dash"),
     ("10-09-2003", datetime(2003, 10, 9), "date with dash"),
@@ -662,6 +663,14 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(parse(dtstr, yearfirst=True, dayfirst=False),
                          datetime(2009, 1, 7))
 
+        dtstr = '20090107'
+
+        self.assertEqual(parse(dtstr, parserinfo(yearfirst=True)),
+                         datetime(2009, 1, 7))
+        self.assertEqual(parse(dtstr, parserinfo(yearfirst=True,
+                                                 dayfirst=False)),
+                         datetime(2009, 1, 7))
+
     def testDayFirst(self):
         dtstr = '090107'
 
@@ -671,6 +680,14 @@ class ParserTest(unittest.TestCase):
 
         self.assertEqual(parse(dtstr, yearfirst=False, dayfirst=True),
                          datetime(2007, 1, 9))
+
+        dtstr = '20090107'
+
+        self.assertEqual(parse(dtstr, parserinfo(dayfirst=True)),
+                         datetime(107, 9, 20))
+        self.assertEqual(parse(dtstr, parserinfo(yearfirst=False,
+                                                 dayfirst=True)),
+                         datetime(107, 9, 20))
 
     def testDayFirstYearFirst(self):
         dtstr = '090107'
