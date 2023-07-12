@@ -663,13 +663,15 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(parse(dtstr, yearfirst=True, dayfirst=False),
                          datetime(2009, 1, 7))
 
-        dtstr = '20090107'
+        dtstr = "20090107"
 
-        self.assertEqual(parse(dtstr, parserinfo(yearfirst=True)),
-                         datetime(2009, 1, 7))
-        self.assertEqual(parse(dtstr, parserinfo(yearfirst=True,
-                                                 dayfirst=False)),
-                         datetime(2009, 1, 7))
+        self.assertEqual(
+            parse(dtstr, parserinfo(yearfirst=True)), datetime(2009, 1, 7)
+        )
+        self.assertEqual(
+            parse(dtstr, parserinfo(yearfirst=True, dayfirst=False)),
+            datetime(2009, 1, 7),
+        )
 
     def testDayFirst(self):
         dtstr = '090107'
@@ -681,13 +683,15 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(parse(dtstr, yearfirst=False, dayfirst=True),
                          datetime(2007, 1, 9))
 
-        dtstr = '20090107'
+        dtstr = "20090107"
 
-        self.assertEqual(parse(dtstr, parserinfo(dayfirst=True)),
-                         datetime(107, 9, 20))
-        self.assertEqual(parse(dtstr, parserinfo(yearfirst=False,
-                                                 dayfirst=True)),
-                         datetime(107, 9, 20))
+        self.assertEqual(
+            parse(dtstr, parserinfo(dayfirst=True)), datetime(107, 9, 20)
+        )
+        self.assertEqual(
+            parse(dtstr, parserinfo(yearfirst=False, dayfirst=True)),
+            datetime(107, 9, 20),
+        )
 
     def testDayFirstYearFirst(self):
         dtstr = '090107'
