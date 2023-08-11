@@ -1,0 +1,1 @@
+Set GitHub Workflow permissions and fixed breaking CI
