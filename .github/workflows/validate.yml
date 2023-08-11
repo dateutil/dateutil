@@ -28,15 +28,11 @@ jobs:
         ]
         os: [ubuntu-latest, windows-latest, macos-latest]
         exclude:
-          - python-version: "2.7"
-            os: "ubuntu-latest"
           - python-version: "3.5"
             os: "ubuntu-latest"
           - python-version: "3.6"
             os: "ubuntu-latest"
         include:
-          - python-version: "2.7"
-            os: "ubuntu-20.04"
           - python-version: "3.5"
             os: "ubuntu-20.04"
           - python-version: "3.6"
