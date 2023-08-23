@@ -487,8 +487,6 @@ class relativedelta:
                     self.minute is None and
                     self.second is None and
                     self.microsecond is None)
-    # Compatibility with Python 2.x
-    __nonzero__ = __bool__
 
     def __mul__(self, other):
         try:
