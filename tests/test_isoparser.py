@@ -6,7 +6,6 @@ from dateutil.tz import UTC
 from dateutil.parser import isoparser, isoparse
 
 import pytest
-import six
 
 
 def _generate_tzoffsets(limited):
@@ -293,8 +292,7 @@ def test_isoparser_invalid_sep(sep):
         isoparser(sep=sep)
 
 
-# This only fails on Python 3
-@pytest.mark.xfail(not six.PY2, reason="Fails on Python 3 only")
+@pytest.mark.xfail
 def test_isoparser_byte_sep():
     dt = datetime(2017, 12, 6, 12, 30, 45)
     dt_str = dt.isoformat(sep="T")
