@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 This module offers a generic date/time string parser which is able to parse
 most known formats to represent a date and/or time.
@@ -28,7 +27,6 @@ Additional resources about date/time string formats can be found below:
 - `Java SimpleDateFormat Class
   <https://docs.oracle.com/javase/6/docs/api/java/text/SimpleDateFormat.html>`_
 """
-from __future__ import unicode_literals
 
 import datetime
 import re
@@ -55,7 +53,7 @@ __all__ = ["parse", "parserinfo", "ParserError"]
 # TODO: pandas.core.tools.datetimes imports this explicitly.  Might be worth
 # making public and/or figuring out if there is something we can
 # take off their plate.
-class _timelex(object):
+class _timelex:
     # Fractional seconds are sometimes split by a comma
     _split_decimal = re.compile("([.,])")
 
@@ -63,7 +61,7 @@ class _timelex(object):
         if isinstance(instream, (bytes, bytearray)):
             instream = instream.decode()
 
-        if isinstance(instream, text_type):
+        if isinstance(instream, str):
             instream = StringIO(instream)
         elif getattr(instream, 'read', None) is None:
             raise TypeError('Parser must be a string or character stream, not '
@@ -216,7 +214,7 @@ class _timelex(object):
         return nextchar.isspace()
 
 
-class _resultbase(object):
+class _resultbase:
 
     def __init__(self):
         for attr in self.__slots__:
@@ -227,8 +225,8 @@ class _resultbase(object):
         for attr in self.__slots__:
             value = getattr(self, attr)
             if value is not None:
-                l.append("%s=%s" % (attr, repr(value)))
-        return "%s(%s)" % (classname, ", ".join(l))
+                l.append("{}={}".format(attr, repr(value)))
+        return "{}({})".format(classname, ", ".join(l))
 
     def __len__(self):
         return (sum(getattr(self, attr) is not None
@@ -238,7 +236,7 @@ class _resultbase(object):
         return self._repr(self.__class__.__name__)
 
 
-class parserinfo(object):
+class parserinfo:
     """
     Class which handles what inputs are accepted. Subclass this to customize
     the language and acceptable values for each parameter.
@@ -565,7 +563,7 @@ class _ymd(list):
         return year, month, day
 
 
-class parser(object):
+class parser:
     def __init__(self, info=None):
         self.info = info or parserinfo()
 
@@ -648,7 +646,7 @@ class parser(object):
         try:
             ret = self._build_naive(res, default)
         except ValueError as e:
-            six.raise_from(ParserError(str(e) + ": %s", timestr), e)
+            raise ParserError(str(e) + ": %s", timestr) from e
 
         if not ignoretz:
             ret = self._build_tzaware(ret, res, tzinfos)
@@ -878,7 +876,7 @@ class parser(object):
         try:
             value = self._to_decimal(value_repr)
         except Exception as e:
-            six.raise_from(ValueError('Unknown numeric token'), e)
+            raise ValueError("Unknown numeric token") from e
 
         len_li = len(value_repr)
 
@@ -1147,7 +1145,7 @@ class parser(object):
                 raise ValueError("Converted decimal value is infinite or NaN")
         except Exception as e:
             msg = "Could not convert %s to decimal" % val
-            six.raise_from(ValueError(msg), e)
+            raise ValueError(msg) from e
         else:
             return decimal_value
 
@@ -1165,9 +1163,9 @@ class parser(object):
         # eg tzinfos = {'BRST' : None}
         if isinstance(tzdata, datetime.tzinfo) or tzdata is None:
             tzinfo = tzdata
-        elif isinstance(tzdata, text_type):
+        elif isinstance(tzdata, str):
             tzinfo = tz.tzstr(tzdata)
-        elif isinstance(tzdata, integer_types):
+        elif isinstance(tzdata, int):
             tzinfo = tz.tzoffset(tzname, tzdata)
         else:
             raise TypeError("Offset must be tzinfo subclass, tz string, "
@@ -1368,7 +1366,7 @@ def parse(timestr, parserinfo=None, **kwargs):
         return DEFAULTPARSER.parse(timestr, **kwargs)
 
 
-class _tzparser(object):
+class _tzparser:
 
     class _result(_resultbase):
 
@@ -1598,11 +1596,11 @@ class ParserError(ValueError):
         try:
             return self.args[0] % self.args[1:]
         except (TypeError, IndexError):
-            return super(ParserError, self).__str__()
+            return super().__str__()
 
     def __repr__(self):
         args = ", ".join("'%s'" % arg for arg in self.args)
-        return "%s(%s)" % (self.__class__.__name__, args)
+        return "{}({})".format(self.__class__.__name__, args)
 
 
 class UnknownTimezoneWarning(RuntimeWarning):

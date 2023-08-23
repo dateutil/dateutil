@@ -1,18 +1,17 @@
-from datetime import timedelta
+import _thread
 import weakref
 from collections import OrderedDict
-
-from six.moves import _thread
+from datetime import timedelta
 
 
 class _TzSingleton(type):
     def __init__(cls, *args, **kwargs):
         cls.__instance = None
-        super(_TzSingleton, cls).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def __call__(cls):
         if cls.__instance is None:
-            cls.__instance = super(_TzSingleton, cls).__call__()
+            cls.__instance = super().__call__()
         return cls.__instance
 
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import datetime
 import calendar
 
@@ -15,7 +14,7 @@ MO, TU, WE, TH, FR, SA, SU = weekdays = tuple(weekday(x) for x in range(7))
 __all__ = ["relativedelta", "MO", "TU", "WE", "TH", "FR", "SA", "SU"]
 
 
-class relativedelta(object):
+class relativedelta:
     """
     The relativedelta type is designed to be applied to an existing datetime and
     can replace specific components of that datetime, or represents an interval
@@ -200,7 +199,7 @@ class relativedelta(object):
                      "This is not a well-defined condition and will raise " +
                      "errors in future versions.", DeprecationWarning)
 
-            if isinstance(weekday, integer_types):
+            if isinstance(weekday, int):
                 self.weekday = weekdays[weekday]
             else:
                 self.weekday = weekday

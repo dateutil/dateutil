@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
 from datetime import datetime, timedelta, date, time
 import itertools as it
 
@@ -300,7 +297,7 @@ def test_isoparser_invalid_sep(sep):
 @pytest.mark.xfail(not six.PY2, reason="Fails on Python 3 only")
 def test_isoparser_byte_sep():
     dt = datetime(2017, 12, 6, 12, 30, 45)
-    dt_str = dt.isoformat(sep=str('T'))
+    dt_str = dt.isoformat(sep="T")
 
     dt_rt = isoparser(sep=b'T').isoparse(dt_str)
 
@@ -347,9 +344,8 @@ def __make_date_examples():
         date(2016, 2, 1)
     ]
 
-    if not six.PY2:
-        # strftime does not support dates before 1900 in Python 2
-        dates_no_day.append(date(1000, 11, 1))
+    # strftime does not support dates before 1900 in Python 2
+    dates_no_day.append(date(1000, 11, 1))
 
     # Only one supported format for dates with no day
     o = zip(dates_no_day, it.repeat('%Y-%m'))
@@ -371,7 +367,7 @@ def __make_date_examples():
 @pytest.mark.parametrize('as_bytes', [True, False])
 def test_parse_isodate(d, dt_fmt, as_bytes):
     d_str = d.strftime(dt_fmt)
-    if isinstance(d_str, six.text_type) and as_bytes:
+    if isinstance(d_str, str) and as_bytes:
         d_str = d_str.encode('ascii')
     elif isinstance(d_str, bytes) and not as_bytes:
         d_str = d_str.decode('ascii')
@@ -400,10 +396,7 @@ def test_parse_isodate_error_text():
         isoparser().parse_isodate('2014-0423')
 
     # ensure the error message does not contain b' prefixes
-    if six.PY2:
-        expected_error = "String contains unknown ISO components: u'2014-0423'"
-    else:
-        expected_error = "String contains unknown ISO components: '2014-0423'"
+    expected_error = "String contains unknown ISO components: '2014-0423'"
     assert expected_error == str(excinfo.value)
 
 
@@ -458,7 +451,7 @@ def __make_time_examples():
 @pytest.mark.parametrize('as_bytes', [True, False])
 def test_isotime(time_val, time_fmt, as_bytes):
     tstr = time_val.strftime(time_fmt)
-    if isinstance(tstr, six.text_type) and as_bytes:
+    if isinstance(tstr, str) and as_bytes:
         tstr = tstr.encode('ascii')
     elif isinstance(tstr, bytes) and not as_bytes:
         tstr = tstr.decode('ascii')

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 #
 # dateutil documentation build configuration file, created by
 # sphinx-quickstart on Thu Nov 20 23:18:41 2014.
