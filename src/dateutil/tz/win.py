@@ -8,8 +8,7 @@ Attempting to import this module on a non-Windows platform will raise an
 # This code was originally contributed by Jeffrey Harris.
 import datetime
 import struct
-
-from six.moves import winreg
+import winreg
 
 try:
     import ctypes
