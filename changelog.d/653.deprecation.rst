@@ -1,0 +1,4 @@
+Drop python 2 support. Removes all python 2 code, along with compatability code,
+and any CI or test configuration that may still test against python 2
+environments.
+Reported by @pganssle (gh issue #653). Fixed by @benjamb (gh pr #1304).
