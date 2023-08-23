@@ -5,7 +5,6 @@ from datetime import datetime, timedelta
 from io import StringIO
 
 import pytest
-from six import PY2
 
 from dateutil import tz
 from dateutil.parser import (
@@ -462,13 +461,6 @@ class ParserTest(unittest.TestCase):
                                tzinfos=self.tzinfos),
                          datetime(2003, 9, 25, 10, 36, 28,
                                   tzinfo=self.brsttz))
-
-    def testDateCommandFormatWithLong(self):
-        if PY2:
-            self.assertEqual(parse("Thu Sep 25 10:36:28 BRST 2003",
-                                   tzinfos={"BRST": long(-10800)}),
-                             datetime(2003, 9, 25, 10, 36, 28,
-                                      tzinfo=self.brsttz))
 
     def testISOFormatStrip2(self):
         self.assertEqual(parse("2003-09-25T10:49:41+03:00"),
