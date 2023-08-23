@@ -1634,8 +1634,7 @@ def __get_gettz():
                         if tzwin is not None:
                             try:
                                 tz = tzwin(name)
-                            except (OSError, UnicodeEncodeError):
-                                # UnicodeEncodeError is for Python 2.7 compat
+                            except OSError:
                                 tz = None
 
                         if not tz:
