@@ -16,13 +16,7 @@ import time
 import weakref
 from collections import OrderedDict
 
-from ._common import (
-    _tzinfo,
-    _validate_fromutc_inputs,
-    enfold,
-    tzname_in_python2,
-    tzrangebase,
-)
+from ._common import _tzinfo, _validate_fromutc_inputs, enfold, tzrangebase
 from ._factories import _TzOffsetFactory, _TzSingleton, _TzStrFactory
 
 try:
@@ -73,7 +67,6 @@ class tzutc(datetime.tzinfo, metaclass=_TzSingleton):
     def dst(self, dt):
         return ZERO
 
-    @tzname_in_python2
     def tzname(self, dt):
         return "UTC"
 
@@ -152,7 +145,6 @@ class tzoffset(datetime.tzinfo, metaclass=_TzOffsetFactory):
     def dst(self, dt):
         return ZERO
 
-    @tzname_in_python2
     def tzname(self, dt):
         return self._name
 
@@ -230,7 +222,6 @@ class tzlocal(_tzinfo):
         else:
             return ZERO
 
-    @tzname_in_python2
     def tzname(self, dt):
         return self._tznames[self._isdst(dt)]
 
@@ -840,7 +831,6 @@ class tzfile(_tzinfo):
         # be constant for every dt.
         return tti.dstoffset
 
-    @tzname_in_python2
     def tzname(self, dt):
         if not self._ttinfo_std or dt is None:
             return None
@@ -1236,7 +1226,6 @@ class _tzicalvtz(_tzinfo):
         else:
             return ZERO
 
-    @tzname_in_python2
     def tzname(self, dt):
         return self._find_comp(dt).tzname
 
