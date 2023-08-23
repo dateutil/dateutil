@@ -188,9 +188,6 @@ class _timelex:
 
         return token
 
-    def next(self):
-        return self.__next__()  # Python 2.x support
-
     @classmethod
     def split(cls, s):
         return list(cls(s))
