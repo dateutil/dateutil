@@ -5,15 +5,6 @@ import pytest
 MODULE_TYPE = type(sys)
 
 
-# Tests live in datetutil/test which cause a RuntimeWarning for Python2 builds.
-# But since we expect lazy imports tests to fail for Python < 3.7  we'll ignore those
-# warnings with this filter.
-
-
-def filter_import_warning(f):
-    return f
-
-
 @pytest.fixture(scope="function")
 def clean_import():
     """Create a somewhat clean import base for lazy import tests"""
@@ -42,7 +33,6 @@ def clean_import():
         sys.modules[mod_name] = mod
 
 
-@filter_import_warning
 @pytest.mark.parametrize(
     "module",
     ["easter", "parser", "relativedelta", "rrule", "tz", "utils", "zoneinfo"],
