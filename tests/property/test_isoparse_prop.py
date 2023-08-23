@@ -20,7 +20,7 @@ def test_timespec_auto(dt, sep):
         # Assume offset has no sub-second components
         assume(dt.utcoffset().total_seconds() % 60 == 0)
 
-    sep = str(sep)          # Python 2.7 requires bytes
+    sep = str(sep)
     dtstr = dt.isoformat(sep=sep)
     dt_rt = isoparse(dtstr)
 
