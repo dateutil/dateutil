@@ -13,7 +13,6 @@ from dateutil import tz
 from functools import wraps
 
 import re
-import six
 
 __all__ = ["isoparse", "isoparser"]
 

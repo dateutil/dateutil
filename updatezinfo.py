@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import hashlib
-import io
 import json
 import os
 from urllib import error as urllib_error

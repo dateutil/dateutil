@@ -1,5 +1,3 @@
-from six import PY2
-
 from functools import wraps
 
 from datetime import datetime, timedelta, tzinfo

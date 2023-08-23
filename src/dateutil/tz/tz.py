@@ -16,9 +16,6 @@ import time
 import weakref
 from collections import OrderedDict
 
-import six
-from six import string_types
-
 from ._common import (
     _tzinfo,
     _validate_fromutc_inputs,
@@ -32,9 +29,6 @@ try:
     from .win import tzwin, tzwinlocal
 except ImportError:
     tzwin = tzwinlocal = None
-
-# For warning about rounding tzinfo
-from warnings import warn
 
 ZERO = datetime.timedelta(0)
 EPOCH = datetime.datetime(1970, 1, 1, 0, 0)

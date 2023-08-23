@@ -1,16 +1,13 @@
 #!/usr/bin/python
-from os.path import isfile
 import os
+import sys
+import warnings
+from distutils.version import LooseVersion
+from os.path import isfile
 
 import setuptools
-from setuptools import setup, find_packages
+from setuptools import setup
 from setuptools.command.test import test as TestCommand
-
-from distutils.version import LooseVersion
-import warnings
-
-import io
-import sys
 
 if isfile("MANIFEST"):
     os.unlink("MANIFEST")

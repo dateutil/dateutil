@@ -10,7 +10,6 @@ import datetime
 import struct
 
 from six.moves import winreg
-from six import text_type
 
 try:
     import ctypes

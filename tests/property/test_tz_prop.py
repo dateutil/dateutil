@@ -1,8 +1,7 @@
 from datetime import datetime, timedelta
 
 import pytest
-import six
-from hypothesis import assume, given
+from hypothesis import given
 from hypothesis import strategies as st
 
 from dateutil import tz as tz

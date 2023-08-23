@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from io import StringIO
 
 import pytest
-from six import PY2, assertRaisesRegex
+from six import PY2
 
 from dateutil import tz
 from dateutil.parser import (

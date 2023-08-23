@@ -15,8 +15,6 @@ from functools import wraps
 # For warning about deprecation of until and count
 from warnings import warn
 
-from six import advance_iterator, integer_types
-
 from ._common import weekday as weekdaybase
 
 try:

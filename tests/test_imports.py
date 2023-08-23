@@ -1,8 +1,6 @@
 import sys
-import unittest
 
 import pytest
-import six
 
 MODULE_TYPE = type(sys)
 
