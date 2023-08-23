@@ -337,13 +337,7 @@ def test_parse_tzstr_fails(tzstr, exception):
 ###
 # Test parse_isodate
 def __make_date_examples():
-    dates_no_day = [
-        date(1999, 12, 1),
-        date(2016, 2, 1)
-    ]
-
-    # strftime does not support dates before 1900 in Python 2
-    dates_no_day.append(date(1000, 11, 1))
+    dates_no_day = [date(1999, 12, 1), date(2016, 2, 1), date(1000, 11, 1)]
 
     # Only one supported format for dates with no day
     o = zip(dates_no_day, it.repeat('%Y-%m'))
