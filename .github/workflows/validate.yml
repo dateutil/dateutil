@@ -11,6 +11,7 @@ on:
 jobs:
   test:
     strategy:
+      fail-fast: false
       matrix:
         python-version: [
           "2.7",
