@@ -228,7 +228,7 @@ Example around 03/11/2023, day of the switch to summer time:
 
     >>> winter_time = datetime(2023, 3, 11, 2, 55, 0, tzinfo=tz.gettz('America/Los_Angeles'))
     2023-03-11 02:55:00-08:00
-    >>> summer_time = winter_time + relativedelta.relativedelta(days=1)
+    >>> summer_time = winter_time + relativedelta(days=1)
     2023-03-12 02:55:00-07:00
     >>> (summer_time - winter_time).days * 24.0
     24.0
