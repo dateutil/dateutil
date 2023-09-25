@@ -225,15 +225,12 @@ days, weeks, etc.  Absolute time counts switching of time regions, change of the
 Example around 03/11/2023, day of the switch to summer time:
 
 .. doctest:: relativedelta
-    # winter time
+
     >>> winter_time = datetime(2023, 3, 11, 2, 55, 0, tzinfo=tz.gettz('America/Los_Angeles'))
     2023-03-11 02:55:00-08:00
-    # summer time
     >>> summer_time = winter_time + relativedelta.relativedelta(days=1)
     2023-03-12 02:55:00-07:00
-    # wall time (in hours)
     >>> (summer_time - winter_time).days * 24.0
     24.0
-    # absolute time (converting to UTC timestamp)
     >>> (summer_time.timestamp() - winter_time.timestamp())/3600
     23.0
