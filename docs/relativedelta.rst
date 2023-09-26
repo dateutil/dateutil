@@ -220,8 +220,8 @@ We can use the non-leap year day to ignore this:
     datetime.date(2000, 9, 17)
 
 Remember: relativedelta.relativedelta provides the calendar time delta, Wall Time, not Absolute Time.
-Wall time is the time on the clock: adding or subrtracting time changes time on a specified number of minutes, hours,
-days, weeks, etc.  Absolute time counts switching of time regions, change of the winter time to summer time, etc.
+Wall Time is the time on the clock: adding or subrtracting time changes time on a specified number of minutes, hours,
+days, weeks, etc.  Absolute Time counts switching of time regions, change of the winter time to summer time, etc.
 Example around 03/11/2023, day of the switch to summer time:
 
 .. doctest:: relativedelta
