@@ -1,2 +1,2 @@
-Add Python 3.11 to CI runs. Fixed by
+Add Python 3.12 to CI runs. Fixed by
 @stegayet (gh pr #1300)
