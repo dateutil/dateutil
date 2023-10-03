@@ -8,7 +8,7 @@ import unittest
 
 import pytest
 
-from src.dateutil.relativedelta import relativedelta, MO, TU, WE, FR, SU
+from dateutil.relativedelta import relativedelta, MO, TU, WE, FR, SU
 
 
 class RelativeDeltaTest(unittest.TestCase):
@@ -765,22 +765,21 @@ class RelativeDeltaWeeksPropertySetterTest(unittest.TestCase):
 
 
 class RelativeDeltaMillisecondTest(unittest.TestCase):
-    now = datetime(2000, 1, 1, 1, 1, 1)
+    NOW = datetime(2000, 1, 1, 1, 1, 1)
 
     def test_add_milliseconds(self):
-        self.assertEqual(self.now +
+        self.assertEqual(RelativeDeltaMillisecondTest.NOW +
                          relativedelta(seconds=+1, milliseconds=+1, microseconds=+1),
                          datetime(2000, 1, 1, 1, 1, 2, 1001))
 
     def test_add_milliseconds_2(self):
-        self.assertEqual(datetime(2000, 1, 1, 1, 1, 1) +
+        self.assertEqual(RelativeDeltaMillisecondTest.NOW +
                          relativedelta(seconds=4, milliseconds=-1000, microseconds=+1),
                          datetime(2000, 1, 1, 1, 1, 4, 1))
 
     def test_add_milliseconds_3(self):
         rd = relativedelta(milliseconds=1.25)
-        d1 = datetime(2000, 1, 1, 1, 1, 1)
-        self.assertEqual(d1 + rd,
+        self.assertEqual(RelativeDeltaMillisecondTest.NOW + rd,
                          datetime(2000, 1, 1, 1, 1, 1, 1250))
 
     """Test the milliseconds property getter"""
