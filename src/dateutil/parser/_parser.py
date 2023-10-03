@@ -42,6 +42,8 @@ from io import StringIO
 import six
 from six import integer_types, text_type
 
+import sys
+
 from decimal import Decimal
 
 from warnings import warn
@@ -262,14 +264,14 @@ class parserinfo(object):
             "st", "nd", "rd", "th"]
 
     WEEKDAYS = [("Mon", "Monday"),
-                ("Tue", "Tuesday"),     # TODO: "Tues"
+                ("Tue", "Tuesday"),  # TODO: "Tues"
                 ("Wed", "Wednesday"),
-                ("Thu", "Thursday"),    # TODO: "Thurs"
+                ("Thu", "Thursday"),  # TODO: "Thurs"
                 ("Fri", "Friday"),
                 ("Sat", "Saturday"),
                 ("Sun", "Sunday")]
     MONTHS = [("Jan", "January"),
-              ("Feb", "February"),      # TODO: "Febr"
+              ("Feb", "February"),  # TODO: "Febr"
               ("Mar", "March"),
               ("Apr", "April"),
               ("May", "May"),
@@ -288,6 +290,7 @@ class parserinfo(object):
     UTCZONE = ["UTC", "GMT", "Z", "z"]
     PERTAIN = ["of"]
     TZOFFSET = {}
+
     # TODO: ERA = ["AD", "BC", "CE", "BCE", "Stardate",
     #              "Anno Domini", "Year of Our Lord"]
 
@@ -383,7 +386,7 @@ class parserinfo(object):
             res.year = self.convertyear(res.year, res.century_specified)
 
         if ((res.tzoffset == 0 and not res.tzname) or
-             (res.tzname == 'Z' or res.tzname == 'z')):
+                (res.tzname == 'Z' or res.tzname == 'z')):
             res.tzname = "UTC"
             res.tzoffset = 0
         elif res.tzoffset != 0 and res.tzname and self.utczone(res.tzname):
@@ -548,7 +551,7 @@ class _ymd(list):
 
             else:
                 if (self[0] > 31 or
-                    self.ystridx == 0 or
+                        self.ystridx == 0 or
                         (yearfirst and self[1] <= 12 and self[2] <= 31)):
                     # 99-01-01
                     if dayfirst and self[2] <= 12:
@@ -637,7 +640,7 @@ class parser(object):
             default = datetime.datetime.now().replace(hour=0, minute=0,
                                                       second=0, microsecond=0)
 
-        res, skipped_tokens = self._parse(timestr, **kwargs)
+        res, skipped_tokens, tokens = self._parse(timestr, **kwargs)
 
         if res is None:
             raise ParserError("Unknown string format: %s", timestr)
@@ -646,6 +649,7 @@ class parser(object):
             raise ParserError("String does not contain a date: %s", timestr)
 
         try:
+            format_string = self._guess_format_mask(res, timestr, tokens)
             ret = self._build_naive(res, default)
         except ValueError as e:
             six.raise_from(ParserError(str(e) + ": %s", timestr), e)
@@ -654,14 +658,118 @@ class parser(object):
             ret = self._build_tzaware(ret, res, tzinfos)
 
         if kwargs.get('fuzzy_with_tokens', False):
-            return ret, skipped_tokens
+            return ret, skipped_tokens, format_string
         else:
-            return ret
+            return ret, format_string
 
     class _result(_resultbase):
         __slots__ = ["year", "month", "day", "weekday",
                      "hour", "minute", "second", "microsecond",
-                     "tzname", "tzoffset", "ampm","any_unused_tokens"]
+                     "tzname", "tzoffset", "ampm", "any_unused_tokens"] + \
+                    ["year_token", "month_token", "day_token",
+                     "weekday_token", "hour_token", "minute_token",
+                     "second_token", "microsecond_token", "tzname_token",
+                     "tzoffset_token", "ampm_token", "any_unused_tokens_token"]
+
+    def _guess_format_mask(self, parsed_date, timestring, tokens):
+        """
+        Given a parsed date and the original timestring, try to guess the
+        format mask used.
+        """
+        system_type = "Windows" if sys.platform == "win32" else "Linux"
+
+        def to_numeric(x):
+            if isinstance(x, integer_types):
+                return int(x)
+            elif isinstance(x, float):
+                return float(x)
+            elif isinstance(x, str):
+                if x.isdigit():
+                    return int(x)
+                else:
+                    return x
+
+        units = ["year", "month", "day", "weekday",
+                 "hour", "minute", "second", "microsecond",
+                 "tzname", "tzoffset", "ampm"]
+        result_dict = {k: [] for k in units}
+        units += [x + "_token" for x in units]
+
+        for unit in units:
+            result_dict[unit.replace("_token", "")].append(getattr(parsed_date, unit))
+
+        result_dict = {k: [v[0], str(v[0])] if not v[1] else v for k, v in result_dict.items()}
+        sep = [".", ":", " "]
+        matched_units = {k: i for k, i in result_dict.items() for token in tokens if
+                         (i[1] == token) or (to_numeric(i[1]) == to_numeric(token))}
+        for k, v in matched_units.items():
+            if not v[1].isdigit():
+                if any([i in v[1] for i in sep]):
+                    splitted = re.split("|".join(['\\' + i for i in sep]), v[1])
+                    for subtoken in splitted:
+                        if to_numeric(subtoken) == v[0]:
+                            v.append(v[1])
+                            v[1] = str(v[0])
+                        elif to_numeric(subtoken) == v[0] / 1000:
+                            v.append(v[1])
+                            v[1] = str(v[0] // 1000)
+
+        month_notation = "%-m" if system_type == "Linux" else "%#m"
+        month_token = matched_units.get("month", [0, "0"])[1]
+        if month_token and month_token in [i[0] for i in self.info.MONTHS]:
+            month_notation = "%b"
+        elif month_token and month_token in [i[1] for i in self.info.MONTHS]:
+            month_notation = "%B"
+        elif month_token.startswith("0"):
+            month_notation = "%m"
+
+        year_notation = "%-y" if system_type == "Linux" else "%#y"
+        year_token = matched_units.get("year", [0, "0"])[1]
+        if year_token and year_token.startswith("0"):
+            year_notation = "%y"
+        elif year_token and len(year_token) > 2:
+            year_notation = "%Y"
+
+        day_notation = "%-d" if system_type == "Linux" else "%#d"
+        day_token = matched_units.get("day", [0, "0"])[1]
+        if day_token and day_token.startswith("0"):
+            day_notation = "%d"
+
+        weekday_notation = "%w"
+        weekday_token = matched_units.get("weekday", [0, "0"])[1]
+        if weekday_token and weekday_token in [i[0] for i in self.info.WEEKDAYS]:
+            weekday_notation = "%a"
+        elif weekday_token and weekday_token in [i[1] for i in self.info.WEEKDAYS]:
+            weekday_notation = "%A"
+
+        hour_notation = "%-H" if system_type == "Linux" else "%#H"
+        hour_token = matched_units.get("hour", [0, "0"])[1]
+        if hour_token and hour_token.startswith("0") and len(hour_token) == 2:
+            hour_notation = "%H"
+
+        minute_notation = "%-M" if system_type == "Linux" else "%#M"
+        minute_token = matched_units.get("minute", [0, "0"])[1]
+        if minute_token and minute_token.startswith("0") and len(minute_token) == 2:
+            minute_notation = "%M"
+
+        second_notation = "%-S" if system_type == "Linux" else "%#S"
+        second_token = matched_units.get("second", [0, "0"])[1]
+        if second_token and second_token.startswith("0") and len(second_token) == 2:
+            second_notation = "%S"
+
+        symbolic_units = {"year": year_notation, "month": month_notation,
+                          "day": day_notation, "weekday": weekday_notation,
+                          "hour": hour_notation, "minute": minute_notation,
+                          "second": second_notation, "microsecond": "%f", "tzname": "%Z",
+                          "tzoffset": "%z", "ampm": "%p"}
+        output_format = [i for i in tokens]
+        for n, token in enumerate(tokens):
+            for unit, values in matched_units.items():
+                matched_token = values[-1]
+                if token == matched_token:
+                    output_format[n] = output_format[n].replace(values[1], symbolic_units[unit])
+
+        return "".join(output_format)
 
     def _parse(self, timestr, dayfirst=None, yearfirst=None, fuzzy=False,
                fuzzy_with_tokens=False):
@@ -716,8 +824,7 @@ class parser(object):
             yearfirst = info.yearfirst
 
         res = self._result()
-        l = _timelex.split(timestr)         # Splits the timestr into tokens
-
+        l = _timelex.split(timestr)  # Splits the timestr into tokens
         skipped_idxs = []
 
         # year/month/day list
@@ -725,6 +832,7 @@ class parser(object):
 
         len_l = len(l)
         i = 0
+
         try:
             while i < len_l:
 
@@ -743,11 +851,13 @@ class parser(object):
                 elif info.weekday(l[i]) is not None:
                     value = info.weekday(l[i])
                     res.weekday = value
+                    res.weekday_token = l[i]
 
                 # Check month name
                 elif info.month(l[i]) is not None:
                     value = info.month(l[i])
                     ymd.append(value, 'M')
+                    res.month_token = l[i]
 
                     if i + 1 < len_l:
                         if l[i + 1] in ('-', '/'):
@@ -771,6 +881,7 @@ class parser(object):
                                 value = int(l[i + 4])
                                 year = str(info.convertyear(value))
                                 ymd.append(year, 'Y')
+                                res.year_token = l[i + 4]
                             else:
                                 # Wrong guess
                                 pass
@@ -785,6 +896,7 @@ class parser(object):
                     if val_is_ampm:
                         res.hour = self._adjust_ampm(res.hour, value)
                         res.ampm = value
+                        res.ampm_token = l[i]
 
                     elif fuzzy:
                         skipped_idxs.append(i)
@@ -792,7 +904,9 @@ class parser(object):
                 # Check for a timezone name
                 elif self._could_be_tzname(res.hour, res.tzname, res.tzoffset, l[i]):
                     res.tzname = l[i]
+                    res.tzname_token = l[i]
                     res.tzoffset = info.tzoffset(res.tzname)
+                    res.tzoffset = l[i]
 
                     # Check for something like GMT+3, or BRST+3. Notice
                     # that it doesn't mean "I am 3 hours after GMT", but
@@ -802,10 +916,12 @@ class parser(object):
                     if i + 1 < len_l and l[i + 1] in ('+', '-'):
                         l[i + 1] = ('+', '-')[l[i + 1] == '+']
                         res.tzoffset = None
-                        if info.utczone(res.tzname):
+                        res.tzoffset_token = None
+                        if info.utczone(res.tzname[0]):
                             # With something like GMT+3, the timezone
                             # is *not* GMT.
                             res.tzname = None
+                            res.tzname_token = None
 
                 # Check for a numbered timezone
                 elif res.hour is not None and l[i] in ('+', '-'):
@@ -840,6 +956,7 @@ class parser(object):
                                                   None, l[i + 4])):
                         # -0300 (BRST)
                         res.tzname = l[i + 4]
+                        res.tzname_token = l[i + 4]
                         i += 4
 
                     i += 1
@@ -854,7 +971,6 @@ class parser(object):
 
             # Process year/month/day
             year, month, day = ymd.resolve_ymd(yearfirst, dayfirst)
-
             res.century_specified = ymd.century_specified
             res.year = year
             res.month = month
@@ -870,7 +986,7 @@ class parser(object):
             skipped_tokens = self._recombine_skipped(l, skipped_idxs)
             return res, tuple(skipped_tokens)
         else:
-            return res, None
+            return res, None, l
 
     def _parse_numeric_token(self, tokens, idx, info, ymd, res, fuzzy):
         # Token is a number
@@ -885,16 +1001,18 @@ class parser(object):
         len_l = len(tokens)
 
         if (len(ymd) == 3 and len_li in (2, 4) and
-            res.hour is None and
-            (idx + 1 >= len_l or
-             (tokens[idx + 1] != ':' and
-              info.hms(tokens[idx + 1]) is None))):
+                res.hour is None and
+                (idx + 1 >= len_l or
+                 (tokens[idx + 1] != ':' and
+                  info.hms(tokens[idx + 1]) is None))):
             # 19990101T23[59]
             s = tokens[idx]
             res.hour = int(s[:2])
+            res.hour_token = tokens[idx][:2]
 
             if len_li == 4:
                 res.minute = int(s[2:])
+                res.minute_token = tokens[idx][2:]
 
         elif len_li == 6 or (len_li > 6 and tokens[idx].find('.') == 6):
             # YYMMDD or HHMMSS[.ss]
@@ -909,22 +1027,30 @@ class parser(object):
 
                 # TODO: Check if res attributes already set.
                 res.hour = int(s[:2])
+                res.hour_token = tokens[idx][:2]
                 res.minute = int(s[2:4])
+                res.minute_token = tokens[idx][2:4]
                 res.second, res.microsecond = self._parsems(s[4:])
+                res.second_token = tokens[idx][4:] if res.second else None
+                res.microsecond_token = tokens[idx][4:] if res.microsecond else None
 
         elif len_li in (8, 12, 14):
             # YYYYMMDD
             s = tokens[idx]
             ymd.append(s[:4], 'Y')
+            res.year_token = tokens[idx][:4]
             ymd.append(s[4:6])
             ymd.append(s[6:8])
 
             if len_li > 8:
                 res.hour = int(s[8:10])
+                res.hour_token = tokens[idx][8:10]
                 res.minute = int(s[10:12])
+                res.minute_token = tokens[idx][10:12]
 
                 if len_li > 12:
                     res.second = int(s[12:])
+                    res.second_token = tokens[idx][12:]
 
         elif self._find_hms_idx(idx, tokens, info, allow_jump=True) is not None:
             # HH[ ]h or MM[ ]m or SS[.ss][ ]s
@@ -938,11 +1064,16 @@ class parser(object):
         elif idx + 2 < len_l and tokens[idx + 1] == ':':
             # HH:MM[:SS[.ss]]
             res.hour = int(value)
+            res.hour_token = tokens[idx]
             value = self._to_decimal(tokens[idx + 2])  # TODO: try/except for this?
-            (res.minute, res.second) = self._parse_min_sec(value)
+            (res.minute, res.second) = self._parse_min_sec(value, tokens, idx)
+            res.minute_token = tokens[idx + 2] if res.minute else None
+            res.second_token = tokens[idx + 2] if res.second else None
 
             if idx + 4 < len_l and tokens[idx + 3] == ':':
                 res.second, res.microsecond = self._parsems(tokens[idx + 4])
+                res.second_token = tokens[idx + 4] if res.second else None
+                res.microsecond_token = tokens[idx + 4] if res.microsecond else None
 
                 idx += 2
 
@@ -962,6 +1093,7 @@ class parser(object):
 
                     if value is not None:
                         ymd.append(value, 'M')
+                        res.month_token = tokens[idx + 2]
                     else:
                         raise ValueError()
 
@@ -971,6 +1103,7 @@ class parser(object):
 
                     if value is not None:
                         ymd.append(value, 'M')
+                        res.month_token = tokens[idx + 4]
                     else:
                         ymd.append(tokens[idx + 4])
                     idx += 2
@@ -983,6 +1116,7 @@ class parser(object):
                 # 12 am
                 hour = int(value)
                 res.hour = self._adjust_ampm(hour, info.ampm(tokens[idx + 2]))
+                res.hours_token = tokens[idx + 2]
                 idx += 1
             else:
                 # Year, month or day
@@ -993,6 +1127,7 @@ class parser(object):
             # 12am
             hour = int(value)
             res.hour = self._adjust_ampm(hour, info.ampm(tokens[idx + 1]))
+            res.hour_token = tokens[idx + 1]
             idx += 1
 
         elif ymd.could_be_day(value):
@@ -1006,27 +1141,27 @@ class parser(object):
     def _find_hms_idx(self, idx, tokens, info, allow_jump):
         len_l = len(tokens)
 
-        if idx+1 < len_l and info.hms(tokens[idx+1]) is not None:
+        if idx + 1 < len_l and info.hms(tokens[idx + 1]) is not None:
             # There is an "h", "m", or "s" label following this token.  We take
             # assign the upcoming label to the current token.
             # e.g. the "12" in 12h"
             hms_idx = idx + 1
 
-        elif (allow_jump and idx+2 < len_l and tokens[idx+1] == ' ' and
-              info.hms(tokens[idx+2]) is not None):
+        elif (allow_jump and idx + 2 < len_l and tokens[idx + 1] == ' ' and
+              info.hms(tokens[idx + 2]) is not None):
             # There is a space and then an "h", "m", or "s" label.
             # e.g. the "12" in "12 h"
             hms_idx = idx + 2
 
-        elif idx > 0 and info.hms(tokens[idx-1]) is not None:
+        elif idx > 0 and info.hms(tokens[idx - 1]) is not None:
             # There is a "h", "m", or "s" preceding this token.  Since neither
             # of the previous cases was hit, there is no label following this
             # token, so we use the previous label.
             # e.g. the "04" in "12h04"
-            hms_idx = idx-1
+            hms_idx = idx - 1
 
-        elif (1 < idx == len_l-1 and tokens[idx-1] == ' ' and
-              info.hms(tokens[idx-2]) is not None):
+        elif (1 < idx == len_l - 1 and tokens[idx - 1] == ' ' and
+              info.hms(tokens[idx - 2]) is not None):
             # If we are looking at the final token, we allow for a
             # backward-looking check to skip over a space.
             # TODO: Are we sure this is the right condition here?
@@ -1045,7 +1180,7 @@ class parser(object):
             # Hour
             res.hour = int(value)
             if value % 1:
-                res.minute = int(60*(value % 1))
+                res.minute = int(60 * (value % 1))
 
         elif hms == 1:
             (res.minute, res.second) = self._parse_min_sec(value)
@@ -1096,7 +1231,7 @@ class parser(object):
             hour = 0
         return hour
 
-    def _parse_min_sec(self, value):
+    def _parse_min_sec(self, value, tokens, idx):
         # TODO: Every usage of this function sets res.second to the return
         # value. Are there any cases where second will be returned as None and
         # we *don't* want to set res.second = None?
@@ -1106,7 +1241,7 @@ class parser(object):
         sec_remainder = value % 1
         if sec_remainder:
             second = int(60 * sec_remainder)
-        return (minute, second)
+        return minute, second
 
     def _parse_hms(self, idx, tokens, info, hms_idx):
         # TODO: Is this going to admit a lot of false-positives for when we
@@ -1369,7 +1504,6 @@ def parse(timestr, parserinfo=None, **kwargs):
 
 
 class _tzparser(object):
-
     class _result(_resultbase):
 
         __slots__ = ["stdabbr", "stdoffset", "dstabbr", "dstoffset",
@@ -1389,7 +1523,7 @@ class _tzparser(object):
 
     def parse(self, tzstr):
         res = self._result()
-        l = [x for x in re.split(r'([,:.]|[a-zA-Z]+|[0-9]+)',tzstr) if x]
+        l = [x for x in re.split(r'([,:.]|[a-zA-Z]+|[0-9]+)', tzstr) if x]
         used_idxs = list()
         try:
 
@@ -1447,7 +1581,6 @@ class _tzparser(object):
                         break
                 else:
                     break
-
 
             if i < len_l:
                 for j in range(i, len_l):
@@ -1575,7 +1708,7 @@ class _tzparser(object):
             return None
 
         unused_idxs = set(range(len_l)).difference(used_idxs)
-        res.any_unused_tokens = not {l[n] for n in unused_idxs}.issubset({",",":"})
+        res.any_unused_tokens = not {l[n] for n in unused_idxs}.issubset({",", ":"})
         return res
 
 
@@ -1594,6 +1727,7 @@ class ParserError(ValueError):
 
     .. versionadded:: 2.8.1
     """
+
     def __str__(self):
         try:
             return self.args[0] % self.args[1:]
