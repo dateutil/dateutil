@@ -58,6 +58,7 @@ switch, and thus all their contributions are dual-licensed.
 - Hugo van Kemenade (gh: @hugovk) **D**
 - Igor <mrigor83@MASKED>
 - Ionuț Ciocîrlan <jdxlark@MASKED>
+- Jack McIvor <jacktmcivor@MASKED> (gh: @jack-mcivor) **D**
 - Jacqueline Chen <jacqueline415@outlook.com> (gh: @jachen20) **D**
 - Jake Chorley (gh: @jakec-github) **D**
 - Jakub Kulík (gh: @kulikjak) **D**
