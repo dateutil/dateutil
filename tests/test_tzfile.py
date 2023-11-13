@@ -1,5 +1,6 @@
 import contextlib
 import functools
+import shutil
 import sys
 import threading
 
@@ -43,6 +44,20 @@ else:
     contextdecorator = contextlib.contextmanager
 
 
+def _copy_resource_to(resource, path):
+    """Copies a test resource to a path on disk."""
+    from dateutil._tzdata_impl import _open_binary
+
+    # Python 2.7 compat
+    parent_dir = os.path.dirname(path)
+    if not os.path.exists(parent_dir):
+        os.makedirs(parent_dir)
+
+    with _open_binary("tests.resources", resource) as f:
+        with open(path, "wb") as out_f:
+            out_f.write(f.read())
+
+
 def pop_tzdata_modules():
     tzdata_modules = {}
     for modname in list(sys.modules):
@@ -56,6 +71,7 @@ def pop_tzdata_modules():
 
 @contextdecorator
 def set_tzpath(tzpath, block_tzdata=False):
+    tzdata_modules = {}
     with TZPATH_LOCK:
         if block_tzdata:
             tzdata_modules = pop_tzdata_modules()
@@ -75,6 +91,18 @@ def set_tzpath(tzpath, block_tzdata=False):
 
 @set_tzpath((), block_tzdata=False)
 def no_tz_data():
-    tz.gettz.clear_cache()
+    tz.gettz.cache_clear()
     NYC = tz.gettz("America/New_York")
     assert NYC is None
+
+
+def test_tzpath_setting(tmp_path):
+    with set_tzpath([tmp_path]):
+        _copy_resource_to(
+            "liliput_tzif", os.path.join(str(tmp_path), "Fictional", "Liliput")
+        )
+        tz.gettz.cache_clear()
+
+        fiction_land = tz.gettz("Fictional/Liliput")
+
+        assert fiction_land is not None
