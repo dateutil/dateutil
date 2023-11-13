@@ -64,7 +64,6 @@ steps:
 
 - bash: |
     if [[ $TOXENV == "py" ]]; then
-      ./ci_tools/retry.sh python updatezinfo.py
       python -m tox -- tests --cov-config=tox.ini --cov=dateutil --junitxml=unittests/TEST-$(Agent.JobName).xml
       python -m tox -e coverage,codecov || true
     else

@@ -11,6 +11,7 @@ on:
 jobs:
   test:
     strategy:
+      fail-fast: false
       matrix:
         python-version: [
           "2.7",
@@ -60,20 +61,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
-        run: python -m pip install -U tox six
-      - name: Install zic (Windows)
-        run: |
-          curl https://get.enterprisedb.com/postgresql/postgresql-9.5.21-2-windows-x64-binaries.zip --output $env:GITHUB_WORKSPACE\postgresql9.5.21.zip
-          unzip -oq $env:GITHUB_WORKSPACE\postgresql9.5.21.zip -d .postgresql
-        if: runner.os == 'Windows'
-      - name: Run updatezinfo.py (Windows)
-        run: |
-          $env:Path += ";$env:GITHUB_WORKSPACE\.postgresql\pgsql\bin"
-          ci_tools/retry.bat python updatezinfo.py
-        if: runner.os == 'Windows'
-      - name: Run updatezinfo.py (Unix)
-        run: ./ci_tools/retry.sh python updatezinfo.py
-        if: runner.os != 'Windows'
+        run: python -m pip install -U tox
       - name: Run tox
         run: python -m tox
       - name: Generate coverage.xml
@@ -115,12 +103,11 @@ jobs:
         with:
           fetch-depth: 0
       - uses: actions/setup-python@v4
-      - uses: akaihola/darker@0fb2501a3f6c1b2d64976afa57885aeec0601182
-        # pinned due to unreleased fix: https://github.com/akaihola/darker/issues/489
+      - uses: akaihola/darker@1.7.2
         with:
           options: "--check --diff --color --isort"
           src: "."
-          version: "~=1.7.1"
+          version: "1.7.2"
 
   build-dist:
     runs-on: ubuntu-latest

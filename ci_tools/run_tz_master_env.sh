@@ -82,16 +82,6 @@ PATH=$TMP_DIR/tzdir/usr/sbin:${PATH}
 # Stash the old zoneinfo file in the temporary directory
 mv $REPO_TARBALL $TMP_TARBALL
 
-
-# Make the metadata file
-ZONEFILE_METADATA_NAME=zonefile_metadata_master.json
-${CITOOLS_DIR}/make_zonefile_metadata.py \
-    $TARBALL_NAME \
-    $VERSION \
-    $ZONEFILE_METADATA_NAME
-
-python ${REPO_DIR}/updatezinfo.py $ZONEFILE_METADATA_NAME
-
 # Run the tests
 python -m pytest ${REPO_DIR}/tests $EXTRA_TEST_ARGS
 

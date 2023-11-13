@@ -26,7 +26,6 @@ install:
       pip install -U setuptools
     fi
   - pip install -U "tox<3.8.0" $PIP_ARGS
-  - if [[ $TOXENV == "py" ]]; then ./ci_tools/retry.sh python updatezinfo.py; fi
 
 script:
   - tox
