@@ -1,0 +1,4 @@
+Adds helper method ``dateutil.relativedelta.from_iso8610()``
+to convert an ISO8601 duration into a ``relativedelta`` instance
+NOTE: does not support ISO8601 week durations (eg, "P[n]W")
+Added by @morrissimo (refs gh issues #854)
