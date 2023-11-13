@@ -1,0 +1,2 @@
+Add new ChainParser class to facilitate chaining multiple parsers and formats.
+Reported and fixed by @mariocj89 (gh issue #1153).
