@@ -124,6 +124,7 @@ switch, and thus all their contributions are dual-licensed.
 - Zbigniew Jędrzejewski-Szmek <zbyszek@MASKED>
 - bachmann <bachmann.matt@MASKED>
 - bjv <brandon.vanvaerenbergh@MASKED> (@bjamesvERT)
+- friskysaga (gh: @FriskySaga) **D**
 - gl <gl@MASKED>
 - gfyoung <gfyoung17@gmail.com> **D**
 - Labrys <labrys.git@gmail.com> (gh: @labrys) **R**
