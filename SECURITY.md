@@ -2,15 +2,11 @@
 
 ## Supported Versions
 
-Use this section to tell people about which versions of your project are
-currently being supported with security updates.
+pypi version supported Python version licence
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 5.1.x   | :white_check_mark: |
-| 5.0.x   | :x:                |
-| 4.0.x   | :white_check_mark: |
-| < 4.0   | :x:                |
+Join the chat at https://gitter.im/dateutil/dateutil Read the documentation at https://dateutil.readthedocs.io/en/latest/
+
+travis build status appveyor build status azure pipelines build status Code coverage
 
 ## Reporting a Vulnerability
 
