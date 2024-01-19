@@ -1,0 +1,2 @@
+The currently supported versions are PyPy3.10, PyPy3.9, PyPy2.7 so let's test on the first and the last. Fixed by
+@cclauss (gh pr #1336)
