@@ -29,6 +29,10 @@ jobs:
         exclude:
           - python-version: "2.7"
             os: "ubuntu-latest"
+          - python-version: "2.7"
+            os: "windows-latest"
+          - python-version: "2.7"
+            os: "macos-latest"
           - python-version: "3.5"
             os: "ubuntu-latest"
           - python-version: "3.6"
@@ -45,7 +49,14 @@ jobs:
       TOXENV: py
     steps:
       - uses: actions/checkout@v3
-      - name: Set up Python ${{ matrix.python-version }} on ${{ matrix.os }}
+      - if: ${{ matrix.python-version == '2.7' }}
+        run: |
+          sudo apt-get install python-is-python2
+          curl -sSL https://bootstrap.pypa.io/pip/2.7/get-pip.py -o get-pip.py
+          python get-pip.py
+        name: Set up Python ${{ matrix.python-version }} on ${{ matrix.os }}
+      - if: ${{ matrix.python-version != '2.7' }}
+        name: Set up Python ${{ matrix.python-version }} on ${{ matrix.os }}
         uses: actions/setup-python@v3
         with:
           python-version: ${{ matrix.python-version }}
