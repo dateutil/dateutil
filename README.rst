@@ -5,7 +5,7 @@ dateutil - powerful extensions to datetime
 
 |gitter| |readthedocs|
 
-|travis| |appveyor| |pipelines| |coverage|
+|appveyor| |gha| |coverage|
 
 .. |pypi| image:: https://img.shields.io/pypi/v/python-dateutil.svg?style=flat-square
     :target: https://pypi.org/project/python-dateutil/
@@ -15,17 +15,13 @@ dateutil - powerful extensions to datetime
     :target: https://pypi.org/project/python-dateutil/
     :alt: supported Python version
 
-.. |travis| image:: https://img.shields.io/travis/dateutil/dateutil/master.svg?style=flat-square&label=Travis%20Build
-    :target: https://travis-ci.org/dateutil/dateutil
-    :alt: travis build status
-
 .. |appveyor| image:: https://img.shields.io/appveyor/ci/dateutil/dateutil/master.svg?style=flat-square&logo=appveyor
     :target: https://ci.appveyor.com/project/dateutil/dateutil
     :alt: appveyor build status
 
-.. |pipelines| image:: https://dev.azure.com/pythondateutilazure/dateutil/_apis/build/status/dateutil.dateutil?branchName=master
-    :target: https://dev.azure.com/pythondateutilazure/dateutil/_build/latest?definitionId=1&branchName=master
-    :alt: azure pipelines build status
+.. |gha| image:: https://github.com/dateutil/dateutil/actions/workflows/validate.yml/badge.svg
+    :target: https://github.com/dateutil/dateutil/actions
+    :alt: github actions build status
 
 .. |coverage| image:: https://codecov.io/gh/dateutil/dateutil/branch/master/graphs/badge.svg?branch=master
     :target: https://codecov.io/gh/dateutil/dateutil?branch=master
