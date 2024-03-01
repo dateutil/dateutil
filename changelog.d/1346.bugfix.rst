@@ -1,0 +1,1 @@
+Pinned ``setuptools_scm`` to ``<8``, which should make the generated ``_version.py`` file compatible with all supported versions of Python.
