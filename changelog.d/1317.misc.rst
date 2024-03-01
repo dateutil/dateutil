@@ -1,0 +1,1 @@
+Add explicit support for Python 3.12. Change by @jack-mcivor (gh pr #1317)
