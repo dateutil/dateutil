@@ -95,7 +95,7 @@ switch, and thus all their contributions are dual-licensed.
 - Pavel Ponomarev <comrad.awsum@MASKED>
 - Peter Bieringer <pb@MASKED>
 - Pierre Gergondet <pierre.gergondet@MASKED> (gh: @gergondet) **D**
-- Quentin Pradet <quentin@MASKED>
+- Quentin Pradet (gh: @pquentin) **D**
 - Raymond Cha (gh: @weatherpattern) **D**
 - Ridhi Mahajan <ridhikmahajan@MASKED> **D**
 - Robin Henriksson Törnström <gh: @MrRawbin> **D**
