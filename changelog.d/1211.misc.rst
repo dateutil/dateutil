@@ -1,1 +1,0 @@
-Test with Python 3.11-dev. Reported and fixed by Hugo van Kemenade (gh pr #1211).
