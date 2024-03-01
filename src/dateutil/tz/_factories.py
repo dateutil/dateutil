@@ -1,8 +1,7 @@
 from datetime import timedelta
 import weakref
 from collections import OrderedDict
-
-from six.moves import _thread
+import _thread
 
 
 class _TzSingleton(type):
@@ -41,7 +40,7 @@ class _TzOffsetFactory(_TzFactory):
             instance = cls.__instances.setdefault(key,
                                                   cls.instance(name, offset))
 
-        # This lock may not be necessary in Python 3. See GH issue #901
+        # This lock may not be necessary. See GH issue #901
         with cls._cache_lock:
             cls.__strong_cache[key] = cls.__strong_cache.pop(key, instance)
 
@@ -68,7 +67,7 @@ class _TzStrFactory(_TzFactory):
             instance = cls.__instances.setdefault(key,
                 cls.instance(s, posix_offset))
 
-        # This lock may not be necessary in Python 3. See GH issue #901
+        # This lock may not be necessary. See GH issue #901
         with cls.__cache_lock:
             cls.__strong_cache[key] = cls.__strong_cache.pop(key, instance)
 

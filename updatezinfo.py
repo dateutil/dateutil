@@ -3,9 +3,8 @@ import os
 import hashlib
 import json
 import io
-
-from six.moves.urllib import request
-from six.moves.urllib import error as urllib_error
+from urllib import request
+from urllib import error as urllib_error
 
 try:
     import dateutil

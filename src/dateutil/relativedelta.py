@@ -5,7 +5,6 @@ import calendar
 import operator
 from math import copysign
 
-from six import integer_types
 from warnings import warn
 
 from ._common import weekday
@@ -200,7 +199,7 @@ class relativedelta(object):
                      "This is not a well-defined condition and will raise " +
                      "errors in future versions.", DeprecationWarning)
 
-            if isinstance(weekday, integer_types):
+            if isinstance(weekday, int):
                 self.weekday = weekdays[weekday]
             else:
                 self.weekday = weekday
@@ -489,8 +488,6 @@ class relativedelta(object):
                     self.minute is None and
                     self.second is None and
                     self.microsecond is None)
-    # Compatibility with Python 2.x
-    __nonzero__ = __bool__
 
     def __mul__(self, other):
         try:

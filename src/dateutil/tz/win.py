@@ -9,9 +9,7 @@ Attempting to import this module on a non-Windows platform will raise an
 # This code was originally contributed by Jeffrey Harris.
 import datetime
 import struct
-
-from six.moves import winreg
-from six import text_type
+import winreg
 
 try:
     import ctypes
@@ -216,7 +214,7 @@ class tzwin(tzwinbase):
         self._name = name
 
         with winreg.ConnectRegistry(None, winreg.HKEY_LOCAL_MACHINE) as handle:
-            tzkeyname = text_type("{kn}\\{name}").format(kn=TZKEYNAME, name=name)
+            tzkeyname = str("{kn}\\{name}").format(kn=TZKEYNAME, name=name)
             with winreg.OpenKey(handle, tzkeyname) as tzkey:
                 keydict = valuestodict(tzkey)
 
@@ -282,8 +280,8 @@ class tzwinlocal(tzwinbase):
             self._dst_abbr = keydict["DaylightName"]
 
             try:
-                tzkeyname = text_type('{kn}\\{sn}').format(kn=TZKEYNAME,
-                                                          sn=self._std_abbr)
+                tzkeyname = str('{kn}\\{sn}').format(kn=TZKEYNAME,
+                                                     sn=self._std_abbr)
                 with winreg.OpenKey(handle, tzkeyname) as tzkey:
                     _keydict = valuestodict(tzkey)
                     self._display = _keydict["Display"]

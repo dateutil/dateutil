@@ -10,6 +10,5 @@ py==1.4.34
 pytest==3.2.5
 pytest-cov==2.5.1
 setuptools==39.2.0
-six==1.12.0
 tox==2.9.1
 virtualenv==15.2.0
