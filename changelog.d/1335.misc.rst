@@ -1,0 +1,2 @@
+Keep GitHub Actions up to date with Dependabot. Fixed by
+@cclauss (gh pr #1335)
