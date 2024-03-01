@@ -1,7 +1,7 @@
-from datetime import timedelta
+import _thread
 import weakref
 from collections import OrderedDict
-import _thread
+from datetime import timedelta
 
 
 class _TzSingleton(type):

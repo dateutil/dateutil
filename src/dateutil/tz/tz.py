@@ -7,22 +7,19 @@ etc), TZ environment string (in all known formats), given ranges (with help
 from relative deltas), local machine timezone, fixed offset timezone, and UTC
 timezone.
 """
-import datetime
-import struct
-import time
-import sys
-import os
+import _thread
 import bisect
+import datetime
+import os
+import struct
+import sys
+import time
 import weakref
 from collections import OrderedDict
-import _thread
 
-from ._common import _tzinfo
-from ._common import tzrangebase, enfold
-from ._common import _validate_fromutc_inputs
+from ._common import _tzinfo, _validate_fromutc_inputs, enfold, tzrangebase
+from ._factories import _TzOffsetFactory, _TzSingleton, _TzStrFactory
 
-from ._factories import _TzSingleton, _TzOffsetFactory
-from ._factories import _TzStrFactory
 try:
     from .win import tzwin, tzwinlocal
 except ImportError:
@@ -1636,7 +1633,7 @@ def __get_gettz():
                         if tzwin is not None:
                             try:
                                 tz = tzwin(name)
-                            except (WindowsError):
+                            except WindowsError:
                                 tz = None
 
                         if not tz:

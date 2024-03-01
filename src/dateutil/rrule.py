@@ -5,6 +5,7 @@ the recurrence rules documented in the
 `iCalendar RFC <https://tools.ietf.org/html/rfc5545>`_,
 including support for caching of results.
 """
+import _thread
 import calendar
 import datetime
 import heapq
@@ -14,7 +15,6 @@ import sys
 from functools import wraps
 # For warning about deprecation of until and count
 from warnings import warn
-import _thread
 
 from ._common import weekday as weekdaybase
 

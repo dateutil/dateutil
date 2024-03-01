@@ -872,7 +872,7 @@ class parser(object):
         try:
             value = self._to_decimal(value_repr)
         except Exception as e:
-            raise ValueError('Unknown numeric token') from e
+            raise ValueError("Unknown numeric token") from e
 
         len_li = len(value_repr)
 

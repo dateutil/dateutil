@@ -1,10 +1,10 @@
 #!/usr/bin/env python
-import os
 import hashlib
-import json
 import io
-from urllib import request
+import json
+import os
 from urllib import error as urllib_error
+from urllib import request
 
 try:
     import dateutil

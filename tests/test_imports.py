@@ -1,5 +1,6 @@
 import sys
 import unittest
+
 import pytest
 
 MODULE_TYPE = type(sys)
@@ -45,7 +46,9 @@ def clean_import():
 def test_lazy_import(clean_import, module):
     """Test that dateutil.[submodule] works for py version > 3.7"""
 
-    import dateutil, importlib
+    import importlib
+
+    import dateutil
 
     if sys.version_info < (3, 7):
         pytest.xfail("Lazy loading does not work for Python < 3.7")
@@ -93,12 +96,8 @@ def test_import_parser_from():
 
 
 def test_import_parser_all():
-    # All interface
-    from dateutil.parser import parse
-    from dateutil.parser import parserinfo
-
-    # Other public classes
-    from dateutil.parser import parser
+    # Interfaces and public classes
+    from dateutil.parser import parse, parser, parserinfo
 
     for var in (parse, parserinfo, parser):
         assert var is not None
@@ -114,7 +113,8 @@ def test_import_relative_delta_from():
 
 def test_import_relative_delta_all():
     from dateutil.relativedelta import relativedelta
-    from dateutil.relativedelta import MO, TU, WE, TH, FR, SA, SU
+
+    from dateutil.relativedelta import MO, TU, WE, TH, FR, SA, SU  # isort:skip
 
     for var in (relativedelta, MO, TU, WE, TH, FR, SA, SU):
         assert var is not None
@@ -134,12 +134,11 @@ def test_import_rrule_from():
 
 
 def test_import_rrule_all():
-    from dateutil.rrule import rrule
-    from dateutil.rrule import rruleset
-    from dateutil.rrule import rrulestr
-    from dateutil.rrule import YEARLY, MONTHLY, WEEKLY, DAILY
-    from dateutil.rrule import HOURLY, MINUTELY, SECONDLY
-    from dateutil.rrule import MO, TU, WE, TH, FR, SA, SU
+    from dateutil.rrule import rrule, rruleset, rrulestr
+
+    from dateutil.rrule import YEARLY, MONTHLY, WEEKLY, DAILY  # isort:skip
+    from dateutil.rrule import HOURLY, MINUTELY, SECONDLY  # isort:skip
+    from dateutil.rrule import MO, TU, WE, TH, FR, SA, SU  # isort:skip
 
     rr_all = (rrule, rruleset, rrulestr,
               YEARLY, MONTHLY, WEEKLY, DAILY,
@@ -164,20 +163,22 @@ def test_import_tz_from():
 
 
 def test_import_tz_all():
-    from dateutil.tz import tzutc
-    from dateutil.tz import tzoffset
-    from dateutil.tz import tzlocal
-    from dateutil.tz import tzfile
-    from dateutil.tz import tzrange
-    from dateutil.tz import tzstr
-    from dateutil.tz import tzical
-    from dateutil.tz import gettz
-    from dateutil.tz import tzwin
-    from dateutil.tz import tzwinlocal
-    from dateutil.tz import UTC
-    from dateutil.tz import datetime_ambiguous
-    from dateutil.tz import datetime_exists
-    from dateutil.tz import resolve_imaginary
+    from dateutil.tz import (
+        UTC,
+        datetime_ambiguous,
+        datetime_exists,
+        gettz,
+        resolve_imaginary,
+        tzfile,
+        tzical,
+        tzlocal,
+        tzoffset,
+        tzrange,
+        tzstr,
+        tzutc,
+        tzwin,
+        tzwinlocal,
+    )
 
     tz_all = ["tzutc", "tzoffset", "tzlocal", "tzfile", "tzrange",
               "tzstr", "tzical", "gettz", "datetime_ambiguous",
@@ -202,8 +203,7 @@ def test_import_tz_windows_from():
 
 @pytest.mark.skipif(not HOST_IS_WINDOWS, reason="Requires Windows")
 def test_import_tz_windows_star():
-    from dateutil.tzwin import tzwin
-    from dateutil.tzwin import tzwinlocal
+    from dateutil.tzwin import tzwin, tzwinlocal
 
     tzwin_all = [tzwin, tzwinlocal]
 
@@ -221,9 +221,7 @@ def test_import_zone_info_from():
 
 
 def test_import_zone_info_star():
-    from dateutil.zoneinfo import gettz
-    from dateutil.zoneinfo import gettz_db_metadata
-    from dateutil.zoneinfo import rebuild
+    from dateutil.zoneinfo import gettz, gettz_db_metadata, rebuild
 
     zi_all = (gettz, gettz_db_metadata, rebuild)
 

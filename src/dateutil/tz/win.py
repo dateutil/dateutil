@@ -280,8 +280,9 @@ class tzwinlocal(tzwinbase):
             self._dst_abbr = keydict["DaylightName"]
 
             try:
-                tzkeyname = str('{kn}\\{sn}').format(kn=TZKEYNAME,
-                                                     sn=self._std_abbr)
+                tzkeyname = "'{kn}\\{sn}'".format(
+                    kn=TZKEYNAME, sn=self._std_abbr
+                )
                 with winreg.OpenKey(handle, tzkeyname) as tzkey:
                     _keydict = valuestodict(tzkey)
                     self._display = _keydict["Display"]

@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, tzinfo
 
 ZERO = timedelta(0)
 
-__all__ = ['enfold']
+__all__ = ["enfold"]
 
 
 # The following is adapted from Alexander Belopolsky's tz library
