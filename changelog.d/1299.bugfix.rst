@@ -1,0 +1,1 @@
+Fixed issue where {added another condition in  _parser.py for bad padding .previously parser.parse("January15,7626") giving the result -> 2023-01-15 00:00:00 now its fixed,}. Reported by @lucasabr (gh issue #1299). Fixed by @priyambajpai22 (gh pr #1302).
