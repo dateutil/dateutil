@@ -1,3 +1,0 @@
-Added note into docs and tests where relativedelta would return last day of the month
-only if the same day on a different month resolves to a date that doesn't exist.
-Reported by @hawkEye-01 (gh issue #1167). Fixed by @Mifrill (gh pr #1168)

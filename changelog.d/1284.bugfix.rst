@@ -1,1 +1,0 @@
-Removed a call to ``datetime.utcfromtimestamp``, which is deprecated as of Python 3.12. Reported by Hugo van Kemenade (gh pr #1284), fixed by Thomas Grainger (gh pr #1285).

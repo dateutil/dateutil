@@ -1,3 +1,37 @@
+Version 2.9.0 (2024-02-29)
+==========================
+
+Data updates
+------------
+
+- Updated tzdata version to 2024a. (gh pr #1342)
+
+
+Features
+--------
+
+- Made all ``dateutil`` submodules lazily imported using `PEP 562
+  <https://www.python.org/dev/peps/pep-0562/>`_. On Python 3.7+, things like
+  ``import dateutil; dateutil.tz.gettz("America/New_York")`` will now work
+  without explicitly importing ``dateutil.tz``, with the import occurring behind
+  the scenes on first use. The old behavior remains on Python 3.6 and earlier.
+  Fixed by Orson Adams. (gh issue #771, gh pr #1007)
+
+
+Bugfixes
+--------
+
+- Removed a call to ``datetime.utcfromtimestamp``, which is deprecated as of Python 3.12. Reported by Hugo van Kemenade (gh pr #1284), fixed by Thomas Grainger (gh pr #1285).
+
+
+Documentation changes
+---------------------
+
+- Added note into docs and tests where relativedelta would return last day of the month
+  only if the same day on a different month resolves to a date that doesn't exist.
+  Reported by @hawkEye-01 (gh issue #1167). Fixed by @Mifrill (gh pr #1168)
+
+
 Version 2.8.2 (2021-07-08)
 ==========================
 
