@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 This module provides an interface to the native time zone data on Windows,
 including :py:class:`datetime.tzinfo` implementations.
@@ -36,7 +35,7 @@ def _settzkeyname():
     try:
         winreg.OpenKey(handle, TZKEYNAMENT).Close()
         TZKEYNAME = TZKEYNAMENT
-    except WindowsError:
+    except OSError:
         TZKEYNAME = TZKEYNAME9X
     handle.Close()
     return TZKEYNAME
@@ -45,7 +44,7 @@ def _settzkeyname():
 TZKEYNAME = _settzkeyname()
 
 
-class tzres(object):
+class tzres:
     """
     Class for accessing ``tzres.dll``, which contains timezone name related
     resources.
@@ -216,7 +215,7 @@ class tzwin(tzwinbase):
         self._name = name
 
         with winreg.ConnectRegistry(None, winreg.HKEY_LOCAL_MACHINE) as handle:
-            tzkeyname = text_type("{kn}\\{name}").format(kn=TZKEYNAME, name=name)
+            tzkeyname = "{kn}\\{name}".format(kn=TZKEYNAME, name=name)
             with winreg.OpenKey(handle, tzkeyname) as tzkey:
                 keydict = valuestodict(tzkey)
 
@@ -282,7 +281,7 @@ class tzwinlocal(tzwinbase):
             self._dst_abbr = keydict["DaylightName"]
 
             try:
-                tzkeyname = text_type('{kn}\\{sn}').format(kn=TZKEYNAME,
+                tzkeyname = '{kn}\\{sn}'.format(kn=TZKEYNAME,
                                                           sn=self._std_abbr)
                 with winreg.OpenKey(handle, tzkeyname) as tzkey:
                     _keydict = valuestodict(tzkey)

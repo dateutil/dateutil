@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
 from datetime import datetime, date
 import unittest
 from six import PY2
@@ -4876,13 +4873,13 @@ class WeekdayTest(unittest.TestCase):
     def testWeekdayEqualitySubclass(self):
         # Two weekday objects equal if their "weekday" and "n" attributes are
         # available and the same
-        class BasicWeekday(object):
+        class BasicWeekday:
             def __init__(self, weekday):
                 self.weekday = weekday
 
         class BasicNWeekday(BasicWeekday):
             def __init__(self, weekday, n=None):
-                super(BasicNWeekday, self).__init__(weekday)
+                super().__init__(weekday)
                 self.n = n
 
         MO_Basic = BasicWeekday(0)

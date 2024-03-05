@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 This module offers timezone implementations subclassing the abstract
 :py:class:`datetime.tzinfo` type. There are classes to handle tzfile format
@@ -18,7 +17,7 @@ from collections import OrderedDict
 
 import six
 from six import string_types
-from six.moves import _thread
+import _thread
 from ._common import tzname_in_python2, _tzinfo
 from ._common import tzrangebase, enfold
 from ._common import _validate_fromutc_inputs
@@ -38,8 +37,7 @@ EPOCH = datetime.datetime(1970, 1, 1, 0, 0)
 EPOCHORDINAL = EPOCH.toordinal()
 
 
-@six.add_metaclass(_TzSingleton)
-class tzutc(datetime.tzinfo):
+class tzutc(datetime.tzinfo, metaclass=_TzSingleton):
     """
     This is a tzinfo object that represents the UTC time zone.
 
@@ -129,8 +127,7 @@ class tzutc(datetime.tzinfo):
 UTC = tzutc()
 
 
-@six.add_metaclass(_TzOffsetFactory)
-class tzoffset(datetime.tzinfo):
+class tzoffset(datetime.tzinfo, metaclass=_TzOffsetFactory):
     """
     A simple class for representing a fixed offset from UTC.
 
@@ -191,7 +188,7 @@ class tzoffset(datetime.tzinfo):
         return not (self == other)
 
     def __repr__(self):
-        return "%s(%s, %s)" % (self.__class__.__name__,
+        return "{}({}, {})".format(self.__class__.__name__,
                                repr(self._name),
                                int(self._offset.total_seconds()))
 
@@ -203,7 +200,7 @@ class tzlocal(_tzinfo):
     A :class:`tzinfo` subclass built around the ``time`` timezone functions.
     """
     def __init__(self):
-        super(tzlocal, self).__init__()
+        super().__init__()
 
         self._std_offset = datetime.timedelta(seconds=-time.timezone)
         if time.daylight:
@@ -325,7 +322,7 @@ class tzlocal(_tzinfo):
     __reduce__ = object.__reduce__
 
 
-class _ttinfo(object):
+class _ttinfo:
     __slots__ = ["offset", "delta", "isdst", "abbr",
                  "isstd", "isgmt", "dstoffset"]
 
@@ -338,8 +335,8 @@ class _ttinfo(object):
         for attr in self.__slots__:
             value = getattr(self, attr)
             if value is not None:
-                l.append("%s=%s" % (attr, repr(value)))
-        return "%s(%s)" % (self.__class__.__name__, ", ".join(l))
+                l.append("{}={}".format(attr, repr(value)))
+        return "{}({})".format(self.__class__.__name__, ", ".join(l))
 
     def __eq__(self, other):
         if not isinstance(other, _ttinfo):
@@ -370,7 +367,7 @@ class _ttinfo(object):
                 setattr(self, name, state[name])
 
 
-class _tzfile(object):
+class _tzfile:
     """
     Lightweight class for holding the relevant transition and time zone
     information read from binary tzfiles.
@@ -456,10 +453,10 @@ class tzfile(_tzinfo):
     """
 
     def __init__(self, fileobj, filename=None):
-        super(tzfile, self).__init__()
+        super().__init__()
 
         file_opened_here = False
-        if isinstance(fileobj, string_types):
+        if isinstance(fileobj, str):
             self._filename = fileobj
             fileobj = open(fileobj, 'rb')
             file_opened_here = True
@@ -862,7 +859,7 @@ class tzfile(_tzinfo):
         return not (self == other)
 
     def __repr__(self):
-        return "%s(%s)" % (self.__class__.__name__, repr(self._filename))
+        return "{}({})".format(self.__class__.__name__, repr(self._filename))
 
     def __reduce__(self):
         return self.__reduce_ex__(None)
@@ -1033,8 +1030,7 @@ class tzrange(tzrangebase):
         return self._dst_base_offset_
 
 
-@six.add_metaclass(_TzStrFactory)
-class tzstr(tzrange):
+class tzstr(tzrange, metaclass=_TzStrFactory):
     """
     ``tzstr`` objects are time zone objects specified by a time-zone string as
     it would be passed to a ``TZ`` variable on POSIX-style systems (see
@@ -1150,10 +1146,10 @@ class tzstr(tzrange):
         return relativedelta.relativedelta(**kwargs)
 
     def __repr__(self):
-        return "%s(%s)" % (self.__class__.__name__, repr(self._s))
+        return "{}({})".format(self.__class__.__name__, repr(self._s))
 
 
-class _tzicalvtzcomp(object):
+class _tzicalvtzcomp:
     def __init__(self, tzoffsetfrom, tzoffsetto, isdst,
                  tzname=None, rrule=None):
         self.tzoffsetfrom = datetime.timedelta(seconds=tzoffsetfrom)
@@ -1166,7 +1162,7 @@ class _tzicalvtzcomp(object):
 
 class _tzicalvtz(_tzinfo):
     def __init__(self, tzid, comps=[]):
-        super(_tzicalvtz, self).__init__()
+        super().__init__()
 
         self._tzid = tzid
         self._comps = comps
@@ -1250,7 +1246,7 @@ class _tzicalvtz(_tzinfo):
     __reduce__ = object.__reduce__
 
 
-class tzical(object):
+class tzical:
     """
     This object is designed to parse an iCalendar-style ``VTIMEZONE`` structure
     as set out in `RFC 5545`_ Section 4.6.5 into one or more `tzinfo` objects.
@@ -1265,10 +1261,10 @@ class tzical(object):
         global rrule
         from dateutil import rrule
 
-        if isinstance(fileobj, string_types):
+        if isinstance(fileobj, str):
             self._s = fileobj
             # ical should be encoded in UTF-8 with CRLF
-            fileobj = open(fileobj, 'r')
+            fileobj = open(fileobj)
         else:
             self._s = getattr(fileobj, 'name', repr(fileobj))
             fileobj = _nullcontext(fileobj)
@@ -1421,7 +1417,7 @@ class tzical(object):
                     elif name == "TZOFFSETFROM":
                         if parms:
                             raise ValueError(
-                                "unsupported %s parm: %s " % (name, parms[0]))
+                                "unsupported {} parm: {} ".format(name, parms[0]))
                         tzoffsetfrom = self._parse_offset(value)
                     elif name == "TZOFFSETTO":
                         if parms:
@@ -1453,7 +1449,7 @@ class tzical(object):
                 invtz = True
 
     def __repr__(self):
-        return "%s(%s)" % (self.__class__.__name__, repr(self._s))
+        return "{}({})".format(self.__class__.__name__, repr(self._s))
 
 
 if sys.platform != "win32":
@@ -1472,7 +1468,7 @@ def __get_gettz():
     if tzwinlocal is not None:
         tzlocal_classes += (tzwinlocal,)
 
-    class GettzFunc(object):
+    class GettzFunc:
         """
         Retrieve a time zone object from a string representation
 
@@ -1610,7 +1606,7 @@ def __get_gettz():
                         try:
                             tz = tzfile(filepath)
                             break
-                        except (IOError, OSError, ValueError):
+                        except (OSError, ValueError):
                             pass
                 else:
                     tz = tzlocal()
@@ -1621,7 +1617,7 @@ def __get_gettz():
                 except TypeError as e:
                     if isinstance(name, bytes):
                         new_msg = "gettz argument should be str, not bytes"
-                        six.raise_from(TypeError(new_msg), e)
+                        raise TypeError(new_msg) from e
                     else:
                         raise
                 if os.path.isabs(name):
@@ -1639,14 +1635,14 @@ def __get_gettz():
                         try:
                             tz = tzfile(filepath)
                             break
-                        except (IOError, OSError, ValueError):
+                        except (OSError, ValueError):
                             pass
                     else:
                         tz = None
                         if tzwin is not None:
                             try:
                                 tz = tzwin(name)
-                            except (WindowsError, UnicodeEncodeError):
+                            except (OSError, UnicodeEncodeError):
                                 # UnicodeEncodeError is for Python 2.7 compat
                                 tz = None
 
@@ -1814,25 +1810,15 @@ def _datetime_to_timestamp(dt):
     return (dt.replace(tzinfo=None) - EPOCH).total_seconds()
 
 
-if sys.version_info >= (3, 6):
-    def _get_supported_offset(second_offset):
-        return second_offset
-else:
-    def _get_supported_offset(second_offset):
-        # For python pre-3.6, round to full-minutes if that's not the case.
-        # Python's datetime doesn't accept sub-minute timezones. Check
-        # http://python.org/sf/1447945 or https://bugs.python.org/issue5288
-        # for some information.
-        old_offset = second_offset
-        calculated_offset = 60 * ((second_offset + 30) // 60)
-        return calculated_offset
+def _get_supported_offset(second_offset):
+    return second_offset
 
 
 try:
     # Python 3.7 feature
     from contextlib import nullcontext as _nullcontext
 except ImportError:
-    class _nullcontext(object):
+    class _nullcontext:
         """
         Class for wrapping contexts so that they are passed through in a
         with statement.

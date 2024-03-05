@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import sys
 
 try:
@@ -15,7 +14,7 @@ def __getattr__(name):
     if name in __all__:
         return importlib.import_module("." + name, __name__)
     raise AttributeError(
-        "module {!r} has not attribute {!r}".format(__name__, name)
+        f"module {__name__!r} has not attribute {name!r}"
     )
 
 

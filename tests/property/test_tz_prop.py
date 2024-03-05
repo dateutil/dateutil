@@ -25,10 +25,7 @@ def test_gettz_returns_local(gettz_arg, dt):
         return
 
     dt_act = dt.astimezone(tz.gettz(gettz_arg))
-    if six.PY2:
-        dt_exp = dt.astimezone(tz.tzlocal())
-    else:
-        dt_exp = dt.astimezone()
+    dt_exp = dt.astimezone()
 
     assert dt_act == dt_exp
     assert dt_act.tzname() == dt_exp.tzname()

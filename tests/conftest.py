@@ -31,7 +31,7 @@ def set_tzpath():
 
     path_components = tzpath.split(':')
 
-    print("Setting TZPATH to {}".format(path_components))
+    print(f"Setting TZPATH to {path_components}")
 
     from dateutil import tz
     tz.TZPATHS.clear()

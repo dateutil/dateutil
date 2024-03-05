@@ -4,8 +4,8 @@ import hashlib
 import json
 import io
 
-from six.moves.urllib import request
-from six.moves.urllib import error as urllib_error
+from urllib import request
+from urllib import error as urllib_error
 
 try:
     import dateutil
@@ -22,7 +22,7 @@ METADATA_FILE = "zonefile_metadata.json"
 
 
 def main(metadata_file):
-    with io.open(metadata_file, 'r') as f:
+    with open(metadata_file) as f:
         metadata = json.load(f)
 
     releases_urls = metadata['releases_url']
@@ -33,7 +33,7 @@ def main(metadata_file):
     if not os.path.isfile(metadata['tzdata_file']):
 
         for ii, releases_url in enumerate(releases_urls):
-            print("Downloading tz file from mirror {ii}".format(ii=ii))
+            print(f"Downloading tz file from mirror {ii}")
             try:
                 request.urlretrieve(os.path.join(releases_url,
                                                  metadata['tzdata_file']),

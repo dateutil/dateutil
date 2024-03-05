@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
 from ._common import PicklableMixin
 from ._common import TZEnvContext, TZWinContext
 from ._common import ComparesEqual
@@ -168,7 +166,7 @@ def get_timezone_tuple(dt):
 
 ###
 # Mix-ins
-class context_passthrough(object):
+class context_passthrough:
     def __init__(*args, **kwargs):
         pass
 
@@ -179,7 +177,7 @@ class context_passthrough(object):
         pass
 
 
-class TzFoldMixin(object):
+class TzFoldMixin:
     """ Mix-in class for testing ambiguous times """
     def gettz(self, tzname):
         raise NotImplementedError
@@ -434,11 +432,11 @@ class TzFoldMixin(object):
             self.assertEqual(t0_syd0, t0_syd1)
 
 
-class TzWinFoldMixin(object):
+class TzWinFoldMixin:
     def get_args(self, tzname):
         return (tzname, )
 
-    class context(object):
+    class context:
         def __init__(*args, **kwargs):
             pass
 
@@ -1428,9 +1426,9 @@ class TZStrTest(unittest.TestCase, TzFoldMixin):
         # Test that tz.tzstr() won't throw an error if given a str instead
         # of a unicode literal.
         self.assertEqual(datetime(2003, 4, 6, 1, 59,
-                                  tzinfo=tz.tzstr(str("EST5EDT"))).tzname(), "EST")
+                                  tzinfo=tz.tzstr("EST5EDT")).tzname(), "EST")
         self.assertEqual(datetime(2003, 4, 6, 2, 00,
-                                  tzinfo=tz.tzstr(str("EST5EDT"))).tzname(), "EDT")
+                                  tzinfo=tz.tzstr("EST5EDT")).tzname(), "EDT")
 
     def testStrInequality(self):
         TZS1 = tz.tzstr('EST5EDT4')
@@ -1535,7 +1533,7 @@ def test_tzstr_weakref():
     assert tz.tzstr('EST5EDT') is tz_t2_ref()
 
     for offset in range(5,15):
-        tz.tzstr('GMT+{}'.format(offset))
+        tz.tzstr(f'GMT+{offset}')
     gc.collect()
 
     assert tz_t2_ref() is None

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import warnings
 import json
 
@@ -22,12 +21,12 @@ class tzfile(_tzfile):
 def getzoneinfofile_stream():
     try:
         return BytesIO(get_data(__name__, ZONEFILENAME))
-    except IOError as e:  # TODO  switch to FileNotFoundError?
-        warnings.warn("I/O error({0}): {1}".format(e.errno, e.strerror))
+    except OSError as e:  # TODO  switch to FileNotFoundError?
+        warnings.warn(f"I/O error({e.errno}): {e.strerror}")
         return None
 
 
-class ZoneInfoFile(object):
+class ZoneInfoFile:
     def __init__(self, zonefile_stream=None):
         if zonefile_stream is not None:
             with TarFile.open(fileobj=zonefile_stream) as tf:
