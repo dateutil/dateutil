@@ -49,7 +49,7 @@ steps:
     versionSpec: $(python.version)
 
 - bash: |
-    python -m pip install -U six && python -m pip install -U 'tox < 3.8.0'
+    python -m pip install -U 'tox < 3.8.0'
     if [[ $PYTHON_VERSION == "3.3" ]]; then pip install 'virtualenv<16.0'; fi
     if [[ $PYTHON_VERSION == "3.3" ]]; then pip install 'setuptools<40.0'; fi
   displayName: Ensure prereqs
