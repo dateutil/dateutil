@@ -99,9 +99,8 @@ years/months/days/etc, before the next easter happening on a
 year with a Friday 13th in August, and you want to get today's
 date out of the "date" unix system command. Here is the code:
 
-.. doctest:: readmeexample
+.. code-block:: python
 
-```
     >>> from dateutil.relativedelta import *
     >>> from dateutil.easter import *
     >>> from dateutil.rrule import *
@@ -119,7 +118,6 @@ date out of the "date" unix system command. Here is the code:
     How far is the Easter of that year: relativedelta(months=+6)
     >>> print("And the Easter of that year is: %s" % (today+rdelta))
     And the Easter of that year is: 2004-04-11
-```
 
 Being exactly 6 months ahead was **really** a coincidence :)
 
