@@ -1159,7 +1159,10 @@ def available_iana_timezones():
     """
     # Start with loading from the tzdata package if it exists: this has a
     # pre-assembled list of zones that only requires opening one file.
-    valid_zones = set(_tzdata_impl._load_tzdata_keys())
+    try:
+        valid_zones = set(_tzdata_impl._load_tzdata_keys())
+    except ImportError:
+        valid_zones = set()
 
     def valid_key(fpath):
         try:
