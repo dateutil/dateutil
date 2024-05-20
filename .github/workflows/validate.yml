@@ -81,7 +81,9 @@ jobs:
           curl --fail --location "https://data.iana.org/time-zones/releases/tzdb-${{matrix.tzdata-version}}.tar.lz" -o tzdb.tar.lz
           tar --lzip -xf tzdb.tar.lz
           cd tzdb-${{matrix.tzdata-version}}
-          TOPDIR=/usr/share/zoneinfo sudo make install
+          sudo rm -rf /usr/share/zoneinfo
+          sudo make install DESTDIR=./tzdata \
+                            DATAFORM=main
 
           ls tzdata
           sudo mv ./tzdata/usr/share/zoneinfo/ /usr/share/zoneinfo
