@@ -1,15 +1,35 @@
+"""Tests for `tz.tzfile`."""
+
 import contextlib
 import functools
 import shutil
 import sys
 import threading
+from datetime import date, datetime, time, timedelta
 
+import attr
 import pytest
 import six
 
 from dateutil import tz
 
 TZPATH_LOCK = threading.Lock()
+####
+# Backports
+functools_cache = getattr(functools, "cache", None)
+if functools_cache is None:
+
+    def functools_cache(f):
+        _cache = {}
+
+        @functools.wraps(f)
+        def inner_func():
+            if "value" not in _cache:
+                _cache["value"] = f()
+            return _cache["value"]
+
+        return inner_func
+
 
 if sys.version_info < (3, 4):
 
@@ -44,6 +64,8 @@ else:
     contextdecorator = contextlib.contextmanager
 
 
+####
+# Test utilities
 def _copy_resource_to(resource, path):
     """Copies a test resource to a path on disk."""
     from dateutil._tzdata_impl import _open_binary
@@ -89,14 +111,287 @@ def set_tzpath(tzpath, block_tzdata=False):
             tz._tzpath.reset_tzpath(to=old_tzpath)
 
 
-@set_tzpath((), block_tzdata=False)
-def no_tz_data():
+def as_list(f):
+    @functools.wraps(f)
+    def inner_func(*args, **kwargs):
+        return list(f(*args, **kwargs))
+
+    return inner_func
+
+
+####
+# Classes representing test data
+ZERO = timedelta(0)
+ONE_H = timedelta(hours=1)
+
+
+if sys.version_info >= (3, 6):
+
+    def offset_converter(td):
+        return td
+
+else:
+
+    def offset_converter(td):
+        minutes = round(td.total_seconds() / 60.0)
+        return timedelta(minutes=minutes)
+
+
+@attr.s
+class ZoneOffset(object):
+    tzname = attr.ib()
+    utcoffset = attr.ib(converter=offset_converter)
+    dst = attr.ib(default=ZERO, converter=offset_converter)
+
+
+@attr.s
+class ZoneTransition(object):
+    transition = attr.ib()
+    offset_before = attr.ib()
+    offset_after = attr.ib()
+    marks = attr.ib(default=None)
+
+    @property
+    def transition_utc(self):
+        return (self.transition - self.offset_before.utcoffset).replace(
+            tzinfo=tz.UTC
+        )
+
+    @property
+    def fold(self):
+        """Whether this introduces a fold"""
+        return self.offset_before.utcoffset > self.offset_after.utcoffset
+
+    @property
+    def gap(self):
+        """Whether this introduces a gap"""
+        return self.offset_before.utcoffset < self.offset_after.utcoffset
+
+    @property
+    def delta(self):
+        return self.offset_after.utcoffset - self.offset_before.utcoffset
+
+    @property
+    def anomaly_start(self):
+        if self.fold:
+            return self.transition + self.delta
+        else:
+            return self.transition
+
+    @property
+    def anomaly_end(self):
+        if not self.fold:
+            return self.transition + self.delta
+        else:
+            return self.transition
+
+
+####
+# Test data
+@functools_cache
+def get_zonedump_data():
+    def _zone_dump_data():
+        def _Africa_Abidjan():
+            LMT = ZoneOffset("LMT", timedelta(seconds=-968))
+            GMT = ZoneOffset("GMT", ZERO)
+
+            return [
+                ZoneTransition(datetime(1912, 1, 1), LMT, GMT),
+            ]
+
+        def _Africa_Casablanca():
+            P00_s = ZoneOffset("+00", ZERO, ZERO)
+            P01_d = ZoneOffset("+01", ONE_H, ONE_H)
+            P00_d = ZoneOffset("+00", ZERO, -ONE_H)
+            P01_s = ZoneOffset("+01", ONE_H, ZERO)
+
+            return [
+                # Morocco sometimes pauses DST during Ramadan
+                ZoneTransition(datetime(2018, 3, 25, 2), P00_s, P01_d),
+                ZoneTransition(datetime(2018, 5, 13, 3), P01_d, P00_s),
+                ZoneTransition(datetime(2018, 6, 17, 2), P00_s, P01_d),
+                # On October 28th Morocco set standard time to +01,
+                # with negative DST only during Ramadan
+                ZoneTransition(datetime(2018, 10, 28, 3), P01_d, P01_s),
+                ZoneTransition(datetime(2019, 5, 5, 3), P01_s, P00_d),
+                ZoneTransition(datetime(2019, 6, 9, 2), P00_d, P01_s),
+            ]
+
+        def _America_Los_Angeles():
+            LMT = ZoneOffset("LMT", timedelta(seconds=-28378), ZERO)
+            PST = ZoneOffset("PST", timedelta(hours=-8), ZERO)
+            PDT = ZoneOffset("PDT", timedelta(hours=-7), ONE_H)
+            PWT = ZoneOffset("PWT", timedelta(hours=-7), ONE_H)
+            PPT = ZoneOffset("PPT", timedelta(hours=-7), ONE_H)
+
+            return [
+                ZoneTransition(datetime(1883, 11, 18, 12, 7, 2), LMT, PST),
+                ZoneTransition(datetime(1918, 3, 31, 2), PST, PDT),
+                ZoneTransition(datetime(1918, 3, 31, 2), PST, PDT),
+                ZoneTransition(datetime(1918, 10, 27, 2), PDT, PST),
+                # Transition to Pacific War Time
+                ZoneTransition(datetime(1942, 2, 9, 2), PST, PWT),
+                # Transition from Pacific War Time to Pacific Peace Time
+                ZoneTransition(datetime(1945, 8, 14, 16), PWT, PPT),
+                ZoneTransition(datetime(1945, 9, 30, 2), PPT, PST),
+                ZoneTransition(datetime(2015, 3, 8, 2), PST, PDT),
+                ZoneTransition(datetime(2015, 11, 1, 2), PDT, PST),
+                # After 2038: Rules continue indefinitely
+                ZoneTransition(datetime(2450, 3, 13, 2), PST, PDT),
+                ZoneTransition(datetime(2450, 11, 6, 2), PDT, PST),
+            ]
+
+        def _America_Santiago():
+            LMT = ZoneOffset("LMT", timedelta(seconds=-16965), ZERO)
+            SMT = ZoneOffset("SMT", timedelta(seconds=-16965), ZERO)
+            N05 = ZoneOffset("-05", timedelta(seconds=-18000), ZERO)
+            N04 = ZoneOffset("-04", timedelta(seconds=-14400), ZERO)
+            N03 = ZoneOffset("-03", timedelta(seconds=-10800), ONE_H)
+
+            return [
+                ZoneTransition(datetime(1890, 1, 1), LMT, SMT),
+                ZoneTransition(datetime(1910, 1, 10), SMT, N05),
+                ZoneTransition(datetime(1916, 7, 1), N05, SMT),
+                ZoneTransition(datetime(2008, 3, 30), N03, N04),
+                ZoneTransition(datetime(2008, 10, 12), N04, N03),
+                ZoneTransition(datetime(2040, 4, 8), N03, N04),
+                ZoneTransition(datetime(2040, 9, 2), N04, N03),
+            ]
+
+        def _Asia_Tokyo():
+            JST = ZoneOffset("JST", timedelta(seconds=32400), ZERO)
+            JDT = ZoneOffset("JDT", timedelta(seconds=36000), ONE_H)
+
+            # Japan had DST from 1948 to 1951, and it was unusual in that
+            # the transition from DST to STD occurred at 25:00, and is
+            # denominated as such in the time zone database
+            return [
+                ZoneTransition(datetime(1948, 5, 2), JST, JDT),
+                ZoneTransition(datetime(1948, 9, 12, 1), JDT, JST),
+                ZoneTransition(datetime(1951, 9, 9, 1), JDT, JST),
+            ]
+
+        def _Australia_Sydney():
+            LMT = ZoneOffset("LMT", timedelta(seconds=36292), ZERO)
+            AEST = ZoneOffset("AEST", timedelta(seconds=36000), ZERO)
+            AEDT = ZoneOffset("AEDT", timedelta(seconds=39600), ONE_H)
+
+            return [
+                ZoneTransition(datetime(1895, 2, 1), LMT, AEST),
+                ZoneTransition(datetime(1917, 1, 1, 2), AEST, AEDT),
+                ZoneTransition(datetime(1917, 3, 25, 3), AEDT, AEST),
+                ZoneTransition(datetime(2012, 4, 1, 3), AEDT, AEST),
+                ZoneTransition(datetime(2012, 10, 7, 2), AEST, AEDT),
+                ZoneTransition(datetime(2040, 4, 1, 3), AEDT, AEST),
+                ZoneTransition(datetime(2040, 10, 7, 2), AEST, AEDT),
+            ]
+
+        def _Europe_Dublin():
+            LMT = ZoneOffset("LMT", timedelta(seconds=-1521), ZERO)
+            DMT = ZoneOffset("DMT", timedelta(seconds=-1521), ZERO)
+            IST_0 = ZoneOffset("IST", timedelta(seconds=2079), ONE_H)
+            GMT_0 = ZoneOffset("GMT", ZERO, ZERO)
+            BST = ZoneOffset("BST", ONE_H, ONE_H)
+            GMT_1 = ZoneOffset("GMT", ZERO, -ONE_H)
+            IST_1 = ZoneOffset("IST", ONE_H, ZERO)
+
+            return [
+                ZoneTransition(datetime(1880, 8, 2, 0), LMT, DMT),
+                ZoneTransition(datetime(1916, 5, 21, 2), DMT, IST_0),
+                ZoneTransition(datetime(1916, 10, 1, 3), IST_0, GMT_0),
+                ZoneTransition(datetime(1917, 4, 8, 2), GMT_0, BST),
+                ZoneTransition(datetime(2016, 3, 27, 1), GMT_1, IST_1),
+                ZoneTransition(datetime(2016, 10, 30, 2), IST_1, GMT_1),
+                ZoneTransition(datetime(2487, 3, 30, 1), GMT_1, IST_1),
+                ZoneTransition(datetime(2487, 10, 26, 2), IST_1, GMT_1),
+            ]
+
+        def _Europe_Lisbon():
+            WET = ZoneOffset("WET", ZERO, ZERO)
+            WEST = ZoneOffset("WEST", ONE_H, ONE_H)
+            CET = ZoneOffset("CET", ONE_H, ZERO)
+            CEST = ZoneOffset("CEST", timedelta(seconds=7200), ONE_H)
+
+            return [
+                ZoneTransition(datetime(1992, 3, 29, 1), WET, WEST),
+                ZoneTransition(datetime(1992, 9, 27, 2), WEST, CET),
+                ZoneTransition(datetime(1993, 3, 28, 2), CET, CEST),
+                ZoneTransition(datetime(1993, 9, 26, 3), CEST, CET),
+                ZoneTransition(datetime(1996, 3, 31, 2), CET, WEST),
+                ZoneTransition(datetime(1996, 10, 27, 2), WEST, WET),
+            ]
+
+        def _Europe_London():
+            LMT = ZoneOffset("LMT", timedelta(seconds=-75), ZERO)
+            GMT = ZoneOffset("GMT", ZERO, ZERO)
+            BST = ZoneOffset("BST", ONE_H, ONE_H)
+
+            return [
+                ZoneTransition(datetime(1847, 12, 1), LMT, GMT),
+                ZoneTransition(datetime(2005, 3, 27, 1), GMT, BST),
+                ZoneTransition(datetime(2005, 10, 30, 2), BST, GMT),
+                ZoneTransition(datetime(2043, 3, 29, 1), GMT, BST),
+                ZoneTransition(datetime(2043, 10, 25, 2), BST, GMT),
+            ]
+
+        def _Pacific_Kiritimati():
+            LMT = ZoneOffset("LMT", timedelta(seconds=-37760), ZERO)
+            N1040 = ZoneOffset("-1040", timedelta(seconds=-38400), ZERO)
+            N10 = ZoneOffset("-10", timedelta(seconds=-36000), ZERO)
+            P14 = ZoneOffset("+14", timedelta(seconds=50400), ZERO)
+
+            # This is literally every transition in Christmas Island history
+            return [
+                ZoneTransition(datetime(1901, 1, 1), LMT, N1040),
+                ZoneTransition(datetime(1979, 10, 1), N1040, N10),
+                # They skipped December 31, 1994
+                ZoneTransition(datetime(1994, 12, 31), N10, P14),
+            ]
+
+        return {
+            "Africa/Abidjan": _Africa_Abidjan(),
+            "Africa/Casablanca": _Africa_Casablanca(),
+            "America/Los_Angeles": _America_Los_Angeles(),
+            "America/Santiago": _America_Santiago(),
+            "Australia/Sydney": _Australia_Sydney(),
+            "Asia/Tokyo": _Asia_Tokyo(),
+            "Europe/Dublin": _Europe_Dublin(),
+            "Europe/Lisbon": _Europe_Lisbon(),
+            "Europe/London": _Europe_London(),
+            "Pacific/Kiritimati": _Pacific_Kiritimati(),
+        }
+
+    return _zone_dump_data()
+
+
+@functools_cache
+def transition_examples():
+    zonedump_data = get_zonedump_data()
+    return tuple(zonedump_data.items())
+
+
+@functools_cache
+def fixed_offset_zones():
+    return {}
+
+
+####
+# Tests
+
+
+@set_tzpath((), block_tzdata=True)
+def test_no_tz_data():
+    """Test what happens when no TZ data is available."""
     tz.gettz.cache_clear()
     NYC = tz.gettz("America/New_York")
     assert NYC is None
 
 
 def test_tzpath_setting(tmp_path):
+    """Ensure that setting tz.TZPATH changes where `tz.gettz` searches."""
+    if six.PY2:
+        tmp_path = str(tmp_path)
+
     with set_tzpath([tmp_path]):
         _copy_resource_to(
             "liliput_tzif", os.path.join(str(tmp_path), "Fictional", "Liliput")
@@ -106,3 +401,50 @@ def test_tzpath_setting(tmp_path):
         fiction_land = tz.gettz("Fictional/Liliput")
 
         assert fiction_land is not None
+
+
+@pytest.mark.parametrize(
+    "dt, errtype",
+    [
+        # Should fail if tzinfo is not `self`
+        (datetime(2019, 1, 1, tzinfo=tz.UTC), ValueError),
+        (datetime(2019, 1, 1), ValueError),
+        # Only works with `datetime`
+        (date(2019, 1, 1), TypeError),
+        (time(0), TypeError),
+        (0, TypeError),
+        ("2019-01-01", TypeError),
+    ],
+)
+def test_fromutc_errors(dt, errtype):
+    """tzinfo.fromutc invocations that raise an error."""
+    zone = tz.gettz("Europe/London")  # Any zone should work
+    with pytest.raises(errtype):
+        zone.fromutc(dt)
+
+
+@as_list
+def _get_unambiguous_transitions():
+    for key, zone_transitions in transition_examples():
+        for zone_transition in zone_transitions:
+            yield (
+                key,
+                zone_transition.transition - timedelta(days=2),
+                zone_transition.offset_before,
+            )
+            yield (
+                key,
+                zone_transition.transition + timedelta(days=2),
+                zone_transition.offset_after,
+            )
+
+
+@pytest.mark.parametrize("key, dt, offset", _get_unambiguous_transitions())
+def test_unambiguous(key, dt, offset):
+    """Test times that are *not* ambiguous."""
+    tzi = tz.gettz(key)
+    dt = dt.replace(tzinfo=tzi)
+
+    assert dt.tzname() == offset.tzname
+    assert dt.utcoffset() == offset.utcoffset
+    assert dt.dst() == offset.dst
