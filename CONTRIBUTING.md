@@ -109,4 +109,4 @@ This will pass the `-m tzstr` parameter to `pytest`, running only the tests with
 
 The tests can also be run directly by running `pytest` or `python -m pytest` in the root directory. This will be likely be less thorough but is often faster and is a good first pass to check your changes.
 
-All GitHub pull requests are automatically tested using [Travis](https://travis-ci.org/dateutil/dateutil/) and [Appveyor](https://ci.appveyor.com/project/dateutil/dateutil).
+All GitHub pull requests are automatically tested using [GitHub Actions](https://github.com/dateutil/dateutil/actions/) and [Appveyor](https://ci.appveyor.com/project/dateutil/dateutil).
