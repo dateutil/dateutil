@@ -21,6 +21,8 @@ jobs:
           "3.9",
           "3.10",
           "3.11",
+          "3.12",
+          "3.13",
           "pypy-2.7",
           "pypy-3.8",
         ]
@@ -56,9 +58,10 @@ jobs:
         name: Set up Python ${{ matrix.python-version }} on ${{ matrix.os }}
       - if: ${{ matrix.python-version != '2.7' }}
         name: Set up Python ${{ matrix.python-version }} on ${{ matrix.os }}
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+          allow-prereleases: true
       - name: Install dependencies
         run: python -m pip install -U tox six
       - name: Install zic (Windows)
@@ -98,7 +101,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: ${{ matrix.toxenv }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: "3.10"
       - name: Install tox
@@ -114,7 +117,7 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
       - uses: akaihola/darker@0fb2501a3f6c1b2d64976afa57885aeec0601182
         # pinned due to unreleased fix: https://github.com/akaihola/darker/issues/489
         with:
@@ -127,7 +130,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v5
         with:
           python-version: "3.10"
       - name: Install tox
