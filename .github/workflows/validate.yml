@@ -59,6 +59,7 @@ jobs:
       image: ${{ matrix.use-container && format('python:{0}', matrix.python-version) || '' }}
     env:
       TOXENV: py
+      PIP_TRUSTED_HOST: pypi.python.org
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -69,7 +70,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
           allow-prereleases: true
         env:
-          PIP_TRUSTED_HOST: ${{ contains(fromJson('["3.5"]'), matrix.python-version) && env.pypi-hosts || '' }}
+          PIP_TRUSTED_HOST: ${{ contains(fromJson('["2.7", "3.5", "3.6", "3.7"]'), matrix.python-version) && env.pypi-hosts || '' }}
       - name: Install lzip
         run: sudo apt-get install lzip
         if: startsWith(matrix.os, 'ubuntu')
