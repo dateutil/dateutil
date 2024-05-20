@@ -27,7 +27,6 @@ jobs:
           "pypy-3.8",
         ]
         os: [ubuntu-latest, windows-latest, macos-latest]
-        tzdata-version: ["2024a"]
         include:
           # Older versions (<=3.7) are included separately since they need
           # special handling (using an older os or a container)
@@ -76,11 +75,12 @@ jobs:
         if: startsWith(matrix.os, 'ubuntu')
       - name: Install specific tzdata version
         run: |
+          TZDATA_VERSION="2024a"
           TMP_DIR=$(mktemp -d)
           cd $TMP_DIR
-          curl --fail --location "https://data.iana.org/time-zones/releases/tzdb-${{matrix.tzdata-version}}.tar.lz" -o tzdb.tar.lz
+          curl --fail --location "https://data.iana.org/time-zones/releases/tzdb-${TZDATA_VERSION}.tar.lz" -o tzdb.tar.lz
           tar --lzip -xf tzdb.tar.lz
-          cd tzdb-${{matrix.tzdata-version}}
+          cd tzdb-${TZDATA_VERSION}
           sudo rm -rf /usr/share/zoneinfo
           sudo make install DESTDIR=./tzdata \
                             DATAFORM=main
