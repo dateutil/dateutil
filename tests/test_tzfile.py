@@ -2,6 +2,7 @@
 
 import contextlib
 import functools
+import os
 import shutil
 import sys
 import threading
@@ -109,6 +110,25 @@ def set_tzpath(tzpath, block_tzdata=False):
                 sys.modules[modname] = module
 
             tz._tzpath.reset_tzpath(to=old_tzpath)
+
+
+@functools_cache
+def rearguard():
+    # If we know that we're using the rearguard tzdata file, skip tests
+    # that rely on rearguard features.
+    for path in tz.TZPATH:
+        # Technically you could have more than one set of tzdata, some which
+        # are reaguard and some vanguard or whatever, but we'll just assume
+        # that the first tzdata file we find is authoritative in terms of
+        # version.
+        tzdata_zi = os.path.join(path, "tzdata.zi")
+        if os.path.exists(tzdata_zi):
+            with open(tzdata_zi, "rt") as f:
+                if "-rearguard" in next(iter(f)):
+                    return True
+                else:
+                    break
+        return False
 
 
 def as_list(f):
@@ -439,6 +459,9 @@ def _get_unambiguous_transitions():
             )
 
 
+@pytest.mark.skipif(
+    rearguard(), reason="Skipping TZ tests with rearguard files"
+)
 @pytest.mark.parametrize("key, dt, offset", _get_unambiguous_transitions())
 def test_unambiguous(key, dt, offset):
     """Test times that are *not* ambiguous."""
