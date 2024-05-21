@@ -139,13 +139,15 @@ def as_list(f):
     return inner_func
 
 
+SUPPORTS_SUB_MINUTE_OFFSETS = not sys.version_info < (3, 6)
+
+
 ####
 # Classes representing test data
 ZERO = timedelta(0)
 ONE_H = timedelta(hours=1)
 
-
-if sys.version_info >= (3, 6):
+if SUPPORTS_SUB_MINUTE_OFFSETS:
 
     def offset_converter(td):
         return td
@@ -160,8 +162,12 @@ else:
 @attr.s
 class ZoneOffset(object):
     tzname = attr.ib()
-    utcoffset = attr.ib(converter=offset_converter)
+    utcoffset = attr.ib()
     dst = attr.ib(default=ZERO, converter=offset_converter)
+
+    def __attrs_post_init__(self):
+        self.raw_utcoffset = self.utcoffset
+        self.utcoffset = offset_converter(self.utcoffset)
 
 
 @attr.s
@@ -173,7 +179,7 @@ class ZoneTransition(object):
 
     @property
     def transition_utc(self):
-        return (self.transition - self.offset_before.utcoffset).replace(
+        return (self.transition - self.offset_before.raw_utcoffset).replace(
             tzinfo=tz.UTC
         )
 
@@ -185,11 +191,15 @@ class ZoneTransition(object):
     @property
     def gap(self):
         """Whether this introduces a gap"""
-        return self.offset_before.utcoffset < self.offset_after.utcoffset
+        return (
+            self.offset_before.raw_utcoffset < self.offset_after.raw_utcoffset
+        )
 
     @property
     def delta(self):
-        return self.offset_after.utcoffset - self.offset_before.utcoffset
+        return (
+            self.offset_after.raw_utcoffset - self.offset_before.raw_utcoffset
+        )
 
     @property
     def anomaly_start(self):
