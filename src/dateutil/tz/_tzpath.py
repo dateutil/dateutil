@@ -88,6 +88,8 @@ except ImportError:
     TZPATH = ()
     TZPATH_CALLBACKS = []
 
+    reset_tzpath()
+
 
 class InvalidTZPathWarning(RuntimeWarning):
     """Warning raised if an invalid path is specified in PYTHONTZPATH."""
