@@ -549,3 +549,20 @@ def test_folds_from_utc(key, dt_utc, expected_fold):
     dt = dt_utc.astimezone(tzi)
 
     assert getattr(dt, "fold", 0) == expected_fold
+
+
+def test_time_fixed_offset():
+    utc = tz.gettz("UTC")
+    assert isinstance(utc, tz.tzfile)
+
+    t = time(11, 1, tzinfo=utc)
+    assert t.utcoffset() == ZERO
+
+
+def test_time_varying_offset():
+    tzi = tz.gettz("America/New_York")
+    t = time(11, 1, tzinfo=tzi)
+
+    assert t.utcoffset() is None
+    assert t.tzname() is None
+    assert t.dst() is None
