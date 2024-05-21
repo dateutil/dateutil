@@ -350,6 +350,8 @@ class tzfile(_tzinfo):
             isdst.append(bool(ttinfo.dstoff))
             abbr.append(ttinfo.tzname)
 
+        utcoff = getattr(self, "_utcoff_raw", utcoff)
+
         trans_idx = [ttinfo_indices[id(ttinfo)] for ttinfo in self._ttinfos]
 
         trans_utc = self._trans_utc
@@ -375,8 +377,11 @@ class tzfile(_tzinfo):
             # Python's datetime doesn't accept sub-minute timezones. Check
             # http://python.org/sf/1447945 or https://bugs.python.org/issue5288
             # for some information.
-            utcoff = [60 * ((s + 30) // 60) for s in utcoff]
+            utcoff_adjusted = [60 * ((s + 30) // 60) for s in utcoff]
             dstoff = [60 * ((s + 30) // 60) for s in dstoff]
+            self._utcoff_raw = utcoff
+        else:
+            utcoff_adjusted = utcoff
 
         # Convert all the transition times (UTC) into "seconds since 1970-01-01 local time"
         trans_local = self._ts_to_local(trans_idx, trans_utc, utcoff)
@@ -386,7 +391,9 @@ class tzfile(_tzinfo):
             _ttinfo(
                 _load_timedelta(utcoffset), _load_timedelta(dstoffset), tzname
             )
-            for utcoffset, dstoffset, tzname in zip(utcoff, dstoff, abbr)
+            for utcoffset, dstoffset, tzname in zip(
+                utcoff_adjusted, dstoff, abbr
+            )
         ]
 
         self._ttinfo_list = _ttinfo_list
