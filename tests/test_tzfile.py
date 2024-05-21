@@ -714,172 +714,272 @@ def test_time_varying_offset():
     assert t.dst() is None
 
 
-def test_one_transition():
-    LMT = ZoneOffset("LMT", -timedelta(hours=6, minutes=31, seconds=2))
-    STD = ZoneOffset("STD", -timedelta(hours=6))
-
-    transitions = [
-        ZoneTransition(datetime(1883, 6, 9, 14), LMT, STD),
-    ]
-
-    after = "STD6"
-
-    zf = construct_zone(transitions, after)
-    zi = tz.tzfile(zf, key="One Transition")
-
-    dt0 = datetime(1883, 6, 9, 1, tzinfo=zi)
-    dt1 = datetime(1883, 6, 10, 1, tzinfo=zi)
-
-    for dt, offset in [(dt0, LMT), (dt1, STD)]:
-        # TODO: Use subtests
-        assert dt.tzname() == offset.tzname
-        assert dt.utcoffset() == offset.utcoffset
-        assert dt.dst() == offset.dst
-
-    dts = [
-        (
-            datetime(1883, 6, 9, 1, tzinfo=zi),
-            (
-                datetime(1883, 6, 9, 7, 31, 2, tzinfo=tz.UTC)
-                if SUPPORTS_SUB_MINUTE_OFFSETS
-                else datetime(1883, 6, 9, 7, 31, tzinfo=tz.UTC)
-            ),
-        ),
-        (
-            datetime(2010, 4, 1, 12, tzinfo=zi),
-            datetime(2010, 4, 1, 18, tzinfo=tz.UTC),
-        ),
-    ]
-
-    for dt_local, dt_utc in dts:
-        # TODO: Use subtests
-        dt_actual = dt_utc.astimezone(zi)
-        assert dt_actual == dt_local
-
-        dt_utc_actual = dt_local.astimezone(tz.UTC)
-        assert dt_utc_actual == dt_utc
-
-
 @functools_cache
-def one_transition_zone_dst():
-    DST = ZoneOffset("DST", ONE_H, ONE_H)
-    transitions = [
-        ZoneTransition(datetime(1970, 1, 1), DST, DST),
-    ]
+def weirdzone_test_cases():
+    _real_cases = {"offset": [], "utc": [], "varying_zones": []}
+    cases = {}
 
-    after = "STD0DST-1,0/0,J365/25"
+    def add_cases(f):
+        cases["offset"] = []
+        cases["utc"] = []
+        cases["varying_zones"] = []
+        f()
 
-    zf = construct_zone(transitions, after)
-    zi = tz.tzfile(zf, key="One Zone DST")
-    return zi
+        case_found = False
+        for key, values in cases.items():
+            case_found = True
+            id_base = f.__name__.strip("_") + "-%s"
+            for i, value in enumerate(values):
+                _real_cases[key].append(pytest.param(*value, id=id_base % i))
 
+        if not case_found:  # pragma: nocover
+            raise ValueError("%s did not add any tests!" % f)
 
-@pytest.mark.parametrize(
-    "dt",
-    [
-        datetime(1900, 3, 1),
-        datetime(1965, 9, 12),
-        datetime(1970, 1, 1),
-        datetime(2010, 11, 3),
-        datetime(2040, 1, 1),
-    ],
-)
-def test_one_zone_dst(dt):
-    """Tests for a zone with one transition, DST -> DST"""
-    DST = ZoneOffset("DST", ONE_H, ONE_H)
-    dt = dt.replace(tzinfo=one_transition_zone_dst())
-    assert dt.tzname() == DST.tzname
-    assert dt.utcoffset() == DST.utcoffset
-    assert dt.dst() == DST.dst
+    @add_cases
+    def _one_transition():
+        LMT = ZoneOffset("LMT", -timedelta(hours=6, minutes=31, seconds=2))
+        STD = ZoneOffset("STD", -timedelta(hours=6))
 
-
-@functools_cache
-def _no_tzstr_zone():
-    STD = ZoneOffset("STD", ONE_H, ZERO)
-    DST = ZoneOffset("DST", 2 * ONE_H, ONE_H)
-
-    transitions = []
-    for year in range(1996, 2000):
-        transitions.append(ZoneTransition(datetime(year, 3, 1, 2), STD, DST))
-        transitions.append(ZoneTransition(datetime(year, 11, 1, 2), DST, STD))
-
-    after = ""
-
-    zf = construct_zone(transitions, after)
-
-    zi = tz.tzfile(zf)
-    return zi
-
-
-@pytest.mark.parametrize(
-    "dt, isdst",
-    [
-        (datetime(1995, 1, 1), False),
-        (datetime(1996, 4, 1), True),
-        (datetime(1996, 11, 2), False),
-        (datetime(2001, 1, 1), False),
-    ],
-)
-def test_no_tzstr(dt, isdst):
-    """Test a V2+ zone with no TZStr set."""
-    if isdst:
-        offset = ZoneOffset("DST", 2 * ONE_H, ONE_H)
-    else:
-        offset = ZoneOffset("STD", ONE_H, ZERO)
-    dt = dt.replace(tzinfo=_no_tzstr_zone())
-
-    assert dt.tzname() == offset.tzname
-    assert dt.utcoffset() == offset.utcoffset
-    assert dt.dst() == offset.dst
-
-
-def test_no_tzstr_time():
-    """Test that a zone with no tzstr returns None for time objects."""
-    t = time(0, tzinfo=_no_tzstr_zone())
-    assert t.tzname() is None
-    assert t.utcoffset() is None
-    assert t.dst() is None
-
-
-@as_list
-def _tz_no_transitions_before_only():
-    # From RFC 8536 Section 3.2:
-    #
-    #   If there are no transitions, local time for all timestamps is
-    #   specified by the TZ string in the footer if present and nonempty;
-    #   otherwise, it is specified by time type 0.
-
-    offsets = [
-        ZoneOffset("STD", ZERO, ZERO),
-        ZoneOffset("DST", ONE_H, ONE_H),
-    ]
-
-    for offset in offsets:
-        # Phantom transition to set time type 0.
         transitions = [
-            ZoneTransition(None, offset, offset),
+            ZoneTransition(datetime(1883, 6, 9, 14), LMT, STD),
         ]
+
+        after = "STD6"
+
+        zf = construct_zone(transitions, after)
+        zi = tz.tzfile(zf, key="Etc/One_Transition")
+        cases["varying_zones"].append((zi,))
+
+        dt0 = datetime(1883, 6, 9, 1, tzinfo=zi)
+        dt1 = datetime(1883, 6, 10, 1, tzinfo=zi)
+
+        for dt, offset in [(dt0, LMT), (dt1, STD)]:
+            dt = dt.replace(tzinfo=zi)
+            cases["offset"].append((dt, offset))
+
+        dts = [
+            (
+                datetime(1883, 6, 9, 1),
+                (
+                    datetime(1883, 6, 9, 7, 31, 2, tzinfo=tz.UTC)
+                    if SUPPORTS_SUB_MINUTE_OFFSETS
+                    else datetime(1883, 6, 9, 7, 31, tzinfo=tz.UTC)
+                ),
+            ),
+            (
+                datetime(2010, 4, 1, 12),
+                datetime(2010, 4, 1, 18, tzinfo=tz.UTC),
+            ),
+        ]
+
+        for dt_naive, dt_utc in dts:
+            cases["utc"].append((dt_naive.replace(tzinfo=zi), dt_utc))
+
+    @add_cases
+    def _one_transition_zone_dst():
+        DST = ZoneOffset("DST", ONE_H, ONE_H)
+        transitions = [
+            ZoneTransition(datetime(1970, 1, 1), DST, DST),
+        ]
+
+        after = "STD0DST-1,0/0,J365/25"
+
+        zf = construct_zone(transitions, after)
+        zi = tz.tzfile(zf, key="Etc/One_Zone_DST")
+        cases["varying_zones"].append((zi,))
+
+        dts = [
+            datetime(1900, 3, 1),
+            datetime(1965, 9, 12),
+            datetime(1970, 1, 1),
+            datetime(2010, 11, 3),
+            datetime(2040, 1, 1),
+        ]
+
+        for dt in dts:
+            dt = dt.replace(tzinfo=zi)
+            cases["offset"].append((dt, DST))
+
+    @add_cases
+    def _no_tzstr_zone():
+        STD = ZoneOffset("STD", ONE_H, ZERO)
+        DST = ZoneOffset("DST", 2 * ONE_H, ONE_H)
+
+        transitions = []
+        for year in range(1996, 2000):
+            transitions.append(
+                ZoneTransition(datetime(year, 3, 1, 2), STD, DST)
+            )
+            transitions.append(
+                ZoneTransition(datetime(year, 11, 1, 2), DST, STD)
+            )
 
         after = ""
 
         zf = construct_zone(transitions, after)
-        zi = tz.tzfile(zf, key="Etc/No_Transitions_%s" % offset.tzname)
 
+        zi = tz.tzfile(zf, key="Etc/No_TzStr")
+        cases["varying_zones"].append((zi,))
         dts = [
-            datetime(1900, 1, 1),
-            datetime(1970, 1, 1),
-            datetime(2000, 1, 1),
+            (datetime(1995, 1, 1), STD),
+            (datetime(1996, 4, 1), DST),
+            (datetime(1996, 11, 2), STD),
+            (datetime(2001, 1, 1), STD),
         ]
 
-        for dt in dts:
-            yield dt.replace(tzinfo=zi), offset
+        for dt, offset in dts:
+            dt = dt.replace(tzinfo=zi)
+            cases["offset"].append((dt, offset))
+
+    @add_cases
+    def _tz_no_transitions_before_only():
+        # From RFC 8536 Section 3.2:
+        #
+        #   If there are no transitions, local time for all timestamps is
+        #   specified by the TZ string in the footer if present and nonempty;
+        #   otherwise, it is specified by time type 0.
+
+        offsets = [
+            ZoneOffset("STD", ZERO, ZERO),
+            ZoneOffset("DST", ONE_H, ONE_H),
+        ]
+
+        for offset in offsets:
+            # Phantom transition to set time type 0.
+            transitions = [
+                ZoneTransition(None, offset, offset),
+            ]
+
+            after = ""
+
+            zf = construct_zone(transitions, after)
+            zi = tz.tzfile(zf, key="Etc/No_Transitions_%s" % offset.tzname)
+
+            dts = [
+                datetime(1900, 1, 1),
+                datetime(1970, 1, 1),
+                datetime(2000, 1, 1),
+                time(12, 0, 0),
+            ]
+
+            for dt in dts:
+                cases["offset"].append((dt.replace(tzinfo=zi), offset))
+
+    @add_cases
+    def _very_large_timestamp_zone():
+        """Tests using a zone with transitions very far in the past and future.
+
+        Particularly, this is a concern if something:
+
+            1. Attempts to call ``datetime.timestamp`` for a datetime outside
+               of ``[datetime.min, datetime.max]``.
+            2. Attempts to construct a timedelta outside of
+               ``[timedelta.min, timedelta.max]``.
+
+        This actually occurs "in the wild", as some time zones on Ubuntu (at
+        least as of 2020) have an initial transition added at ``-2**58``.
+        """
+
+        LMT = ZoneOffset("LMT", timedelta(seconds=-968))
+        GMT = ZoneOffset("GMT", ZERO)
+
+        transitions = [
+            (-(1 << 62), LMT, LMT),
+            ZoneTransition(datetime(1912, 1, 1), LMT, GMT),
+            ((1 << 62), GMT, GMT),
+        ]
+
+        after = "GMT0"
+
+        zf = construct_zone(transitions, after)
+        zi = tz.tzfile(zf, key="Etc/Large_Transitions")
+
+        cases["varying_zones"].append((zi,))
+
+        offset_cases = [
+            (datetime.min, LMT),
+            (datetime.max, GMT),
+            (datetime(1911, 12, 31), LMT),
+            (datetime(1912, 1, 2), GMT),
+        ]
+
+        for dt_naive, offset in offset_cases:
+            dt = dt_naive.replace(tzinfo=zi)
+            cases["offset"].append((dt, offset))
+
+        if SUPPORTS_SUB_MINUTE_OFFSETS:
+            utc_cases = [
+                (datetime.min, datetime.min + timedelta(seconds=968)),
+                (datetime(1898, 12, 31, 23, 43, 52), datetime(1899, 1, 1)),
+                (
+                    datetime(1911, 12, 31, 23, 59, 59, 999999),
+                    datetime(1912, 1, 1, 0, 16, 7, 999999),
+                ),
+                (
+                    datetime(1912, 1, 1, 0, 16, 8),
+                    (datetime(1912, 1, 1, 0, 16, 8)),
+                ),
+                (datetime(1970, 1, 1), datetime(1970, 1, 1)),
+                (datetime.max, datetime.max),
+            ]
+        else:
+            utc_cases = [
+                (datetime.min, datetime.min + timedelta(seconds=960)),
+                (datetime(1898, 12, 31, 23, 44), datetime(1899, 1, 1)),
+                (
+                    datetime(1911, 12, 31, 23, 59, 59, 999999),
+                    datetime(1912, 1, 1, 0, 15, 59, 999999),
+                ),
+                (
+                    datetime(1912, 1, 1, 0, 16, 8),
+                    (datetime(1912, 1, 1, 0, 16, 8)),
+                ),
+                (datetime(1970, 1, 1), datetime(1970, 1, 1)),
+                (datetime.max, datetime.max),
+            ]
+
+        for naive_dt, naive_dt_utc in utc_cases:
+            dt = naive_dt.replace(tzinfo=zi)
+            dt_utc = naive_dt_utc.replace(tzinfo=tz.UTC)
+            cases["utc"].append((dt, dt_utc))
+
+    @add_cases
+    def _fixed_offset_phantom_transition_zone():
+        """A zone with a phantom transition from UTC -> UTC."""
+        UTC = ZoneOffset("UTC", ZERO, ZERO)
+
+        transitions = [ZoneTransition(datetime(1970, 1, 1), UTC, UTC)]
+
+        after = "UTC0"
+        zf = construct_zone(transitions, after)
+        zi = tz.tzfile(zf, key="Etc/Phantom_UTC")
+
+        cases["offset"].append((datetime(2020, 1, 1, tzinfo=zi), UTC))
+        cases["offset"].append((time(0, tzinfo=zi), UTC))
+
+    return _real_cases
 
 
-@pytest.mark.parametrize("dt, offset", _tz_no_transitions_before_only())
-def test_tz_no_transitions_before_only(dt, offset):
-    assert dt.utcoffset() == offset.utcoffset
+@pytest.mark.parametrize("dt, offset", weirdzone_test_cases()["offset"])
+def test_weirdzone_offsets(dt, offset):
     assert dt.tzname() == offset.tzname
+    assert dt.utcoffset() == offset.utcoffset
     assert dt.dst() == offset.dst
+
+
+@pytest.mark.parametrize("dt, dt_utc", weirdzone_test_cases()["utc"])
+def test_weirdzone_utc(dt, dt_utc):
+    assert dt.tzinfo is not None
+    assert dt == dt_utc
+    assert dt_utc.astimezone(dt.tzinfo) == dt
+
+
+@pytest.mark.parametrize("zone", weirdzone_test_cases()["varying_zones"])
+def test_weirdzone_time_none(zone):
+    t = time(12, 0, 0, tzinfo=zone)
+    assert t.tzname() is None
+    assert t.utcoffset() is None
+    assert t.dst() is None
 
 
 def test_empty_zone():
@@ -887,129 +987,3 @@ def test_empty_zone():
 
     with pytest.raises(ValueError):
         tz.tzfile(zf)
-
-
-@functools_cache
-def _very_large_timestamp_zone():
-    """Zone with transitions very far in the past and future.
-
-    Particularly, this is a concern if something:
-
-        1. Attempts to call ``datetime.timestamp`` for a datetime outside
-           of ``[datetime.min, datetime.max]``.
-        2. Attempts to construct a timedelta outside of
-           ``[timedelta.min, timedelta.max]``.
-
-    This actually occurs "in the wild", as some time zones on Ubuntu (at
-    least as of 2020) have an initial transition added at ``-2**58``.
-    """
-
-    LMT = ZoneOffset("LMT", timedelta(seconds=-968))
-    GMT = ZoneOffset("GMT", ZERO)
-
-    transitions = [
-        (-(1 << 62), LMT, LMT),
-        ZoneTransition(datetime(1912, 1, 1), LMT, GMT),
-        ((1 << 62), GMT, GMT),
-    ]
-
-    after = "GMT0"
-
-    zf = construct_zone(transitions, after)
-    zi = tz.tzfile(zf, key="Etc/Large_Transitions")
-    return zi
-
-
-@as_list
-def _very_large_timestamp_offset_cases():
-    LMT = ZoneOffset("LMT", timedelta(seconds=-968))
-    GMT = ZoneOffset("GMT", ZERO)
-
-    offset_cases = [
-        (datetime.min, LMT),
-        (datetime.max, GMT),
-        (datetime(1911, 12, 31), LMT),
-        (datetime(1912, 1, 2), GMT),
-    ]
-
-    zi = _very_large_timestamp_zone()
-    for dt_naive, offset in offset_cases:
-        dt = dt_naive.replace(tzinfo=zi)
-        yield dt, offset
-
-
-@pytest.mark.parametrize("dt, offset", _very_large_timestamp_offset_cases())
-def test_very_large_timestamp_offsets(dt, offset):
-    assert dt.tzname() == offset.tzname
-    assert dt.utcoffset() == offset.utcoffset
-    assert dt.dst() == offset.dst
-
-
-@as_list
-def _very_large_timestamp_utc_cases():
-    if SUPPORTS_SUB_MINUTE_OFFSETS:
-        utc_cases = [
-            (datetime.min, datetime.min + timedelta(seconds=968)),
-            (datetime(1898, 12, 31, 23, 43, 52), datetime(1899, 1, 1)),
-            (
-                datetime(1911, 12, 31, 23, 59, 59, 999999),
-                datetime(1912, 1, 1, 0, 16, 7, 999999),
-            ),
-            (datetime(1912, 1, 1, 0, 16, 8), (datetime(1912, 1, 1, 0, 16, 8))),
-            (datetime(1970, 1, 1), datetime(1970, 1, 1)),
-            (datetime.max, datetime.max),
-        ]
-    else:
-        utc_cases = [
-            (datetime.min, datetime.min + timedelta(seconds=960)),
-            (datetime(1898, 12, 31, 23, 44), datetime(1899, 1, 1)),
-            (
-                datetime(1911, 12, 31, 23, 59, 59, 999999),
-                datetime(1912, 1, 1, 0, 15, 59, 999999),
-            ),
-            (datetime(1912, 1, 1, 0, 16, 8), (datetime(1912, 1, 1, 0, 16, 8))),
-            (datetime(1970, 1, 1), datetime(1970, 1, 1)),
-            (datetime.max, datetime.max),
-        ]
-
-    zi = _very_large_timestamp_zone()
-    for naive_dt, naive_dt_utc in utc_cases:
-        dt = naive_dt.replace(tzinfo=zi)
-        dt_utc = naive_dt_utc.replace(tzinfo=tz.UTC)
-        yield dt, dt_utc
-
-
-@pytest.mark.parametrize("dt, dt_utc", _very_large_timestamp_utc_cases())
-def test_very_large_timestamp_utc_cases(dt, dt_utc):
-    assert dt.tzinfo is not None
-    assert dt == dt_utc
-    assert dt_utc.astimezone(dt.tzinfo) == dt
-
-
-@functools_cache
-def _phantom_transition_zone():
-    """A zone with a phantom transition from UTC -> UTC."""
-    UTC = ZoneOffset("UTC", ZERO, ZERO)
-
-    transitions = [ZoneTransition(datetime(1970, 1, 1), UTC, UTC)]
-
-    after = "UTC0"
-    zf = construct_zone(transitions, after)
-    zi = tz.tzfile(zf, key="UTC")
-    return zi
-
-
-def test_fixed_offset_phantom_transition():
-    UTC = ZoneOffset("UTC", ZERO, ZERO)
-    dt = datetime(2020, 1, 1, tzinfo=_phantom_transition_zone())
-    assert dt.tzname() == UTC.tzname
-    assert dt.utcoffset() == UTC.utcoffset
-    assert dt.dst() == UTC.dst
-
-
-def test_fixed_offset_phantom_transition_time():
-    UTC = ZoneOffset("UTC", ZERO, ZERO)
-    t = time(0, tzinfo=_phantom_transition_zone())
-    assert t.tzname() == UTC.tzname
-    assert t.utcoffset() == UTC.utcoffset
-    assert t.dst() == UTC.dst
