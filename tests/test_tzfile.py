@@ -791,3 +791,51 @@ def test_one_zone_dst(dt):
     assert dt.tzname() == DST.tzname
     assert dt.utcoffset() == DST.utcoffset
     assert dt.dst() == DST.dst
+
+
+@functools_cache
+def _no_tzstr_zone():
+    STD = ZoneOffset("STD", ONE_H, ZERO)
+    DST = ZoneOffset("DST", 2 * ONE_H, ONE_H)
+
+    transitions = []
+    for year in range(1996, 2000):
+        transitions.append(ZoneTransition(datetime(year, 3, 1, 2), STD, DST))
+        transitions.append(ZoneTransition(datetime(year, 11, 1, 2), DST, STD))
+
+    after = ""
+
+    zf = construct_zone(transitions, after)
+
+    zi = tz.tzfile(zf)
+    return zi
+
+
+@pytest.mark.parametrize(
+    "dt, isdst",
+    [
+        (datetime(1995, 1, 1), False),
+        (datetime(1996, 4, 1), True),
+        (datetime(1996, 11, 2), False),
+        (datetime(2001, 1, 1), False),
+    ],
+)
+def test_no_tzstr(dt, isdst):
+    """Test a V2+ zone with no TZStr set."""
+    if isdst:
+        offset = ZoneOffset("DST", 2 * ONE_H, ONE_H)
+    else:
+        offset = ZoneOffset("STD", ONE_H, ZERO)
+    dt = dt.replace(tzinfo=_no_tzstr_zone())
+
+    assert dt.tzname() == offset.tzname
+    assert dt.utcoffset() == offset.utcoffset
+    assert dt.dst() == offset.dst
+
+
+def test_no_tzstr_time():
+    """Test that a zone with no tzstr returns None for time objects."""
+    t = time(0, tzinfo=_no_tzstr_zone())
+    assert t.tzname() is None
+    assert t.utcoffset() is None
+    assert t.dst() is None
