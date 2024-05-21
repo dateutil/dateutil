@@ -839,3 +839,44 @@ def test_no_tzstr_time():
     assert t.tzname() is None
     assert t.utcoffset() is None
     assert t.dst() is None
+
+
+@as_list
+def _tz_no_transitions_before_only():
+    # From RFC 8536 Section 3.2:
+    #
+    #   If there are no transitions, local time for all timestamps is
+    #   specified by the TZ string in the footer if present and nonempty;
+    #   otherwise, it is specified by time type 0.
+
+    offsets = [
+        ZoneOffset("STD", ZERO, ZERO),
+        ZoneOffset("DST", ONE_H, ONE_H),
+    ]
+
+    for offset in offsets:
+        # Phantom transition to set time type 0.
+        transitions = [
+            ZoneTransition(None, offset, offset),
+        ]
+
+        after = ""
+
+        zf = construct_zone(transitions, after)
+        zi = tz.tzfile(zf, key="Etc/No_Transitions_%s" % offset.tzname)
+
+        dts = [
+            datetime(1900, 1, 1),
+            datetime(1970, 1, 1),
+            datetime(2000, 1, 1),
+        ]
+
+        for dt in dts:
+            yield dt.replace(tzinfo=zi), offset
+
+
+@pytest.mark.parametrize("dt, offset", _tz_no_transitions_before_only())
+def test_tz_no_transitions_before_only(dt, offset):
+    assert dt.utcoffset() == offset.utcoffset
+    assert dt.tzname() == offset.tzname
+    assert dt.dst() == offset.dst
