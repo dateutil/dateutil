@@ -887,3 +887,100 @@ def test_empty_zone():
 
     with pytest.raises(ValueError):
         tz.tzfile(zf)
+
+
+@functools_cache
+def _very_large_timestamp_zone():
+    """Zone with transitions very far in the past and future.
+
+    Particularly, this is a concern if something:
+
+        1. Attempts to call ``datetime.timestamp`` for a datetime outside
+           of ``[datetime.min, datetime.max]``.
+        2. Attempts to construct a timedelta outside of
+           ``[timedelta.min, timedelta.max]``.
+
+    This actually occurs "in the wild", as some time zones on Ubuntu (at
+    least as of 2020) have an initial transition added at ``-2**58``.
+    """
+
+    LMT = ZoneOffset("LMT", timedelta(seconds=-968))
+    GMT = ZoneOffset("GMT", ZERO)
+
+    transitions = [
+        (-(1 << 62), LMT, LMT),
+        ZoneTransition(datetime(1912, 1, 1), LMT, GMT),
+        ((1 << 62), GMT, GMT),
+    ]
+
+    after = "GMT0"
+
+    zf = construct_zone(transitions, after)
+    zi = tz.tzfile(zf, key="Etc/Large_Transitions")
+    return zi
+
+
+@as_list
+def _very_large_timestamp_offset_cases():
+    LMT = ZoneOffset("LMT", timedelta(seconds=-968))
+    GMT = ZoneOffset("GMT", ZERO)
+
+    offset_cases = [
+        (datetime.min, LMT),
+        (datetime.max, GMT),
+        (datetime(1911, 12, 31), LMT),
+        (datetime(1912, 1, 2), GMT),
+    ]
+
+    zi = _very_large_timestamp_zone()
+    for dt_naive, offset in offset_cases:
+        dt = dt_naive.replace(tzinfo=zi)
+        yield dt, offset
+
+
+@pytest.mark.parametrize("dt, offset", _very_large_timestamp_offset_cases())
+def test_very_large_timestamp_offsets(dt, offset):
+    assert dt.tzname() == offset.tzname
+    assert dt.utcoffset() == offset.utcoffset
+    assert dt.dst() == offset.dst
+
+
+@as_list
+def _very_large_timestamp_utc_cases():
+    if SUPPORTS_SUB_MINUTE_OFFSETS:
+        utc_cases = [
+            (datetime.min, datetime.min + timedelta(seconds=968)),
+            (datetime(1898, 12, 31, 23, 43, 52), datetime(1899, 1, 1)),
+            (
+                datetime(1911, 12, 31, 23, 59, 59, 999999),
+                datetime(1912, 1, 1, 0, 16, 7, 999999),
+            ),
+            (datetime(1912, 1, 1, 0, 16, 8), (datetime(1912, 1, 1, 0, 16, 8))),
+            (datetime(1970, 1, 1), datetime(1970, 1, 1)),
+            (datetime.max, datetime.max),
+        ]
+    else:
+        utc_cases = [
+            (datetime.min, datetime.min + timedelta(seconds=960)),
+            (datetime(1898, 12, 31, 23, 44), datetime(1899, 1, 1)),
+            (
+                datetime(1911, 12, 31, 23, 59, 59, 999999),
+                datetime(1912, 1, 1, 0, 15, 59, 999999),
+            ),
+            (datetime(1912, 1, 1, 0, 16, 8), (datetime(1912, 1, 1, 0, 16, 8))),
+            (datetime(1970, 1, 1), datetime(1970, 1, 1)),
+            (datetime.max, datetime.max),
+        ]
+
+    zi = _very_large_timestamp_zone()
+    for naive_dt, naive_dt_utc in utc_cases:
+        dt = naive_dt.replace(tzinfo=zi)
+        dt_utc = naive_dt_utc.replace(tzinfo=tz.UTC)
+        yield dt, dt_utc
+
+
+@pytest.mark.parametrize("dt, dt_utc", _very_large_timestamp_utc_cases())
+def test_very_large_timestamp_utc_cases(dt, dt_utc):
+    assert dt.tzinfo is not None
+    assert dt == dt_utc
+    assert dt_utc.astimezone(dt.tzinfo) == dt
