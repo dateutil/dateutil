@@ -984,3 +984,32 @@ def test_very_large_timestamp_utc_cases(dt, dt_utc):
     assert dt.tzinfo is not None
     assert dt == dt_utc
     assert dt_utc.astimezone(dt.tzinfo) == dt
+
+
+@functools_cache
+def _phantom_transition_zone():
+    """A zone with a phantom transition from UTC -> UTC."""
+    UTC = ZoneOffset("UTC", ZERO, ZERO)
+
+    transitions = [ZoneTransition(datetime(1970, 1, 1), UTC, UTC)]
+
+    after = "UTC0"
+    zf = construct_zone(transitions, after)
+    zi = tz.tzfile(zf, key="UTC")
+    return zi
+
+
+def test_fixed_offset_phantom_transition():
+    UTC = ZoneOffset("UTC", ZERO, ZERO)
+    dt = datetime(2020, 1, 1, tzinfo=_phantom_transition_zone())
+    assert dt.tzname() == UTC.tzname
+    assert dt.utcoffset() == UTC.utcoffset
+    assert dt.dst() == UTC.dst
+
+
+def test_fixed_offset_phantom_transition_time():
+    UTC = ZoneOffset("UTC", ZERO, ZERO)
+    t = time(0, tzinfo=_phantom_transition_zone())
+    assert t.tzname() == UTC.tzname
+    assert t.utcoffset() == UTC.utcoffset
+    assert t.dst() == UTC.dst
