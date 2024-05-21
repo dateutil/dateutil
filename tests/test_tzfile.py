@@ -758,3 +758,36 @@ def test_one_transition():
 
         dt_utc_actual = dt_local.astimezone(tz.UTC)
         assert dt_utc_actual == dt_utc
+
+
+@functools_cache
+def one_transition_zone_dst():
+    DST = ZoneOffset("DST", ONE_H, ONE_H)
+    transitions = [
+        ZoneTransition(datetime(1970, 1, 1), DST, DST),
+    ]
+
+    after = "STD0DST-1,0/0,J365/25"
+
+    zf = construct_zone(transitions, after)
+    zi = tz.tzfile(zf, key="One Zone DST")
+    return zi
+
+
+@pytest.mark.parametrize(
+    "dt",
+    [
+        datetime(1900, 3, 1),
+        datetime(1965, 9, 12),
+        datetime(1970, 1, 1),
+        datetime(2010, 11, 3),
+        datetime(2040, 1, 1),
+    ],
+)
+def test_one_zone_dst(dt):
+    """Tests for a zone with one transition, DST -> DST"""
+    DST = ZoneOffset("DST", ONE_H, ONE_H)
+    dt = dt.replace(tzinfo=one_transition_zone_dst())
+    assert dt.tzname() == DST.tzname
+    assert dt.utcoffset() == DST.utcoffset
+    assert dt.dst() == DST.dst
