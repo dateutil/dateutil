@@ -481,3 +481,51 @@ def test_unambiguous(key, dt, offset):
     assert dt.tzname() == offset.tzname
     assert dt.utcoffset() == offset.utcoffset
     assert dt.dst() == offset.dst
+
+
+@as_list
+def _get_folds_and_gaps():
+    for key, zone_transitions in transition_examples():
+        for zt in zone_transitions:
+            if not zt.fold and not zt.gap:
+                continue
+            test_group = "fold" if zt.fold else "gap"
+
+            # Cases are of the form key, dt, fold, offset
+            dt = zt.anomaly_start - timedelta(seconds=1)
+            yield (key, dt, 0, zt.offset_before)
+            yield (key, dt, 1, zt.offset_before)
+
+            dt = zt.anomaly_start
+            yield (key, dt, 0, zt.offset_before)
+            yield (key, dt, 1, zt.offset_after)
+
+            dt = zt.anomaly_start + timedelta(seconds=1)
+            yield (key, dt, 0, zt.offset_before)
+            yield (key, dt, 1, zt.offset_after)
+
+            dt = zt.anomaly_end - timedelta(seconds=1)
+            yield (key, dt, 0, zt.offset_before)
+            yield (key, dt, 1, zt.offset_after)
+
+            dt = zt.anomaly_end
+            yield (key, dt, 0, zt.offset_after)
+            yield (key, dt, 1, zt.offset_after)
+
+            dt = zt.anomaly_end + timedelta(seconds=1)
+            yield (key, dt, 0, zt.offset_after)
+            yield (key, dt, 1, zt.offset_after)
+
+
+@pytest.mark.skipif(
+    rearguard(), reason="Skipping TZ tests with rearguard files"
+)
+@pytest.mark.parametrize("key, dt, fold, offset", _get_folds_and_gaps())
+def test_gaps_and_folds(key, dt, fold, offset):
+    """Test times that are ambiguous."""
+    tzi = tz.gettz(key)
+    dt = tz.enfold(dt.replace(tzinfo=tzi), fold)
+
+    assert dt.tzname() == offset.tzname
+    assert dt.utcoffset() == offset.utcoffset
+    assert dt.dst() == offset.dst
