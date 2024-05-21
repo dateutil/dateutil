@@ -146,6 +146,7 @@ SUPPORTS_SUB_MINUTE_OFFSETS = not sys.version_info < (3, 6)
 # Classes representing test data
 ZERO = timedelta(0)
 ONE_H = timedelta(hours=1)
+SECOND = timedelta(seconds=1)
 
 if SUPPORTS_SUB_MINUTE_OFFSETS:
 
@@ -529,3 +530,22 @@ def test_gaps_and_folds(key, dt, fold, offset):
     assert dt.tzname() == offset.tzname
     assert dt.utcoffset() == offset.utcoffset
     assert dt.dst() == offset.dst
+
+
+@as_list
+def _get_folds_from_utc():
+    for key, zone_transitions in transition_examples():
+        for zt in zone_transitions:
+            if not zt.fold:
+                continue
+            dt_utc = zt.transition_utc
+            yield (key, dt_utc - SECOND, 0)
+            yield (key, dt_utc + SECOND, 1)
+
+
+@pytest.mark.parametrize("key, dt_utc, expected_fold", _get_folds_from_utc())
+def test_folds_from_utc(key, dt_utc, expected_fold):
+    tzi = tz.gettz(key)
+    dt = dt_utc.astimezone(tzi)
+
+    assert getattr(dt, "fold", 0) == expected_fold
