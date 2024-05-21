@@ -712,3 +712,49 @@ def test_time_varying_offset():
     assert t.utcoffset() is None
     assert t.tzname() is None
     assert t.dst() is None
+
+
+def test_one_transition():
+    LMT = ZoneOffset("LMT", -timedelta(hours=6, minutes=31, seconds=2))
+    STD = ZoneOffset("STD", -timedelta(hours=6))
+
+    transitions = [
+        ZoneTransition(datetime(1883, 6, 9, 14), LMT, STD),
+    ]
+
+    after = "STD6"
+
+    zf = construct_zone(transitions, after)
+    zi = tz.tzfile(zf, key="One Transition")
+
+    dt0 = datetime(1883, 6, 9, 1, tzinfo=zi)
+    dt1 = datetime(1883, 6, 10, 1, tzinfo=zi)
+
+    for dt, offset in [(dt0, LMT), (dt1, STD)]:
+        # TODO: Use subtests
+        assert dt.tzname() == offset.tzname
+        assert dt.utcoffset() == offset.utcoffset
+        assert dt.dst() == offset.dst
+
+    dts = [
+        (
+            datetime(1883, 6, 9, 1, tzinfo=zi),
+            (
+                datetime(1883, 6, 9, 7, 31, 2, tzinfo=tz.UTC)
+                if SUPPORTS_SUB_MINUTE_OFFSETS
+                else datetime(1883, 6, 9, 7, 31, tzinfo=tz.UTC)
+            ),
+        ),
+        (
+            datetime(2010, 4, 1, 12, tzinfo=zi),
+            datetime(2010, 4, 1, 18, tzinfo=tz.UTC),
+        ),
+    ]
+
+    for dt_local, dt_utc in dts:
+        # TODO: Use subtests
+        dt_actual = dt_utc.astimezone(zi)
+        assert dt_actual == dt_local
+
+        dt_utc_actual = dt_local.astimezone(tz.UTC)
+        assert dt_utc_actual == dt_utc
