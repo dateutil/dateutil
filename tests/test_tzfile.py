@@ -880,3 +880,10 @@ def test_tz_no_transitions_before_only(dt, offset):
     assert dt.utcoffset() == offset.utcoffset
     assert dt.tzname() == offset.tzname
     assert dt.dst() == offset.dst
+
+
+def test_empty_zone():
+    zf = construct_zone([], "")
+
+    with pytest.raises(ValueError):
+        tz.tzfile(zf)
