@@ -36,10 +36,7 @@ warnings.warn(
 )
 
 
-class tzfile(_tzfile):
-    def __reduce__(self):
-        return (gettz, (self.key,))
-
+tzfile = _tzfile
 
 class ZoneInfoFile(object):
     def __init__(self, zonefile_stream=None):
