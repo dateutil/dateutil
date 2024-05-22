@@ -994,7 +994,11 @@ def weirdzone_test_cases():
     FOLD = 1
     GAP = 2
 
-    def add_tzstr_tests(zi, test_cases):
+    def add_tzstr_tests(tzstr, test_cases, varying=True):
+        zi = zone_from_tzstr(tzstr)
+        if varying:
+            cases["varying_zones"].append((zi,))
+
         for dt_naive, offset, dt_type in test_cases:
             dt = dt_naive.replace(tzinfo=zi)
             cases["offset"].append((dt, offset))
@@ -1005,7 +1009,7 @@ def weirdzone_test_cases():
             cases["utc"].append((dt, dt_utc))
 
     @add_cases
-    def _standard_est5edt():
+    def _tzstr_standard_est5edt():
         # Transition to EDT on the 2nd Sunday in March at 4 AM, and
         # transition back on the first Sunday in November at 3AM
         tzstr = "EST5EDT,M3.2.0/4:00,M11.1.0/3:00"
@@ -1013,11 +1017,8 @@ def weirdzone_test_cases():
         EST = ZoneOffset("EST", timedelta(hours=-5), ZERO)
         EDT = ZoneOffset("EDT", timedelta(hours=-4), ONE_H)
 
-        zi = zone_from_tzstr(tzstr)
-        cases["varying_zones"].append((zi,))
-
         add_tzstr_tests(
-            zi,
+            tzstr,
             (
                 (datetime(2019, 3, 9), EST, NORMAL),
                 (datetime(2019, 3, 10, 3, 59), EST, NORMAL),
@@ -1035,6 +1036,229 @@ def weirdzone_test_cases():
                 (tz.enfold(datetime(2020, 11, 1, 1, 59), 1), EDT, NORMAL),
                 (tz.enfold(datetime(2020, 11, 1, 2, 0), 0), EDT, FOLD),
                 (tz.enfold(datetime(2020, 11, 1, 2, 0), 1), EST, FOLD),
+            ),
+        )
+
+    @add_cases
+    def _tzstr_gmt0bst1():
+        # Transition to BST happens on the last Sunday in March at 1 AM GMT
+        # and the transition back happens the last Sunday in October at 2AM BST
+        tzstr = "GMT0BST-1,M3.5.0/1:00,M10.5.0/2:00"
+
+        GMT = ZoneOffset("GMT", ZERO, ZERO)
+        BST = ZoneOffset("BST", ONE_H, ONE_H)
+
+        add_tzstr_tests(
+            tzstr,
+            (
+                (datetime(2019, 3, 30), GMT, NORMAL),
+                (datetime(2019, 3, 31, 0, 59), GMT, NORMAL),
+                (datetime(2019, 3, 31, 2, 0), BST, NORMAL),
+                (datetime(2019, 10, 26), BST, NORMAL),
+                (tz.enfold(datetime(2019, 10, 27, 0, 59), 1), BST, NORMAL),
+                (tz.enfold(datetime(2019, 10, 27, 1, 0), 0), BST, GAP),
+                (tz.enfold(datetime(2019, 10, 27, 2, 0), 1), GMT, GAP),
+                (datetime(2020, 3, 29, 0, 59), GMT, NORMAL),
+                (datetime(2020, 3, 29, 2, 0), BST, NORMAL),
+                (tz.enfold(datetime(2020, 10, 25, 0, 59), 1), BST, NORMAL),
+                (tz.enfold(datetime(2020, 10, 25, 1, 0), 0), BST, FOLD),
+                (tz.enfold(datetime(2020, 10, 25, 2, 0), 1), GMT, NORMAL),
+            ),
+        )
+
+    @add_cases
+    def _tzstr_aest10_aedt():
+        # Austrialian time zone - DST start is chronologically first
+        tzstr = "AEST-10AEDT,M10.1.0/2,M4.1.0/3"
+
+        AEST = ZoneOffset("AEST", timedelta(hours=10), ZERO)
+        AEDT = ZoneOffset("AEDT", timedelta(hours=11), ONE_H)
+
+        add_tzstr_tests(
+            tzstr,
+            (
+                (datetime(2019, 4, 6), AEDT, NORMAL),
+                (datetime(2019, 4, 7, 1, 59), AEDT, NORMAL),
+                (tz.enfold(datetime(2019, 4, 7, 1, 59), 1), AEDT, NORMAL),
+                (tz.enfold(datetime(2019, 4, 7, 2, 0), 0), AEDT, FOLD),
+                (tz.enfold(datetime(2019, 4, 7, 2, 1), 0), AEDT, FOLD),
+                (tz.enfold(datetime(2019, 4, 7, 2, 0), 1), AEST, FOLD),
+                (tz.enfold(datetime(2019, 4, 7, 2, 1), 1), AEST, FOLD),
+                (tz.enfold(datetime(2019, 4, 7, 3, 0), 0), AEST, NORMAL),
+                (tz.enfold(datetime(2019, 4, 7, 3, 0), 1), AEST, NORMAL),
+                (datetime(2019, 10, 5, 0), AEST, NORMAL),
+                (datetime(2019, 10, 6, 1, 59), AEST, NORMAL),
+                (tz.enfold(datetime(2019, 10, 6, 2, 0), 0), AEST, GAP),
+                (tz.enfold(datetime(2019, 10, 6, 2, 0), 1), AEDT, GAP),
+                (datetime(2019, 10, 6, 3, 0), AEDT, NORMAL),
+            ),
+        )
+
+    @add_cases
+    def _tzstr_negative_dst():
+        # Irish time zone - negative DST
+        tzstr = "IST-1GMT0,M10.5.0,M3.5.0/1"
+
+        GMT = ZoneOffset("GMT", ZERO, -ONE_H)
+        IST = ZoneOffset("IST", ONE_H, ZERO)
+
+        add_tzstr_tests(
+            tzstr,
+            (
+                (datetime(2019, 3, 30), GMT, NORMAL),
+                (datetime(2019, 3, 31, 0, 59), GMT, NORMAL),
+                (datetime(2019, 3, 31, 2, 0), IST, NORMAL),
+                (datetime(2019, 10, 26), IST, NORMAL),
+                (tz.enfold(datetime(2019, 10, 27, 0, 59), 1), IST, NORMAL),
+                (tz.enfold(datetime(2019, 10, 27, 1, 0), 0), IST, FOLD),
+                (tz.enfold(datetime(2019, 10, 27, 1, 0), 1), GMT, FOLD),
+                (tz.enfold(datetime(2019, 10, 27, 2, 0), 1), GMT, NORMAL),
+                (datetime(2020, 3, 29, 0, 59), GMT, NORMAL),
+                (datetime(2020, 3, 29, 2, 0), IST, NORMAL),
+                (tz.enfold(datetime(2020, 10, 25, 0, 59), 1), IST, NORMAL),
+                (tz.enfold(datetime(2020, 10, 25, 1, 0), 0), IST, FOLD),
+                (tz.enfold(datetime(2020, 10, 25, 2, 0), 1), GMT, NORMAL),
+            ),
+        )
+
+    @add_cases
+    def _tzstr_fixed_offset_quoted_numerical():
+        # Pacific/Kosrae: Fixed offset zone with a quoted numerical tzname
+        tzstr = "<+11>-11"
+
+        add_tzstr_tests(
+            tzstr,
+            (
+                (
+                    datetime(2020, 1, 1),
+                    ZoneOffset("+11", timedelta(hours=11)),
+                    NORMAL,
+                ),
+            ),
+            varying=False,
+        )
+
+    @add_cases
+    def _tzstr_quoted_std_and_dst_trans_at_24():
+        # Quoted STD and DST, transitions at 24:00
+        tzstr = "<-04>4<-03>,M9.1.6/24,M4.1.6/24"
+
+        M04 = ZoneOffset("-04", timedelta(hours=-4))
+        M03 = ZoneOffset("-03", timedelta(hours=-3), ONE_H)
+
+        add_tzstr_tests(
+            tzstr,
+            (
+                (datetime(2020, 5, 1), M04, NORMAL),
+                (datetime(2020, 11, 1), M03, NORMAL),
+            ),
+        )
+
+    @add_cases
+    def _tzstr_permanent_dst():
+        # Permanent daylight saving time is modeled with transitions at 0/0
+        # and J365/25, as mentioned in RFC 8536 Section 3.3.1
+        tzstr = "EST5EDT,0/0,J365/25"
+
+        EDT = ZoneOffset("EDT", timedelta(hours=-4), ONE_H)
+
+        add_tzstr_tests(
+            tzstr,
+            (
+                (datetime(2019, 1, 1), EDT, NORMAL),
+                (datetime(2019, 6, 1), EDT, NORMAL),
+                (datetime(2019, 12, 31, 23, 59, 59, 999999), EDT, NORMAL),
+                (datetime(2020, 1, 1), EDT, NORMAL),
+                (datetime(2020, 3, 1), EDT, NORMAL),
+                (datetime(2020, 6, 1), EDT, NORMAL),
+                (datetime(2020, 12, 31, 23, 59, 59, 999999), EDT, NORMAL),
+                (datetime(2400, 1, 1), EDT, NORMAL),
+                (datetime(2400, 3, 1), EDT, NORMAL),
+                (datetime(2400, 12, 31, 23, 59, 59, 999999), EDT, NORMAL),
+            ),
+        )
+
+    @add_cases
+    def _tzstr_transitions_on_julian_day():
+        # Transitions on March 1st and November 1st of each year
+        tzstr = "AAA3BBB,J60/12,J305/12"
+
+        AAA = ZoneOffset("AAA", timedelta(hours=-3))
+        BBB = ZoneOffset("BBB", timedelta(hours=-2), ONE_H)
+
+        add_tzstr_tests(
+            tzstr,
+            (
+                (datetime(2019, 1, 1), AAA, NORMAL),
+                (datetime(2019, 2, 28), AAA, NORMAL),
+                (datetime(2019, 3, 1, 11, 59), AAA, NORMAL),
+                (tz.enfold(datetime(2019, 3, 1, 12), 0), AAA, GAP),
+                (tz.enfold(datetime(2019, 3, 1, 12), 1), BBB, GAP),
+                (datetime(2019, 3, 1, 13), BBB, NORMAL),
+                (datetime(2019, 11, 1, 10, 59), BBB, NORMAL),
+                (tz.enfold(datetime(2019, 11, 1, 11), 0), BBB, FOLD),
+                (tz.enfold(datetime(2019, 11, 1, 11), 1), AAA, FOLD),
+                (datetime(2019, 11, 1, 12), AAA, NORMAL),
+                (datetime(2019, 12, 31, 23, 59, 59, 999999), AAA, NORMAL),
+                (datetime(2020, 1, 1), AAA, NORMAL),
+                (datetime(2020, 2, 29), AAA, NORMAL),
+                (datetime(2020, 3, 1, 11, 59), AAA, NORMAL),
+                (tz.enfold(datetime(2020, 3, 1, 12), 0), AAA, GAP),
+                (tz.enfold(datetime(2020, 3, 1, 12), 1), BBB, GAP),
+                (datetime(2020, 3, 1, 13), BBB, NORMAL),
+                (datetime(2020, 11, 1, 10, 59), BBB, NORMAL),
+                (tz.enfold(datetime(2020, 11, 1, 11), 0), BBB, FOLD),
+                (tz.enfold(datetime(2020, 11, 1, 11), 1), AAA, FOLD),
+                (datetime(2020, 11, 1, 12), AAA, NORMAL),
+                (datetime(2020, 12, 31, 23, 59, 59, 999999), AAA, NORMAL),
+            ),
+        )
+
+    @add_cases
+    def _tzstr_negative_transition_times():
+        # Taken from America/Godthab, this rule has a transition on the
+        # Saturday before the last Sunday of March and October, at 22:00
+        # and 23:00, respectively. This is encoded with negative start
+        # and end transition times.
+        tzstr = "<-03>3<-02>,M3.5.0/-2,M10.5.0/-1"
+
+        N03 = ZoneOffset("-03", timedelta(hours=-3))
+        N02 = ZoneOffset("-02", timedelta(hours=-2), ONE_H)
+
+        add_tzstr_tests(
+            tzstr,
+            (
+                (datetime(2020, 3, 27), N03, NORMAL),
+                (datetime(2020, 3, 28, 21, 59, 59), N03, NORMAL),
+                (tz.enfold(datetime(2020, 3, 28, 22), 0), N03, GAP),
+                (tz.enfold(datetime(2020, 3, 28, 22), 1), N02, GAP),
+                (datetime(2020, 3, 28, 23), N02, NORMAL),
+                (datetime(2020, 10, 24, 21), N02, NORMAL),
+                (tz.enfold(datetime(2020, 10, 24, 22), 0), N02, FOLD),
+                (tz.enfold(datetime(2020, 10, 24, 22), 1), N03, FOLD),
+                (datetime(2020, 10, 24, 23), N03, NORMAL),
+            ),
+        )
+
+    @add_cases
+    def _tzstr_minute_second_transition_times():
+        # Transition times with minutes and seconds
+        tzstr = "AAA3BBB,M3.2.0/01:30,M11.1.0/02:15:45"
+
+        AAA = ZoneOffset("AAA", timedelta(hours=-3))
+        BBB = ZoneOffset("BBB", timedelta(hours=-2), ONE_H)
+
+        add_tzstr_tests(
+            tzstr,
+            (
+                (datetime(2012, 3, 11, 1, 0), AAA, NORMAL),
+                (tz.enfold(datetime(2012, 3, 11, 1, 30), 0), AAA, GAP),
+                (tz.enfold(datetime(2012, 3, 11, 1, 30), 1), BBB, GAP),
+                (datetime(2012, 3, 11, 2, 30), BBB, NORMAL),
+                (datetime(2012, 11, 4, 1, 15, 44, 999999), BBB, NORMAL),
+                (tz.enfold(datetime(2012, 11, 4, 1, 15, 45), 0), BBB, FOLD),
+                (tz.enfold(datetime(2012, 11, 4, 1, 15, 45), 1), AAA, FOLD),
+                (datetime(2012, 11, 4, 2, 15, 45), AAA, NORMAL),
             ),
         )
 
