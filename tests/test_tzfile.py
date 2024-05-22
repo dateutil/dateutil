@@ -970,7 +970,7 @@ def test_weirdzone_offsets(dt, offset):
 @pytest.mark.parametrize("dt, dt_utc", weirdzone_test_cases()["utc"])
 def test_weirdzone_utc(dt, dt_utc):
     assert dt.tzinfo is not None
-    assert dt == dt_utc
+    assert dt.astimezone(tz.UTC) == dt_utc
     assert dt_utc.astimezone(dt.tzinfo) == dt
 
 
