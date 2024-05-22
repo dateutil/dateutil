@@ -167,6 +167,8 @@ class tzfile(_tzinfo):
             self._filename = filename
         elif hasattr(fileobj, "name"):
             self._filename = fileobj.name
+        elif key is not None:
+            self._filename = key
         else:
             self._filename = repr(fileobj)
 

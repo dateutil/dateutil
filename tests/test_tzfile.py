@@ -231,6 +231,8 @@ def construct_zone(transitions, after=None, version=3):
         # Finally we write the TZ string if we're writing a Version 2+ file
         if v > 0:
             zonefile.write(b"\x0A")
+            if after is None:
+                after = ""
             zonefile.write(after.encode("ascii"))
             zonefile.write(b"\x0A")
 
@@ -1292,3 +1294,16 @@ def test_empty_zone():
 
     with pytest.raises(ValueError):
         tz.tzfile(zf)
+
+
+def test_tzfile_repr():
+    """When the key is specified with a file object, it should be used in the repr."""
+    GMT = ZoneOffset("GMT", ZERO, ZERO)
+    BST = ZoneOffset("BST", ONE_H, ONE_H)
+    zf = construct_zone(
+        [
+            ZoneTransition(datetime(2005, 3, 27, 1), GMT, BST),
+        ]
+    )
+    zi = tz.tzfile(zf, key="Europe/London")
+    assert "Europe/London" in repr(zi)
