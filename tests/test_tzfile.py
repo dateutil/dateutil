@@ -582,11 +582,6 @@ def transition_examples():
     return tuple(zonedump_data.items())
 
 
-@functools_cache
-def fixed_offset_zones():
-    return {}
-
-
 ####
 # Tests
 
