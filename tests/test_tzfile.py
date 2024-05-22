@@ -238,6 +238,39 @@ def construct_zone(transitions, after=None, version=3):
     return zonefile
 
 
+@functools_cache
+def _tzstr_header():
+    out = bytearray()
+    # The TZif format always starts with a Version 1 file followed by
+    # the Version 2+ file. In this case, we have no transitions, just
+    # the tzstr in the footer, so up to the footer, the files are
+    # identical and we can just write the same file twice in a row.
+    for _ in range(2):
+        out += b"TZif"  # Magic value
+        out += b"3"  # Version
+        out += b" " * 15  # Reserved
+
+        # We will not write any of the manual transition parts
+        out += struct.pack(">6l", 0, 0, 0, 0, 0, 0)
+
+    return bytes(out)
+
+
+def zone_from_tzstr(tzstr):
+    """Creates a zoneinfo file following a POSIX rule."""
+    zonefile = six.BytesIO(_tzstr_header())
+    zonefile.seek(0, 2)
+
+    # Write the footer
+    zonefile.write(b"\x0A")
+    zonefile.write(tzstr.encode("ascii"))
+    zonefile.write(b"\x0A")
+
+    zonefile.seek(0)
+
+    return tz.tzfile(zonefile, key=tzstr)
+
+
 @contextdecorator
 def set_tzpath(tzpath, block_tzdata=False):
     tzdata_modules = {}
@@ -956,6 +989,54 @@ def weirdzone_test_cases():
 
         cases["offset"].append((datetime(2020, 1, 1, tzinfo=zi), UTC))
         cases["offset"].append((time(0, tzinfo=zi), UTC))
+
+    NORMAL = 0
+    FOLD = 1
+    GAP = 2
+
+    def add_tzstr_tests(zi, test_cases):
+        for dt_naive, offset, dt_type in test_cases:
+            dt = dt_naive.replace(tzinfo=zi)
+            cases["offset"].append((dt, offset))
+            if dt_type == GAP:
+                continue
+
+            dt_utc = (dt_naive - offset.raw_utcoffset).replace(tzinfo=tz.UTC)
+            cases["utc"].append((dt, dt_utc))
+
+    @add_cases
+    def _standard_est5edt():
+        # Transition to EDT on the 2nd Sunday in March at 4 AM, and
+        # transition back on the first Sunday in November at 3AM
+        tzstr = "EST5EDT,M3.2.0/4:00,M11.1.0/3:00"
+
+        EST = ZoneOffset("EST", timedelta(hours=-5), ZERO)
+        EDT = ZoneOffset("EDT", timedelta(hours=-4), ONE_H)
+
+        zi = zone_from_tzstr(tzstr)
+        cases["varying_zones"].append((zi,))
+
+        add_tzstr_tests(
+            zi,
+            (
+                (datetime(2019, 3, 9), EST, NORMAL),
+                (datetime(2019, 3, 10, 3, 59), EST, NORMAL),
+                (datetime(2019, 3, 10, 4, 0), EST, GAP),
+                (tz.enfold(datetime(2019, 3, 10, 4, 0), 1), EDT, GAP),
+                (tz.enfold(datetime(2019, 3, 10, 4, 1), 0), EST, GAP),
+                (tz.enfold(datetime(2019, 3, 10, 4, 1), 1), EDT, GAP),
+                (datetime(2019, 11, 2), EDT, NORMAL),
+                (datetime(2019, 11, 3, 1, 59), EDT, NORMAL),
+                (datetime(2019, 11, 3, 2, 0), EDT, FOLD),
+                (tz.enfold(datetime(2019, 11, 3, 2, 0), 1), EST, FOLD),
+                (datetime(2020, 3, 8, 3, 59), EST, NORMAL),
+                (datetime(2020, 3, 8, 4, 0), EST, GAP),
+                (tz.enfold(datetime(2020, 3, 8, 4, 0), 1), EDT, GAP),
+                (tz.enfold(datetime(2020, 11, 1, 1, 59), 1), EDT, NORMAL),
+                (tz.enfold(datetime(2020, 11, 1, 2, 0), 0), EDT, FOLD),
+                (tz.enfold(datetime(2020, 11, 1, 2, 0), 1), EST, FOLD),
+            ),
+        )
 
     return _real_cases
 
