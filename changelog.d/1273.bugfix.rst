@@ -1,0 +1,1 @@
+Fixed issue where valid non-standard properties in icalendar timezones caused dateutil.tz.tzical to raise a ValueError. Reported by @marc1uk (gh issue #1185). Fixed by @danieljnchen (gh pr #1273).
