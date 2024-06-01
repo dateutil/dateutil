@@ -8,7 +8,7 @@ import unittest
 
 import pytest
 
-from dateutil.relativedelta import relativedelta, MO, TU, WE, FR, SU
+from dateutil.relativedelta import relativedelta, MO, TU, WE, FR, SU, from_iso8601
 
 
 class RelativeDeltaTest(unittest.TestCase):
@@ -762,6 +762,206 @@ class RelativeDeltaWeeksPropertySetterTest(unittest.TestCase):
         rd.weeks = -1  # does not change anything
         self.assertEqual(rd.days, -8)
         self.assertEqual(rd.weeks, -1)
+
+
+class RelativeDeltaFromISO88601DurationTest(unittest.TestCase):
+
+    def test_invalid(self):
+        raw = "invalid"
+        rd = from_iso8601(raw)
+        self.assertEqual(rd.years, 0)
+        self.assertEqual(rd.months, 0)
+        self.assertEqual(rd.weeks, 0)
+        self.assertEqual(rd.days, 0)
+        self.assertEqual(rd.hours, 0)
+        self.assertEqual(rd.minutes, 0)
+        self.assertEqual(rd.seconds, 0)
+
+    def test_valid_but_empty(self):
+        for raw in ["P", "PT"]:
+            rd = from_iso8601(raw)
+            self.assertEqual(rd.years, 0)
+            self.assertEqual(rd.months, 0)
+            self.assertEqual(rd.weeks, 0)
+            self.assertEqual(rd.days, 0)
+            self.assertEqual(rd.hours, 0)
+            self.assertEqual(rd.minutes, 0)
+            self.assertEqual(rd.seconds, 0)
+
+    def test_year_only(self):
+        for raw in ["P1Y", "P1Y0M0DT0H0M0S"]:
+            rd = from_iso8601(raw)
+            self.assertEqual(rd.years, 1)
+            self.assertEqual(rd.months, 0)
+            self.assertEqual(rd.weeks, 0)
+            self.assertEqual(rd.days, 0)
+            self.assertEqual(rd.hours, 0)
+            self.assertEqual(rd.minutes, 0)
+            self.assertEqual(rd.seconds, 0)
+        for raw in ["P-1Y", "P-1Y0M0DT0H0M0S"]:
+            rd = from_iso8601(raw)
+            self.assertEqual(rd.years, -1)
+            self.assertEqual(rd.months, 0)
+            self.assertEqual(rd.weeks, 0)
+            self.assertEqual(rd.days, 0)
+            self.assertEqual(rd.hours, 0)
+            self.assertEqual(rd.minutes, 0)
+            self.assertEqual(rd.seconds, 0)
+
+    def test_month_only(self):
+        for raw in ["P1M", "P0Y1M0DT0H0M0S"]:
+            rd = from_iso8601(raw)
+            self.assertEqual(rd.years, 0)
+            self.assertEqual(rd.months, 1)
+            self.assertEqual(rd.weeks, 0)
+            self.assertEqual(rd.days, 0)
+            self.assertEqual(rd.hours, 0)
+            self.assertEqual(rd.minutes, 0)
+            self.assertEqual(rd.seconds, 0)
+        for raw in ["P-1M", "P0Y-1M0DT0H0M0S"]:
+            rd = from_iso8601(raw)
+            self.assertEqual(rd.years, 0)
+            self.assertEqual(rd.months, -1)
+            self.assertEqual(rd.weeks, 0)
+            self.assertEqual(rd.days, 0)
+            self.assertEqual(rd.hours, 0)
+            self.assertEqual(rd.minutes, 0)
+            self.assertEqual(rd.seconds, 0)
+
+    def test_day_only(self):
+        for raw in ["P1D", "P0Y0M1DT0H0M0S"]:
+            rd = from_iso8601(raw)
+            self.assertEqual(rd.years, 0)
+            self.assertEqual(rd.months, 0)
+            self.assertEqual(rd.weeks, 0)
+            self.assertEqual(rd.days, 1)
+            self.assertEqual(rd.hours, 0)
+            self.assertEqual(rd.minutes, 0)
+            self.assertEqual(rd.seconds, 0)
+        for raw in ["P-1D", "P0Y0M-1DT0H0M0S"]:
+            rd = from_iso8601(raw)
+            self.assertEqual(rd.years, 0)
+            self.assertEqual(rd.months, 0)
+            self.assertEqual(rd.weeks, 0)
+            self.assertEqual(rd.days, -1)
+            self.assertEqual(rd.hours, 0)
+            self.assertEqual(rd.minutes, 0)
+            self.assertEqual(rd.seconds, 0)
+
+    def test_hour_only(self):
+        for raw in ["PT1H", "P0Y0M0DT1H0M0S"]:
+            rd = from_iso8601(raw)
+            self.assertEqual(rd.years, 0)
+            self.assertEqual(rd.months, 0)
+            self.assertEqual(rd.weeks, 0)
+            self.assertEqual(rd.days, 0)
+            self.assertEqual(rd.hours, 1)
+            self.assertEqual(rd.minutes, 0)
+            self.assertEqual(rd.seconds, 0)
+        for raw in ["PT-1H", "P0Y0M0DT-1H0M0S"]:
+            rd = from_iso8601(raw)
+            self.assertEqual(rd.years, 0)
+            self.assertEqual(rd.months, 0)
+            self.assertEqual(rd.weeks, 0)
+            self.assertEqual(rd.days, 0)
+            self.assertEqual(rd.hours, -1)
+            self.assertEqual(rd.minutes, 0)
+            self.assertEqual(rd.seconds, 0)
+
+    def test_minute_only(self):
+        for raw in ["PT1M", "P0Y0M0DT0H1M0S"]:
+            rd = from_iso8601(raw)
+            self.assertEqual(rd.years, 0)
+            self.assertEqual(rd.months, 0)
+            self.assertEqual(rd.weeks, 0)
+            self.assertEqual(rd.days, 0)
+            self.assertEqual(rd.hours, 0)
+            self.assertEqual(rd.minutes, 1)
+            self.assertEqual(rd.seconds, 0)
+        for raw in ["PT-1M", "P0Y0M0DT0H-1M0S"]:
+            rd = from_iso8601(raw)
+            self.assertEqual(rd.years, 0)
+            self.assertEqual(rd.months, 0)
+            self.assertEqual(rd.weeks, 0)
+            self.assertEqual(rd.days, 0)
+            self.assertEqual(rd.hours, 0)
+            self.assertEqual(rd.minutes, -1)
+            self.assertEqual(rd.seconds, 0)
+
+    def test_second_only(self):
+        for raw in ["PT1S", "P0Y0M0DT0H0M1S"]:
+            rd = from_iso8601(raw)
+            self.assertEqual(rd.years, 0)
+            self.assertEqual(rd.months, 0)
+            self.assertEqual(rd.weeks, 0)
+            self.assertEqual(rd.days, 0)
+            self.assertEqual(rd.hours, 0)
+            self.assertEqual(rd.minutes, 0)
+            self.assertEqual(rd.seconds, 1)
+        for raw in ["PT-1S", "P0Y0M0DT0H0M-1S"]:
+            rd = from_iso8601(raw)
+            self.assertEqual(rd.years, 0)
+            self.assertEqual(rd.months, 0)
+            self.assertEqual(rd.weeks, 0)
+            self.assertEqual(rd.days, 0)
+            self.assertEqual(rd.hours, 0)
+            self.assertEqual(rd.minutes, 0)
+            self.assertEqual(rd.seconds, -1)
+
+    def test_date_fragment(self):
+        raw = "P1Y2M3D"
+        rd = from_iso8601(raw)
+        self.assertEqual(rd.years, 1)
+        self.assertEqual(rd.months, 2)
+        self.assertEqual(rd.weeks, 0)
+        self.assertEqual(rd.days, 3)
+        self.assertEqual(rd.hours, 0)
+        self.assertEqual(rd.minutes, 0)
+        self.assertEqual(rd.seconds, 0)
+        # with the T(ime) separator but no time values
+        raw = "P1Y2M3DT"
+        rd = from_iso8601(raw)
+        self.assertEqual(rd.years, 1)
+        self.assertEqual(rd.months, 2)
+        self.assertEqual(rd.weeks, 0)
+        self.assertEqual(rd.days, 3)
+        self.assertEqual(rd.hours, 0)
+        self.assertEqual(rd.minutes, 0)
+        self.assertEqual(rd.seconds, 0)
+
+    def test_time_fragment(self):
+        raw = "PT1H2M3S"
+        rd = from_iso8601(raw)
+        self.assertEqual(rd.years, 0)
+        self.assertEqual(rd.months, 0)
+        self.assertEqual(rd.weeks, 0)
+        self.assertEqual(rd.days, 0)
+        self.assertEqual(rd.hours, 1)
+        self.assertEqual(rd.minutes, 2)
+        self.assertEqual(rd.seconds, 3)
+
+    def test_realistic(self):
+        # 1 month, 15 days
+        raw = "P1M15D"
+        rd = from_iso8601(raw)
+        self.assertEqual(rd.years, 0)
+        self.assertEqual(rd.months, 1)
+        self.assertEqual(rd.weeks, 2)
+        self.assertEqual(rd.days, 15)
+        self.assertEqual(rd.hours, 0)
+        self.assertEqual(rd.minutes, 0)
+        self.assertEqual(rd.seconds, 0)
+        # -14 hours, -30 minutes
+        raw = "PT-14H-30M"
+        rd = from_iso8601(raw)
+        self.assertEqual(rd.years, 0)
+        self.assertEqual(rd.months, 0)
+        self.assertEqual(rd.weeks, 0)
+        self.assertEqual(rd.days, 0)
+        self.assertEqual(rd.hours, -14)
+        self.assertEqual(rd.minutes, -30)
+        self.assertEqual(rd.seconds, 0)
+
 
 
 # vim:ts=4:sw=4:et
