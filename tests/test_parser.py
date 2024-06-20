@@ -167,7 +167,7 @@ def test_parser_default(parsable_text, expected_datetime, assertion_message):
     assert parse(parsable_text, default=datetime(2003, 9, 25)) == expected_datetime, assertion_message
 
 
-@pytest.mark.parametrize('sep', ['-', '.', '/', ' '])
+@pytest.mark.parametrize('sep', ['-', '.', '/', ' ', ''])
 def test_parse_dayfirst(sep):
     expected = datetime(2003, 9, 10)
     fmt = sep.join(['%d', '%m', '%Y'])
@@ -176,7 +176,7 @@ def test_parse_dayfirst(sep):
     assert result == expected
 
 
-@pytest.mark.parametrize('sep', ['-', '.', '/', ' '])
+@pytest.mark.parametrize('sep', ['-', '.', '/', ' ', ''])
 def test_parse_yearfirst(sep):
     expected = datetime(2010, 9, 3)
     fmt = sep.join(['%Y', '%m', '%d'])
