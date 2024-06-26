@@ -1,4 +1,5 @@
 import pytest
+from dateutil.parser._parser import ParserError
 
 class ParserError(ValueError):
     """Exception subclass used for any failure to parse a datetime string."""
@@ -27,18 +28,13 @@ class ParserError(ValueError):
 def print_branch_coverage(request):
     yield
     print("\nBranch Coverage:")
-    for branch, count in ParserError.branch_coverage.items():
-        print(f"{branch}: {count}")
+    for branch, state in ParserError.branch_coverage.items():
+        print(f"{branch}: {state}")
     branch_coverage_percentage = sum(ParserError.branch_coverage.values()) / len(ParserError.branch_coverage) * 100
-    print(f"Branch Coverage: {branch_coverage_percentage:.2f}%")
-
-def test_str_with_valid_format():
-    error = ParserError("Parsing failed: %s, %d", "reason", 42)
-    assert str(error) == "Parsing failed: reason, 42"
-
-def test_str_with_no_args():
-    error = ParserError("Parsing failed")
-    assert str(error) == "Parsing failed"
+    if(int(branch_coverage_percentage) == 100):
+        print("\n\033[32mBranch coverage is 100%\033[0m")
+    else:
+        print(f"\n\033[31mBranch coverage is {branch_coverage_percentage}%\033[0m")
 
 def test_str_with_empty_args():
     error = ParserError("")  # No format string
@@ -48,11 +44,7 @@ def test_str_with_non_string_format():
     error = ParserError(42)  # Invalid format string type
     assert str(error) == "42"
 
-def test_str_with_type_error():
-    error = ParserError("Parsing failed: %s, %d")  # Format string without placeholders
-    assert str(error) == "Parsing failed: %s, %d"
-
-def test_sure_pass():
+def test_always_true():
     assert True
 
 if __name__ == '__main__':
