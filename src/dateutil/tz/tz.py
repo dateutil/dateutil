@@ -329,6 +329,11 @@ class _ttinfo(object):
     __slots__ = ["offset", "delta", "isdst", "abbr",
                  "isstd", "isgmt", "dstoffset"]
 
+    coverage_info = {
+        "enter_for_loop": False,
+        "enter_if": False,
+    }
+
     def __init__(self):
         for attr in self.__slots__:
             setattr(self, attr, None)
@@ -336,8 +341,10 @@ class _ttinfo(object):
     def __repr__(self):
         l = []
         for attr in self.__slots__:
+            self.coverage_info["enter_for_loop"] = True
             value = getattr(self, attr)
             if value is not None:
+                self.coverage_info["enter_if"] = True
                 l.append("%s=%s" % (attr, repr(value)))
         return "%s(%s)" % (self.__class__.__name__, ", ".join(l))
 
