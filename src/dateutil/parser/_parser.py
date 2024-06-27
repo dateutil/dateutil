@@ -1594,10 +1594,18 @@ class ParserError(ValueError):
 
     .. versionadded:: 2.8.1
     """
+    
+    coverage_info = {
+        "enter_try_block": False,
+        "enter_except_block": False
+    }
+    
     def __str__(self):
         try:
+            self.coverage_info["enter_try_block"] = True
             return self.args[0] % self.args[1:]
         except (TypeError, IndexError):
+            self.coverage_info["enter_except_block"] = True
             return super(ParserError, self).__str__()
 
     def __repr__(self):
