@@ -293,6 +293,18 @@ def set_tzpath(tzpath, block_tzdata=False):
             tz._tzpath.reset_tzpath(to=old_tzpath)
 
 
+@pytest.fixture(scope="package")
+def tzpath(request):
+    """Parameterizable fixture that sets the tzpath."""
+    if request.param is None:
+        cm = tz._nullcontext()
+    else:
+        cm = set_tzpath(request.param)
+
+    with cm:
+        yield
+
+
 @functools_cache
 def rearguard():
     # If we know that we're using the rearguard tzdata file, skip tests
