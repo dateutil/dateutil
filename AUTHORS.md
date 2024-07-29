@@ -11,6 +11,7 @@ switch, and thus all their contributions are dual-licensed.
 
 ## Contributors (alphabetical order)
 
+- Aarni Koskela <akx@iki.fi> **D**
 - Adam Chainz <adam@MASKED>
 - Adrien Cossa <cossa@MASKED>
 - Alec Nikolas Reiter <alecreiter@MASKED>
