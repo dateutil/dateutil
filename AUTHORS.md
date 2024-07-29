@@ -80,6 +80,7 @@ switch, and thus all their contributions are dual-licensed.
 - Matthew Schinckel <matt@MASKED>
 - Max Shenfield <shenfieldmax@MASKED>
 - Maxime Lorant <maxime.lorant@MASKED>
+- Md Safiyat Reza <reza.safiyat@MASKED> (gh: @safiyat) **D**
 - Michael Aquilina <michaelaquilina@MASKED> (gh: @MichaelAquilina)
 - Michael J. Schultz <mjschultz@MASKED>
 - Michael Käufl (gh: @michael-k)
