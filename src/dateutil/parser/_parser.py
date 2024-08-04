@@ -156,9 +156,9 @@ class _timelex(object):
                 # If we've seen some letters and a dot separator, continue
                 # parsing, and the tokens will be broken up later.
                 seenletters = True
-                if nextchar == '.' or nextchar.isalpha():
+                if nextchar == "." or nextchar.isalpha():
                     token += nextchar
-                elif nextchar.isdigit() and token[-1] == '.':
+                elif nextchar.isdigit() and token[-1] == ".":
                     token += nextchar
                     state = '0.'
                 else:
@@ -167,9 +167,9 @@ class _timelex(object):
             elif state == '0.':
                 # If we've seen at least one dot separator, keep going, we'll
                 # break up the tokens later.
-                if nextchar == '.' or nextchar.isdigit():
+                if nextchar == "." or nextchar.isdigit():
                     token += nextchar
-                elif nextchar.isalpha() and token[-1] == '.':
+                elif nextchar.isalpha() and token[-1] == ".":
                     token += nextchar
                     state = 'a.'
                 else:
