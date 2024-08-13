@@ -255,9 +255,10 @@ class parserinfo(object):
         to be the year, otherwise the last number is taken to be the year.
         Default is ``False``.
     """
-
+    CHARSETS_OF_SEP_YMD = ('-', '/', "_")
+    
     # m from a.m/p.m, t from ISO T separator
-    JUMP = [" ", ".", ",", ";", "-", "/", "'",
+    JUMP = [" ", ".", ",", ";", "-", "/", "'", "_",
             "at", "on", "and", "ad", "m", "t", "of",
             "st", "nd", "rd", "th"]
 
@@ -310,8 +311,8 @@ class parserinfo(object):
         dct = {}
         for i, v in enumerate(lst):
             if isinstance(v, tuple):
-                for v in v:
-                    dct[v.lower()] = i
+                for c in v:
+                    dct[c.lower()] = i
             else:
                 dct[v.lower()] = i
         return dct
@@ -750,7 +751,7 @@ class parser(object):
                     ymd.append(value, 'M')
 
                     if i + 1 < len_l:
-                        if l[i + 1] in ('-', '/'):
+                        if l[i + 1] in self.info.CHARSETS_OF_SEP_YMD:
                             # Jan-01[-99]
                             sep = l[i + 1]
                             ymd.append(l[i + 2])
