@@ -100,6 +100,7 @@ switch, and thus all their contributions are dual-licensed.
 - Raymond Cha (gh: @weatherpattern) **D**
 - Ridhi Mahajan <ridhikmahajan@MASKED> **D**
 - Robin Henriksson Törnström <gh: @MrRawbin> **D**
+- Robert Morris <gh: @morrissimo> **D**
 - Roy Williams <rwilliams@MASKED>
 - Rustem Saiargaliev (gh: @amureki) **D**
 - Satyabrat Bhol <satyabrat35@MASKED> (gh: @Satyabrat35) **D**
