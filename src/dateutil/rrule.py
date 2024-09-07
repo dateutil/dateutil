@@ -1675,10 +1675,11 @@ class _rrulestr(object):
                         raise ValueError("unsupported RRULE parm: "+parm)
                     rrulevals.append(value)
                 elif name == "RDATE":
-                    for parm in parms:
-                        if parm != "VALUE=DATE-TIME":
-                            raise ValueError("unsupported RDATE parm: "+parm)
-                    rdatevals.append(value)
+                    rdatevals.extend(
+                        self._parse_date_value(value, parms,
+                                               TZID_NAMES, ignoretz,
+                                               tzids, tzinfos)
+                    )
                 elif name == "EXRULE":
                     for parm in parms:
                         raise ValueError("unsupported EXRULE parm: "+parm)
@@ -1708,10 +1709,7 @@ class _rrulestr(object):
                                                      ignoretz=ignoretz,
                                                      tzinfos=tzinfos))
                 for value in rdatevals:
-                    for datestr in value.split(','):
-                        rset.rdate(parser.parse(datestr,
-                                                ignoretz=ignoretz,
-                                                tzinfos=tzinfos))
+                    rset.rdate(value)
                 for value in exrulevals:
                     rset.exrule(self._parse_rfc_rrule(value, dtstart=dtstart,
                                                       ignoretz=ignoretz,
