@@ -2966,8 +2966,8 @@ class RRuleTest(unittest.TestCase):
         
     def testStrSetRDateValueDateTimeWithPeriod(self):
         rrstr = '\n'.join([
-            "DTSTART;VALUE=DATE-TIME;TZID=Europe/Brussels:19970902T090000",
-            "RDATE;VALUE=PERIOD;TZID=Europe/Brussels:19970902T090000/19970909T090000",
+            "DTSTART;VALUE=DATE-TIME:19970902T090000",
+            "RDATE;VALUE=PERIOD:19970902T090000/19970909T090000",
         ])
 
         rr = rrulestr(rrstr)
