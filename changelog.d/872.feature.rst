@@ -1,0 +1,2 @@
+Added support for RDATE parameters and PERIOD value type when parsing rrule strings.
+Reported by @pganssle (gh issue #872), fixed by @jeriox (gh pr #1388).
