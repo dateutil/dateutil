@@ -2963,7 +2963,7 @@ class RRuleTest(unittest.TestCase):
         rr = rrulestr(rrstr)
         assert list(rr) == [datetime(1997, 9, 2, 9, tzinfo=BXL),
                             datetime(1997, 9, 9, 9, tzinfo=BXL)]
-        
+
     def testStrSetRDateValueDateTimeWithPeriod(self):
         rrstr = '\n'.join([
             "DTSTART;VALUE=DATE-TIME:19970902T090000",
