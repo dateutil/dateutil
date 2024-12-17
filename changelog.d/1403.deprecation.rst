@@ -1,0 +1,1 @@
+Removed dependency on the `six` module. Fixed by @mcepl (gh pr #1403)

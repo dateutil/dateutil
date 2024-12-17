@@ -13,12 +13,10 @@ import time
 import sys
 import os
 import bisect
+import _thread
 import weakref
 from collections import OrderedDict
 
-import six
-from six import string_types
-from six.moves import _thread
 from ._common import tzname_in_python2, _tzinfo
 from ._common import tzrangebase, enfold
 from ._common import _validate_fromutc_inputs
@@ -38,8 +36,7 @@ EPOCH = datetime.datetime(1970, 1, 1, 0, 0)
 EPOCHORDINAL = EPOCH.toordinal()
 
 
-@six.add_metaclass(_TzSingleton)
-class tzutc(datetime.tzinfo):
+class tzutc(datetime.tzinfo, metaclass=_TzSingleton):
     """
     This is a tzinfo object that represents the UTC time zone.
 
@@ -129,8 +126,7 @@ class tzutc(datetime.tzinfo):
 UTC = tzutc()
 
 
-@six.add_metaclass(_TzOffsetFactory)
-class tzoffset(datetime.tzinfo):
+class tzoffset(datetime.tzinfo, metaclass=_TzOffsetFactory):
     """
     A simple class for representing a fixed offset from UTC.
 
@@ -459,7 +455,7 @@ class tzfile(_tzinfo):
         super(tzfile, self).__init__()
 
         file_opened_here = False
-        if isinstance(fileobj, string_types):
+        if isinstance(fileobj, str):
             self._filename = fileobj
             fileobj = open(fileobj, 'rb')
             file_opened_here = True
@@ -1033,8 +1029,7 @@ class tzrange(tzrangebase):
         return self._dst_base_offset_
 
 
-@six.add_metaclass(_TzStrFactory)
-class tzstr(tzrange):
+class tzstr(tzrange, metaclass=_TzStrFactory):
     """
     ``tzstr`` objects are time zone objects specified by a time-zone string as
     it would be passed to a ``TZ`` variable on POSIX-style systems (see
@@ -1265,7 +1260,7 @@ class tzical(object):
         global rrule
         from dateutil import rrule
 
-        if isinstance(fileobj, string_types):
+        if isinstance(fileobj, str):
             self._s = fileobj
             # ical should be encoded in UTF-8 with CRLF
             fileobj = open(fileobj, 'r')
@@ -1621,7 +1616,7 @@ def __get_gettz():
                 except TypeError as e:
                     if isinstance(name, bytes):
                         new_msg = "gettz argument should be str, not bytes"
-                        six.raise_from(TypeError(new_msg), e)
+                        raise TypeError(new_msg) from e
                     else:
                         raise
                 if os.path.isabs(name):

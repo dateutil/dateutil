@@ -1,9 +1,7 @@
 from datetime import timedelta
+import _thread
 import weakref
 from collections import OrderedDict
-
-from six.moves import _thread
-
 
 class _TzSingleton(type):
     def __init__(cls, *args, **kwargs):

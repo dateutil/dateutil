@@ -77,6 +77,7 @@ switch, and thus all their contributions are dual-licensed.
 - Mario Corchero <mcorcherojim@MASKED> (gh: @mariocj89) **R**
 - Mark Bailey <msb@MASKED> **D**
 - Mateusz Dziedzic (gh: @m-dz) **D**
+- Matěj Cepl <mcepl@cepl.eu> (gh: @mcepl) **D**
 - Matt Cooper <vtbassmatt@MASKED> (gh: @vtbassmatt) **D**
 - Matthew Schinckel <matt@MASKED>
 - Max Shenfield <shenfieldmax@MASKED>

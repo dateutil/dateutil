@@ -3,7 +3,6 @@ from __future__ import unicode_literals
 
 from datetime import datetime, date
 import unittest
-from six import PY2
 
 from dateutil import tz
 from dateutil.rrule import (
@@ -2282,27 +2281,6 @@ class RRuleTest(unittest.TestCase):
                           datetime(2010, 3, 22, 13, 1),
                           datetime(2010, 3, 22, 14, 1)])
 
-    def testLongIntegers(self):
-        if PY2:  # There are no longs in python3
-            self.assertEqual(list(rrule(MINUTELY,
-                                  count=long(2),
-                                  interval=long(2),
-                                  bymonth=long(2),
-                                  byweekday=long(3),
-                                  byhour=long(6),
-                                  byminute=long(6),
-                                  bysecond=long(6),
-                                  dtstart=datetime(1997, 9, 2, 9, 0))),
-                             [datetime(1998, 2, 5, 6, 6, 6),
-                              datetime(1998, 2, 12, 6, 6, 6)])
-            self.assertEqual(list(rrule(YEARLY,
-                                  count=long(2),
-                                  bymonthday=long(5),
-                                  byweekno=long(2),
-                                  dtstart=datetime(1997, 9, 2, 9, 0))),
-                             [datetime(1998, 1, 5, 9, 0),
-                              datetime(2004, 1, 5, 9, 0)])
-
     def testHourlyBadRRule(self):
         """
         When `byhour` is specified with `freq=HOURLY`, there are certain
@@ -4576,24 +4554,6 @@ class RRuleTest(unittest.TestCase):
                               count=3,
                               wkst=SU,
                               dtstart=datetime(1997, 9, 2, 9, 0)))
-
-    def testToStrLongIntegers(self):
-        if PY2:  # There are no longs in python3
-            self._rrulestr_reverse_test(rrule(MINUTELY,
-                                  count=long(2),
-                                  interval=long(2),
-                                  bymonth=long(2),
-                                  byweekday=long(3),
-                                  byhour=long(6),
-                                  byminute=long(6),
-                                  bysecond=long(6),
-                                  dtstart=datetime(1997, 9, 2, 9, 0)))
-
-            self._rrulestr_reverse_test(rrule(YEARLY,
-                                  count=long(2),
-                                  bymonthday=long(5),
-                                  byweekno=long(2),
-                                  dtstart=datetime(1997, 9, 2, 9, 0)))
 
     def testReplaceIfSet(self):
         rr = rrule(YEARLY,

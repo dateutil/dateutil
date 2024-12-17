@@ -1,9 +1,7 @@
-six
 pytest >= 3.0; python_version != '3.3'
 pytest-cov >= 2.0.0
 freezegun ; python_version != '3.3'
 hypothesis >= 3.30
 coverage
-mock ; python_version < '3.0'
 build >= 0.3.0 ; python_version >= '3.6'
 attrs!=21.1.0

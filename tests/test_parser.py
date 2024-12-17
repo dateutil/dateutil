@@ -14,7 +14,6 @@ from dateutil.parser import UnknownTimezoneWarning
 
 from ._common import TZEnvContext
 
-from six import assertRaisesRegex, PY2
 from io import StringIO
 
 import pytest
@@ -462,13 +461,6 @@ class ParserTest(unittest.TestCase):
                          datetime(2003, 9, 25, 10, 36, 28,
                                   tzinfo=self.brsttz))
 
-    def testDateCommandFormatWithLong(self):
-        if PY2:
-            self.assertEqual(parse("Thu Sep 25 10:36:28 BRST 2003",
-                                   tzinfos={"BRST": long(-10800)}),
-                             datetime(2003, 9, 25, 10, 36, 28,
-                                      tzinfo=self.brsttz))
-
     def testISOFormatStrip2(self):
         self.assertEqual(parse("2003-09-25T10:49:41+03:00"),
                          datetime(2003, 9, 25, 10, 49, 41,
@@ -570,11 +562,11 @@ class ParserTest(unittest.TestCase):
             parse('shouldfail')
 
     def testCorrectErrorOnFuzzyWithTokens(self):
-        assertRaisesRegex(self, ParserError, 'Unknown string format',
+        self.assertRaisesRegex(ParserError, 'Unknown string format',
                           parse, '04/04/32/423', fuzzy_with_tokens=True)
-        assertRaisesRegex(self, ParserError, 'Unknown string format',
+        self.assertRaisesRegex(ParserError, 'Unknown string format',
                           parse, '04/04/04 +32423', fuzzy_with_tokens=True)
-        assertRaisesRegex(self, ParserError, 'Unknown string format',
+        self.assertRaisesRegex(ParserError, 'Unknown string format',
                           parse, '04/04/0d4', fuzzy_with_tokens=True)
 
     def testIncreasingCTime(self):

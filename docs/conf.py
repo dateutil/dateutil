@@ -188,7 +188,7 @@ htmlhelp_basename = 'dateutildoc'
 
 # -- Options for autodoc -------------------------------------------------
 
-autodoc_mock_imports = ['ctypes.wintypes', 'six.moves.winreg']
+autodoc_mock_imports = ['ctypes.wintypes', 'winreg']
 
 # Need to mock this out specifically to avoid errors
 import ctypes
