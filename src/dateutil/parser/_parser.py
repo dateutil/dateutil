@@ -569,8 +569,15 @@ class parser(object):
     def __init__(self, info=None):
         self.info = info or parserinfo()
 
-    def parse(self, timestr, default=None,
-              ignoretz=False, tzinfos=None, return_missing=False, **kwargs):
+    def parse(
+        self,
+        timestr,
+        default=None,
+        ignoretz=False,
+        tzinfos=None,
+        return_missing=False,
+        **kwargs
+    ):
         """
         Parse the date/time string into a :class:`datetime.datetime` object.
 
@@ -649,10 +656,16 @@ class parser(object):
         if res is None:
             raise ParserError("Unknown string format: %s", timestr)
 
-        missing = {'day': res.day is None, 'month': res.month is None, 'year': res.year is None,
-                   'weekday': res.weekday is None, 'hour': res.hour is None,
-                   'minute': res.minute is None, 'second': res.second is None,
-                   'microsecond': res.microsecond is None}
+        missing = {
+            "day": res.day is None,
+            "month": res.month is None,
+            "year": res.year is None,
+            "weekday": res.weekday is None,
+            "hour": res.hour is None,
+            "minute": res.minute is None,
+            "second": res.second is None,
+            "microsecond": res.microsecond is None,
+        }
 
         if len(res) == 0:
             raise ParserError("String does not contain a date: %s", timestr)
