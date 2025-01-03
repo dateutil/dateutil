@@ -646,10 +646,13 @@ class parser(object):
 
         res, skipped_tokens = self._parse(timestr, **kwargs)
 
-        missing = {'day': res.day is None, 'month': res.month is None, 'year': res.year is None}
-
         if res is None:
             raise ParserError("Unknown string format: %s", timestr)
+        
+        missing = {'day': res.day is None, 'month': res.month is None, 'year': res.year is None,
+                   'weekday': res.weekday is None, 'hour': res.hour is None,
+                   'minute': res.minute is None, 'second': res.second is None,
+                   'microsecond': res.microsecond is None}
 
         if len(res) == 0:
             raise ParserError("String does not contain a date: %s", timestr)
