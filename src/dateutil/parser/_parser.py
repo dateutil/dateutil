@@ -570,7 +570,7 @@ class parser(object):
         self.info = info or parserinfo()
 
     def parse(self, timestr, default=None,
-              ignoretz=False, tzinfos=None, **kwargs):
+              ignoretz=False, tzinfos=None, return_missing=False, **kwargs):
         """
         Parse the date/time string into a :class:`datetime.datetime` object.
 
@@ -611,6 +611,13 @@ class parser(object):
 
             This parameter is ignored if ``ignoretz`` is set.
 
+        :param return_missing:
+            If set ``True``, this function returns a tuple `(ret, missing)` instead of just `ret`.
+            The `missing` dictionary maps each component of the date/time string to a boolean
+            indicating whether it was explicitly provided (False) or missing (True). The keys in
+            `missing` are:
+            ["day", "month", "year", "weekday", "hour", "minute", "second", "microsecond"]
+
         :param \\*\\*kwargs:
             Keyword arguments as passed to ``_parse()``.
 
@@ -639,6 +646,8 @@ class parser(object):
 
         res, skipped_tokens = self._parse(timestr, **kwargs)
 
+        missing = {'day': res.day is None, 'month': res.month is None, 'year': res.year is None}
+
         if res is None:
             raise ParserError("Unknown string format: %s", timestr)
 
@@ -655,6 +664,8 @@ class parser(object):
 
         if kwargs.get('fuzzy_with_tokens', False):
             return ret, skipped_tokens
+        elif return_missing:
+            return ret, missing
         else:
             return ret
 
