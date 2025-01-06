@@ -1,0 +1,2 @@
+Fixed issue where the offset error occurred when a letter was connected to a time zone offset. Reported by @DexterW (gh issue #1391). Fixed by
+@JcsEV (gh pr #1594)
