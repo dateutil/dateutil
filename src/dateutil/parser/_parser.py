@@ -729,7 +729,7 @@ class parser(object):
                 # is *not* GMT.
                 res.tzname = None
         return i
-    
+
     def _process_numeric_tz(self, info, res, timestr, l, len_l, i):
         signal = (-1, 1)[l[i] == "+"]
         len_li = len(l[i + 1])
@@ -756,10 +756,11 @@ class parser(object):
         res.tzoffset = signal * (hour_offset * 3600 + min_offset * 60)
 
         # Look for a timezone name between parenthesis
-        if (i + 5 < len_l
+        if (
+            i + 5 < len_l
             and info.jump(l[i + 2])
-            and l[i + 3] == '('
-            and l[i + 5] == ')'
+            and l[i + 3] == "("
+            and l[i + 5] == ")"
             and 3 <= len(l[i + 4])
             and self._could_be_tzname(res.hour, res.tzname, None, l[i + 4])
         ):
