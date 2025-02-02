@@ -665,10 +665,10 @@ class parser(object):
 
     def _process_month(self, info, ymd, l, len_l, i):
         value = info.month(l[i])
-        ymd.append(value, 'M')
+        ymd.append(value, "M")
 
         if i + 1 < len_l:
-            if l[i + 1] in ('-', '/'):
+            if l[i + 1] in ("-", "/"):
                 # Jan-01[-99]
                 sep = l[i + 1]
                 ymd.append(l[i + 2])
@@ -680,15 +680,18 @@ class parser(object):
 
                 i += 2
 
-            elif (i + 4 < len_l and l[i + 1] == l[i + 3] == ' ' and
-                    info.pertain(l[i + 2])):
+            elif (
+                i + 4 < len_l
+                and l[i + 1] == l[i + 3] == " "
+                and info.pertain(l[i + 2])
+            ):
                 # Jan of 01
                 # In this case, 01 is clearly year
                 if l[i + 4].isdigit():
                     # Convert it here to become unambiguous
                     value = int(l[i + 4])
                     year = str(info.convertyear(value))
-                    ymd.append(year, 'Y')
+                    ymd.append(year, "Y")
                 else:
                     # Wrong guess
                     pass
@@ -718,8 +721,8 @@ class parser(object):
         # "my time +3 is GMT". If found, we reverse the
         # logic so that timezone parsing code will get it
         # right.
-        if i + 1 < len_l and l[i + 1] in ('+', '-'):
-            l[i + 1] = ('+', '-')[l[i + 1] == '+']
+        if i + 1 < len_l and l[i + 1] in ("+", "-"):
+            l[i + 1] = ("+", "-")[l[i + 1] == "+"]
             res.tzoffset = None
             if info.utczone(res.tzname):
                 # With something like GMT+3, the timezone
@@ -728,7 +731,7 @@ class parser(object):
         return i
     
     def _process_numeric_tz(self, info, res, timestr, l, len_l, i):
-        signal = (-1, 1)[l[i] == '+']
+        signal = (-1, 1)[l[i] == "+"]
         len_li = len(l[i + 1])
 
         # TODO: check that l[i + 1] is integer?
@@ -736,10 +739,12 @@ class parser(object):
             # -0300
             hour_offset = int(l[i + 1][:2])
             min_offset = int(l[i + 1][2:])
-        elif i + 2 < len_l and l[i + 2] == ':':
+        elif i + 2 < len_l and l[i + 2] == ":":
             # -03:00
             hour_offset = int(l[i + 1])
-            min_offset = int(l[i + 3])  # TODO: Check that l[i+3] is minute-like?
+            min_offset = int(
+                l[i + 3]
+            )  # TODO: Check that l[i+3] is minute-like?
             i += 2
         elif len_li <= 2:
             # -[0]3
@@ -751,12 +756,13 @@ class parser(object):
         res.tzoffset = signal * (hour_offset * 3600 + min_offset * 60)
 
         # Look for a timezone name between parenthesis
-        if (i + 5 < len_l and
-                info.jump(l[i + 2]) and l[i + 3] == '(' and
-                l[i + 5] == ')' and
-                3 <= len(l[i + 4]) and
-                self._could_be_tzname(res.hour, res.tzname,
-                                        None, l[i + 4])):
+        if (i + 5 < len_l
+            and info.jump(l[i + 2])
+            and l[i + 3] == '('
+            and l[i + 5] == ')'
+            and 3 <= len(l[i + 4])
+            and self._could_be_tzname(res.hour, res.tzname, None, l[i + 4])
+        ):
             # -0300 (BRST)
             res.tzname = l[i + 4]
             i += 4
@@ -858,8 +864,10 @@ class parser(object):
                     i = self._process_tzname(info, res, l, len_l, i)
 
                 # Check for a numbered timezone
-                elif res.hour is not None and l[i] in ('+', '-'):
-                    i = self._process_numeric_tz(info, res, timestr, l, len_l, i)
+                elif res.hour is not None and l[i] in ("+", "-"):
+                    i = self._process_numeric_tz(
+                        info, res, timestr, l, len_l, i
+                    )
 
                 # Check jumps
                 elif not (info.jump(l[i]) or fuzzy):
