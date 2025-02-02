@@ -663,6 +663,107 @@ class parser(object):
                      "hour", "minute", "second", "microsecond",
                      "tzname", "tzoffset", "ampm","any_unused_tokens"]
 
+    def _process_month(self, info, ymd, l, len_l, i):
+        value = info.month(l[i])
+        ymd.append(value, 'M')
+
+        if i + 1 < len_l:
+            if l[i + 1] in ('-', '/'):
+                # Jan-01[-99]
+                sep = l[i + 1]
+                ymd.append(l[i + 2])
+
+                if i + 3 < len_l and l[i + 3] == sep:
+                    # Jan-01-99
+                    ymd.append(l[i + 4])
+                    i += 2
+
+                i += 2
+
+            elif (i + 4 < len_l and l[i + 1] == l[i + 3] == ' ' and
+                    info.pertain(l[i + 2])):
+                # Jan of 01
+                # In this case, 01 is clearly year
+                if l[i + 4].isdigit():
+                    # Convert it here to become unambiguous
+                    value = int(l[i + 4])
+                    year = str(info.convertyear(value))
+                    ymd.append(year, 'Y')
+                else:
+                    # Wrong guess
+                    pass
+                    # TODO: not hit in tests
+                i += 4
+        return i
+
+    def _process_ampm(self, info, res, l, i, fuzzy, skipped_idxs):
+        value = info.ampm(l[i])
+        val_is_ampm = self._ampm_valid(res.hour, res.ampm, fuzzy)
+
+        if val_is_ampm:
+            res.hour = self._adjust_ampm(res.hour, value)
+            res.ampm = value
+
+        elif fuzzy:
+            skipped_idxs.append(i)
+
+        return i
+
+    def _process_tzname(self, info, res, l, len_l, i):
+        res.tzname = l[i]
+        res.tzoffset = info.tzoffset(res.tzname)
+
+        # Check for something like GMT+3, or BRST+3. Notice
+        # that it doesn't mean "I am 3 hours after GMT", but
+        # "my time +3 is GMT". If found, we reverse the
+        # logic so that timezone parsing code will get it
+        # right.
+        if i + 1 < len_l and l[i + 1] in ('+', '-'):
+            l[i + 1] = ('+', '-')[l[i + 1] == '+']
+            res.tzoffset = None
+            if info.utczone(res.tzname):
+                # With something like GMT+3, the timezone
+                # is *not* GMT.
+                res.tzname = None
+        return i
+    
+    def _process_numeric_tz(self, info, res, timestr, l, len_l, i):
+        signal = (-1, 1)[l[i] == '+']
+        len_li = len(l[i + 1])
+
+        # TODO: check that l[i + 1] is integer?
+        if len_li == 4:
+            # -0300
+            hour_offset = int(l[i + 1][:2])
+            min_offset = int(l[i + 1][2:])
+        elif i + 2 < len_l and l[i + 2] == ':':
+            # -03:00
+            hour_offset = int(l[i + 1])
+            min_offset = int(l[i + 3])  # TODO: Check that l[i+3] is minute-like?
+            i += 2
+        elif len_li <= 2:
+            # -[0]3
+            hour_offset = int(l[i + 1][:2])
+            min_offset = 0
+        else:
+            raise ValueError(timestr)
+
+        res.tzoffset = signal * (hour_offset * 3600 + min_offset * 60)
+
+        # Look for a timezone name between parenthesis
+        if (i + 5 < len_l and
+                info.jump(l[i + 2]) and l[i + 3] == '(' and
+                l[i + 5] == ')' and
+                3 <= len(l[i + 4]) and
+                self._could_be_tzname(res.hour, res.tzname,
+                                        None, l[i + 4])):
+            # -0300 (BRST)
+            res.tzname = l[i + 4]
+            i += 4
+
+        i += 1
+        return i
+
     def _parse(self, timestr, dayfirst=None, yearfirst=None, fuzzy=False,
                fuzzy_with_tokens=False):
         """
@@ -746,103 +847,19 @@ class parser(object):
 
                 # Check month name
                 elif info.month(l[i]) is not None:
-                    value = info.month(l[i])
-                    ymd.append(value, 'M')
-
-                    if i + 1 < len_l:
-                        if l[i + 1] in ('-', '/'):
-                            # Jan-01[-99]
-                            sep = l[i + 1]
-                            ymd.append(l[i + 2])
-
-                            if i + 3 < len_l and l[i + 3] == sep:
-                                # Jan-01-99
-                                ymd.append(l[i + 4])
-                                i += 2
-
-                            i += 2
-
-                        elif (i + 4 < len_l and l[i + 1] == l[i + 3] == ' ' and
-                              info.pertain(l[i + 2])):
-                            # Jan of 01
-                            # In this case, 01 is clearly year
-                            if l[i + 4].isdigit():
-                                # Convert it here to become unambiguous
-                                value = int(l[i + 4])
-                                year = str(info.convertyear(value))
-                                ymd.append(year, 'Y')
-                            else:
-                                # Wrong guess
-                                pass
-                                # TODO: not hit in tests
-                            i += 4
+                    i = self._process_month(info, ymd, l, len_l, i)
 
                 # Check am/pm
                 elif info.ampm(l[i]) is not None:
-                    value = info.ampm(l[i])
-                    val_is_ampm = self._ampm_valid(res.hour, res.ampm, fuzzy)
-
-                    if val_is_ampm:
-                        res.hour = self._adjust_ampm(res.hour, value)
-                        res.ampm = value
-
-                    elif fuzzy:
-                        skipped_idxs.append(i)
+                    i = self._process_ampm(info, res, l, i, fuzzy, skipped_idxs)
 
                 # Check for a timezone name
                 elif self._could_be_tzname(res.hour, res.tzname, res.tzoffset, l[i]):
-                    res.tzname = l[i]
-                    res.tzoffset = info.tzoffset(res.tzname)
-
-                    # Check for something like GMT+3, or BRST+3. Notice
-                    # that it doesn't mean "I am 3 hours after GMT", but
-                    # "my time +3 is GMT". If found, we reverse the
-                    # logic so that timezone parsing code will get it
-                    # right.
-                    if i + 1 < len_l and l[i + 1] in ('+', '-'):
-                        l[i + 1] = ('+', '-')[l[i + 1] == '+']
-                        res.tzoffset = None
-                        if info.utczone(res.tzname):
-                            # With something like GMT+3, the timezone
-                            # is *not* GMT.
-                            res.tzname = None
+                    i = self._process_tzname(info, res, l, len_l, i)
 
                 # Check for a numbered timezone
                 elif res.hour is not None and l[i] in ('+', '-'):
-                    signal = (-1, 1)[l[i] == '+']
-                    len_li = len(l[i + 1])
-
-                    # TODO: check that l[i + 1] is integer?
-                    if len_li == 4:
-                        # -0300
-                        hour_offset = int(l[i + 1][:2])
-                        min_offset = int(l[i + 1][2:])
-                    elif i + 2 < len_l and l[i + 2] == ':':
-                        # -03:00
-                        hour_offset = int(l[i + 1])
-                        min_offset = int(l[i + 3])  # TODO: Check that l[i+3] is minute-like?
-                        i += 2
-                    elif len_li <= 2:
-                        # -[0]3
-                        hour_offset = int(l[i + 1][:2])
-                        min_offset = 0
-                    else:
-                        raise ValueError(timestr)
-
-                    res.tzoffset = signal * (hour_offset * 3600 + min_offset * 60)
-
-                    # Look for a timezone name between parenthesis
-                    if (i + 5 < len_l and
-                            info.jump(l[i + 2]) and l[i + 3] == '(' and
-                            l[i + 5] == ')' and
-                            3 <= len(l[i + 4]) and
-                            self._could_be_tzname(res.hour, res.tzname,
-                                                  None, l[i + 4])):
-                        # -0300 (BRST)
-                        res.tzname = l[i + 4]
-                        i += 4
-
-                    i += 1
+                    i = self._process_numeric_tz(info, res, timestr, l, len_l, i)
 
                 # Check jumps
                 elif not (info.jump(l[i]) or fuzzy):
