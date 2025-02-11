@@ -2,7 +2,11 @@ from datetime import timedelta
 import weakref
 from collections import OrderedDict
 
-from six.moves import _thread
+try:
+    from six.moves import _thread
+except ModuleNotFoundError:
+    import six
+    _thread = six.moves._thread
 
 
 class _TzSingleton(type):
