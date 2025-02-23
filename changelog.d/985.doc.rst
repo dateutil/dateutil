@@ -1,1 +1,0 @@
-- Fixes a small typo in dateutil/utils.py.

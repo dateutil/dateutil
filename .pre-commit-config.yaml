@@ -1,0 +1,14 @@
+repos:
+  - repo: https://github.com/akaihola/darker
+    rev: 1.7.1
+    hooks:
+    -   id: darker
+        args: [--isort]
+        additional_dependencies:
+            - "isort>5.9"
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      - id: trailing-whitespace
+      - id: debug-statements

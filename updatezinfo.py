@@ -7,6 +7,15 @@ import io
 from six.moves.urllib import request
 from six.moves.urllib import error as urllib_error
 
+try:
+    import dateutil
+except ImportError:
+    print("dateutil not installed locally, adding src to Python path")
+    import sys
+    here = os.path.dirname(__file__)
+    sys.path.append(os.path.join(here, "src"))
+    print(sys.path)
+
 from dateutil.zoneinfo import rebuild
 
 METADATA_FILE = "zonefile_metadata.json"

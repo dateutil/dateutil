@@ -1,0 +1,170 @@
+name: Validate
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+env:
+  pypi-hosts: "pypi.python.org pypi.org files.pythonhosted.org"
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        python-version: [
+          "2.7",
+          "3.5",
+          "3.6",
+          "3.7",
+          "3.8",
+          "3.9",
+          "3.10",
+          "3.11",
+          "3.12",
+          "3.13",
+          "pypy-2.7",
+          "pypy-3.8",
+        ]
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        exclude:
+          - python-version: "2.7"
+            os: "ubuntu-latest"
+          - python-version: "2.7"
+            os: "windows-latest"
+          - python-version: "2.7"
+            os: "macos-latest"
+          - python-version: "3.5"
+            os: "macos-latest"
+          - python-version: "3.6"
+            os: "macos-latest"
+          - python-version: "3.7"
+            os: "macos-latest"
+          - python-version: "3.5"
+            os: "ubuntu-latest"
+          - python-version: "3.6"
+            os: "ubuntu-latest"
+        include:
+          - python-version: "3.5"
+            os: "macos-12"
+          - python-version: "3.6"
+            os: "macos-12"
+          - python-version: "3.7"
+            os: "macos-12"
+          - python-version: "2.7"
+            os: "ubuntu-20.04"
+          - python-version: "3.5"
+            os: "ubuntu-20.04"
+          - python-version: "3.6"
+            os: "ubuntu-20.04"
+    runs-on: ${{ matrix.os }}
+    env:
+      TOXENV: py
+    steps:
+      - uses: actions/checkout@v3
+      - if: ${{ matrix.python-version == '2.7' }}
+        run: |
+          sudo apt-get install python-is-python2
+          curl -sSL https://bootstrap.pypa.io/pip/2.7/get-pip.py -o get-pip.py
+          python get-pip.py
+        name: Set up Python ${{ matrix.python-version }} on ${{ matrix.os }}
+      - if: ${{ matrix.python-version != '2.7' }}
+        name: Set up Python ${{ matrix.python-version }} on ${{ matrix.os }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          allow-prereleases: true
+        env:
+          PIP_TRUSTED_HOST: ${{ contains(fromJson('["3.5"]'), matrix.python-version) && env.pypi-hosts || '' }}
+      - name: Install dependencies
+        run: python -m pip install -U tox six
+      - name: Install zic (Windows)
+        run: |
+          curl https://get.enterprisedb.com/postgresql/postgresql-9.5.21-2-windows-x64-binaries.zip --output $env:GITHUB_WORKSPACE\postgresql9.5.21.zip
+          unzip -oq $env:GITHUB_WORKSPACE\postgresql9.5.21.zip -d .postgresql
+        if: runner.os == 'Windows'
+      - name: Run updatezinfo.py (Windows)
+        run: |
+          $env:Path += ";$env:GITHUB_WORKSPACE\.postgresql\pgsql\bin"
+          ci_tools/retry.bat python updatezinfo.py
+        if: runner.os == 'Windows'
+      - name: Run updatezinfo.py (Unix)
+        run: ./ci_tools/retry.sh python updatezinfo.py
+        if: runner.os != 'Windows'
+      - name: Run tox
+        run: python -m tox
+      - name: Generate coverage.xml
+        run: python -m tox -e coverage
+      - name: Report coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./.tox/coverage.xml
+          name: ${{ matrix.os }}:${{ matrix.python-version }}
+          fail_ci_if_error: false
+
+  other:
+    runs-on: "ubuntu-latest"
+    strategy:
+      matrix:
+        toxenv: ["docs", "tz", "precommit"]
+    env:
+      TOXENV: ${{ matrix.toxenv }}
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: ${{ matrix.toxenv }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - name: Install tox
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -U tox
+      - name: Run action
+        run: tox
+
+  darker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+      - uses: akaihola/darker@0fb2501a3f6c1b2d64976afa57885aeec0601182
+        # pinned due to unreleased fix: https://github.com/akaihola/darker/issues/489
+        with:
+          options: "--check --diff --color --isort"
+          src: "."
+          version: "~=1.7.1"
+
+  build-dist:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - name: Install tox
+        run: python -m pip install -U tox
+      - name: Run tox
+        run: python -m tox -e build
+      - name: Check generation
+        run: |
+          exactly_one() {
+            value=$(find dist -iname $1 | wc -l)
+            if [ $value -ne 1 ]; then
+              echo "Found $value instances of $1, not 1"
+              return 1
+            else
+              echo "Found exactly 1 instance of $value"
+            fi
+          }
+          # Check that exactly one tarball and one wheel are created
+          exactly_one '*.tar.gz'
+          exactly_one '*.whl'

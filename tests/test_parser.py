@@ -22,11 +22,12 @@ import pytest
 # Platform info
 IS_WIN = sys.platform.startswith('win')
 
+PLATFORM_HAS_DASH_D = False
 try:
-    datetime.now().strftime('%-d')
-    PLATFORM_HAS_DASH_D = True
+    if datetime.now().strftime('%-d'):
+        PLATFORM_HAS_DASH_D = True
 except ValueError:
-    PLATFORM_HAS_DASH_D = False
+    pass
 
 
 @pytest.fixture(params=[True, False])
@@ -873,6 +874,15 @@ class TestParseUnimplementedCases(object):
         dstr = "201712"
         res = parse(dstr)
         expected = datetime(2017, 12, 1)
+        assert res == expected
+
+    @pytest.mark.xfail
+    def test_extraneous_numerical_content(self):
+        # ref: https://github.com/dateutil/dateutil/issues/1029
+        # parser interprets price and percentage as parts of the date
+        dstr = "£14.99 (25% off, until April 20)"
+        res = parse(dstr, fuzzy=True, default=datetime(2000, 1, 1))
+        expected = datetime(2000, 4, 20)
         assert res == expected
 
 
