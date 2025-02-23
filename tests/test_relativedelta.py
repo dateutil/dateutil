@@ -119,11 +119,19 @@ class RelativeDeltaTest(unittest.TestCase):
         self.assertEqual(self.today+relativedelta(day=31, weekday=FR(-1)),
                          date(2003, 9, 26))
 
+    def testLastDayOfFebruary(self):
+        self.assertEqual(date(2021, 2, 1) + relativedelta(day=31),
+                         date(2021, 2, 28))
+
+    def testLastDayOfFebruaryLeapYear(self):
+        self.assertEqual(date(2020, 2, 1) + relativedelta(day=31),
+                         date(2020, 2, 29))
+
     def testNextWednesdayIsToday(self):
         self.assertEqual(self.today+relativedelta(weekday=WE),
                          date(2003, 9, 17))
 
-    def testNextWenesdayNotToday(self):
+    def testNextWednesdayNotToday(self):
         self.assertEqual(self.today+relativedelta(days=+1, weekday=WE),
                          date(2003, 9, 24))
 
@@ -642,6 +650,67 @@ class RelativeDeltaTest(unittest.TestCase):
         except:
             self.fail("relativedelta() failed to hash!")
 
+    def testDayOfMonthPlus(self):
+        assert [
+            date(2021, 1, 28) + relativedelta(months=1),
+            date(2021, 2, 27) + relativedelta(months=1),
+            date(2021, 4, 29) + relativedelta(months=1),
+            date(2021, 5, 30) + relativedelta(months=1),
+        ] == [
+            date(2021, 2, 28),
+            date(2021, 3, 27),
+            date(2021, 5, 29),
+            date(2021, 6, 30),
+        ]
+
+    def testLastDayOfMonthPlus(self):
+        assert [
+            date(2021, 1, 31) + relativedelta(months=1),
+            date(2021, 1, 30) + relativedelta(months=1),
+            date(2021, 1, 29) + relativedelta(months=1),
+            date(2021, 1, 28) + relativedelta(months=1),
+            date(2021, 2, 28) + relativedelta(months=1),
+            date(2021, 4, 30) + relativedelta(months=1),
+            date(2021, 5, 31) + relativedelta(months=1),
+        ] == [
+            date(2021, 2, 28),
+            date(2021, 2, 28),
+            date(2021, 2, 28),
+            date(2021, 2, 28),
+            date(2021, 3, 28),
+            date(2021, 5, 30),
+            date(2021, 6, 30),
+        ]
+
+    def testDayOfMonthMinus(self):
+        assert [
+           date(2021, 2, 27) - relativedelta(months=1),
+           date(2021, 3, 30) - relativedelta(months=1),
+           date(2021, 3, 29) - relativedelta(months=1),
+           date(2021, 3, 28) - relativedelta(months=1),
+           date(2021, 5, 30) - relativedelta(months=1),
+           date(2021, 6, 29) - relativedelta(months=1),
+        ] == [
+            date(2021, 1, 27),
+            date(2021, 2, 28),
+            date(2021, 2, 28),
+            date(2021, 2, 28),
+            date(2021, 4, 30),
+            date(2021, 5, 29),
+        ]
+
+    def testLastDayOfMonthMinus(self):
+        assert [
+            date(2021, 2, 28) - relativedelta(months=1),
+            date(2021, 3, 31) - relativedelta(months=1),
+            date(2021, 5, 31) - relativedelta(months=1),
+            date(2021, 6, 30) - relativedelta(months=1),
+        ] == [
+            date(2021, 1, 28),
+            date(2021, 2, 28),
+            date(2021, 4, 30),
+            date(2021, 5, 30),
+        ]
 
 class RelativeDeltaWeeksPropertyGetterTest(unittest.TestCase):
     """Test the weeks property getter"""

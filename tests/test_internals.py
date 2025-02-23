@@ -7,10 +7,9 @@ The motivating case for these tests is #483, where we want to smoke-test
 code that may be difficult to reach through the standard API calls.
 """
 
-import unittest
 import sys
-
 import pytest
+import warnings
 
 from dateutil.parser._parser import _ymd
 from dateutil import tz
@@ -18,33 +17,31 @@ from dateutil import tz
 IS_PY32 = sys.version_info[0:2] == (3, 2)
 
 
-class TestYMD(unittest.TestCase):
+@pytest.mark.smoke
+def test_YMD_could_be_day():
+    ymd = _ymd('foo bar 124 baz')
 
-    # @pytest.mark.smoke
-    def test_could_be_day(self):
-        ymd = _ymd('foo bar 124 baz')
+    ymd.append(2, 'M')
+    assert ymd.has_month
+    assert not ymd.has_year
+    assert ymd.could_be_day(4)
+    assert not ymd.could_be_day(-6)
+    assert not ymd.could_be_day(32)
 
-        ymd.append(2, 'M')
-        assert ymd.has_month
-        assert not ymd.has_year
-        assert ymd.could_be_day(4)
-        assert not ymd.could_be_day(-6)
-        assert not ymd.could_be_day(32)
+    # Assumes leap year
+    assert ymd.could_be_day(29)
 
-        # Assumes leap year
-        assert ymd.could_be_day(29)
+    ymd.append(1999)
+    assert ymd.has_year
+    assert not ymd.could_be_day(29)
 
-        ymd.append(1999)
-        assert ymd.has_year
-        assert not ymd.could_be_day(29)
+    ymd.append(16, 'D')
+    assert ymd.has_day
+    assert not ymd.could_be_day(1)
 
-        ymd.append(16, 'D')
-        assert ymd.has_day
-        assert not ymd.could_be_day(1)
-
-        ymd = _ymd('foo bar 124 baz')
-        ymd.append(1999)
-        assert ymd.could_be_day(31)
+    ymd = _ymd('foo bar 124 baz')
+    ymd.append(1999)
+    assert ymd.could_be_day(31)
 
 
 ###
@@ -69,18 +66,17 @@ def test_parser_parser_private_not_warns():
     from dateutil.parser._parser import _timelex, _tzparser
     from dateutil.parser._parser import _parsetz
 
-    with pytest.warns(None) as recorder:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
         _tzparser()
-        assert len(recorder) == 0
 
-    with pytest.warns(None) as recorder:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
         _timelex('2014-03-03')
 
-        assert len(recorder) == 0
-
-    with pytest.warns(None) as recorder:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
         _parsetz('+05:00')
-        assert len(recorder) == 0
 
 
 @pytest.mark.tzstr

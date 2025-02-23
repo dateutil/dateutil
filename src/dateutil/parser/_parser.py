@@ -60,14 +60,8 @@ class _timelex(object):
     _split_decimal = re.compile("([.,])")
 
     def __init__(self, instream):
-        if six.PY2:
-            # In Python 2, we can't duck type properly because unicode has
-            # a 'decode' function, and we'd be double-decoding
-            if isinstance(instream, (bytes, bytearray)):
-                instream = instream.decode()
-        else:
-            if getattr(instream, 'decode', None) is not None:
-                instream = instream.decode()
+        if isinstance(instream, (bytes, bytearray)):
+            instream = instream.decode()
 
         if isinstance(instream, text_type):
             instream = StringIO(instream)

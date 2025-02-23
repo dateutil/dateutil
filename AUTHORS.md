@@ -11,10 +11,12 @@ switch, and thus all their contributions are dual-licensed.
 
 ## Contributors (alphabetical order)
 
+- Aarni Koskela <akx@iki.fi> **D**
 - Adam Chainz <adam@MASKED>
 - Adrien Cossa <cossa@MASKED>
 - Alec Nikolas Reiter <alecreiter@MASKED>
 - Alec Reiter <areiter@MASKED>
+- Aleksei Strizhak <alexei.mifrill.strizhak@MASKED> (gh: @Mifrill)
 - Alex Chamberlain (gh: @alexchamberlain) **D**
 - Alex Verdyan <verdyan@MASKED>
 - Alex Willmer <alex@moreati.org.uk> (gh: @moreati) **R**
@@ -24,6 +26,7 @@ switch, and thus all their contributions are dual-licensed.
 - Allison Quinlan <aquinlan82@gmail.com> (gh: @aquinlan) **D**
 - Andrew Bennett (gh: @andrewcbennett) **D**
 - Andrew Murray <radarhere@MASKED>
+- Arclight <arclight@MASKED> (gh: @arclightslavik)
 - Aritro Nandi <gurgenz221@gmail.com> (gh: @gurgenz221) **D**
 - Bernat Gabor <bgabor8@bloomberg.net> (gh: @gaborbernat) **D**
 - Bradlee Speice <bradlee@speice.io> (gh: @bspeice) **D**
@@ -58,6 +61,7 @@ switch, and thus all their contributions are dual-licensed.
 - Ionuț Ciocîrlan <jdxlark@MASKED>
 - Jacqueline Chen <jacqueline415@outlook.com> (gh: @jachen20) **D**
 - Jake Chorley (gh: @jakec-github) **D**
+- Jakub Kulík (gh: @kulikjak) **D**
 - Jan Studený <jendas1@MASKED>
 - Jay Weisskopf <jay@jayschwa.net> (gh: @jayschwa) **D**
 - Jitesh <jitesh@MASKED>
@@ -79,11 +83,13 @@ switch, and thus all their contributions are dual-licensed.
 - Maxime Lorant <maxime.lorant@MASKED>
 - Michael Aquilina <michaelaquilina@MASKED> (gh: @MichaelAquilina)
 - Michael J. Schultz <mjschultz@MASKED>
+- Michael Käufl (gh: @michael-k)
 - Mike Gilbert <floppym@MASKED>
 - Nicholas Herrriot <Nicholas.Herriot@gmail.com> **D**
 - Nicolas Évrard (gh: @nicoe) **D**
 - Nick Smith <nick.smith@MASKED>
 - Orson Adams <orson.network@MASKED> (gh: @parsethis) **D**
+- Paul Brown (gh: @pawl) **D**
 - Paul Dickson (gh @prdickson) **D**
 - Paul Ganssle <paul@ganssle.io> (gh: @pganssle) **R**
 - Pascal van Kooten <kootenpv@MASKED> (gh: @kootenpv) **R**
@@ -93,6 +99,7 @@ switch, and thus all their contributions are dual-licensed.
 - Quentin Pradet <quentin@MASKED>
 - Raymond Cha (gh: @weatherpattern) **D**
 - Ridhi Mahajan <ridhikmahajan@MASKED> **D**
+- Robin Henriksson Törnström <gh: @MrRawbin> **D**
 - Roy Williams <rwilliams@MASKED>
 - Rustem Saiargaliev (gh: @amureki) **D**
 - Satyabrat Bhol <satyabrat35@MASKED> (gh: @Satyabrat35) **D**
@@ -104,6 +111,7 @@ switch, and thus all their contributions are dual-licensed.
 - Thierry Bastian <thierryb@MASKED>
 - Thomas A Caswell <tcaswell@MASKED> (gh: @tacaswell) **R**
 - Thomas Achtemichuk <tom@MASKED>
+- Thomas Grainger <tagrain@gmail.com> (gh: @graingert) **D**
 - Thomas Kluyver <takowl@MASKED> (gh: @takluyver)
 - Tim Gates <tim.gates@iress.com> (gh: timgates42)
 - Tomasz Kluczkowski (gh: @Tomasz-Kluczkowski) **D**

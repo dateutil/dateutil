@@ -11,7 +11,7 @@ REPO_DIR=${2}
 ORIG_DIR=$(pwd)
 CITOOLS_DIR=$REPO_DIR/ci_tools
 
-REPO_TARBALL=${REPO_DIR}/dateutil/zoneinfo/dateutil-zoneinfo.tar.gz
+REPO_TARBALL=${REPO_DIR}/src/dateutil/zoneinfo/dateutil-zoneinfo.tar.gz
 TMP_TARBALL=${TMP_DIR}/dateutil-zoneinfo.tar.gz
 
 UPSTREAM_URL="https://github.com/eggert/tz.git"
@@ -69,7 +69,7 @@ set -e
 mv $TARBALL_NAME $ORIG_DIR
 
 # Install everything else
-make TOPDIR=$TMP_DIR/tzdir install
+make ZFLAGS='-b fat' TOPDIR="$TMP_DIR/tzdir" install
 
 #
 # Make the zoneinfo tarball
@@ -93,5 +93,5 @@ ${CITOOLS_DIR}/make_zonefile_metadata.py \
 python ${REPO_DIR}/updatezinfo.py $ZONEFILE_METADATA_NAME
 
 # Run the tests
-python -m pytest ${REPO_DIR}/dateutil/test $EXTRA_TEST_ARGS
+python -m pytest ${REPO_DIR}/tests $EXTRA_TEST_ARGS
 

@@ -6,28 +6,20 @@ Release Checklist
     release from https://www.iana.org/time-zones.
 [ ] If necessary, update the tzdata mirror at https://github.com/dateutil/tzdata
 [ ] Update NEWS with list of changes:
-    [ ] Invoke `tox -e towncrier -- --version <NEXT_VERSION>`
+    [ ] Invoke `tox -e news -- --version <NEXT_VERSION>`
     [ ] Make sure that only `template.rst` remains in changelog.d/
     [ ] Manually clean up the new NEWS file.
     [ ] Replace entries in the "Misc" section that are not likely to be
         interesting to anyone consuming the package (e.g. changes to CI) with
         a reference to the Github PR.
 [ ] Commit the changes in git and make a pull request.
-[ ] Accept the pull request and tag the repository with the release number.
-[ ] Add the contents of the NEWS file to the Github release notes for the
-    release.
-[ ] Upload the source and binary distributions with `tox -e release`.
+[ ] Follow the "Releasing" steps below
+
 
 Optional:
 ----------
 [ ] Check that README.rst is up-to-date.
 [ ] Check that the documentation builds correctly (cd docs, make html)
-
-
-Instructions
------------------------------------------
-See the instructions at https://packaging.python.org/en/latest/distributing/
-for more details.
 
 
 Versioning
@@ -37,29 +29,51 @@ are managed with `setuptools_scm`, so to update the version, simply tag the
 relevant commit with the new version number.
 
 
+Instructions
+-----------------------------------------
+See the instructions at https://packaging.python.org/en/latest/distributing/
+for more details.
+
+
 Building and Releasing
 ----------------------
-Building and releasing can be done using the `release.py` script, which
-automates building, signing and uploading. Since it uses GPG for signing and
-for decrypting a stored token, it requires that `gpg` be installed on your
-system. Because it has python dependencies, the best way to use the
-`release.py` script is to invoke it using `tox`. To build the source and binary
-distributions, use:
+Releasing is automated via the `publish.yml` GitHub Actions workflow. When a
+new tag is pushed to the repository, the project is automatically built and
+uploaded to Test PyPI. When the publish action is triggered manually (see
+https://docs.github.com/en/actions/managing-workflow-runs/manually-running-a-workflow
+for more details), the result is uploaded to PyPI.
 
-    tox -e build
+To make a release:
 
-This will build the distributions in `dist/`. Once that is done, you can release
-them with:
+1. After having made a PR with all the relevant changes, trigger the "Upload
+   package" to trigger an upload to Test PyPI. If desired, you can push a
+   `.dev0` or `.rc0` tag first, so that all uploads will have a prefix for the
+   *next* version rather than the previous version (e.g. if you are releasing
+   `3.1.2`, without making a new tag releases will have a version like
+   `3.1.1+gff8893e.d20220603`; if you push a `3.1.2.dev0` tag first, the version
+   number will be `3.1.2.dev0`, and subsequent commits will be things like
+   `3.1.2.dev0+fe9dacc4.d20220603`).
 
-    tox -e release
+2. Check the Test PyPI page for `python-dateutil` to ensure that the dev release
+   worked correctly: https://test.pypi.org/project/python-dateutil/
 
-if you have the token stored in your `~/.pypirc` file. If you have stored the
-relevant token in an encrypted file, use the `--passfile` argument:
+   Dev releases may not appear as the default page, so click "Release history"
+   and navigate to the release you are trying to check. Make sure that the
+   metadata looks right and in particular that the `Requires` metadata is
+   present.
 
-    tox -e release -- --passfile .token.gpg
+4. If the release failed or was unsatisfactory in some way, make the required
+   changes and got back to step 1. Pushing a new tag is not necessary.
 
-The `release` command defaults to uploading to test.pypi.org. To upload to
-pypi.org, use the `--release` flag, so putting it all together, we have:
+5. When everything looks good, merge the release PR, pull the result to your
+   local branch and create a new tag with a non-dev version number,
+   e.g. `3.1.2`. Push this to the repository, wait for the Test PyPI run to
+   trigger, and ensure that the upload worked.
 
-    tox -e build
-    tox -e release -- --passfile .token.gpg --release
+6. Create a new GitHub release with the new entries from `NEWS` in the
+   description. This will trigger the workflow to build and release the final
+   version to PyPI.org. Check https://pypi.org/project/python-dateutil to
+   ensure that everything worked correctly.
+
+7. Delete any dev tags created during the testing process from your upstream
+   and local branches.
