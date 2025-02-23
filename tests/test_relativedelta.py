@@ -407,14 +407,12 @@ class RelativeDeltaTest(unittest.TestCase):
     def testRelativeDeltaFractionalYears(self):
         rd = relativedelta(years=1.25)
         d1 = datetime(2009, 9, 3, 0, 0)
-        self.assertEqual(d1 + rd,
-                         datetime(2010, 12, 3, 0))
+        self.assertEqual(d1 + rd, datetime(2010, 12, 3, 0))
 
     def testRelativeDeltaFractionalMonths(self):
         rd = relativedelta(months=1.25)
         d1 = datetime(2009, 9, 3, 0, 0)
-        self.assertEqual(d1 + rd,
-                         datetime(2009, 10, 10, 18))
+        self.assertEqual(d1 + rd, datetime(2009, 10, 10, 18))
 
     def testRelativeDeltaFractionalWeeks(self):
         # Equivalent to days=8, hours=18

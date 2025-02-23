@@ -361,7 +361,7 @@ class relativedelta(object):
             return NotImplemented
         elif self._has_time and not isinstance(other, datetime.datetime):
             other = datetime.datetime.fromordinal(other.toordinal())
-        year = (self.year or other.year)+int(self.years)
+        year = (self.year or other.year) + int(self.years)
         if self.years != int(self.years):
             self.months += 12 * (self.years % 1)
         month = self.month or other.month
@@ -375,9 +375,10 @@ class relativedelta(object):
                 year -= 1
                 month += 12
             if self.months != int(self.months):
-                self.days += calendar.monthrange(year, month)[1] * (self.months % 1)
-        day = min(calendar.monthrange(year, month)[1],
-                  self.day or other.day)
+                self.days += calendar.monthrange(year, month)[1] * (
+                    self.months % 1
+                )
+        day = min(calendar.monthrange(year, month)[1], self.day or other.day)
         repl = {"year": year, "month": month, "day": day}
         for attr in ["hour", "minute", "second", "microsecond"]:
             value = getattr(self, attr)
