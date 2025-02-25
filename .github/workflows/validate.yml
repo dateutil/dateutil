@@ -16,10 +16,6 @@ jobs:
     strategy:
       matrix:
         python-version: [
-          "2.7",
-          "3.5",
-          "3.6",
-          "3.7",
           "3.8",
           "3.9",
           "3.10",
@@ -30,49 +26,43 @@ jobs:
           "pypy-3.8",
         ]
         os: [ubuntu-latest, windows-latest, macos-latest]
-        exclude:
-          - python-version: "2.7"
-            os: "ubuntu-latest"
-          - python-version: "2.7"
-            os: "windows-latest"
-          - python-version: "2.7"
-            os: "macos-latest"
-          - python-version: "3.5"
-            os: "macos-latest"
-          - python-version: "3.6"
-            os: "macos-latest"
-          - python-version: "3.7"
-            os: "macos-latest"
-          - python-version: "3.5"
-            os: "ubuntu-latest"
-          - python-version: "3.6"
-            os: "ubuntu-latest"
         include:
-          - python-version: "3.5"
-            os: "macos-12"
-          - python-version: "3.6"
-            os: "macos-12"
-          - python-version: "3.7"
-            os: "macos-12"
-          - python-version: "2.7"
-            os: "ubuntu-20.04"
-          - python-version: "3.5"
-            os: "ubuntu-20.04"
-          - python-version: "3.6"
-            os: "ubuntu-20.04"
+          # Older versions (<=3.7) are included separately since they need
+          # special handling (using an older os or a container)
+          - os: "macos-13"
+            python-version: "3.5"
+          - os: "macos-13"
+            python-version: "3.6"
+          - os: "macos-13"
+            python-version: "3.7"
+          - os: "windows-latest"
+            python-version: "3.5"
+          - os: "windows-latest"
+            python-version: "3.6"
+          - os: "windows-latest"
+            python-version: "3.7"
+          - os: "ubuntu-latest"
+            python-version: "2.7"
+            use-container: true
+          - os: "ubuntu-latest"
+            python-version: "3.5"
+            use-container: true
+          - os: "ubuntu-latest"
+            python-version: "3.6"
+            use-container: true
+          - os: "ubuntu-latest"
+            python-version: "3.7"
+            use-container: true
     runs-on: ${{ matrix.os }}
+    container:
+      image: ${{ matrix.use-container && format('python:{0}', matrix.python-version) || '' }}
     env:
       TOXENV: py
     steps:
-      - uses: actions/checkout@v3
-      - if: ${{ matrix.python-version == '2.7' }}
-        run: |
-          sudo apt-get install python-is-python2
-          curl -sSL https://bootstrap.pypa.io/pip/2.7/get-pip.py -o get-pip.py
-          python get-pip.py
-        name: Set up Python ${{ matrix.python-version }} on ${{ matrix.os }}
-      - if: ${{ matrix.python-version != '2.7' }}
-        name: Set up Python ${{ matrix.python-version }} on ${{ matrix.os }}
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - if: ${{ !matrix.use-container }}
+        name: Set up Python ${{ matrix.python-version }} on ${{ matrix.os }} (non-containers)
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
@@ -104,6 +94,9 @@ jobs:
           file: ./.tox/coverage.xml
           name: ${{ matrix.os }}:${{ matrix.python-version }}
           fail_ci_if_error: false
+          # codecov/codecov-action@v3 needs v0.7.3 to work on (intel) macos-13
+          # See https://github.com/codecov/codecov-action/issues/1549
+          version: ${{ matrix.os == 'macos-13' && 'v0.7.3' || 'latest' }}
 
   other:
     runs-on: "ubuntu-latest"
