@@ -1561,13 +1561,14 @@ class _rrulestr(object):
         return rrule(dtstart=dtstart, cache=cache, **rrkwargs)
 
     def _parse_date_value(self, date_value, parms, rule_tzids,
-                          ignoretz, tzids, tzinfos):
+                          ignoretz, tzids, tzinfos, accept_period=False):
         global parser
         if not parser:
             from dateutil import parser
 
         datevals = []
         value_found = False
+        is_period = False
         TZID = None
 
         for parm in parms:
@@ -1593,7 +1594,11 @@ class _rrulestr(object):
 
             # RFC 5445 3.8.2.4: The VALUE parameter is optional, but may be found
             # only once.
-            if parm not in {"VALUE=DATE-TIME", "VALUE=DATE"}:
+            if parm == "VALUE=PERIOD":
+                is_period = True
+                if not accept_period:
+                    raise ValueError("PERIOD is not allowed here")
+            if parm not in {"VALUE=DATE-TIME", "VALUE=DATE", "VALUE=PERIOD"}:
                 raise ValueError("unsupported parm: " + parm)
             else:
                 if value_found:
@@ -1602,6 +1607,10 @@ class _rrulestr(object):
                 value_found = True
 
         for datestr in date_value.split(','):
+            if is_period:
+                # RFC 5545 3.3.9: A period consists of start end end date-time, separated by a slash.
+                # We use the start date-time as the date value.
+                datestr = datestr.split('/')[0]
             date = parser.parse(datestr, ignoretz=ignoretz, tzinfos=tzinfos)
             if TZID is not None:
                 if date.tzinfo is None:
@@ -1675,10 +1684,11 @@ class _rrulestr(object):
                         raise ValueError("unsupported RRULE parm: "+parm)
                     rrulevals.append(value)
                 elif name == "RDATE":
-                    for parm in parms:
-                        if parm != "VALUE=DATE-TIME":
-                            raise ValueError("unsupported RDATE parm: "+parm)
-                    rdatevals.append(value)
+                    rdatevals.extend(
+                        self._parse_date_value(value, parms,
+                                               TZID_NAMES, ignoretz,
+                                               tzids, tzinfos, accept_period=True)
+                    )
                 elif name == "EXRULE":
                     for parm in parms:
                         raise ValueError("unsupported EXRULE parm: "+parm)
@@ -1708,10 +1718,7 @@ class _rrulestr(object):
                                                      ignoretz=ignoretz,
                                                      tzinfos=tzinfos))
                 for value in rdatevals:
-                    for datestr in value.split(','):
-                        rset.rdate(parser.parse(datestr,
-                                                ignoretz=ignoretz,
-                                                tzinfos=tzinfos))
+                    rset.rdate(value)
                 for value in exrulevals:
                     rset.exrule(self._parse_rfc_rrule(value, dtstart=dtstart,
                                                       ignoretz=ignoretz,

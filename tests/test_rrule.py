@@ -2952,6 +2952,27 @@ class RRuleTest(unittest.TestCase):
                           datetime(1997, 9, 9, 9, 0),
                           datetime(1997, 9, 16, 9, 0)])
 
+    def testStrSetRDateValueDateTimeWithTZID(self):
+        BXL = tz.gettz('Europe/Brussels')
+        rrstr = '\n'.join([
+            "DTSTART;VALUE=DATE-TIME;TZID=Europe/Brussels:19970902T090000",
+            "RDATE;VALUE=DATE-TIME;TZID=Europe/Brussels:19970902T090000",
+            "RDATE;VALUE=DATE-TIME;TZID=Europe/Brussels:19970909T090000",
+        ])
+
+        rr = rrulestr(rrstr)
+        assert list(rr) == [datetime(1997, 9, 2, 9, tzinfo=BXL),
+                            datetime(1997, 9, 9, 9, tzinfo=BXL)]
+
+    def testStrSetRDateValueDateTimeWithPeriod(self):
+        rrstr = '\n'.join([
+            "DTSTART;VALUE=DATE-TIME:19970902T090000",
+            "RDATE;VALUE=PERIOD:19970902T090000/19970909T090000",
+        ])
+
+        rr = rrulestr(rrstr)
+        assert list(rr) == [datetime(1997, 9, 2, 9)]
+
     def testStrKeywords(self):
         self.assertEqual(list(rrulestr(
                               "DTSTART:19970902T090000\n"
@@ -3000,6 +3021,17 @@ class RRuleTest(unittest.TestCase):
         with pytest.raises(ValueError):
             rr = rrulestr("DTSTART:19970101T000000,19970202T000000\n"
                           "RRULE:FREQ=YEARLY;COUNT=1")
+
+    def testStrNoPeriodDTStart(self):
+        with pytest.raises(ValueError):
+            rr = rrulestr("DTSTART;VALUE=PERIOD:19970101T000000/19970102T000000\n"
+                          "RRULE:FREQ=YEARLY;COUNT=1")
+
+    def testStrNoPeriodExDate(self):
+        with pytest.raises(ValueError):
+            rr = rrulestr("DTSTART:19970101T000000\n"
+                          "RRULE:FREQ=YEARLY;COUNT=1\n"
+                          "EXDATE;VALUE=PERIOD:19970101T090000/19970102T090000\n")
 
     def testStrInvalidUntil(self):
         with self.assertRaises(ValueError):
