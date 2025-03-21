@@ -10,7 +10,12 @@ Attempting to import this module on a non-Windows platform will raise an
 import datetime
 import struct
 
-from six.moves import winreg
+try:
+    from six.moves import winreg
+except ModuleNotFoundError:
+    # Support for Python 3.12+ where six.moves is not available. 
+    import winreg
+
 from six import text_type
 
 try:

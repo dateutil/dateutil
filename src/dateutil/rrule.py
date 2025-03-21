@@ -17,7 +17,11 @@ from warnings import warn
 
 from six import advance_iterator, integer_types
 
-from six.moves import _thread, range
+try:
+    from six.moves import _thread, range
+except ModuleNotFoundError:
+    # Support for Python 3.12+ where six.moves is not available. 
+    import _thread
 
 from ._common import weekday as weekdaybase
 

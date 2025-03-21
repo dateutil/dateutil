@@ -18,7 +18,13 @@ from collections import OrderedDict
 
 import six
 from six import string_types
-from six.moves import _thread
+
+try:
+    from six.moves import _thread
+except ModuleNotFoundError:
+    # Support for Python 3.12+ where six.moves is not available. 
+    import _thread
+
 from ._common import tzname_in_python2, _tzinfo
 from ._common import tzrangebase, enfold
 from ._common import _validate_fromutc_inputs

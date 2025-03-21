@@ -4,8 +4,13 @@ import hashlib
 import json
 import io
 
-from six.moves.urllib import request
-from six.moves.urllib import error as urllib_error
+try:
+    from six.moves.urllib import request
+    from six.moves.urllib import error as urllib_error
+except ModuleNotFoundError:
+    # Support for Python 3.12+ where six.moves is not available. 
+    from urllib import request
+    from urllib import error as urllib_error
 
 try:
     import dateutil
