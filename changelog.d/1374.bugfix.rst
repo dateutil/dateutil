@@ -1,0 +1,1 @@
+Ignore X-name instructions inside any RRULE. Fixed by @yajo (gh pr #1374)
