@@ -41,6 +41,7 @@ switch, and thus all their contributions are dual-licensed.
 - Claudio Canepa <ccanepacc@MASKED>
 - Corey Girard <corey.r.girard@gmail.com> (gh: @coreygirard) **D**
 - Cosimo Lupo <cosimo@anthrotype.com> (gh: @anthrotype) **D**
+- Daniel Chen (gh: @danieljnchen) **D**
 - Daniel Lemm (gh: @ffe4) **D**
 - Daniel Lepage <dplepage@MASKED>
 - David Lehrian <david@MASKED>
