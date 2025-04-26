@@ -11,6 +11,7 @@ switch, and thus all their contributions are dual-licensed.
 
 ## Contributors (alphabetical order)
 
+- Aarni Koskela <akx@iki.fi> **D**
 - Adam Chainz <adam@MASKED>
 - Adrien Cossa <cossa@MASKED>
 - Alec Nikolas Reiter <alecreiter@MASKED>
@@ -67,6 +68,7 @@ switch, and thus all their contributions are dual-licensed.
 - John Purviance <jpurviance@MASKED> (gh @jpurviance) **D**
 - Jon Dufresne <jon.dufresne@MASKED> (gh: @jdufresne) **R**
 - Jonas Neubert <jonas@MASKED> (gh: @jonemo) **R**
+- Juan Arias <jdarias3@gmail.com> (gh: @jdarias3) **D**
 - Kevin Nguyen <kvn219@MASKED> **D**
 - Kirit Thadaka <kirit.thadaka@gmail.com> (gh: @kirit93) **D**
 - Kubilay Kocak <koobs@MASKED>
@@ -99,6 +101,7 @@ switch, and thus all their contributions are dual-licensed.
 - Raymond Cha (gh: @weatherpattern) **D**
 - Ridhi Mahajan <ridhikmahajan@MASKED> **D**
 - Robin Henriksson Törnström <gh: @MrRawbin> **D**
+- Rowan Walsh (gh: @rowan-walsh) **D**
 - Roy Williams <rwilliams@MASKED>
 - Rustem Saiargaliev (gh: @amureki) **D**
 - Satyabrat Bhol <satyabrat35@MASKED> (gh: @Satyabrat35) **D**

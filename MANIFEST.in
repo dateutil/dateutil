@@ -1,4 +1,4 @@
 include LICENSE NEWS zonefile_metadata.json updatezinfo.py pyproject.toml
-recursive-include tests/
+recursive-include tests/ *
 global-exclude __pycache__
 global-exclude *.py[co]

@@ -1,6 +1,0 @@
-Made all ``dateutil`` submodules lazily imported using `PEP 562
-<https://www.python.org/dev/peps/pep-0562/>`_. On Python 3.7+, things like
-``import dateutil; dateutil.tz.gettz("America/New_York")`` will now work
-without explicitly importing ``dateutil.tz``, with the import occurring behind
-the scenes on first use. The old behavior remains on Python 3.6 and earlier.
-Fixed by Orson Adams. (gh issue #771, gh pr #1007)

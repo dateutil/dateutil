@@ -1,0 +1,1 @@
+Bump six version to fix No module named 'six.moves'. Reported by @skytreader (gh issue #1415) Fixed by @jdarias3 (gh pr #1424).
