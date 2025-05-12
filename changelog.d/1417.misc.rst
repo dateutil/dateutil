@@ -1,0 +1,1 @@
+Fixed validation CI workflow. Fixed by @rowan-walsh (gh pr #1417).
