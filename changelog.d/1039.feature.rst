@@ -1,2 +1,0 @@
-Added ``walltimedelta`` function in ``dateutil.tzutils`` to calculate wall time differences
-between timezone-aware datetime objects, properly handling DST transitions.
