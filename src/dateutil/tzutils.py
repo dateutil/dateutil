@@ -1,9 +1,13 @@
 # -*- coding: utf-8 -*-
-from datetime import datetime
+"""Timezone utility functions."""
+
+from datetime import datetime, timedelta
 from dateutil.tz import resolve_imaginary, UTC
 
+__all__ = ["walltimedelta"]
 
-def walltimedelta(start: datetime, end: datetime, tz=None) -> datetime.timedelta:
+
+def walltimedelta(start: datetime, end: datetime, tz=None) -> timedelta:
     """
     Calculate the wall time difference between two datetime objects, accounting for DST.
 
@@ -20,14 +24,14 @@ def walltimedelta(start: datetime, end: datetime, tz=None) -> datetime.timedelta
         A timedelta object representing the wall time difference.
 
     Raises:
-        ValueError: If some datetime is naive and no timezone is provided, or if datetimes
+        ValueError: If some datetime is naive and no timezone provided, or if datetimes
                     are in different timezones.
 
     Examples:
         >>> from datetime import datetime
         >>> from dateutil.tz import gettz
         >>> from dateutil.tzutils import walltimedelta
-        >>> 
+        >>>
         >>> # DST transition (spring forward loses 1 hour)
         >>> tz = gettz("America/New_York")
         >>> start = datetime(2024, 3, 10, 1, 30, tzinfo=tz)  # before DST transition
@@ -37,9 +41,9 @@ def walltimedelta(start: datetime, end: datetime, tz=None) -> datetime.timedelta
     """
     if tz is None:
         if start.tzinfo is None or end.tzinfo is None:
-            raise ValueError('Some datetime is naive and no timezone provided.')
+            raise ValueError("Some datetime is naive and no timezone provided.")
         elif start.tzinfo is not end.tzinfo:
-            raise ValueError('Datetimes are in different timezones.')
+            raise ValueError("Datetimes are in different timezones.")
     else:
         start = start.replace(tzinfo=tz) if start.tzinfo is None else start
         end = end.replace(tzinfo=tz) if end.tzinfo is None else end

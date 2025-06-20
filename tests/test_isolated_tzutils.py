@@ -3,6 +3,14 @@ from datetime import datetime, timedelta
 from dateutil.tz import gettz
 
 
+import pytest
+from datetime import datetime, timedelta
+from dateutil.tz import gettz
+
+# Skip if tzutils is not available
+pytest.importorskip("dateutil.tzutils")
+
+
 def test_walltimedelta_basic():
     """Basic test for walltimedelta function."""
     # Import within test to ensure package is installed
