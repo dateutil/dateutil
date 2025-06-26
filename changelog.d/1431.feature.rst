@@ -1,1 +1,1 @@
-Add support for Python 3.13
+Added support for Python 3.13. Reported by @rani-pinchuk (gh issue #1430). Fixed by @rani-pinchuk (gh pr #1431).
