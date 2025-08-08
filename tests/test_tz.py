@@ -28,6 +28,7 @@ from dateutil.relativedelta import relativedelta, SU, TH
 from dateutil.parser import parse
 from dateutil import tz as tz
 from dateutil import zoneinfo
+from dateutil.tz import tzstr
 
 try:
     from dateutil import tzwin
@@ -2809,3 +2810,9 @@ def test_resolve_imaginary(tzi, dt, dt_exp):
     assert dt_r == dt_exp
     assert dt_r.tzname() == dt_exp.tzname()
     assert dt_r.utcoffset() == dt_exp.utcoffset()
+
+
+def test_tzstr():
+    result = tzstr("GMT")
+    assert result is not TypeError
+
