@@ -16,6 +16,7 @@ switch, and thus all their contributions are dual-licensed.
 - Adrien Cossa <cossa@MASKED>
 - Alec Nikolas Reiter <alecreiter@MASKED>
 - Alec Reiter <areiter@MASKED>
+- Alec Rosenbaum (gh: @AlecRosenbaum)
 - Aleksei Strizhak <alexei.mifrill.strizhak@MASKED> (gh: @Mifrill)
 - Alex Chamberlain (gh: @alexchamberlain) **D**
 - Alex Verdyan <verdyan@MASKED>
