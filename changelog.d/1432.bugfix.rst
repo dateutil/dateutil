@@ -1,0 +1,2 @@
+Fixed an issue where calling tzstr("GMT") would return a NoneType error when called without an
+explicit offset. Reported by @shukuchicoding (gh issue #1432). Fixed by @SilentNotion (gh pr #1435).

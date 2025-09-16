@@ -1089,6 +1089,8 @@ class tzstr(tzrange):
         # Here we break the compatibility with the TZ variable handling.
         # GMT-3 actually *means* the timezone -3.
         if res.stdabbr in ("GMT", "UTC") and not posix_offset:
+            if res.stdoffset is None:
+                res.stdoffset = 0
             res.stdoffset *= -1
 
         # We must initialize it first, since _delta() needs
