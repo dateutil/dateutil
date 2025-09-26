@@ -4,7 +4,7 @@ import os
 
 import setuptools
 from setuptools import setup, find_packages
-from setuptools.command.test import test as TestCommand
+from setuptools import Command
 
 from distutils.version import LooseVersion
 import warnings
@@ -20,7 +20,13 @@ if LooseVersion(setuptools.__version__) <= LooseVersion("24.3"):
                   UserWarning)
 
 
-class Unsupported(TestCommand):
+class Unsupported(Command):
+
+    user_options = []
+
+    def initialize_options(self):
+        pass
+
     def run(self):
         sys.stderr.write("Running 'test' with setup.py is not supported. "
                          "Use 'pytest' or 'tox' to run the tests.\n")
