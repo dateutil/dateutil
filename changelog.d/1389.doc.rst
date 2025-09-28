@@ -1,0 +1,1 @@
+Revised docs to improve clarity on imports for the Quick Example. Reported by @DamonGuzman (gh issue #1365). Fixed by @suryamak (gh pr #1389)
