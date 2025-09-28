@@ -2674,6 +2674,21 @@ class RRuleTest(unittest.TestCase):
                           datetime(1998, 9, 2, 9, 0),
                           datetime(1999, 9, 2, 9, 0)])
 
+    def testXNamed(self):
+        self.assertEqual(
+            list(
+                rrulestr(
+                    "DTSTART:20240122T124500\n"
+                    "RRULE;X-EVOLUTION-ENDDATE=20240205T124500:FREQ=WEEKLY;COUNT=3;BYDAY=MO\n"
+                )
+            ),
+            [
+                datetime(2024, 1, 22, 12, 45),
+                datetime(2024, 1, 29, 12, 45),
+                datetime(2024, 2, 5, 12, 45),
+            ],
+        )
+
     def testStrWithTZID(self):
         NYC = tz.gettz('America/New_York')
         self.assertEqual(list(rrulestr(

@@ -60,6 +60,7 @@ switch, and thus all their contributions are dual-licensed.
 - Igor <mrigor83@MASKED>
 - Ionuț Ciocîrlan <jdxlark@MASKED>
 - Jacqueline Chen <jacqueline415@outlook.com> (gh: @jachen20) **D**
+- Jairo Llopis (gh: @yajo) **D**
 - Jake Chorley (gh: @jakec-github) **D**
 - Jakub Kulík (gh: @kulikjak) **D**
 - Jan Studený <jendas1@MASKED>
