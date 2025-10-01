@@ -7,8 +7,11 @@ from ._parser import __doc__
 
 from .isoparser import isoparser, isoparse
 
+from .chain_parser import ChainParser
+
 __all__ = ['parse', 'parser', 'parserinfo',
            'isoparse', 'isoparser',
+           'ChainParser',
            'ParserError',
            'UnknownTimezoneWarning']
 
