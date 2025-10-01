@@ -28,6 +28,7 @@ switch, and thus all their contributions are dual-licensed.
 - Andrew Murray <radarhere@MASKED>
 - Arclight <arclight@MASKED> (gh: @arclightslavik)
 - Aritro Nandi <gurgenz221@gmail.com> (gh: @gurgenz221) **D**
+- Artem Demidov <stereoad@proton.me> (gh: @stereodamage) **D**
 - Bernat Gabor <bgabor8@bloomberg.net> (gh: @gaborbernat) **D**
 - Bradlee Speice <bradlee@speice.io> (gh: @bspeice) **D**
 - Brandon W Maister <quodlibetor@MASKED>
