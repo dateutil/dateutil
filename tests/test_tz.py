@@ -1897,6 +1897,21 @@ class TZICalTest(unittest.TestCase, TzFoldMixin):
             for test_type in ('name', 'offset', 'dst'):
                 self._testEST(start=start, test_type=test_type, tzc=tzc)
 
+    def testESTExperimentalProperties(self):
+        # Violating one-test-per-test rule because we're not set up to do
+        # parameterized tests and the manual proliferation is getting a bit
+        # out of hand.
+        tz_str_list = []
+        for line in self._gettz_str_tuple('America/New_York'):
+            tz_str_list.append(line)
+            tz_str_list.append("X-NON-STANDARD-PROPERTY:Value")
+
+        tzc = tz.tzical(StringIO('\n'.join(tz_str_list))).get()
+
+        for start in (True, False):
+            for test_type in ('name', 'offset', 'dst'):
+                self._testEST(start=start, test_type=test_type, tzc=tzc)
+
     def _testMultizone(self, start, test_type):
         tzstrs = (self._gettz_str('America/New_York'),
                   self._gettz_str('America/Los_Angeles'))
