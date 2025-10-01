@@ -4,8 +4,8 @@ import hashlib
 import json
 import io
 
-from six.moves.urllib import request
-from six.moves.urllib import error as urllib_error
+import urllib.error
+import urllib.request
 
 try:
     import dateutil
@@ -35,10 +35,10 @@ def main(metadata_file):
         for ii, releases_url in enumerate(releases_urls):
             print("Downloading tz file from mirror {ii}".format(ii=ii))
             try:
-                request.urlretrieve(os.path.join(releases_url,
-                                                 metadata['tzdata_file']),
-                                    metadata['tzdata_file'])
-            except urllib_error.URLError as e:
+                urllib.request.urlretrieve(os.path.join(releases_url,
+                                                        metadata['tzdata_file']),
+                                           metadata['tzdata_file'])
+            except urllib.error.URLError as e:
                 print("Download failed, trying next mirror.")
                 last_error = e
                 continue
