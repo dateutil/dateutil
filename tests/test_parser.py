@@ -184,6 +184,11 @@ def test_parse_yearfirst(sep):
     result = parse(dstr, yearfirst=True)
     assert result == expected
 
+@pytest.mark.parametrize('dstr,expected',[('January15,7626',datetime(2023, 1, 15, 0, 0))])
+def test_parse_without_padding_date(dstr,expected):
+    result=parse(dstr)
+    assert result==expected
+
 
 @pytest.mark.parametrize('dstr,expected', [
     ("Thu Sep 25 10:36:28 BRST 2003", datetime(2003, 9, 25, 10, 36, 28)),
