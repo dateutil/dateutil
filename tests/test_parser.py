@@ -541,6 +541,11 @@ class ParserTest(unittest.TestCase):
             res = parse(s1, fuzzy=True)
         self.assertEqual(res, datetime(1945, 1, 29, 14, 45))
 
+    def testFuzzyDashError(self):
+        r = parse("12:34 -", fuzzy=True)
+        self.assertEqual(r.hour, 12)
+        self.assertEqual(r.minute, 34)
+
     def testRandomFormat24(self):
         self.assertEqual(parse("0:00 PM, PST", default=self.default,
                                ignoretz=True),
