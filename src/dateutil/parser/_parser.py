@@ -181,6 +181,20 @@ class _timelex(object):
         if state == '0.' and token.count('.') == 0:
             token = token.replace(',', '.')
 
+        # 'MM.YYYY' format
+        elif state == '0.' and token.count('.') == 1 and len(token) == 7:
+          tokenstack = []
+          tokenlist = re.split('(\W)', token)
+          for t in tokenlist:
+              if t.isdigit() or t == '.':
+                  tokenstack.append(t)
+              else:
+                  tokenstack.clear()
+                  break
+          if tokenstack:
+              self.tokenstack.extend(tokenstack)
+              token = self.tokenstack.pop(0)
+
         return token
 
     def __iter__(self):
