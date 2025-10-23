@@ -118,7 +118,7 @@ class _timelex(object):
                     state = 'a'
                 elif self.isnum(nextchar):
                     state = '0'
-                elif self.isspace(nextchar):
+                elif self.isspace(nextchar) or self.isunderscore(nextchar):
                     token = ' '
                     break  # emit token
                 else:
@@ -214,6 +214,11 @@ class _timelex(object):
     def isspace(cls, nextchar):
         """ Whether the next character is whitespace """
         return nextchar.isspace()
+
+    @classmethod
+    def isunderscore(cls, nextchar):
+        """ Whether the next character is whitespace """
+        return nextchar == '_'
 
 
 class _resultbase(object):
