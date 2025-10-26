@@ -1,0 +1,1 @@
+Add explicit support for Python 3.14. Change by @nsano-rururu (gh pr #1445)
