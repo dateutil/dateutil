@@ -106,6 +106,7 @@ switch, and thus all their contributions are dual-licensed.
 - Rustem Saiargaliev (gh: @amureki) **D**
 - Satyabrat Bhol <satyabrat35@MASKED> (gh: @Satyabrat35) **D**
 - Savraj <savraj@MASKED>
+- Sebastian Kreft <gh: @sk-> **D**
 - Sergey Vishnikin <armicron@MASKED>
 - Sherry Zhou (gh: @cssherry) **D**
 - Siping Meng (gh: @smeng10) **D**
