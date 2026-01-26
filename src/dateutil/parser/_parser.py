@@ -119,7 +119,7 @@ class _timelex(object):
                 elif self.isnum(nextchar):
                     state = '0'
                 elif self.isspace(nextchar):
-                    token_parts = [' ']
+                    token_parts = [" "]
                     break  # emit token
                 else:
                     break  # emit token
@@ -140,7 +140,9 @@ class _timelex(object):
                 # numbers until we find something that doesn't fit.
                 if self.isnum(nextchar):
                     token_parts.append(nextchar)
-                elif nextchar == '.' or (nextchar == ',' and len(token_parts) >= 2):
+                elif nextchar == "." or (
+                    nextchar == "," and len(token_parts) >= 2
+                ):
                     token_parts.append(nextchar)
                     state = '0.'
                 else:
@@ -152,7 +154,7 @@ class _timelex(object):
                 seenletters = True
                 if nextchar == '.' or self.isword(nextchar):
                     token_parts.append(nextchar)
-                elif self.isnum(nextchar) and token_parts[-1] == '.':
+                elif self.isnum(nextchar) and token_parts[-1] == ".":
                     token_parts.append(nextchar)
                     state = '0.'
                 else:
@@ -163,7 +165,7 @@ class _timelex(object):
                 # break up the tokens later.
                 if nextchar == '.' or self.isnum(nextchar):
                     token_parts.append(nextchar)
-                elif self.isword(nextchar) and token_parts[-1] == '.':
+                elif self.isword(nextchar) and token_parts[-1] == ".":
                     token_parts.append(nextchar)
                     state = 'a.'
                 else:
