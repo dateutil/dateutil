@@ -1489,6 +1489,16 @@ class TZStrTest(unittest.TestCase, TzFoldMixin):
         with self.assertRaises(ValueError):
             tz.tzstr('InvalidString;439999')
 
+    def testTzStrGMTNoOffset(self):
+        # GH #1432: tzstr("GMT") and tzstr("UTC") without an explicit offset
+        # should not raise TypeError; they represent UTC+00:00.
+        gmt = tz.tzstr("GMT")
+        utc = tz.tzstr("UTC")
+        self.assertEqual(datetime(2025, 1, 1, tzinfo=gmt).utcoffset(),
+                         timedelta(0))
+        self.assertEqual(datetime(2025, 1, 1, tzinfo=utc).utcoffset(),
+                         timedelta(0))
+
     def testTzStrSingleton(self):
         tz1 = tz.tzstr('EST5EDT')
         tz2 = tz.tzstr('CST4CST')
