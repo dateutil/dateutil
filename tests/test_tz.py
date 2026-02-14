@@ -1494,10 +1494,12 @@ class TZStrTest(unittest.TestCase, TzFoldMixin):
         # should not raise TypeError; they represent UTC+00:00.
         gmt = tz.tzstr("GMT")
         utc = tz.tzstr("UTC")
-        self.assertEqual(datetime(2025, 1, 1, tzinfo=gmt).utcoffset(),
-                         timedelta(0))
-        self.assertEqual(datetime(2025, 1, 1, tzinfo=utc).utcoffset(),
-                         timedelta(0))
+        self.assertEqual(
+            datetime(2025, 1, 1, tzinfo=gmt).utcoffset(), timedelta(0)
+        )
+        self.assertEqual(
+            datetime(2025, 1, 1, tzinfo=utc).utcoffset(), timedelta(0)
+        )
 
     def testTzStrSingleton(self):
         tz1 = tz.tzstr('EST5EDT')
