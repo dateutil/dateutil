@@ -3049,6 +3049,24 @@ class RRuleTest(unittest.TestCase):
                                  bysetpos=(-1, 0, 1),
                                  dtstart=datetime(1997, 9, 2, 9, 0))
 
+    def testBadInterval(self):
+        self.assertRaises(
+            ValueError,
+            rrule,
+            MONTHLY,
+            interval=0,
+            dtstart=datetime(1997, 9, 2, 9, 0),
+        )
+
+    def testBadIntervalNegative(self):
+        self.assertRaises(
+            ValueError,
+            rrule,
+            DAILY,
+            interval=-1,
+            dtstart=datetime(1997, 9, 2, 9, 0),
+        )
+
     # Tests to ensure that str(rrule) works
     def testToStrYearly(self):
         rule = rrule(YEARLY, count=3, dtstart=datetime(1997, 9, 2, 9, 0))
