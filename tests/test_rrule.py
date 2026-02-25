@@ -13,7 +13,9 @@ from dateutil.rrule import (
     MO, TU, WE, TH, FR, SA, SU
 )
 
-from freezegun import freeze_time
+from dateutil import rrule as rrule_mod
+
+from ._common import mock_datetime_now
 
 import pytest
 
@@ -4616,7 +4618,8 @@ class RRuleTest(unittest.TestCase):
 
 
 @pytest.mark.rrule
-@freeze_time(datetime(2018, 3, 6, 5, 36, tzinfo=tz.UTC))
+@mock_datetime_now(datetime(2018, 3, 6, 5, 36, tzinfo=tz.UTC),
+                   module=rrule_mod)
 def test_generated_aware_dtstart():
     dtstart_exp = datetime(2018, 3, 6, 5, 36, tzinfo=tz.UTC)
     UNTIL = datetime(2018, 3, 6, 8, 0, tzinfo=tz.UTC)
@@ -4629,7 +4632,8 @@ def test_generated_aware_dtstart():
 @pytest.mark.rrule
 @pytest.mark.rrulestr
 @pytest.mark.xfail(reason="rrulestr loses time zone, gh issue #637")
-@freeze_time(datetime(2018, 3, 6, 5, 36, tzinfo=tz.UTC))
+@mock_datetime_now(datetime(2018, 3, 6, 5, 36, tzinfo=tz.UTC),
+                   module=rrule_mod)
 def test_generated_aware_dtstart_rrulestr():
     rrule_without_dtstart = rrule(freq=HOURLY,
                                   until=datetime(2018, 3, 6, 8, 0,

@@ -7,22 +7,22 @@ from dateutil import utils
 from dateutil.tz import UTC
 from dateutil.utils import within_delta
 
-from freezegun import freeze_time
+from ._common import mock_datetime_now
 
 NYC = tz.gettz("America/New_York")
 
 
-@freeze_time(datetime(2014, 12, 15, 1, 21, 33, 4003))
+@mock_datetime_now(datetime(2014, 12, 15, 1, 21, 33, 4003), module=utils)
 def test_utils_today():
     assert utils.today() == datetime(2014, 12, 15, 0, 0, 0)
 
 
-@freeze_time(datetime(2014, 12, 15, 12), tz_offset=5)
+@mock_datetime_now(datetime(2014, 12, 15, 12), module=utils)
 def test_utils_today_tz_info():
     assert utils.today(NYC) == datetime(2014, 12, 15, 0, 0, 0, tzinfo=NYC)
 
 
-@freeze_time(datetime(2014, 12, 15, 23), tz_offset=5)
+@mock_datetime_now(datetime(2014, 12, 16, 4), module=utils)
 def test_utils_today_tz_info_different_day():
     assert utils.today(UTC) == datetime(2014, 12, 16, 0, 0, 0, tzinfo=UTC)
 

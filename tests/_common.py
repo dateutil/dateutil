@@ -1,10 +1,13 @@
 from __future__ import unicode_literals
+import datetime
 import os
 import time
 import subprocess
 import warnings
 import tempfile
 import pickle
+from functools import wraps
+from unittest import mock
 
 import pytest
 
@@ -231,3 +234,122 @@ class UnsetTzClass(object):
 
 
 UnsetTz = UnsetTzClass()
+
+
+class mock_datetime_now(object):
+    """
+    Context manager and decorator to mock ``datetime.now()`` and
+    ``datetime.utcnow()`` in the specified module, while preserving all
+    other datetime functionality (constructors, ``combine``, etc.).
+
+    This is a drop-in replacement for ``freezegun.freeze_time`` for the
+    limited use case of freezing *now*.
+
+    :param dt:
+        A :class:`datetime.datetime` to be returned by ``now()`` and
+        ``utcnow()`` calls within the target module.
+
+    :param module:
+        The module whose ``datetime`` reference should be patched. This
+        should be the *actual module object* (e.g. ``dateutil.utils``),
+        not a string.
+
+    Usage as a decorator::
+
+        @mock_datetime_now(datetime(2020, 1, 1), module=dateutil.utils)
+        def test_something():
+            ...
+
+    Usage as a context manager::
+
+        with mock_datetime_now(datetime(2020, 1, 1), module=dateutil.utils):
+            ...
+    """
+
+    def __init__(self, dt, module):
+        self.frozen = dt
+        self.module = module
+
+    def _make_mock_datetime(self, real_datetime):
+        """Build a datetime subclass whose ``now``/``utcnow`` are frozen.
+
+        The returned class uses a custom metaclass so that
+        ``isinstance(obj, MockDatetime)`` returns ``True`` for any instance
+        of the *real* datetime class (or its subclasses), preserving the
+        behaviour code expects when doing type-checks against
+        ``datetime.datetime``.
+        """
+        frozen = self.frozen
+
+        class _DatetimeMeta(type(real_datetime)):
+            """Metaclass that makes isinstance() treat MockDatetime
+            the same as the original datetime class."""
+
+            def __instancecheck__(cls, instance):
+                return isinstance(instance, real_datetime)
+
+            def __subclasscheck__(cls, subclass):
+                if subclass is cls or issubclass(subclass, real_datetime):
+                    return True
+                return super().__subclasscheck__(subclass)
+
+        class MockDatetime(real_datetime, metaclass=_DatetimeMeta):
+            @classmethod
+            def now(cls, tz=None):
+                if tz is not None:
+                    return frozen.replace(tzinfo=tz)
+                return frozen
+
+            @classmethod
+            def utcnow(cls):
+                return frozen
+
+        MockDatetime.__name__ = "datetime"
+        MockDatetime.__qualname__ = "datetime"
+        return MockDatetime
+
+    def __enter__(self):
+        # Determine how datetime is imported in the target module.
+        attr = getattr(self.module, "datetime")
+        if isinstance(attr, type) and issubclass(attr, datetime.datetime):
+            # ``from datetime import datetime`` style import --
+            # the module has a direct reference to the datetime *class*.
+            real_dt = attr
+            mock_dt = self._make_mock_datetime(real_dt)
+            self._patcher = mock.patch.object(
+                self.module, "datetime", mock_dt
+            )
+        else:
+            # ``import datetime`` style import -- *attr* is the datetime
+            # **module**.  We must NOT mutate the real module (that would
+            # affect every other module that imported it).  Instead, build
+            # a thin proxy module object whose ``datetime`` attribute is our
+            # mock class, and patch the *target* module's reference.
+            import types
+            real_dt = attr.datetime
+            mock_dt = self._make_mock_datetime(real_dt)
+
+            proxy = types.ModuleType("datetime")
+            # Copy every public attribute from the real module ...
+            for name in dir(attr):
+                if not name.startswith("_"):
+                    setattr(proxy, name, getattr(attr, name))
+            # ... then override just the class.
+            proxy.datetime = mock_dt
+
+            self._patcher = mock.patch.object(
+                self.module, "datetime", proxy
+            )
+        self._patcher.start()
+        return self
+
+    def __exit__(self, *args):
+        self._patcher.stop()
+
+    def __call__(self, func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            with self:
+                return func(*args, **kwargs)
+
+        return wrapper
