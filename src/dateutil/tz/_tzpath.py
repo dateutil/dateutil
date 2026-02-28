@@ -52,7 +52,7 @@ except ImportError:
         if tzpaths is not None:
             if isinstance(tzpaths, (str, bytes)):
                 raise TypeError(
-                    "tzpaths must be a list or tuple, not %s: %s"
+                    "tzpaths must be a sequence, not %s: %s"
                     % (
                         type(tzpaths),
                         repr(tzpaths),
