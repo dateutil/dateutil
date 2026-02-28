@@ -23,8 +23,8 @@ CACHE_DIR = ".cache"
 ZONEINFO_DIR = os.path.join(CACHE_DIR, "zoneinfo")
 CACHE_INFO_FILE = os.path.join(CACHE_DIR, "zoneinfo_cache_info")
 
-MIN_DT_V1 = datetime.fromtimestamp(-(2**31), tz=tz.UTC).replace(tzinfo=None)
-MAX_DT_V1 = datetime.fromtimestamp(2**31, tz=tz.UTC).replace(tzinfo=None)
+MIN_DT_V1 = datetime(1970, 1, 1) - timedelta(2**31)
+MAX_DT_V1 = datetime(1970, 1, 1) + timedelta(2**31)
 
 ####
 # Backports
