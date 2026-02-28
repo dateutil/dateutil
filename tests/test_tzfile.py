@@ -353,7 +353,7 @@ def construct_zone(transitions, after=None, version=3):
             if after is None:
                 after = ""
             zonefile.write(after.encode("ascii"))
-            zonefile.write(b"\x0A")
+            zonefile.write(b"\x0a")
 
     zonefile.seek(0)
     return zonefile
