@@ -184,7 +184,7 @@ def zoneinfo_cache(request):
     return os.path.abspath(cache_dir), request.param
 
 
-def extract_tzif_files(input_file, cache_dir) -> None:
+def extract_tzif_files(input_file, cache_dir):
     """
     Extract TZif files from a JSON file and save them to the cache directory.
 
