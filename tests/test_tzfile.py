@@ -1,7 +1,10 @@
 """Tests for `tz.tzfile`."""
 
+import base64
 import contextlib
 import functools
+import gzip
+import json
 import os
 import shutil
 import struct
@@ -16,6 +19,13 @@ import six
 from dateutil import tz
 
 TZPATH_LOCK = threading.Lock()
+CACHE_DIR = ".cache"
+ZONEINFO_DIR = os.path.join(CACHE_DIR, "zoneinfo")
+CACHE_INFO_FILE = os.path.join(CACHE_DIR, "zoneinfo_cache_info")
+
+MIN_DT_V1 = datetime.fromtimestamp(-(2**31), tz=tz.UTC).replace(tzinfo=None)
+MAX_DT_V1 = datetime.fromtimestamp(2**31, tz=tz.UTC).replace(tzinfo=None)
+
 ####
 # Backports
 functools_cache = getattr(functools, "cache", None)
@@ -93,6 +103,115 @@ def _copy_resource_to(resource, path):
     with _open_binary("tests.resources", resource) as f:
         with open(path, "wb") as out_f:
             out_f.write(f.read())
+
+
+@pytest.fixture
+def transition(request, tzpath_zoneinfo_cache):
+    key, dt, fold, offset = request.param
+    if dt.tzinfo is not None:
+        dt_n = dt.astimezone(tz.UTC).replace(tzinfo=None)
+    else:
+        dt_n = dt
+
+    if tzpath_zoneinfo_cache == "v1" and not (MIN_DT_V1 <= dt_n <= MAX_DT_V1):
+        pytest.skip(
+            "Out of range for V1 files"
+        )  # TODO: Avoid generating these tests at all
+    yield ExpectedTransition(key=key, dt=dt, fold=fold, offset=offset)
+
+
+@pytest.fixture(scope="module")
+def zoneinfo_cache(request):
+    """
+    A fixture that extracts TZif files from a JSON file mapping timezone names to
+    base64-encoded gzipped TZif data.
+
+    The fixture caches the extracted files and only re-extracts if the source file
+    has been modified since the cache was last created.
+
+    Returns:
+        Path: Path to the directory containing the extracted timezone files.
+    """
+    input_file = os.path.join(
+        "tests/resources/data/", "zoneinfo_%s.json" % request.param
+    )
+    cache_dir = os.path.join(
+        ZONEINFO_DIR, os.path.splitext(os.path.basename(input_file))[0]
+    )
+
+    # Create cache directories if they don't exist
+    if not os.path.exists(CACHE_DIR):
+        os.mkdir(CACHE_DIR)
+    if not os.path.exists(ZONEINFO_DIR):
+        os.mkdir(ZONEINFO_DIR)
+    if not os.path.exists(cache_dir):
+        os.mkdir(cache_dir)
+
+    # Check if the cache needs to be updated
+    cache_valid = False
+    try:
+        if os.path.exists(CACHE_INFO_FILE):
+            with open(CACHE_INFO_FILE, "rt") as jf:
+                cache_info = json.load(jf)
+            cache_valid = six.ensure_text(
+                input_file
+            ) in cache_info and cache_info[
+                six.ensure_text(input_file)
+            ] >= os.path.getmtime(
+                input_file
+            )
+    except (json.JSONDecodeError, OSError):
+        # If there's an error reading the cache info, invalidate the cache
+        cache_valid = False
+
+    if not cache_valid:
+        # Cache is invalid, need to extract files
+        extract_tzif_files(input_file, cache_dir)
+
+        # Update cache info
+        cache_info = {}
+        if os.path.exists(CACHE_INFO_FILE):
+            with open(CACHE_INFO_FILE, "rt") as jf:
+                try:
+                    cache_info = json.load(jf)
+                except json.JSONDecodeError:
+                    cache_info = {}
+
+        cache_info[six.ensure_text(input_file)] = os.path.getmtime(input_file)
+        with open(CACHE_INFO_FILE, "wt") as jf:
+            json.dump(cache_info, jf, indent=2, sort_keys=True)
+
+    return os.path.abspath(cache_dir), request.param
+
+
+def extract_tzif_files(input_file, cache_dir) -> None:
+    """
+    Extract TZif files from a JSON file and save them to the cache directory.
+
+    Args:
+        input_file: Path to the JSON file containing the TZif data.
+        cache_dir: Path to the directory where the extracted files will be stored.
+    """
+    try:
+        with open(input_file, "r") as f:
+            timezone_data = json.load(f)
+
+        for timezone_name, encoded_data in timezone_data.items():
+            # Create the directory structure for the timezone
+            timezone_path = os.path.join(cache_dir, timezone_name)
+            os.makedirs(os.path.dirname(timezone_path), exist_ok=True)
+
+            # Decode and decompress the TZif data
+            compressed_data = base64.b64decode(encoded_data)
+            tzif_data = gzip.decompress(compressed_data)
+
+            # Write the TZif file
+            with open(timezone_path, "wb") as f:
+                f.write(tzif_data)
+    except (json.JSONDecodeError, OSError) as e:
+        raise RuntimeError(
+            f"Failed to extract TZif files from {input_file}: {e}"
+        )
 
 
 def pop_tzdata_modules():
@@ -286,23 +405,30 @@ def set_tzpath(tzpath, block_tzdata=False):
             tz._tzpath.reset_tzpath(to=tzpath)
             yield
         finally:
-            sys.modules.pop("tzdata")
+            sys.modules.pop("tzdata", None)
             for modname, module in tzdata_modules.items():
                 sys.modules[modname] = module
 
             tz._tzpath.reset_tzpath(to=old_tzpath)
 
 
-@pytest.fixture(scope="package")
-def tzpath(request):
-    """Parameterizable fixture that sets the tzpath."""
-    if request.param is None:
-        cm = tz._nullcontext()
-    else:
-        cm = set_tzpath(request.param)
+# @pytest.fixture(scope="package")
+# def tzpath(request):
+#     """Parameterizable fixture that sets the tzpath."""
+#     if request.param is None:
+#         cm = tz._nullcontext()
+#     else:
+#         cm = set_tzpath(request.param)
 
-    with cm:
-        yield
+#     with cm:
+#         yield
+
+
+@pytest.fixture
+def tzpath_zoneinfo_cache(zoneinfo_cache):
+    # Parameterize this indirectly by parameterizing zoneinfo_cache
+    with set_tzpath((zoneinfo_cache[0],), block_tzdata=True):
+        yield zoneinfo_cache[1]
 
 
 @functools_cache
@@ -408,6 +534,14 @@ class ZoneTransition(object):
             return self.transition + self.delta
         else:
             return self.transition
+
+
+@attr.frozen
+class ExpectedTransition:
+    key = attr.field()
+    dt = attr.field()
+    fold = attr.field()
+    offset = attr.field()
 
 
 ####
@@ -646,14 +780,17 @@ def test_fromutc_errors(dt, errtype):
 def _get_unambiguous_transitions():
     for key, zone_transitions in transition_examples():
         for zone_transition in zone_transitions:
+            # key, datetime, fold, offset
             yield (
                 key,
                 zone_transition.transition - timedelta(days=2),
+                0,
                 zone_transition.offset_before,
             )
             yield (
                 key,
                 zone_transition.transition + timedelta(days=2),
+                0,
                 zone_transition.offset_after,
             )
 
@@ -661,15 +798,18 @@ def _get_unambiguous_transitions():
 @pytest.mark.skipif(
     rearguard(), reason="Skipping TZ tests with rearguard files"
 )
-@pytest.mark.parametrize("key, dt, offset", _get_unambiguous_transitions())
-def test_unambiguous(key, dt, offset):
+@pytest.mark.parametrize("zoneinfo_cache", ["v1", "slim", "fat"], indirect=True)
+@pytest.mark.parametrize(
+    "transition", _get_unambiguous_transitions(), indirect=True
+)
+def test_unambiguous(transition):
     """Test times that are *not* ambiguous."""
-    tzi = tz.gettz(key)
-    dt = dt.replace(tzinfo=tzi)
+    tzi = tz.gettz(transition.key)
+    dt = transition.dt.replace(tzinfo=tzi)
 
-    assert dt.tzname() == offset.tzname
-    assert dt.utcoffset() == offset.utcoffset
-    assert dt.dst() == offset.dst
+    assert dt.tzname() == transition.offset.tzname
+    assert dt.utcoffset() == transition.offset.utcoffset
+    assert dt.dst() == transition.offset.dst
 
 
 @as_list
@@ -709,15 +849,16 @@ def _get_folds_and_gaps():
 @pytest.mark.skipif(
     rearguard(), reason="Skipping TZ tests with rearguard files"
 )
-@pytest.mark.parametrize("key, dt, fold, offset", _get_folds_and_gaps())
-def test_gaps_and_folds(key, dt, fold, offset):
+@pytest.mark.parametrize("zoneinfo_cache", ["v1", "slim", "fat"], indirect=True)
+@pytest.mark.parametrize("transition", _get_folds_and_gaps(), indirect=True)
+def test_gaps_and_folds(transition):
     """Test times that are ambiguous."""
-    tzi = tz.gettz(key)
-    dt = tz.enfold(dt.replace(tzinfo=tzi), fold)
+    tzi = tz.gettz(transition.key)
+    dt = tz.enfold(transition.dt.replace(tzinfo=tzi), transition.fold)
 
-    assert dt.tzname() == offset.tzname
-    assert dt.utcoffset() == offset.utcoffset
-    assert dt.dst() == offset.dst
+    assert dt.tzname() == transition.offset.tzname
+    assert dt.utcoffset() == transition.offset.utcoffset
+    assert dt.dst() == transition.offset.dst
 
 
 @as_list
@@ -727,16 +868,18 @@ def _get_folds_from_utc():
             if not zt.fold:
                 continue
             dt_utc = zt.transition_utc
-            yield (key, dt_utc - SECOND, 0)
-            yield (key, dt_utc + SECOND, 1)
+            # key, dt_utc, expected_fold, offset
+            yield (key, dt_utc - SECOND, 0, None)
+            yield (key, dt_utc + SECOND, 1, None)
 
 
-@pytest.mark.parametrize("key, dt_utc, expected_fold", _get_folds_from_utc())
-def test_folds_from_utc(key, dt_utc, expected_fold):
-    tzi = tz.gettz(key)
-    dt = dt_utc.astimezone(tzi)
+@pytest.mark.parametrize("zoneinfo_cache", ["v1", "slim", "fat"], indirect=True)
+@pytest.mark.parametrize("transition", _get_folds_from_utc(), indirect=True)
+def test_folds_from_utc(transition):
+    tzi = tz.gettz(transition.key)
+    dt = transition.dt.astimezone(tzi)
 
-    assert getattr(dt, "fold", 0) == expected_fold
+    assert getattr(dt, "fold", 0) == transition.fold
 
 
 def test_time_fixed_offset():
