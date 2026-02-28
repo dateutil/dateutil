@@ -1145,6 +1145,10 @@ def available_iana_timezones():
     These are suitable for use with :func:`gettz`. This is essentially a direct
     port of :py:func:`zoneinfo.available_timezones`.
 
+    The search includes time zones found on :data:`TZPATH` as well as any
+    time zones provided by the `tzdata <https://pypi.org/project/tzdata/>`_
+    package if it is installed.
+
     :return:
         Returns a mutable set containing strings of time zones. Each call will
         return a fresh set.

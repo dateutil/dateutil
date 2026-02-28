@@ -19,7 +19,9 @@ Objects
     can be set by the ``PYTHONTZPATH`` environment variable, or updated
     via :func:`reset_tzpath`.
 
-    .. versionadded:: 2.9.0
+    In Python >= 3.9, this is an alias for ``zoneinfo.TZPATH``.
+
+    .. versionadded:: 3.0.0
 
 Functions
 ---------
@@ -32,6 +34,20 @@ Functions
 .. autofunction:: available_iana_timezones
 
 .. autofunction:: reset_tzpath
+
+.. py:function:: reset_tzpath(to)
+
+    Sets the value of :data:`TZPATH`. In Python > 3.9, this is an alias for
+    ``zoneinfo.reset_tzpath``, and calling it *will* reset the ``TZPATH`` for
+    both ``dateutil`` and ``zoneinfo``.
+
+    :param to:
+        A sequence of absolute paths to search for zoneinfo files.  If
+        ``None`` (default), the search path is reset to the default search
+        path, which is determined by the ``PYTHONTZPATH`` environment
+        variable, or a set of platform-specific defaults.
+
+    .. versionadded:: 3.0.0
 
 .. autofunction:: enfold
 
@@ -74,22 +90,16 @@ Classes
 
 IANA Time Zone Data
 -------------------
-By default, ``dateutil`` looks for IANA time zone data in a variety of
-different places. It starts with the search path defined in :data:`TZPATH`,
-which is populated from the ``PYTHONTZPATH`` environment variable, or if that
-is not set, it defaults to common system locations (e.g.
-``/usr/share/zoneinfo``).
+``dateutil`` attempts to search for time zone data the same way that the
+standard library does. In versions of Python that include the ``zoneinfo``
+module, :data:`TZPATH` is a proxy for ``zoneinfo.TZPATH`` and
+:function:`reset_tzpath` is an alias for ``zoneinfo.reset_tzpath``.
 
-If no data is found on the search path, ``dateutil`` will look for the
-`tzdata <https://pypi.org/project/tzdata/>`_ package, which provides a
-self-contained, up-to-date source of IANA time zone data for Python. This is
-the recommended way to ensure consistent and up-to-date time zone information
-across all platforms.
+``dateutil`` also backports the search path logic to Python versions < 3.9, and
+the environment variable ``PYTHONTZPATH`` can be used (though there is no
+equivalent to the Python compiler option).
 
-If the search path and ``tzdata`` are both empty or unavailable, ``dateutil``
-can also use Windows-specific zone information on Windows systems via the
-:class:`tzwin` and :class:`tzwinlocal` classes.
-
-You can customize the search path by setting the ``PYTHONTZPATH`` environment
-variable before starting your Python process, or by calling
-:func:`reset_tzpath` at runtime.
+``dateutil`` also takes an unconditional dependency on the `tzdata
+<https://pypi.org/project/tzdata/>`_ package, which provides a self-contained,
+up-to-date source of IANA time zone data for Python. This data source is only
+used if no system time zone information is found on the search path.
