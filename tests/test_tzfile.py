@@ -349,7 +349,7 @@ def construct_zone(transitions, after=None, version=3):
 
         # Finally we write the TZ string if we're writing a Version 2+ file
         if v > 0:
-            zonefile.write(b"\x0A")
+            zonefile.write(b"\x0a")
             if after is None:
                 after = ""
             zonefile.write(after.encode("ascii"))
