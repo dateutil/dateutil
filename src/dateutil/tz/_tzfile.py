@@ -99,14 +99,14 @@ class tzfile(_tzinfo):
         ``fileobj``'s ``name`` attribute or to ``repr(fileobj)``.
 
     This class is intended to be mostly equivalent to the standard library
-    ``zoneinfo.ZoneInfo`` class. The primary differences are:
+    :py:class:`zoneinfo.ZoneInfo` class. The primary differences are:
 
         * All caching in ``tzfile`` is handled by :func:`tz.gettz` level (you
           should generally not attempt to construct a ``tzfile`` directly).
         * ``tzfile`` objects are pickled by value rather than by reference to
           the IANA key.
-        * ``tzfile`` has equality-by-value semantics, whereas ``ZoneInfo`` has
-          equality-by-identity semantics.
+        * ``tzfile`` has equality-by-value semantics, whereas
+          :py:class:`~zoneinfo.ZoneInfo` has equality-by-identity semantics.
 
     See `Sources for Time Zone and Daylight Saving Time Data
     <https://data.iana.org/time-zones/tz-link.html>`_ for more information.
@@ -123,8 +123,8 @@ class tzfile(_tzinfo):
         :func:`dateutil.tz.gettz` with the zone identifier.
 
     .. versionchanged:: 3.0.0
-        ``tzfile`` is now a partial backport of ``zoneinfo.ZoneInfo``, which
-        brings with it support for Version 2 and 3 ``tzfile(5)`` binaries.
+        ``tzfile`` is now a partial backport of :py:class:`zoneinfo.ZoneInfo`,
+        which brings with it support for Version 2 and 3 ``tzfile(5)`` binaries.
 
     **Examples:**
 
