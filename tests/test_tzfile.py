@@ -385,7 +385,7 @@ def zone_from_tzstr(tzstr):
     # Write the footer
     zonefile.write(b"\x0a")
     zonefile.write(tzstr.encode("ascii"))
-    zonefile.write(b"\x0A")
+    zonefile.write(b"\x0a")
 
     zonefile.seek(0)
 
