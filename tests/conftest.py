@@ -1,4 +1,6 @@
+import datetime
 import os
+
 import pytest
 
 
@@ -6,13 +8,13 @@ import pytest
 # See: https://stackoverflow.com/a/53198349/467366
 def pytest_collection_modifyitems(items):
     for item in items:
-        marker_getter = getattr(item, 'get_closest_marker', None)
+        marker_getter = getattr(item, "get_closest_marker", None)
 
         # Python 3.3 support
         if marker_getter is None:
             marker_getter = item.get_marker
 
-        marker = marker_getter('xfail')
+        marker = marker_getter("xfail")
 
         # Need to query the args because conditional xfail tests still have
         # the xfail mark even if they are not expected to fail
@@ -24,16 +26,17 @@ def set_tzpath():
     """
     Sets the TZPATH variable if it's specified in an environment variable.
     """
-    tzpath = os.environ.get('DATEUTIL_TZPATH', None)
+    tzpath = os.environ.get("DATEUTIL_TZPATH", None)
 
     if tzpath is None:
         return
 
-    path_components = tzpath.split(':')
+    path_components = tzpath.split(":")
 
     print("Setting TZPATH to {}".format(path_components))
 
     from dateutil import tz
+
     tz.TZPATHS.clear()
     tz.TZPATHS.extend(path_components)
 
