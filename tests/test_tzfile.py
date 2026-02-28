@@ -324,7 +324,7 @@ def construct_zone(transitions, after=None, version=3):
                 ">{timecnt}{time_type}".format(
                     timecnt=timecnt, time_type=time_type
                 ),
-                *trans_times
+                *trans_times,
             )
         )
         zonefile.write(
