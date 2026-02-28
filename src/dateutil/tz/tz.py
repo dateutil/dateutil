@@ -940,7 +940,12 @@ def __get_gettz():
             tzfile('/etc/localtime')
 
         This function is also the preferred way to map IANA tz database keys
-        to :class:`tzfile` objects:
+        to :class:`tzfile` objects. It searches for these keys in the
+        following order:
+
+        1. On the search path defined in :data:`TZPATH`.
+        2. Using the system-specific mechanisms (e.g. the Windows registry).
+        3. In the `tzdata <https://pypi.org/project/tzdata/>`_ Python package.
 
         .. code-block:: python3
 

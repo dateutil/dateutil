@@ -47,6 +47,16 @@ except ImportError:
         )
 
     def reset_tzpath(to=None):
+        """Sets the value of :data:`TZPATH` for the current thread.
+
+        :param to:
+            A sequence of absolute paths to search for zoneinfo files.  If
+            ``None`` (default), the search path is reset to the default search
+            path, which is determined by the ``PYTHONTZPATH`` environment
+            variable, or a set of platform-specific defaults.
+
+        .. versionadded:: 2.9.0
+        """
         global TZPATH
         tzpaths = to
         if tzpaths is not None:
@@ -86,6 +96,17 @@ except ImportError:
                 callback(TZPATH)
 
     TZPATH = ()
+    """A tuple of paths searched for IANA time zone files.
+
+    This is an immutable tuple containing the current search path for IANA
+    time zone data. It is initialized from the ``PYTHONTZPATH`` environment
+    variable if set, otherwise it defaults to platform-specific locations
+    (e.g., ``/usr/share/zoneinfo``).
+
+    To change the search path, use :func:`reset_tzpath`.
+
+    .. versionadded:: 2.9.0
+    """
     TZPATH_CALLBACKS = []
 
     reset_tzpath()
