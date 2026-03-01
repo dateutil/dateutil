@@ -912,7 +912,6 @@ def test_folds_from_utc(transition):
     assert getattr(dt, "fold", 0) == transition.fold
 
 
-@pytest.mark.xfail(IS_WIN, reason="tzwin prioritized over tzfile")
 def test_time_fixed_offset():
     utc = tz.gettz("UTC")
     assert isinstance(utc, tz.tzfile)
