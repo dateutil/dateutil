@@ -1095,19 +1095,19 @@ def __get_gettz():
                             pass
                     else:
                         tz = None
-                        if tzwin is not None:
-                            try:
-                                tz = tzwin(name)
-                            except (WindowsError, UnicodeEncodeError):
-                                # UnicodeEncodeError is for Python 2.7 compat
-                                tz = None
-
                         if not tz:
                             try:
                                 with _tzdata_impl._load_tzdata(name) as f:
                                     return tzfile(f, key=name)
                             except _tzdata_impl.TZFileNotFound:
                                 pass
+
+                        if tzwin is not None:
+                            try:
+                                tz = tzwin(name)
+                            except (WindowsError, UnicodeEncodeError):
+                                # UnicodeEncodeError is for Python 2.7 compat
+                                tz = None
 
                         if not tz:
                             for c in name:
