@@ -6,8 +6,8 @@
 
 set -e
 
-TMP_DIR=${1}
-REPO_DIR=${2}
+TMP_DIR=$(readlink -f ${1})
+REPO_DIR=$(readlink -f ${2})
 ORIG_DIR=$(pwd)
 CITOOLS_DIR=$REPO_DIR/ci_tools
 
@@ -69,7 +69,7 @@ set -e
 mv $TARBALL_NAME $ORIG_DIR
 
 # Install everything else
-make ZFLAGS='-b fat' TOPDIR="$TMP_DIR/tzdir" install
+make ZFLAGS='-b fat' TOPDIR="${TMP_DIR}/tzdir" install
 
 #
 # Make the zoneinfo tarball
@@ -80,8 +80,9 @@ cd $ORIG_DIR
 PATH=$TMP_DIR/tzdir/usr/sbin:${PATH}
 
 # Stash the old zoneinfo file in the temporary directory
-mv $REPO_TARBALL $TMP_TARBALL
-
+if [ -f "${TMP_TARBALL}" ]; then
+    mv $REPO_TARBALL $TMP_TARBALL
+fi
 
 # Make the metadata file
 ZONEFILE_METADATA_NAME=zonefile_metadata_master.json
@@ -93,5 +94,5 @@ ${CITOOLS_DIR}/make_zonefile_metadata.py \
 python ${REPO_DIR}/updatezinfo.py $ZONEFILE_METADATA_NAME
 
 # Run the tests
-python -m pytest ${REPO_DIR}/tests $EXTRA_TEST_ARGS
+python -m pytest ${REPO_DIR}/tests $EXTRA_TEST_ARGS -x --pdb
 
