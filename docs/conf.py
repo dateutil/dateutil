@@ -283,6 +283,8 @@ texinfo_documents = [
 linkcheck_ignore = [
     # This has been spotty lately so we're adding a mirror
     r'https://pgp.mit.edu',
+    # MetaCPAN frequently returns 402 for automated link checkers
+    r"https://metacpan.org/.*",
 ]
 
 # Reduce problems with ephemeral failures
