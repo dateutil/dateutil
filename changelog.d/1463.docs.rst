@@ -1,0 +1,1 @@
+Added intersphinx to the docs build and cleaned up some broken links. (gh pr #1463)
