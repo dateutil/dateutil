@@ -149,11 +149,6 @@ Releases     Signing key fingerprint
 New releases *may* have signed tags, but binary and source distributions
 uploaded to PyPI will no longer have GPG signatures attached.
 
-Contact
-=======
-Our mailing list is available at `dateutil@python.org <https://mail.python.org/mailman/listinfo/dateutil>`_. As it is hosted by the PSF, it is subject to the `PSF code of
-conduct <https://www.python.org/psf/conduct/>`_.
-
 License
 =======
 
