@@ -29,11 +29,11 @@ jobs:
         include:
           # Older versions (<=3.7) are included separately since they need
           # special handling (using an older os or a container)
-          - os: "macos-13"
+          - os: "macos-15-intel"
             python-version: "3.5"
-          - os: "macos-13"
+          - os: "macos-15-intel"
             python-version: "3.6"
-          - os: "macos-13"
+          - os: "macos-15-intel"
             python-version: "3.7"
           - os: "windows-latest"
             python-version: "3.5"
@@ -94,9 +94,9 @@ jobs:
           file: ./.tox/coverage.xml
           name: ${{ matrix.os }}:${{ matrix.python-version }}
           fail_ci_if_error: false
-          # codecov/codecov-action@v3 needs v0.7.3 to work on (intel) macos-13
+          # codecov/codecov-action@v3 needs v0.7.3 to work on macos-15-intel
           # See https://github.com/codecov/codecov-action/issues/1549
-          version: ${{ matrix.os == 'macos-13' && 'v0.7.3' || 'latest' }}
+          version: ${{ endsWith(matrix.os, '-intel') && 'v0.7.3' || 'latest' }}
 
   other:
     runs-on: "ubuntu-latest"

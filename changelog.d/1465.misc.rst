@@ -1,0 +1,1 @@
+Switch macos-13 CI runners to macos-15-intel. (gh pr #1465)
