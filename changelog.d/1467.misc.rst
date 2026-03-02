@@ -1,0 +1,1 @@
+Fixed the ``ci_tools/run_tz_master_env.sh`` script, which has been broken for some time but was failing silently. (gh pr #1467)
