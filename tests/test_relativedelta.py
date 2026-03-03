@@ -360,14 +360,6 @@ class RelativeDeltaTest(unittest.TestCase):
         self.assertEqual(repr(relativedelta(month=3, hour=3, weekday=SU(3))),
                          'relativedelta(month=3, weekday=SU(+3), hour=3)')
 
-    def testRelativeDeltaFractionalYear(self):
-        with self.assertRaises(ValueError):
-            relativedelta(years=1.5)
-
-    def testRelativeDeltaFractionalMonth(self):
-        with self.assertRaises(ValueError):
-            relativedelta(months=1.5)
-
     def testRelativeDeltaInvalidDatetimeObject(self):
         with self.assertRaises(TypeError):
             relativedelta(dt1='2018-01-01', dt2='2018-01-02')
@@ -411,6 +403,16 @@ class RelativeDeltaTest(unittest.TestCase):
         rd = relativedelta(hours=0.5, seconds=9.22)
         self.assertEqual(repr(rd),
                          'relativedelta(hours=+0.5, seconds=+9.22)')
+
+    def testRelativeDeltaFractionalYears(self):
+        rd = relativedelta(years=1.25)
+        d1 = datetime(2009, 9, 3, 0, 0)
+        self.assertEqual(d1 + rd, datetime(2010, 12, 3, 0))
+
+    def testRelativeDeltaFractionalMonths(self):
+        rd = relativedelta(months=1.25)
+        d1 = datetime(2009, 9, 3, 0, 0)
+        self.assertEqual(d1 + rd, datetime(2009, 10, 10, 18))
 
     def testRelativeDeltaFractionalWeeks(self):
         # Equivalent to days=8, hours=18
