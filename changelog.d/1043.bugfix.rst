@@ -1,0 +1,2 @@
+Fixed not requiring `setuptools.command.test` in setup.py and use the `setuptools.Command` class instead,
+as the former one may not be available. (gh issue #1043, gh pr #1044). Reported and fixed by @eldruin
