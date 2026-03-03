@@ -71,6 +71,8 @@ To solve this exercise, copy-paste this script into a document, change anything 
 A solution to this problem is provided :doc:`here <solutions/mlk-day-rrule>`.
 
 
+.. _next-monday-meeting:
+
 Next Monday meeting
 -------------------
 
@@ -120,6 +122,8 @@ To solve this exercise, copy-paste this script into a document, change anything 
 .. raw:: html
 
     </details>
+
+A solution to this problem is provided :doc:`here <solutions/next_monday_meeting_relativedelta>`.
 
 
 Parsing a local tzname
