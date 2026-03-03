@@ -177,6 +177,42 @@ def test_parse_dayfirst(sep):
 
 
 @pytest.mark.parametrize('sep', ['-', '.', '/', ' '])
+def test_parse_dmy_dayfirst_applied(sep):
+    expected = datetime(2003, 9, 10)
+    fmt = sep.join(['%d', '%m', '%Y'])
+    dstr = expected.strftime(fmt)
+    result = parse(dstr, dmy_dayfirst=True)
+    assert result == expected
+
+
+@pytest.mark.parametrize('sep', ['-', '.', '/', ' '])
+def test_parse_dmy_dayfirst_not_applied(sep):
+    expected = datetime(2003, 9, 10)
+    fmt = sep.join(['%Y', '%m', '%d'])
+    dstr = expected.strftime(fmt)
+    result = parse(dstr, dmy_dayfirst=True)
+    assert result == expected
+
+
+@pytest.mark.parametrize('sep', ['-', '.', '/', ' '])
+def test_parse_ymd_dayfirst_applied(sep):
+    expected = datetime(2003, 9, 10)
+    fmt = sep.join(['%Y', '%d', '%m'])
+    dstr = expected.strftime(fmt)
+    result = parse(dstr, ymd_dayfirst=True)
+    assert result == expected
+
+
+@pytest.mark.parametrize('sep', ['-', '.', '/', ' '])
+def test_parse_ymd_dayfirst_not_applied(sep):
+    expected = datetime(2003, 9, 10)
+    fmt = sep.join(['%m', '%d', '%Y'])
+    dstr = expected.strftime(fmt)
+    result = parse(dstr, ymd_dayfirst=True)
+    assert result == expected
+
+
+@pytest.mark.parametrize('sep', ['-', '.', '/', ' '])
 def test_parse_yearfirst(sep):
     expected = datetime(2010, 9, 3)
     fmt = sep.join(['%Y', '%m', '%d'])
