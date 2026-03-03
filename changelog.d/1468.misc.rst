@@ -1,0 +1,1 @@
+Extended ``PIP_TRUSTED_HOST`` to more outdated Python versions in the validation workflow without (or with poor) SSL support. (gh pr #1468)
