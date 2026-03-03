@@ -80,7 +80,7 @@ Features
   local machine timezone, fixed offset timezone, UTC timezone,
   and Windows registry-based time zones.
 * Internal up-to-date world timezone information based on
-  Olson's database.
+  IANA (nee Olson's) database.
 * Computing of Easter Sunday dates for any given year,
   using Western, Orthodox or Julian algorithms;
 * A comprehensive test suite.
