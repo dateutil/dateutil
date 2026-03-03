@@ -1,0 +1,1 @@
+Deflaked two tests: gave ``test_isoparse_prop.py::test_timespec_auto`` a longer timeout and skipped ``test_tz_prop.py::tz_gettz_returns_local`` on Python 2. (gh pr #1462)
