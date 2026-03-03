@@ -1,33 +1,37 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-from ._common import PicklableMixin
-from ._common import TZEnvContext, TZWinContext
-from ._common import ComparesEqual
 
-from datetime import datetime, timedelta
-from datetime import time as dt_time
-from datetime import tzinfo
-from six import PY2
-from io import BytesIO, StringIO
-import unittest
-
-import sys
 import base64
 import copy
 import gc
+import sys
+import threading
+import unittest
+import warnings
 import weakref
-
+from datetime import datetime
+from datetime import time as dt_time
+from datetime import timedelta, tzinfo
 from functools import partial
+from io import BytesIO, StringIO
+
+from six import PY2
+
+from ._common import ComparesEqual, PicklableMixin, TZEnvContext, TZWinContext
 
 IS_WIN = sys.platform.startswith('win')
 
 import pytest
 
-# dateutil imports
-from dateutil.relativedelta import relativedelta, SU, TH
-from dateutil.parser import parse
 from dateutil import tz as tz
-from dateutil import zoneinfo
+from dateutil.parser import parse
+
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore", category=DeprecationWarning)
+    from dateutil import zoneinfo
+
+# dateutil imports
+from dateutil.relativedelta import SU, TH, relativedelta
 
 try:
     from dateutil import tzwin
@@ -1078,6 +1082,11 @@ class GettzTest(unittest.TestCase, TzFoldMixin):
 
         assert local1 is not local2
 
+    def test_key_attribute(self):
+        # Also tested more thoroughly in the property tests.
+        NYC = tz.gettz("America/New_York")
+        assert NYC.key == "America/New_York"
+
 
 @pytest.mark.gettz
 def test_gettz_same_result_for_none_and_empty_string():
@@ -1137,7 +1146,6 @@ def test_gettz_zone_wrong_type(badzone, exc_reason):
 
 
 @pytest.mark.gettz
-@pytest.mark.xfail(IS_WIN, reason='zoneinfo separately cached')
 def test_gettz_cache_clear():
     NYC1 = tz.gettz('America/New_York')
     tz.gettz.cache_clear()
@@ -1147,7 +1155,6 @@ def test_gettz_cache_clear():
     assert NYC1 is not NYC2
 
 @pytest.mark.gettz
-@pytest.mark.xfail(IS_WIN, reason='zoneinfo separately cached')
 def test_gettz_set_cache_size():
     tz.gettz.cache_clear()
     tz.gettz.set_cache_size(3)
@@ -1167,7 +1174,6 @@ def test_gettz_set_cache_size():
 
     assert MONACO_ref() is None
 
-@pytest.mark.xfail(IS_WIN, reason="Windows does not use system zoneinfo")
 @pytest.mark.smoke
 @pytest.mark.gettz
 def test_gettz_weakref():
@@ -1199,17 +1205,31 @@ class ZoneInfoGettzTest(GettzTest):
         return zoneinfo_file.get(name)
 
     def testZoneInfoFileStart1(self):
-        tz = self.gettz("EST5EDT")
-        self.assertEqual(datetime(2003, 4, 6, 1, 59, tzinfo=tz).tzname(), "EST",
-                         MISSING_TARBALL)
-        self.assertEqual(datetime(2003, 4, 6, 2, 00, tzinfo=tz).tzname(), "EDT")
+        tzc = self.gettz("EST5EDT")
+        self.assertEqual(
+            datetime(2003, 4, 6, 1, 59, tzinfo=tzc).tzname(),
+            "EST",
+            MISSING_TARBALL,
+        )
+
+        self.assertEqual(
+            tz.enfold(datetime(2003, 4, 6, 2, tzinfo=tzc), fold=0).tzname(),
+            "EST",
+        )
+
+        self.assertEqual(
+            tz.enfold(datetime(2003, 4, 6, 2, tzinfo=tzc), fold=1).tzname(),
+            "EDT",
+        )
+
+        self.assertEqual(datetime(2003, 4, 6, 3, 0, tzinfo=tzc).tzname(), "EDT")
 
     def testZoneInfoFileEnd1(self):
         tzc = self.gettz("EST5EDT")
         self.assertEqual(datetime(2003, 10, 26, 0, 59, tzinfo=tzc).tzname(),
                          "EDT", MISSING_TARBALL)
 
-        end_est = tz.enfold(datetime(2003, 10, 26, 1, 00, tzinfo=tzc), fold=1)
+        end_est = tz.enfold(datetime(2003, 10, 26, 1, 0, tzinfo=tzc), fold=1)
         self.assertEqual(end_est.tzname(), "EST")
 
     def testZoneInfoOffsetSignal(self):
@@ -1991,13 +2011,22 @@ class TZTest(unittest.TestCase):
     def testFileStart1(self):
         tzc = tz.tzfile(BytesIO(base64.b64decode(TZFILE_EST5EDT)))
         self.assertEqual(datetime(2003, 4, 6, 1, 59, tzinfo=tzc).tzname(), "EST")
-        self.assertEqual(datetime(2003, 4, 6, 2, 00, tzinfo=tzc).tzname(), "EDT")
+        self.assertEqual(
+            tz.enfold(datetime(2003, 4, 6, 2, 0, tzinfo=tzc), fold=0).tzname(),
+            "EST",
+        )
+        self.assertEqual(
+            tz.enfold(datetime(2003, 4, 6, 2, 0, tzinfo=tzc), fold=1).tzname(),
+            "EDT",
+        )
+        self.assertEqual(datetime(2003, 4, 6, 3, 0, tzinfo=tzc).tzname(), "EDT")
 
     def testFileEnd1(self):
         tzc = tz.tzfile(BytesIO(base64.b64decode(TZFILE_EST5EDT)))
-        self.assertEqual(datetime(2003, 10, 26, 0, 59, tzinfo=tzc).tzname(),
-                         "EDT")
-        end_est = tz.enfold(datetime(2003, 10, 26, 1, 00, tzinfo=tzc))
+        self.assertEqual(
+            datetime(2003, 10, 26, 0, 59, tzinfo=tzc).tzname(), "EDT"
+        )
+        end_est = tz.enfold(datetime(2003, 10, 26, 1, 0, tzinfo=tzc))
         self.assertEqual(end_est.tzname(), "EST")
 
     def testFileLastTransition(self):
@@ -2006,9 +2035,8 @@ class TZTest(unittest.TestCase):
         self.assertEqual(datetime(2037, 10, 25, 0, 59, tzinfo=tzc).tzname(),
                          "EDT")
 
-        last_date = tz.enfold(datetime(2037, 10, 25, 1, 00, tzinfo=tzc), fold=1)
-        self.assertEqual(last_date.tzname(),
-                         "EST")
+        last_date = tz.enfold(datetime(2037, 10, 25, 1, 0, tzinfo=tzc), fold=1)
+        self.assertEqual(last_date.tzname(), "EST")
 
         self.assertEqual(datetime(2038, 5, 25, 12, 0, tzinfo=tzc).tzname(),
                          "EST")
@@ -2042,22 +2070,6 @@ class TZTest(unittest.TestCase):
         # still data we haven't read the file format correctly
         remaining_tzfile_content = fileobj.read()
         self.assertEqual(len(remaining_tzfile_content), 0)
-
-    def testIsStd(self):
-        # NEW_YORK tzfile contains this isstd information:
-        isstd_expected = (0, 0, 0, 1)
-        tzc = tz.tzfile(BytesIO(base64.b64decode(NEW_YORK)))
-        # gather the actual information as parsed by the tzfile class
-        isstd = []
-        for ttinfo in tzc._ttinfo_list:
-            # ttinfo objects contain boolean values
-            isstd.append(int(ttinfo.isstd))
-        # ttinfo list may contain more entries than isstd file content
-        isstd = tuple(isstd[:len(isstd_expected)])
-        self.assertEqual(
-            isstd_expected, isstd,
-            "isstd UTC/local indicators parsed: %s != tzfile contents: %s"
-            % (isstd, isstd_expected))
 
     def testGMTHasNoDaylight(self):
         # tz.tzstr("GMT+2") improperly considered daylight saving time.
