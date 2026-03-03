@@ -42,7 +42,7 @@ class relativedelta(object):
             operation, but rather REPLACES the corresponding value in the
             original datetime with the value(s) in relativedelta.
 
-        years, months, weeks, days, hours, minutes, seconds, microseconds:
+        years, months, weeks, days, hours, minutes, seconds, milliseconds, microseconds:
             Relative information, may be negative (argument is plural); adding
             or subtracting a relativedelta with relative information performs
             the corresponding arithmetic operation on the original datetime value
@@ -104,7 +104,7 @@ class relativedelta(object):
 
     def __init__(self, dt1=None, dt2=None,
                  years=0, months=0, days=0, leapdays=0, weeks=0,
-                 hours=0, minutes=0, seconds=0, microseconds=0,
+                 hours=0, minutes=0, seconds=0, milliseconds=0, microseconds=0,
                  year=None, month=None, day=None, weekday=None,
                  yearday=None, nlyearday=None,
                  hour=None, minute=None, second=None, microsecond=None):
@@ -181,7 +181,7 @@ class relativedelta(object):
             self.hours = hours
             self.minutes = minutes
             self.seconds = seconds
-            self.microseconds = microseconds
+            self.microseconds = microseconds + milliseconds * 1000
 
             # Absolute information
             self.year = year
@@ -265,9 +265,17 @@ class relativedelta(object):
     def weeks(self):
         return int(self.days / 7.0)
 
+    @property
+    def milliseconds(self):
+        return int(self.microseconds / 1000.0)
+
     @weeks.setter
     def weeks(self, value):
         self.days = self.days - (self.weeks * 7) + value * 7
+
+    @milliseconds.setter
+    def milliseconds(self, value):
+        self.microseconds = self.microseconds - (self.milliseconds * 1000) + value * 1000
 
     def _set_months(self, months):
         self.months = months
