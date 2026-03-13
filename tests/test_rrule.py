@@ -81,13 +81,21 @@ class RRuleTest(unittest.TestCase):
                           datetime(1999, 1, 2, 9, 0)])
 
     def testYearlyByMonthDay(self):
-        self.assertEqual(list(rrule(YEARLY,
-                              count=3,
-                              bymonthday=(1, 3),
-                              dtstart=datetime(1997, 9, 2, 9, 0))),
-                         [datetime(1997, 9, 3, 9, 0),
-                          datetime(1998, 9, 1, 9, 0),
-                          datetime(1998, 9, 3, 9, 0)])
+        self.assertEqual(
+            list(
+                rrule(
+                    YEARLY,
+                    count=3,
+                    bymonthday=(1, 3),
+                    dtstart=datetime(1997, 9, 2, 9, 0),
+                )
+            ),
+            [
+                datetime(1997, 9, 3, 9, 0),
+                datetime(1998, 9, 1, 9, 0),
+                datetime(1998, 9, 3, 9, 0),
+            ],
+        )
 
     def testYearlyByMonthAndMonthDay(self):
         self.assertEqual(list(rrule(YEARLY,
@@ -169,22 +177,30 @@ class RRuleTest(unittest.TestCase):
                           datetime(1998, 3, 3, 9, 0)])
 
     def testYearlyByMonthDayUsesDtstartMonth(self):
-        self.assertEqual(list(rrule(YEARLY,
-                              count=12,
-                              bymonthday=30,
-                              dtstart=datetime(2010, 3, 30))),
-                         [datetime(2010, 3, 30),
-                          datetime(2011, 3, 30),
-                          datetime(2012, 3, 30),
-                          datetime(2013, 3, 30),
-                          datetime(2014, 3, 30),
-                          datetime(2015, 3, 30),
-                          datetime(2016, 3, 30),
-                          datetime(2017, 3, 30),
-                          datetime(2018, 3, 30),
-                          datetime(2019, 3, 30),
-                          datetime(2020, 3, 30),
-                          datetime(2021, 3, 30)])
+        self.assertEqual(
+            list(
+                rrule(
+                    YEARLY,
+                    count=12,
+                    bymonthday=30,
+                    dtstart=datetime(2010, 3, 30),
+                )
+            ),
+            [
+                datetime(2010, 3, 30),
+                datetime(2011, 3, 30),
+                datetime(2012, 3, 30),
+                datetime(2013, 3, 30),
+                datetime(2014, 3, 30),
+                datetime(2015, 3, 30),
+                datetime(2016, 3, 30),
+                datetime(2017, 3, 30),
+                datetime(2018, 3, 30),
+                datetime(2019, 3, 30),
+                datetime(2020, 3, 30),
+                datetime(2021, 3, 30),
+            ],
+        )
 
     def testYearlyByMonthAndMonthDayAndWeekDay(self):
         self.assertEqual(list(rrule(YEARLY,
