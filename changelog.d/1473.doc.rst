@@ -1,0 +1,2 @@
+Added solutions for the "Next Monday meeting" and "Parsing a local tzname" exercises;
+fixed "Ireland" → "Israel" typo in exercise #666.
