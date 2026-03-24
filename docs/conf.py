@@ -13,9 +13,6 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import os
-import sys
-
 # -- General configuration ------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
@@ -184,19 +181,6 @@ htmlhelp_basename = 'dateutildoc'
 # -- Options for autodoc -------------------------------------------------
 
 autodoc_mock_imports = ['ctypes.wintypes', 'six.moves.winreg']
-
-# Need to mock this out specifically to avoid errors
-import ctypes
-
-
-def pointer_mock(*args, **kwargs):
-    try:
-        return ctypes.POINTER(*args, **kwargs)
-    except Exception:
-        return None
-
-ctypes.POINTER = pointer_mock
-sys.modules['ctypes'] = ctypes
 
 # -- Configure intersphinx ------------------------------------------------
 
