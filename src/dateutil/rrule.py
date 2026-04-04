@@ -516,6 +516,11 @@ class rrule(rrulebase):
                 byweekday = dtstart.weekday()
                 self._original_rule['byweekday'] = None
 
+        # RFC 5545: When BYMONTH is not specified but BYMONTHDAY is,
+        # derive BYMONTH from DTSTART for YEARLY frequency.
+        if freq == YEARLY and bymonth is None and bymonthday is not None:
+            bymonth = dtstart.month
+
         # bymonth
         if bymonth is None:
             self._bymonth = None
