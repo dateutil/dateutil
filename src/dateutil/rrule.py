@@ -516,9 +516,11 @@ class rrule(rrulebase):
                 byweekday = dtstart.weekday()
                 self._original_rule['byweekday'] = None
 
-        # RFC 5545: When BYMONTH is not specified but BYMONTHDAY is,
-        # derive BYMONTH from DTSTART for YEARLY frequency.
-        if freq == YEARLY and bymonth is None and bymonthday is not None:
+        # RFC 5545: When BYMONTH is not specified and BYMONTHDAY is a single
+        # integer value, derive BYMONTH from DTSTART for YEARLY frequency.
+        # When BYMONTHDAY is a tuple/list (multiple values), the user intends
+        # to match across all months, so don't constrain BYMONTH.
+        if freq == YEARLY and bymonth is None and isinstance(bymonthday, int):
             bymonth = dtstart.month
 
         # bymonth
