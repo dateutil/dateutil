@@ -962,3 +962,25 @@ def test_parsererror_repr():
     s = repr(ParserError("Problem with string: %s", "2019-01-01"))
 
     assert s == "ParserError('Problem with string: %s', '2019-01-01')"
+
+
+@pytest.mark.parametrize('dtstr,expected_offset_seconds', [
+    # GH #1478: UTC offset sign should not be reversed
+    # UTC-4 should mean UTC minus 4 hours, not UTC+4
+    ('2026-03-11 14:32:45 UTC-4', -4 * 3600),
+    ('2026-03-11 14:32:45 UTC+4', 4 * 3600),
+    ('2026-03-11 14:32:45 GMT-5', -5 * 3600),
+    ('2026-03-11 14:32:45 GMT+3', 3 * 3600),
+    ('2026-03-11 14:32:45 Z-4', -4 * 3600),
+    ('2026-03-11 14:32:45 Z+4', 4 * 3600),
+    # Standard numeric offsets should still work correctly
+    ('2026-03-11 14:32:45 -0300', -3 * 3600),
+    ('2026-03-11 14:32:45 +0300', 3 * 3600),
+])
+def test_utc_offset_not_reversed(dtstr, expected_offset_seconds):
+    # GH #1478: UTC/GMT/Z followed by +/- offset should use the
+    # literal offset sign, not POSIX convention reversal.
+    # Previously, "UTC-4" was incorrectly parsed as +04:00.
+    result = parse(dtstr)
+    actual_offset = result.tzinfo.utcoffset(result).total_seconds()
+    assert actual_offset == expected_offset_seconds

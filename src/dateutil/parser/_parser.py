@@ -799,13 +799,23 @@ class parser(object):
                     # "my time +3 is GMT". If found, we reverse the
                     # logic so that timezone parsing code will get it
                     # right.
+                    #
+                    # However, for UTC zone names (UTC, GMT, Z), the
+                    # following offset should NOT be reversed - it
+                    # represents a direct UTC offset like "UTC-4"
+                    # meaning UTC minus 4 hours, not POSIX convention.
                     if i + 1 < len_l and l[i + 1] in ('+', '-'):
-                        l[i + 1] = ('+', '-')[l[i + 1] == '+']
-                        res.tzoffset = None
                         if info.utczone(res.tzname):
-                            # With something like GMT+3, the timezone
-                            # is *not* GMT.
+                            # For UTC/GMT/Z, the offset is literal:
+                            # "UTC-4" means UTC-4, not UTC+4
+                            res.tzoffset = None
                             res.tzname = None
+                        else:
+                            # For non-UTC timezone abbreviations,
+                            # apply POSIX convention: BRST+3 means
+                            # "my time +3 is BRST", i.e. UTC-3
+                            l[i + 1] = ('+', '-')[l[i + 1] == '+']
+                            res.tzoffset = None
 
                 # Check for a numbered timezone
                 elif res.hour is not None and l[i] in ('+', '-'):
