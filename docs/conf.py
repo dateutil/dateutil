@@ -286,6 +286,8 @@ linkcheck_ignore = [
     r'https://pgp.mit.edu',
     # MetaCPAN frequently returns 402 for automated link checkers
     r"https://metacpan.org/.*",
+    # timeanddate.com now rejects automated link checks with HTTP 403
+    r"https://www.timeanddate.com/time/zones/",
 ]
 
 # Reduce problems with ephemeral failures
