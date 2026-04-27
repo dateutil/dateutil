@@ -718,6 +718,11 @@ class ParserTest(unittest.TestCase):
         with pytest.raises(ParserError):
             parse(invalid)
 
+    def test_parse_dashed_time_after_t_separator(self):
+        assert parse("2016-06-01T02-01-00+00-00") == datetime(
+            2016, 6, 1, 2, 1, tzinfo=tz.UTC
+        )
+
     def test_era_trailing_year(self):
         dstr = 'AD2001'
         res = parse(dstr)
