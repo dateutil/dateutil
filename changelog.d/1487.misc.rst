@@ -1,0 +1,1 @@
+Ignored a bot-blocked ``timeanddate.com`` URL during Sphinx linkcheck to avoid CI-only docs failures. (gh pr #1487)
