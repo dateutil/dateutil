@@ -286,6 +286,14 @@ linkcheck_ignore = [
     r'https://pgp.mit.edu',
     # MetaCPAN frequently returns 402 for automated link checkers
     r"https://metacpan.org/.*",
+    # timeanddate.com returns 403 for automated link checkers
+    r"https://www.timeanddate.com/time/zones/",
+    # gnu.org can be unreachable from CI link checkers
+    r"https://www.gnu.org/software/libc/manual/html_node/TZ-Variable.html",
+    # pds-rings.seti.org can time out for automated link checkers
+    r"https://pds-rings.seti.org:443/tools/time_formats.html",
+    # gmarts.org returns 415 for automated link checkers
+    r"http://www.gmarts.org/index.php\?go=415",
 ]
 
 # Reduce problems with ephemeral failures

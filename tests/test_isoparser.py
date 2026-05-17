@@ -239,39 +239,44 @@ def test_bytes(isostr, dt):
 
 ###
 # Invalid ISO strings
-@pytest.mark.parametrize('isostr,exception', [
-    ('201', ValueError),                        # ISO string too short
-    ('2012-0425', ValueError),                  # Inconsistent date separators
-    ('201204-25', ValueError),                  # Inconsistent date separators
-    ('20120425T0120:00', ValueError),           # Inconsistent time separators
-    ('20120425T01:2000', ValueError),           # Inconsistent time separators
-    ('14:3015', ValueError),                    # Inconsistent time separator
-    ('20120425T012500-334', ValueError),        # Wrong microsecond separator
-    ('2001-1', ValueError),                     # YYYY-M not valid
-    ('2012-04-9', ValueError),                  # YYYY-MM-D not valid
-    ('201204', ValueError),                     # YYYYMM not valid
-    ('20120411T03:30+', ValueError),            # Time zone too short
-    ('20120411T03:30+1234567', ValueError),     # Time zone too long
-    ('20120411T03:30-25:40', ValueError),       # Time zone invalid
-    ('2012-1a', ValueError),                    # Invalid month
-    ('20120411T03:30+00:60', ValueError),       # Time zone invalid minutes
-    ('20120411T03:30+00:61', ValueError),       # Time zone invalid minutes
-    ('20120411T033030.123456012:00',            # No sign in time zone
-        ValueError),
-    ('2012-W00', ValueError),                   # Invalid ISO week
-    ('2012-W55', ValueError),                   # Invalid ISO week
-    ('2012-W01-0', ValueError),                 # Invalid ISO week day
-    ('2012-W01-8', ValueError),                 # Invalid ISO week day
-    ('2013-000', ValueError),                   # Invalid ordinal day
-    ('2013-366', ValueError),                   # Invalid ordinal day
-    ('2013366', ValueError),                    # Invalid ordinal day
-    ('2014-03-12Т12:30:14', ValueError),        # Cyrillic T
-    ('2014-04-21T24:00:01', ValueError),        # Invalid use of 24 for midnight
-    ('2014_W01-1', ValueError),                 # Invalid separator
-    ('2014W01-1', ValueError),                  # Inconsistent use of dashes
-    ('2014-W011', ValueError),                  # Inconsistent use of dashes
-
-])
+@pytest.mark.parametrize(
+    "isostr,exception",
+    [
+        ("201", ValueError),  # ISO string too short
+        ("2012-0425", ValueError),  # Inconsistent date separators
+        ("201204-25", ValueError),  # Inconsistent date separators
+        ("20120425T0120:00", ValueError),  # Inconsistent time separators
+        ("20120425T01:2000", ValueError),  # Inconsistent time separators
+        ("14:3015", ValueError),  # Inconsistent time separator
+        ("20120425T012500-334", ValueError),  # Wrong microsecond separator
+        ("2001-1", ValueError),  # YYYY-M not valid
+        ("2012-04-9", ValueError),  # YYYY-MM-D not valid
+        ("201204", ValueError),  # YYYYMM not valid
+        ("20120411T03:30+", ValueError),  # Time zone too short
+        ("20120411T03:30+1234567", ValueError),  # Time zone too long
+        ("20120411T03:30-25:40", ValueError),  # Time zone invalid
+        ("2012-1a", ValueError),  # Invalid month
+        ("20120411T03:30+00:60", ValueError),  # Time zone invalid minutes
+        ("20120411T03:30+00:61", ValueError),  # Time zone invalid minutes
+        ("20120411T033030.123456012:00", ValueError),  # No sign in time zone
+        ("2012-W00", ValueError),  # Invalid ISO week
+        ("2012-W55", ValueError),  # Invalid ISO week
+        ("2021-W53", ValueError),  # Invalid ISO week
+        ("2021W53", ValueError),  # Invalid ISO week
+        ("2021-W53-1", ValueError),  # Invalid ISO week
+        ("2021W531", ValueError),  # Invalid ISO week
+        ("2012-W01-0", ValueError),  # Invalid ISO week day
+        ("2012-W01-8", ValueError),  # Invalid ISO week day
+        ("2013-000", ValueError),  # Invalid ordinal day
+        ("2013-366", ValueError),  # Invalid ordinal day
+        ("2013366", ValueError),  # Invalid ordinal day
+        ("2014-03-12Т12:30:14", ValueError),  # Cyrillic T
+        ("2014-04-21T24:00:01", ValueError),  # Invalid use of 24 for midnight
+        ("2014_W01-1", ValueError),  # Invalid separator
+        ("2014W01-1", ValueError),  # Inconsistent use of dashes
+        ("2014-W011", ValueError),  # Inconsistent use of dashes
+    ],
+)
 def test_iso_raises(isostr, exception):
     with pytest.raises(exception):
         isoparse(isostr)

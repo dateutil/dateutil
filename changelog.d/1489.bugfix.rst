@@ -1,0 +1,3 @@
+Fixed ``isoparse`` accepting ISO week 53 for years that do not have a
+53rd ISO week. Reported by @Ev2geny (gh issue #1236). Fixed by
+@Sean-Kenneth-Doherty (gh pr #1489).

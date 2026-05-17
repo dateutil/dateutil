@@ -325,7 +325,12 @@ class isoparser(object):
 
         # Now add the specific number of weeks and days to get what we want
         week_offset = (week - 1) * 7 + (day - 1)
-        return week_1 + timedelta(days=week_offset)
+        date_out = week_1 + timedelta(days=week_offset)
+
+        if date_out.isocalendar() != (year, week, day):
+            raise ValueError("Invalid week: {}".format(week))
+
+        return date_out
 
     def _parse_isotime(self, timestr):
         len_str = len(timestr)
