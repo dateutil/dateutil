@@ -1074,7 +1074,7 @@ class tzstr(tzrange):
         support is removed in a future version.
 
     .. _`GNU C Library: TZ Variable`:
-        https://www.gnu.org/software/libc/manual/html_node/TZ-Variable.html
+        https://sourceware.org/glibc/manual/latest/html_node/TZ-Variable.html
     """
     def __init__(self, s, posix_offset=False):
         global parser
@@ -1541,7 +1541,7 @@ def __get_gettz():
 
 
         .. _`TZ variable`:
-            https://www.gnu.org/software/libc/manual/html_node/TZ-Variable.html
+            https://sourceware.org/glibc/manual/latest/html_node/TZ-Variable.html
 
         .. _`"same zone" semantics`:
             https://blog.ganssle.io/articles/2018/02/aware-datetime-arithmetic.html
