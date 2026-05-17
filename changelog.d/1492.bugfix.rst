@@ -1,0 +1,1 @@
+Fixed ``tzstr()`` raising ``TypeError`` when parsing bare ``GMT`` or ``UTC`` names without an explicit offset.

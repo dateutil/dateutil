@@ -1074,7 +1074,7 @@ class tzstr(tzrange):
         support is removed in a future version.
 
     .. _`GNU C Library: TZ Variable`:
-        https://www.gnu.org/software/libc/manual/html_node/TZ-Variable.html
+        https://sourceware.org/glibc/manual/latest/html_node/TZ-Variable.html
     """
     def __init__(self, s, posix_offset=False):
         global parser
@@ -1088,7 +1088,11 @@ class tzstr(tzrange):
 
         # Here we break the compatibility with the TZ variable handling.
         # GMT-3 actually *means* the timezone -3.
-        if res.stdabbr in ("GMT", "UTC") and not posix_offset:
+        if (
+            res.stdabbr in ("GMT", "UTC")
+            and res.stdoffset is not None
+            and not posix_offset
+        ):
             res.stdoffset *= -1
 
         # We must initialize it first, since _delta() needs
@@ -1537,7 +1541,7 @@ def __get_gettz():
 
 
         .. _`TZ variable`:
-            https://www.gnu.org/software/libc/manual/html_node/TZ-Variable.html
+            https://sourceware.org/glibc/manual/latest/html_node/TZ-Variable.html
 
         .. _`"same zone" semantics`:
             https://blog.ganssle.io/articles/2018/02/aware-datetime-arithmetic.html

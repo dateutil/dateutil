@@ -1471,6 +1471,14 @@ class TZStrTest(unittest.TestCase, TzFoldMixin):
         self.assertEqual(datetime(2015, 1, 1, tzinfo=TZ2).utcoffset(),
                          timedelta(hours=+3))
 
+    def testBareUtcGmtOffset(self):
+        for tz_str in ("GMT", "UTC"):
+            TZ = tz.tzstr(tz_str)
+            dt = datetime(2015, 1, 1, tzinfo=TZ)
+
+            self.assertEqual(dt.tzname(), tz_str)
+            self.assertEqual(dt.utcoffset(), timedelta(0))
+
     def testStrInequalityUnsupported(self):
         TZS = tz.tzstr('EST5EDT')
 

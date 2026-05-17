@@ -286,6 +286,8 @@ linkcheck_ignore = [
     r'https://pgp.mit.edu',
     # MetaCPAN frequently returns 402 for automated link checkers
     r"https://metacpan.org/.*",
+    # Planetary Rings Node frequently times out for automated link checkers
+    r"https://pds-rings.seti.org(:443)?/.*",
 ]
 
 # Reduce problems with ephemeral failures
