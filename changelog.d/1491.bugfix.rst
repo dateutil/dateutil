@@ -1,0 +1,3 @@
+Bumped the minimum supported ``six`` dependency to 1.16.0 to avoid import
+failures with older ``six`` versions. Reported by @rani-pinchuk (gh issue
+#1430). Fixed by @Sean-Kenneth-Doherty.
