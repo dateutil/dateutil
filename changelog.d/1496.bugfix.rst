@@ -1,0 +1,3 @@
+Raised ``TypeError`` at construction time when ``rrule()`` receives a
+non-integer ``interval``. Reported by @owenhollands (gh issue #1438). Fixed by
+@Mirochill (gh pr #1496)
