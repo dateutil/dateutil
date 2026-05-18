@@ -902,7 +902,7 @@ class parser(object):
             res.hour = int(s[:2])
             res.minute = int(s[2:4])
             res.second = int(s[4:6])
-            res.microsecond = int(s[6:].ljust(6, '0')[:6])
+            res.microsecond = int(s[6:].ljust(6, "0")[:6])
 
         elif len_li == 6 or (len_li > 6 and tokens[idx].find('.') == 6):
             # YYMMDD or HHMMSS[.ss]
