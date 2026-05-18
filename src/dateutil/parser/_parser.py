@@ -935,9 +935,13 @@ class parser(object):
                 # already set?
                 self._assign_hms(res, value_repr, hms)
 
-        elif (len_li == 4 and idx + 4 < len_l and
-              tokens[idx + 1] == tokens[idx + 3] == ':' and
-              tokens[idx + 2].isdigit() and tokens[idx + 4].isdigit()):
+        elif (
+            len_li == 4
+            and idx + 4 < len_l
+            and tokens[idx + 1] == tokens[idx + 3] == ":"
+            and tokens[idx + 2].isdigit()
+            and tokens[idx + 4].isdigit()
+        ):
             # YYYY:MM:DD, e.g. the format used in EXIF metadata
             ymd.append(value_repr, 'Y')
             ymd.append(tokens[idx + 2])
