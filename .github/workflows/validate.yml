@@ -21,7 +21,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: tzdata_built
-          key: tzdata-${{ env.TZDATA_VERSION }}
+          key: tzdata-${{ env.TZDATA_VERSION }}-fat
 
       - name: Build tzdata
         if: steps.cache-tzdata.outputs.cache-hit != 'true'
@@ -34,8 +34,10 @@ jobs:
           curl --fail --location "https://data.iana.org/time-zones/releases/tzdb-${{ env.TZDATA_VERSION }}.tar.lz" -o tzdb.tar.lz
           tar --lzip -xf tzdb.tar.lz
           cd tzdb-${{ env.TZDATA_VERSION }}
+          # TODO: Don't use fat when slim builds are available
           make install DESTDIR=$GITHUB_WORKSPACE/tzdata_built \
-                        DATAFORM=main
+                        DATAFORM=main \
+                        ZFLAGS="-b fat"
 
       - name: Upload tzdata artifact
         uses: actions/upload-artifact@v4
@@ -114,7 +116,7 @@ jobs:
           $SUDO rm -rf /usr/share/zoneinfo
           $SUDO mv tzdata_download /usr/share/zoneinfo
 
-          cat /usr/share/zoneinfo/tzdata.zi | head -n 1
+          head -n 1 /usr/share/zoneinfo/tzdata.zi
         if: startsWith(matrix.os, 'ubuntu')
       - name: Install dependencies
         run: python -m pip install -U tox six
