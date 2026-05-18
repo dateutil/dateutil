@@ -1,0 +1,1 @@
+Skip link checking for timeanddate.com, which is currently giving a 403 for the bot, but working when run manually. (gh pr #1499)
