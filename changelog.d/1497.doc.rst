@@ -1,0 +1,3 @@
+Documented the one-time ``python updatezinfo.py`` setup step needed before
+running tests when the bundled zoneinfo archive is missing. Reported by
+@KingMob (gh issue #1395). Fixed by @Mirochill (gh pr #1497)
