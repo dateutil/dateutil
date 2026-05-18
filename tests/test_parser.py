@@ -185,6 +185,11 @@ def test_parse_yearfirst(sep):
     assert result == expected
 
 
+def test_parse_compact_time_with_milliseconds():
+    result = parse("20010203 040506789")
+    assert result == datetime(2001, 2, 3, 4, 5, 6, 789000)
+
+
 @pytest.mark.parametrize('dstr,expected', [
     ("Thu Sep 25 10:36:28 BRST 2003", datetime(2003, 9, 25, 10, 36, 28)),
     ("1996.07.10 AD at 15:08:56 PDT", datetime(1996, 7, 10, 15, 8, 56)),
