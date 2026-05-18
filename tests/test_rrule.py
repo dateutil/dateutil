@@ -47,8 +47,10 @@ class RRuleTest(unittest.TestCase):
 
     def testStrZeroInterval(self):
         with self.assertRaises(ValueError):
-            rrulestr("DTSTART:19970902T090000\n"
-                     "RRULE:FREQ=YEARLY;COUNT=3;INTERVAL=0")
+            rrulestr(
+                "DTSTART:19970902T090000\n"
+                "RRULE:FREQ=YEARLY;COUNT=3;INTERVAL=0"
+            )
 
     def testYearly(self):
         self.assertEqual(list(rrule(YEARLY,
@@ -78,10 +80,9 @@ class RRuleTest(unittest.TestCase):
 
     def testZeroInterval(self):
         with self.assertRaises(ValueError):
-            rrule(YEARLY,
-                  count=3,
-                  interval=0,
-                  dtstart=datetime(1997, 9, 2, 9, 0))
+            rrule(
+                YEARLY, count=3, interval=0, dtstart=datetime(1997, 9, 2, 9, 0)
+            )
 
     def testYearlyByMonth(self):
         self.assertEqual(list(rrule(YEARLY,
