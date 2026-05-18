@@ -943,7 +943,7 @@ class parser(object):
             and tokens[idx + 4].isdigit()
         ):
             # YYYY:MM:DD, e.g. the format used in EXIF metadata
-            ymd.append(value_repr, 'Y')
+            ymd.append(value_repr, "Y")
             ymd.append(tokens[idx + 2])
             ymd.append(tokens[idx + 4])
             idx += 4
