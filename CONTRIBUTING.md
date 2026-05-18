@@ -109,4 +109,11 @@ This will pass the `-m tzstr` parameter to `pytest`, running only the tests with
 
 The tests can also be run directly by running `pytest` or `python -m pytest` in the root directory. This will be likely be less thorough but is often faster and is a good first pass to check your changes.
 
+If your checkout does not yet contain
+`src/dateutil/zoneinfo/dateutil-zoneinfo.tar.gz`, run
+`python updatezinfo.py` once from the repository root before running the test
+suite. This downloads the timezone data archive and rebuilds the bundled
+zoneinfo file used by the tests; the script requires the `zic` executable to be
+available on your `PATH`.
+
 All GitHub pull requests are automatically tested using [GitHub Actions](https://github.com/dateutil/dateutil/actions/) and [Appveyor](https://ci.appveyor.com/project/dateutil/dateutil).
