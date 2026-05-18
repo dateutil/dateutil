@@ -185,6 +185,11 @@ def test_parse_yearfirst(sep):
     assert result == expected
 
 
+def test_parse_exif_datetime():
+    result = parse("2024:03:29 07:19:05")
+    assert result == datetime(2024, 3, 29, 7, 19, 5)
+
+
 @pytest.mark.parametrize('dstr,expected', [
     ("Thu Sep 25 10:36:28 BRST 2003", datetime(2003, 9, 25, 10, 36, 28)),
     ("1996.07.10 AD at 15:08:56 PDT", datetime(1996, 7, 10, 15, 8, 56)),
