@@ -445,6 +445,8 @@ class rrule(rrulebase):
         self._dtstart = dtstart
         self._tzinfo = dtstart.tzinfo
         self._freq = freq
+        if not isinstance(interval, integer_types):
+            raise TypeError("interval must be an integer")
         self._interval = interval
         self._count = count
 
