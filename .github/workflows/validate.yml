@@ -95,9 +95,13 @@ jobs:
       TOXENV: py
       PIP_TRUSTED_HOST: pypi.python.org
       SUDO: ${{ !matrix.use-container && 'sudo' || '' }}
+      TZ: ${{ !startsWith(matrix.os, 'windows-latest') && 'America/New_York' || null }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      - name: Set timezone (Windows)
+        if: startsWith(matrix.os, 'windows-latest')
+        run: tzutil /s "Eastern Standard Time"
       - if: ${{ !matrix.use-container }}
         name: Set up Python ${{ matrix.python-version }} on ${{ matrix.os }} (non-containers)
         uses: actions/setup-python@v5
@@ -125,15 +129,15 @@ jobs:
         run: |
           curl https://get.enterprisedb.com/postgresql/postgresql-9.5.21-2-windows-x64-binaries.zip --output $env:GITHUB_WORKSPACE\postgresql9.5.21.zip
           unzip -oq $env:GITHUB_WORKSPACE\postgresql9.5.21.zip -d .postgresql
-        if: runner.os == 'Windows'
+        if: startsWith(matrix.os, 'windows')
       - name: Run updatezinfo.py (Windows)
         run: |
           $env:Path += ";$env:GITHUB_WORKSPACE\.postgresql\pgsql\bin"
           ci_tools/retry.bat python updatezinfo.py
-        if: runner.os == 'Windows'
+        if: startsWith(matrix.os, 'windows')
       - name: Run updatezinfo.py (Unix)
         run: ./ci_tools/retry.sh python updatezinfo.py
-        if: runner.os != 'Windows'
+        if: "!startsWith(matrix.os, 'windows')"
       - name: Run tox
         run: python -m tox
       - name: Generate coverage.xml
@@ -156,11 +160,15 @@ jobs:
         toxenv: ["docs", "tz", "precommit"]
     env:
       TOXENV: ${{ matrix.toxenv }}
+      TZ: ${{ !startsWith(matrix.os, 'windows-latest') && 'America/New_York' || null }}
 
     steps:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
+      - name: Set timezone (Windows)
+        if: startsWith(matrix.os, 'windows-latest')
+        run: tzutil /s "Eastern Standard Time"
       - name: ${{ matrix.toxenv }}
         uses: actions/setup-python@v5
         with:

@@ -1,0 +1,1 @@
+Adjust time zone property test so that it works properly in the face of ambiguous and imaginary times, and start running CI tests in America/New_York so that this actually comes up sometimes. (gh pr #1501)
