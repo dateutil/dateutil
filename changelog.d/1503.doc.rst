@@ -1,0 +1,1 @@
+Fix the parser documentation directive so the ``parse()`` signature includes ``timestr``.
