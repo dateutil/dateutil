@@ -1,0 +1,1 @@
+Added Python 3.14 to the CI, which also requires relaxing the virtualenv pin. (gh pr #1504)
