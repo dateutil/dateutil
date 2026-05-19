@@ -21,7 +21,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: tzdata_built
-          key: tzdata-${{ env.TZDATA_VERSION }}-fat
+          key: tzdata-${{ env.TZDATA_VERSION }}
 
       - name: Build tzdata
         if: steps.cache-tzdata.outputs.cache-hit != 'true'
@@ -36,8 +36,7 @@ jobs:
           cd tzdb-${{ env.TZDATA_VERSION }}
           # TODO: Don't use fat when slim builds are available
           make install DESTDIR=$GITHUB_WORKSPACE/tzdata_built \
-                        DATAFORM=main \
-                        ZFLAGS="-b fat"
+                        DATAFORM=main
 
       - name: Upload tzdata artifact
         uses: actions/upload-artifact@v4
