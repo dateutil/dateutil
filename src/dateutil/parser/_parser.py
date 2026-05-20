@@ -896,6 +896,14 @@ class parser(object):
             if len_li == 4:
                 res.minute = int(s[2:])
 
+        elif len(ymd) == 3 and len_li == 9 and res.hour is None:
+            # HHMMSSfff after a complete date, e.g. 20010203 040506789
+            s = tokens[idx]
+            res.hour = int(s[:2])
+            res.minute = int(s[2:4])
+            res.second = int(s[4:6])
+            res.microsecond = int(s[6:].ljust(6, "0")[:6])
+
         elif len_li == 6 or (len_li > 6 and tokens[idx].find('.') == 6):
             # YYMMDD or HHMMSS[.ss]
             s = tokens[idx]
