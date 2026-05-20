@@ -2,22 +2,24 @@
 from __future__ import unicode_literals
 
 import itertools
-from datetime import datetime, timedelta
-import unittest
 import sys
-
-from dateutil import tz
-from dateutil.tz import tzoffset
-from dateutil.parser import parse, parserinfo
-from dateutil.parser import ParserError
-from dateutil.parser import UnknownTimezoneWarning
-
-from ._common import TZEnvContext
-
-from six import assertRaisesRegex, PY2
+import unittest
+from datetime import datetime, timedelta
 from io import StringIO
 
 import pytest
+from six import PY2, assertRaisesRegex
+
+from dateutil import tz
+from dateutil.parser import (
+    ParserError,
+    UnknownTimezoneWarning,
+    parse,
+    parserinfo,
+)
+from dateutil.tz import tzoffset
+
+from ._common import TZEnvContext
 
 # Platform info
 IS_WIN = sys.platform.startswith('win')
@@ -183,6 +185,11 @@ def test_parse_yearfirst(sep):
     dstr = expected.strftime(fmt)
     result = parse(dstr, yearfirst=True)
     assert result == expected
+
+
+def test_parse_exif_datetime():
+    result = parse("2024:03:29 07:19:05")
+    assert result == datetime(2024, 3, 29, 7, 19, 5)
 
 
 @pytest.mark.parametrize('dstr,expected', [
@@ -614,7 +621,7 @@ class ParserTest(unittest.TestCase):
 
     def testCustomParserInfo(self):
         # Custom parser info wasn't working, as Michael Elsdörfer discovered.
-        from dateutil.parser import parserinfo, parser
+        from dateutil.parser import parser, parserinfo
 
         class myparserinfo(parserinfo):
             MONTHS = parserinfo.MONTHS[:]
@@ -627,7 +634,7 @@ class ParserTest(unittest.TestCase):
         # Horacio Hoyos discovered that day names shorter than 3 characters,
         # for example two letter German day name abbreviations, don't work:
         # https://github.com/dateutil/dateutil/issues/343
-        from dateutil.parser import parserinfo, parser
+        from dateutil.parser import parser, parserinfo
 
         class GermanParserInfo(parserinfo):
             WEEKDAYS = [("Mo", "Montag"),
