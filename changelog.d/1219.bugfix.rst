@@ -1,0 +1,1 @@
+Fixed an issue where rrulestr did not respect the ignoretz parameter when parsing EXDATE parameters. Reported and fixed by @AlecRosenbaum (gh issue #1218) (gh pr #1219)
