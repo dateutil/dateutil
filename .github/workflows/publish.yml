@@ -21,7 +21,21 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write # IMPORTANT: this permission is mandatory for trusted publishing
     steps:
+    - name: Determine destination index
+      id: determine-index
+      run: |
+        if [[ "${GITHUB_EVENT_NAME}" == "push" || \
+              "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
+          echo "TWINE_REPOSITORY_URL=https://test.pypi.org/legacy/" >> "${GITHUB_OUTPUT}"
+        elif [[ "${GITHUB_EVENT_NAME}" == "release" ]]; then
+          echo "TWINE_REPOSITORY_URL=https://upload.pypi.org/legacy/" >> "${GITHUB_OUTPUT}"
+        else
+          echo "Unknown event name: ${GITHUB_EVENT_NAME}"
+          exit 1
+        fi
     - uses: actions/checkout@v3
     - name: Set up Python
       uses: actions/setup-python@v5
@@ -46,18 +60,7 @@ jobs:
       run: |
         tox -e build
     - name: Publish package
-      env:
-        TWINE_USERNAME: "__token__"
-      run: |
-        if [[ "$GITHUB_EVENT_NAME" == "push" || \
-              "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]]; then
-          export TWINE_REPOSITORY_URL="https://test.pypi.org/legacy/"
-          export TWINE_PASSWORD="${{ secrets.TEST_PYPI_UPLOAD_TOKEN }}"
-        elif [[ "$GITHUB_EVENT_NAME" == "release" ]]; then
-          export TWINE_REPOSITORY="pypi"
-          export TWINE_PASSWORD="${{ secrets.PYPI_UPLOAD_TOKEN }}"
-        else
-          echo "Unknown event name: ${GITHUB_EVENT_NAME}"
-          exit 1
-        fi
-        tox -e release
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        repository-url: ${{ steps.determine-index.outputs.TWINE_REPOSITORY_URL }}
+
