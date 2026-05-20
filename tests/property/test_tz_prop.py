@@ -10,10 +10,37 @@ from dateutil import tz
 EPOCHALYPSE = datetime.fromtimestamp(2147483647)
 NEGATIVE_EPOCHALYPSE = datetime.fromtimestamp(0) - timedelta(seconds=2147483648)
 
+try:
+    import zoneinfo
+except ImportError:
+    try:
+        import backports.zoneinfo as zoneinfo
+    except ImportError:
+        zoneinfo = None
+
+
+def __valid_keys():
+    key_list = tz.available_iana_timezones()
+    return tuple(sorted(key_list))
+
+
+VALID_KEYS = __valid_keys()
+del __valid_keys
+
+iana_keys = st.sampled_from(VALID_KEYS)
+
+
+@pytest.mark.gettz
+@given(key=iana_keys)
+def test_key_property(key):
+    tzi = tz.gettz(key)
+    assume(isinstance(tzi, tz.tzfile))
+    assert tzi.key == key
+
 
 @pytest.mark.gettz
 @pytest.mark.skipif(
-    sys.version_info < (3, 6), reason="Not supported on Python 2"
+    sys.version_info < (3, 6), reason="Not supported on Python < 3.6"
 )
 @pytest.mark.parametrize("gettz_arg", [None, ""])
 # TODO: Remove bounds when GH #590 is resolved

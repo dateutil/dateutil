@@ -1,0 +1,8 @@
+Rewrote ``tz.tzfile`` based on a backport of the ``zoneinfo`` module's pure-Python
+implementation. This adds support for Version 2 and Version 3 ``tzfile(5)`` binaries,
+resolving issues with timestamps beyond 2038 and "slim" format binaries.
+Additionally, the new implementation improves PEP 495 compliance by correctly
+handling the ``fold`` attribute during gaps in local time. Also added
+``dateutil.tz.TZPATH`` and ``dateutil.tz.reset_tzpath`` to allow for runtime
+configuration of the IANA time zone data search path.
+(gh issues #462, #1059, gh pr #1130)
