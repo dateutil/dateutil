@@ -2303,6 +2303,9 @@ class RRuleTest(unittest.TestCase):
                              [datetime(1998, 1, 5, 9, 0),
                               datetime(2004, 1, 5, 9, 0)])
 
+    def testNonIntegerInterval(self):
+        self.assertRaises(TypeError, rrule, WEEKLY, interval="1")
+
     def testHourlyBadRRule(self):
         """
         When `byhour` is specified with `freq=HOURLY`, there are certain
