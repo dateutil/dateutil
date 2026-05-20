@@ -1,0 +1,1 @@
+Fixed dead link in `datetime.easter.easter` documentation.  Reported and fixed by @lunderberg (gh pr #1426).

@@ -41,7 +41,7 @@ def easter(year, method=EASTER_WESTERN):
 
     More about the algorithm may be found at:
 
-    `GM Arts: Easter Algorithms <http://www.gmarts.org/index.php?go=415>`_
+    `GM Arts: Easter Algorithms <https://web.archive.org/web/20241001041454/http://dates.gmarts.org/eastalg.htm>`_
 
     and
 
