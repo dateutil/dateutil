@@ -800,12 +800,13 @@ class parser(object):
                     # logic so that timezone parsing code will get it
                     # right.
                     if i + 1 < len_l and l[i + 1] in ('+', '-'):
-                        l[i + 1] = ('+', '-')[l[i + 1] == '+']
-                        res.tzoffset = None
                         if info.utczone(res.tzname):
-                            # With something like GMT+3, the timezone
-                            # is *not* GMT.
+                            # With something like UTC-4, the offset is literal.
                             res.tzname = None
+                            res.tzoffset = None
+                        else:
+                            l[i + 1] = ("+", "-")[l[i + 1] == "+"]
+                            res.tzoffset = None
 
                 # Check for a numbered timezone
                 elif res.hour is not None and l[i] in ('+', '-'):
