@@ -170,7 +170,10 @@ def zoneinfo_cache(request):
         Path: Path to the directory containing the extracted timezone files.
     """
     input_file = os.path.join(
-        "tests/resources/data/", "zoneinfo_%s.json" % request.param
+        os.path.dirname(__file__),
+        "resources",
+        "data",
+        "zoneinfo_%s.json" % request.param,
     )
     cache_dir = os.path.join(
         ZONEINFO_DIR, os.path.splitext(os.path.basename(input_file))[0]
