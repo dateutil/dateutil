@@ -25,7 +25,7 @@ except ImportError:
     # "Backport" to older versions by not bothering with frozen
     frozen = attr.s
 
-if six.PY2:
+if sys.version_info < (3, 5):
     JSONDecodeError = ValueError
 else:
     from json import JSONDecodeError
