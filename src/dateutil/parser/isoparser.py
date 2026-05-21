@@ -319,6 +319,15 @@ class isoparser(object):
         if not 0 < day < 8:     # Range is 1-7
             raise ValueError('Invalid weekday: {}'.format(day))
 
+        # Dec 28 is always in the last ISO week of the year
+        max_week = date(year, 12, 28).isocalendar()[1]
+        if week > max_week:
+            raise ValueError(
+                'Week {} is not valid for year {} (max week: {})'.format(
+                    week, year, max_week
+                )
+            )
+
         # Get week 1 for the specific year:
         jan_4 = date(year, 1, 4)   # Week 1 always has January 4th in it
         week_1 = jan_4 - timedelta(days=jan_4.isocalendar()[2] - 1)
