@@ -107,7 +107,7 @@ class relativedelta(object):
 
     def __init__(self, dt1=None, dt2=None,
                  years=0, months=0, days=0, leapdays=0, weeks=0,
-                 hours=0, minutes=0, seconds=0, milliseconds=0, microseconds=0,
+                 hours=0, minutes=0, seconds=0, microseconds=0, milliseconds=0,
                  year=None, month=None, day=None, weekday=None,
                  yearday=None, nlyearday=None,
                  hour=None, minute=None, second=None, microsecond=None):
@@ -279,6 +279,7 @@ class relativedelta(object):
     @milliseconds.setter
     def milliseconds(self, value):
         self.microseconds = self.microseconds - (self.milliseconds * 1000) + value * 1000
+        self._fix()
 
     def _set_months(self, months):
         self.months = months
