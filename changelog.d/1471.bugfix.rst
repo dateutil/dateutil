@@ -1,0 +1,4 @@
+Fixed yearly ``rrule`` generation so ``BYMONTHDAY`` rules without an explicit
+``BYMONTH`` now use the month from ``DTSTART`` instead of expanding across
+every month in the year. Reported by @laydros (gh issue #1452). Fixed by
+@oaksprout (gh pr #1471)
