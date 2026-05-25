@@ -285,6 +285,7 @@ class parserinfo(object):
            ("s", "second", "seconds")]
     AMPM = [("am", "a"),
             ("pm", "p")]
+    NOON = ["noon"]
     UTCZONE = ["UTC", "GMT", "Z", "z"]
     PERTAIN = ["of"]
     TZOFFSET = {}
@@ -297,6 +298,7 @@ class parserinfo(object):
         self._months = self._convert(self.MONTHS)
         self._hms = self._convert(self.HMS)
         self._ampm = self._convert(self.AMPM)
+        self._noon = self._convert(self.NOON)
         self._utczone = self._convert(self.UTCZONE)
         self._pertain = self._convert(self.PERTAIN)
 
@@ -344,6 +346,9 @@ class parserinfo(object):
             return self._ampm[name.lower()]
         except KeyError:
             return None
+
+    def noon(self, name):
+        return name.lower() in self._noon
 
     def pertain(self, name):
         return name.lower() in self._pertain
@@ -789,6 +794,19 @@ class parser(object):
                     elif fuzzy:
                         skipped_idxs.append(i)
 
+                elif info.noon(l[i]):
+                    if res.hour is None:
+                        res.hour = 12
+                    elif res.hour != 12:
+                        if fuzzy:
+                            skipped_idxs.append(i)
+                            i += 1
+                            continue
+                        raise ValueError('Noon is only valid with hour 12')
+
+                    if res.minute is None:
+                        res.minute = 0
+
                 # Check for a timezone name
                 elif self._could_be_tzname(res.hour, res.tzname, res.tzoffset, l[i]):
                     res.tzname = l[i]
@@ -983,6 +1001,12 @@ class parser(object):
                 # 12 am
                 hour = int(value)
                 res.hour = self._adjust_ampm(hour, info.ampm(tokens[idx + 2]))
+                idx += 1
+            elif idx + 2 < len_l and info.noon(tokens[idx + 2]):
+                hour = int(value)
+                if hour != 12:
+                    raise ValueError('Noon is only valid with hour 12')
+                res.hour = hour
                 idx += 1
             else:
                 # Year, month or day
