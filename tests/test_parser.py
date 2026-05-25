@@ -968,11 +968,13 @@ def test_parsererror_repr():
 @pytest.mark.parametrize(
     "dtstr",
     [
-        "2024-01-15T12:00:00+0060",  # minutes >= 60 wraps into hour silently
+        "2024-01-15T12:00:00+0060",  # compact: minutes >= 60 wraps into hour silently
         "2024-01-15T12:00:00+0099",
         "2024-01-15T12:00:00+0560",
-        "2024-01-15T12:00:00+2400",  # total offset >= 24h → toxic datetime
+        "2024-01-15T12:00:00+2400",  # compact: total offset >= 24h → toxic datetime
         "2024-01-15T12:00:00+9900",
+        "2024-01-15T12:00:00+00:60",  # colon-sep: minutes >= 60
+        "2024-01-15T12:00:00+24:00",  # colon-sep: hours >= 24
     ],
 )
 def test_invalid_tzoffset_raises_parsererror(dtstr):
