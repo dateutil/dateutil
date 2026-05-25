@@ -1,0 +1,14 @@
+Validate ISO week 53 in isoparse
+
+isoparse previously accepted week 53 for any year, even those with
+only 52 ISO weeks. For example, isoparse("2021-W53-1") silently
+returned 2022-01-03, which belongs to ISO year 2021 week 52.
+
+This adds a check in _calculate_weekdate that verifies week 53
+actually exists for the given year by checking whether December 28
+(which always falls in the last ISO week) is in week 53.
+
+Years like 2015 and 2020 correctly keep week 53 while years like
+2019 and 2021 now raise ValueError.
+
+Fixes #1236
