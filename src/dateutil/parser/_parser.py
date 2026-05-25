@@ -832,11 +832,15 @@ class parser(object):
                     if not (0 <= min_offset < 60):
                         raise ParserError(
                             "Invalid minute offset %d in timezone: %s",
-                            min_offset, timestr)
+                            min_offset,
+                            timestr,
+                        )
                     if not (0 <= hour_offset < 24):
                         raise ParserError(
                             "Invalid hour offset %d in timezone: %s",
-                            hour_offset, timestr)
+                            hour_offset,
+                            timestr,
+                        )
 
                     res.tzoffset = signal * (hour_offset * 3600 + min_offset * 60)
 

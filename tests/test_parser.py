@@ -965,25 +965,30 @@ def test_parsererror_repr():
 
 
 # GH 1508 — parse() silently accepted out-of-range timezone offsets
-@pytest.mark.parametrize('dtstr', [
-    '2024-01-15T12:00:00+0060',   # minutes >= 60 wraps into hour silently
-    '2024-01-15T12:00:00+0099',
-    '2024-01-15T12:00:00+0560',
-    '2024-01-15T12:00:00+2400',   # total offset >= 24h → toxic datetime
-    '2024-01-15T12:00:00+9900',
-])
+@pytest.mark.parametrize(
+    "dtstr",
+    [
+        "2024-01-15T12:00:00+0060",  # minutes >= 60 wraps into hour silently
+        "2024-01-15T12:00:00+0099",
+        "2024-01-15T12:00:00+0560",
+        "2024-01-15T12:00:00+2400",  # total offset >= 24h → toxic datetime
+        "2024-01-15T12:00:00+9900",
+    ],
+)
 def test_invalid_tzoffset_raises_parsererror(dtstr):
     with pytest.raises(ParserError):
         parse(dtstr)
 
 
-@pytest.mark.parametrize('dtstr, expected_offset', [
-    ('2024-01-15T12:00:00+0000', 0),
-    ('2024-01-15T12:00:00+0530', 5*3600 + 30*60),
-    ('2024-01-15T12:00:00-0300', -(3*3600)),
-    ('2024-01-15T12:00:00+2359', 23*3600 + 59*60),
-])
+@pytest.mark.parametrize(
+    "dtstr, expected_offset",
+    [
+        ("2024-01-15T12:00:00+0000", 0),
+        ("2024-01-15T12:00:00+0530", 5 * 3600 + 30 * 60),
+        ("2024-01-15T12:00:00-0300", -(3 * 3600)),
+        ("2024-01-15T12:00:00+2359", 23 * 3600 + 59 * 60),
+    ],
+)
 def test_valid_tzoffset_still_parsed(dtstr, expected_offset):
-    from dateutil.tz import tzoffset as tzoff
     dt = parse(dtstr)
     assert dt.utcoffset().total_seconds() == expected_offset
