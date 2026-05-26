@@ -316,6 +316,11 @@ class RelativeDeltaTest(unittest.TestCase):
     def testInequalityTypeMismatch(self):
         # Different type
         self.assertFalse(relativedelta(year=1) == 19)
+        self.assertTrue(relativedelta(year=1) != 19)
+    
+    def testInequalityNoneType(self):
+        self.assertFalse(relativedelta(year=1) == None)
+        self.assertTrue(relativedelta(year=1) != None)
 
     def testInequalityUnsupportedType(self):
         self.assertIs(relativedelta(hours=3) == NotAValue, NotAValue)

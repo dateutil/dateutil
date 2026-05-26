@@ -1,0 +1,4 @@
+Fixed an issue where the inequality comparison
+for a RelativeDelta and a different type
+would always return False.
+Reported and fixed by @{FriskySaga}. (gh issue #{1157}, gh pr #{1158})
