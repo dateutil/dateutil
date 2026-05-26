@@ -59,6 +59,10 @@ class _timelex(object):
     # Fractional seconds are sometimes split by a comma
     _split_decimal = re.compile("([.,])")
 
+    # Comma followed by a space should be treated as a token separator
+    # rather than part of the token
+    _comma_follows_token = re.compile(r",(\s+)")
+
     def __init__(self, instream):
         if isinstance(instream, (bytes, bytearray)):
             instream = instream.decode()
