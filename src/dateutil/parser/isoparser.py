@@ -414,3 +414,12 @@ class isoparser(object):
 
 DEFAULT_ISOPARSER = isoparser()
 isoparse = DEFAULT_ISOPARSER.isoparse
+from dateutil.parser._parser import ParserError
+
+def parse_tzstr(tzstr, zero_as_utc=True):
+    # ... (rest of the function remains the same)
+
+    if not (-24 <= hours <= 24) or not (0 <= minutes <= 59):
+        raise ParserError("Invalid timezone offset: {}".format(tzstr))
+
+    # ... (rest of the function remains the same)
