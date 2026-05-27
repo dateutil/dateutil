@@ -1,0 +1,1 @@
+Ignored several external documentation URLs during Sphinx linkcheck because they are not reliably reachable from automated clients.

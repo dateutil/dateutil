@@ -107,6 +107,7 @@ switch, and thus all their contributions are dual-licensed.
 - Satyabrat Bhol <satyabrat35@MASKED> (gh: @Satyabrat35) **D**
 - Savraj <savraj@MASKED>
 - Sergey Vishnikin <armicron@MASKED>
+- Sean Kenneth Doherty (gh: @Sean-Kenneth-Doherty) **D**
 - Sherry Zhou (gh: @cssherry) **D**
 - Siping Meng (gh: @smeng10) **D**
 - Stefan Bonchev **D**
