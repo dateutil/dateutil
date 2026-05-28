@@ -1,0 +1,1 @@
+Fixed test failure once the current year reaches 2027. Reported by Santiago Vila (https://bugs.debian.org/1078638). Fixed by Colin Watson (gh pr #1422).
