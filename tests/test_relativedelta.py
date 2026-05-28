@@ -21,10 +21,10 @@ class RelativeDeltaTest(unittest.TestCase):
             pass
 
         ccRD = rdChildClass(years=1, months=1, days=1, leapdays=1, weeks=1,
-                            hours=1, minutes=1, seconds=1, microseconds=1)
+                            hours=1, minutes=1, seconds=1, milliseconds=1, microseconds=1)
 
         rd = relativedelta(years=1, months=1, days=1, leapdays=1, weeks=1,
-                           hours=1, minutes=1, seconds=1, microseconds=1)
+                           hours=1, minutes=1, seconds=1, milliseconds=1, microseconds=1)
 
         self.assertEqual(type(ccRD + rd), type(ccRD),
                          msg='Addition does not inherit type.')
@@ -762,6 +762,72 @@ class RelativeDeltaWeeksPropertySetterTest(unittest.TestCase):
         rd.weeks = -1  # does not change anything
         self.assertEqual(rd.days, -8)
         self.assertEqual(rd.weeks, -1)
+
+
+class RelativeDeltaMillisecondTest(unittest.TestCase):
+    NOW = datetime(2000, 1, 1, 1, 1, 1)
+
+    def test_add_milliseconds(self):
+        self.assertEqual(RelativeDeltaMillisecondTest.NOW +
+                         relativedelta(seconds=+1, milliseconds=+1, microseconds=+1),
+                         datetime(2000, 1, 1, 1, 1, 2, 1001))
+
+    def test_add_milliseconds_2(self):
+        self.assertEqual(RelativeDeltaMillisecondTest.NOW +
+                         relativedelta(seconds=4, milliseconds=-1000, microseconds=+1),
+                         datetime(2000, 1, 1, 1, 1, 4, 1))
+
+    def test_add_milliseconds_3(self):
+        rd = relativedelta(milliseconds=1.25)
+        self.assertEqual(RelativeDeltaMillisecondTest.NOW + rd,
+                         datetime(2000, 1, 1, 1, 1, 1, 1250))
+
+    """Test the milliseconds property getter"""
+    def test_one_miscrosecond(self):
+        rd = relativedelta(microseconds=1)
+        self.assertEqual(rd.microseconds, 1)
+        self.assertEqual(rd.milliseconds, 0)
+
+    def test_minus_one_microsecond(self):
+        rd = relativedelta(microseconds=-1)
+        self.assertEqual(rd.microseconds, -1)
+        self.assertEqual(rd.milliseconds, 0)
+
+    def test_height_microseconds(self):
+        rd = relativedelta(microseconds=1001)
+        self.assertEqual(rd.microseconds, 1001)
+        self.assertEqual(rd.milliseconds, 1)
+
+    def test_minus_height_microseconds(self):
+        rd = relativedelta(microseconds=-1001)
+        self.assertEqual(rd.microseconds, -1001)
+        self.assertEqual(rd.milliseconds, -1)
+
+    """Test the milliseconds setter which makes a "smart" update of the days attribute"""
+
+    def test_one_microsecond_set_one_millisecond(self):
+        rd = relativedelta(microseconds=1)
+        rd.milliseconds = 1  # add 1000 microseconds
+        self.assertEqual(rd.microseconds, 1001)
+        self.assertEqual(rd.milliseconds, 1)
+
+    def test_minus_one_microseond_set_one_millisecond(self):
+        rd = relativedelta(microseconds=-1)
+        rd.milliseconds = 1  # add 1000 microseonds
+        self.assertEqual(rd.microseconds, 999)
+        self.assertEqual(rd.milliseconds, 0)
+
+    def test_height_microseonds_set_minus_one_milliseconds(self):
+        rd = relativedelta(microseconds=1001)
+        rd.milliseconds = -1  # change from 1 milliseconds, 1 microsecond to -1 milliseconds, 1 microseond
+        self.assertEqual(rd.microseconds, -999)
+        self.assertEqual(rd.milliseconds, 0)
+
+    def test_minus_height_microseconds_set_minus_one_milliseconds(self):
+        rd = relativedelta(microseconds=-1001)
+        rd.milliseconds = -1  # does not change anything
+        self.assertEqual(rd.microseconds, -1001)
+        self.assertEqual(rd.milliseconds, -1)
 
 
 # vim:ts=4:sw=4:et
