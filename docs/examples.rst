@@ -1479,4 +1479,15 @@ tzwinlocal examples
 
     >>> tz = tzwinlocal()
 
+
+isoparse examples
+-------------------
+
+
+.. doctest:: isoparse
+
+    >>> from dateutil.parser import isoparse
+    >>> isoparse("2020-08-20T03:33:46.000Z")
+    datetime.datetime(2020, 8, 20, 3, 33, 46, tzinfo=tzutc())
+
 # vim:ts=4:sw=4:et
