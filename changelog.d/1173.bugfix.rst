@@ -1,0 +1,3 @@
+Fixed the base case MM.YYYY parsing issue.
+Any additional parsing combinations with MM.YYYY are not verified to be working.
+Fixed by @{FriskySaga}. (gh issue #{384}, gh pr #{1173})
