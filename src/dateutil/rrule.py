@@ -1672,7 +1672,10 @@ class _rrulestr(object):
                 parms = parms[1:]
                 if name == "RRULE":
                     for parm in parms:
-                        raise ValueError("unsupported RRULE parm: "+parm)
+                        if parm.startswith("X-"):
+                            # Experimental random vendor features; safe to ignore
+                            continue
+                        raise ValueError("unsupported RRULE parm: " + parm)
                     rrulevals.append(value)
                 elif name == "RDATE":
                     for parm in parms:
