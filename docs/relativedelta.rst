@@ -218,3 +218,19 @@ We can use the non-leap year day to ignore this:
 
     >>> date(2000, 1, 1)+relativedelta(nlyearday=260)
     datetime.date(2000, 9, 17)
+
+Remember: relativedelta.relativedelta provides the calendar time delta, Wall Time, not Absolute Time.
+Wall Time is the time on the clock: adding or subrtracting time changes time on a specified number of minutes, hours,
+days, weeks, etc.  Absolute Time counts switching of time regions, change of the winter time to summer time, etc.
+Example around 03/11/2023, day of the switch to summer time:
+
+.. doctest:: relativedelta
+
+    >>> winter_time = datetime(2023, 3, 11, 2, 55, 0, tzinfo=tz.gettz('America/Los_Angeles'))
+    2023-03-11 02:55:00-08:00
+    >>> summer_time = winter_time + relativedelta.relativedelta(days=1)
+    2023-03-12 02:55:00-07:00
+    >>> (summer_time - winter_time).days * 24.0
+    24.0
+    >>> (summer_time.timestamp() - winter_time.timestamp())/3600
+    23.0
