@@ -962,3 +962,10 @@ def test_parsererror_repr():
     s = repr(ParserError("Problem with string: %s", "2019-01-01"))
 
     assert s == "ParserError('Problem with string: %s', '2019-01-01')"
+
+
+def test_disable_durations():
+    with pytest.raises(ValueError, match="Unknown string format"):
+        parse("t2m", disable_durations=True)
+    with pytest.raises(ValueError, match="Unknown string format"):
+        parse("t2m1", disable_durations=True)
