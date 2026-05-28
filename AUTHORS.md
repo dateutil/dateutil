@@ -66,6 +66,7 @@ switch, and thus all their contributions are dual-licensed.
 - Jay Weisskopf <jay@jayschwa.net> (gh: @jayschwa) **D**
 - Jitesh <jitesh@MASKED>
 - John Purviance <jpurviance@MASKED> (gh @jpurviance) **D**
+- Jon Crall <erotemic@gmail.com> (gh: @erotemic) **D**
 - Jon Dufresne <jon.dufresne@MASKED> (gh: @jdufresne) **R**
 - Jonas Neubert <jonas@MASKED> (gh: @jonemo) **R**
 - Juan Arias <jdarias3@gmail.com> (gh: @jdarias3) **D**
