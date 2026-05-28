@@ -168,14 +168,9 @@ class relativedelta(object):
             self.seconds = delta.seconds + delta.days * 86400
             self.microseconds = delta.microseconds
         else:
-            # Check for non-integer values in integer-only quantities
-            if any(x is not None and x != int(x) for x in (years, months)):
-                raise ValueError("Non-integer years and months are "
-                                 "ambiguous and not currently supported.")
-
             # Relative information
-            self.years = int(years)
-            self.months = int(months)
+            self.years = years
+            self.months = months
             self.days = days + weeks * 7
             self.leapdays = leapdays
             self.hours = hours
@@ -249,7 +244,7 @@ class relativedelta(object):
             div, mod = divmod(self.hours * s, 24)
             self.hours = mod * s
             self.days += div * s
-        if abs(self.months) > 11:
+        if abs(self.months) >= 12:
             s = _sign(self.months)
             div, mod = divmod(self.months * s, 12)
             self.months = mod * s
@@ -271,7 +266,7 @@ class relativedelta(object):
 
     def _set_months(self, months):
         self.months = months
-        if abs(self.months) > 11:
+        if abs(self.months) >= 12:
             s = _sign(self.months)
             div, mod = divmod(self.months * s, 12)
             self.months = mod * s
@@ -286,6 +281,9 @@ class relativedelta(object):
 
         >>> relativedelta(days=1.5, hours=2).normalized()
         relativedelta(days=+1, hours=+14)
+
+        This does not normalize months or years, since those differ depending
+        on the initial date the delta is applied to.
 
         :return:
             Returns a :class:`dateutil.relativedelta.relativedelta` object.
@@ -363,19 +361,24 @@ class relativedelta(object):
             return NotImplemented
         elif self._has_time and not isinstance(other, datetime.datetime):
             other = datetime.datetime.fromordinal(other.toordinal())
-        year = (self.year or other.year)+self.years
+        year = (self.year or other.year) + int(self.years)
+        if self.years != int(self.years):
+            self.months += 12 * (self.years % 1)
         month = self.month or other.month
         if self.months:
-            assert 1 <= abs(self.months) <= 12
-            month += self.months
+            assert 0 <= abs(self.months) <= 12
+            month += int(self.months)
             if month > 12:
                 year += 1
                 month -= 12
-            elif month < 1:
+            elif month < 0:
                 year -= 1
                 month += 12
-        day = min(calendar.monthrange(year, month)[1],
-                  self.day or other.day)
+            if self.months != int(self.months):
+                self.days += calendar.monthrange(year, month)[1] * (
+                    self.months % 1
+                )
+        day = min(calendar.monthrange(year, month)[1], self.day or other.day)
         repl = {"year": year, "month": month, "day": day}
         for attr in ["hour", "minute", "second", "microsecond"]:
             value = getattr(self, attr)
