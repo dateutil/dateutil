@@ -4638,9 +4638,9 @@ def test_generated_aware_dtstart_rrulestr():
     with mock.patch("dateutil.rrule.datetime") as mock_dt:
         mock_dt.datetime.now.return_value = frozen
         mock_dt.datetime.side_effect = lambda *a, **kw: datetime(*a, **kw)
-        rrule_without_dtstart = rrule(freq=HOURLY,
-                                      until=datetime(2018, 3, 6, 8, 0,
-                                                     tzinfo=tz.UTC))
+        rrule_without_dtstart = rrule(
+            freq=HOURLY, until=datetime(2018, 3, 6, 8, 0, tzinfo=tz.UTC)
+        )
         rrule_r = rrulestr(str(rrule_without_dtstart))
         assert list(rrule_r) == list(rrule_without_dtstart)
 

@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-from datetime import timedelta, datetime
+from datetime import datetime, timedelta
 from unittest import mock
 
-from dateutil import tz
-from dateutil import utils
+from dateutil import tz, utils
 from dateutil.tz import UTC
 from dateutil.utils import within_delta
 
