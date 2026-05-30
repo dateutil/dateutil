@@ -1,30 +1,38 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 from datetime import timedelta, datetime
+from unittest import mock
 
 from dateutil import tz
 from dateutil import utils
 from dateutil.tz import UTC
 from dateutil.utils import within_delta
 
-from freezegun import freeze_time
-
 NYC = tz.gettz("America/New_York")
 
 
-@freeze_time(datetime(2014, 12, 15, 1, 21, 33, 4003))
 def test_utils_today():
-    assert utils.today() == datetime(2014, 12, 15, 0, 0, 0)
+    frozen = datetime(2014, 12, 15, 1, 21, 33, 4003)
+    with mock.patch("dateutil.utils.datetime") as mock_dt:
+        mock_dt.now.return_value = frozen
+        mock_dt.side_effect = lambda *a, **kw: datetime(*a, **kw)
+        assert utils.today() == datetime(2014, 12, 15, 0, 0, 0)
 
 
-@freeze_time(datetime(2014, 12, 15, 12), tz_offset=5)
 def test_utils_today_tz_info():
-    assert utils.today(NYC) == datetime(2014, 12, 15, 0, 0, 0, tzinfo=NYC)
+    frozen = datetime(2014, 12, 15, 12, tzinfo=NYC)
+    with mock.patch("dateutil.utils.datetime") as mock_dt:
+        mock_dt.now.return_value = frozen
+        mock_dt.side_effect = lambda *a, **kw: datetime(*a, **kw)
+        assert utils.today(NYC) == datetime(2014, 12, 15, 0, 0, 0, tzinfo=NYC)
 
 
-@freeze_time(datetime(2014, 12, 15, 23), tz_offset=5)
 def test_utils_today_tz_info_different_day():
-    assert utils.today(UTC) == datetime(2014, 12, 16, 0, 0, 0, tzinfo=UTC)
+    frozen = datetime(2014, 12, 15, 23, tzinfo=UTC)
+    with mock.patch("dateutil.utils.datetime") as mock_dt:
+        mock_dt.now.return_value = frozen
+        mock_dt.side_effect = lambda *a, **kw: datetime(*a, **kw)
+        assert utils.today(UTC) == datetime(2014, 12, 16, 0, 0, 0, tzinfo=UTC)
 
 
 def test_utils_default_tz_info_naive():
