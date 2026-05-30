@@ -577,6 +577,14 @@ class parser(object):
         :param timestr:
             Any date/time string using the supported formats.
 
+            .. warning::
+
+                Passing a string that does not represent a date or time has
+                **undefined behaviour** — the parser may return an arbitrary
+                result, raise :exc:`ParserError`, or silently produce an
+                incorrect date.  Only strings that actually represent a
+                date/time are guaranteed to be parsed correctly.
+
         :param default:
             The default datetime object, if this is a datetime object and not
             ``None``, elements specified in ``timestr`` replace elements in the
