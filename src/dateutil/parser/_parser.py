@@ -58,6 +58,8 @@ __all__ = ["parse", "parserinfo", "ParserError"]
 class _timelex(object):
     # Fractional seconds are sometimes split by a comma
     _split_decimal = re.compile("([.,])")
+    # When comma is used as a separator between seconds and microseconds
+    _unsplit_comma = re.compile(r"(?<=\d),(?=\d)")
 
     def __init__(self, instream):
         if isinstance(instream, (bytes, bytearray)):
