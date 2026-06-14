@@ -210,6 +210,11 @@ class isoparser(object):
             return self._parse_isodate_uncommon(dt_str)
 
     def _parse_isodate_common(self, dt_str):
+        """Parse a standard YYYY-MM-DD or YYYYMMDD date string.
+
+        Returns (components, position) where components is [year, month, day]
+        and position is the index after the last consumed character.
+        """
         len_str = len(dt_str)
         components = [1, 1, 1]
 
@@ -251,6 +256,11 @@ class isoparser(object):
         return components, pos + 2
 
     def _parse_isodate_uncommon(self, dt_str):
+        """Parse week-date (YYYY-Www-D) or ordinal-date (YYYY-DDD) formats.
+
+        Returns (components, position) where components is [year, month, day]
+        and position is the index after the last consumed character.
+        """
         if len(dt_str) < 4:
             raise ValueError('ISO string too short')
 
@@ -261,38 +271,64 @@ class isoparser(object):
 
         pos = 4 + has_sep       # Skip '-' if it's there
         if dt_str[pos:pos + 1] == b'W':
-            # YYYY-?Www-?D?
-            pos += 1
+            base_date = self._parse_week_date(dt_str, has_sep, pos, year)
+            # Recalculate pos from the week-date parsing
+            pos = 4 + has_sep + 1  # After 'W'
             weekno = int(dt_str[pos:pos + 2])
             pos += 2
-
-            dayno = 1
             if len(dt_str) > pos:
-                if (dt_str[pos:pos + 1] == self._DATE_SEP) != has_sep:
-                    raise ValueError('Inconsistent use of dash separator')
-
-                pos += has_sep
-
-                dayno = int(dt_str[pos:pos + 1])
-                pos += 1
-
-            base_date = self._calculate_weekdate(year, weekno, dayno)
+                pos += has_sep + 1  # Skip separator and day digit
         else:
-            # YYYYDDD or YYYY-DDD
-            if len(dt_str) - pos < 3:
-                raise ValueError('Invalid ordinal day')
-
-            ordinal_day = int(dt_str[pos:pos + 3])
+            base_date = self._parse_ordinal_date(dt_str, pos, year)
             pos += 3
-
-            if ordinal_day < 1 or ordinal_day > (365 + calendar.isleap(year)):
-                raise ValueError('Invalid ordinal day' +
-                                 ' {} for year {}'.format(ordinal_day, year))
-
-            base_date = date(year, 1, 1) + timedelta(days=ordinal_day - 1)
 
         components = [base_date.year, base_date.month, base_date.day]
         return components, pos
+
+    def _parse_week_date(self, dt_str, has_sep, pos, year):
+        """Parse the week and day portion of a YYYY-Www-D string.
+
+        Args:
+            dt_str: The full date string being parsed.
+            has_sep: Whether the string uses dash separators.
+            pos: Position right after the 'W' character.
+            year: The year component already parsed.
+
+        Returns:
+            A datetime.date for the specified week and day.
+        """
+        weekno = int(dt_str[pos + 1:pos + 3])
+        dayno = 1
+
+        week_end = pos + 3
+        if len(dt_str) > week_end:
+            if (dt_str[week_end:week_end + 1] == self._DATE_SEP) != has_sep:
+                raise ValueError('Inconsistent use of dash separator')
+            dayno = int(dt_str[week_end + has_sep:week_end + has_sep + 1])
+
+        return self._calculate_weekdate(year, weekno, dayno)
+
+    def _parse_ordinal_date(self, dt_str, pos, year):
+        """Parse the ordinal day portion of a YYYY-DDD string.
+
+        Args:
+            dt_str: The full date string being parsed.
+            pos: Position after the year (and optional separator).
+            year: The year component already parsed.
+
+        Returns:
+            A datetime.date for the specified ordinal day.
+        """
+        if len(dt_str) - pos < 3:
+            raise ValueError('Invalid ordinal day')
+
+        ordinal_day = int(dt_str[pos:pos + 3])
+
+        if ordinal_day < 1 or ordinal_day > (365 + calendar.isleap(year)):
+            raise ValueError('Invalid ordinal day' +
+                             ' {} for year {}'.format(ordinal_day, year))
+
+        return date(year, 1, 1) + timedelta(days=ordinal_day - 1)
 
     def _calculate_weekdate(self, year, week, day):
         """
@@ -328,6 +364,11 @@ class isoparser(object):
         return week_1 + timedelta(days=week_offset)
 
     def _parse_isotime(self, timestr):
+        """Parse an ISO-8601 time string into components.
+
+        Returns [hour, minute, second, microsecond, tzinfo] where
+        tzinfo may be None if no timezone is specified.
+        """
         len_str = len(timestr)
         components = [0, 0, 0, 0, None]
         pos = 0
@@ -362,13 +403,10 @@ class isoparser(object):
 
             if comp == 3:
                 # Fraction of a second
-                frac = self._FRACTION_REGEX.match(timestr[pos:])
-                if not frac:
-                    continue
-
-                us_str = frac.group(1)[:6]  # Truncate to microseconds
-                components[comp] = int(us_str) * 10**(6 - len(us_str))
-                pos += len(frac.group())
+                components[comp] = self._parse_second_fraction(timestr, pos)
+                if components[comp] > 0:
+                    frac = self._FRACTION_REGEX.match(timestr[pos:])
+                    pos += len(frac.group())
 
         if pos < len_str:
             raise ValueError('Unused components in ISO string')
@@ -380,7 +418,29 @@ class isoparser(object):
 
         return components
 
+    def _parse_second_fraction(self, timestr, pos):
+        """Extract the fractional seconds from a time string at the given position.
+
+        Args:
+            timestr: The time string being parsed.
+            pos: Position in the string where the fraction starts.
+
+        Returns:
+            Integer microseconds (0 if no fraction found).
+        """
+        frac = self._FRACTION_REGEX.match(timestr[pos:])
+        if not frac:
+            return 0
+
+        us_str = frac.group(1)[:6]  # Truncate to microseconds
+        return int(us_str) * 10**(6 - len(us_str))
+
     def _parse_tzstr(self, tzstr, zero_as_utc=True):
+        """Parse an ISO-8601 timezone offset string.
+
+        Handles Z, ±HH, ±HH:MM, and ±HHMM formats.
+        Returns tzutc for UTC or tzoffset for other offsets.
+        """
         if tzstr == b'Z' or tzstr == b'z':
             return tz.UTC
 

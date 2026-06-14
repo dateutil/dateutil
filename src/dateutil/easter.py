@@ -13,6 +13,82 @@ EASTER_ORTHODOX = 2
 EASTER_WESTERN = 3
 
 
+def _compute_julian_pfm_offset(year):
+    """Compute Paschal Full Moon offset for Julian calendar method.
+
+    Uses the original calculation valid for dates after 326 AD.
+
+    Args:
+        year: The year to compute for.
+
+    Returns:
+        Tuple of (i, j) where:
+        - i: Number of days from March 21 to Paschal Full Moon
+        - j: Weekday for PFM (0=Sunday, etc)
+    """
+    g = year % 19
+    i = (19 * g + 15) % 30
+    j = (year + year // 4 + i) % 7
+    return i, j
+
+
+def _compute_gregorian_correction(year):
+    """Compute the Julian-to-Gregorian date correction for Orthodox Easter.
+
+    Orthodox Easter uses the Julian calendar date, then converts to the
+    Gregorian calendar by adding extra days.
+
+    Args:
+        year: The year to compute for.
+
+    Returns:
+        Integer number of extra days to add.
+    """
+    e = 10
+    if year > 1600:
+        e = e + year // 100 - 16 - (year // 100 - 16) // 4
+    return e
+
+
+def _compute_western_pfm_offset(year):
+    """Compute Paschal Full Moon offset for Western (revised) method.
+
+    Uses the revised method in Gregorian calendar, valid for years 1583-4099.
+
+    Args:
+        year: The year to compute for.
+
+    Returns:
+        Tuple of (i, j) where:
+        - i: Number of days from March 21 to Paschal Full Moon
+        - j: Weekday for PFM (0=Sunday, etc)
+    """
+    g = year % 19
+    c = year // 100
+    h = (c - c // 4 - (8 * c + 13) // 25 + 19 * g + 15) % 30
+    i = h - (h // 28) * (1 - (h // 28) * (29 // (h + 1)) * ((21 - g) // 11))
+    j = (year + year // 4 + i + 2 - c + c // 4) % 7
+    return i, j
+
+
+def _pfm_offset_to_date(year, pfm_days, weekday_offset, gregorian_correction=0):
+    """Convert Paschal Full Moon offset to an Easter date.
+
+    Args:
+        year: The year.
+        pfm_days: Number of days from March 21 to Paschal Full Moon (i).
+        weekday_offset: Weekday for PFM (j).
+        gregorian_correction: Extra days for Julian-to-Gregorian conversion.
+
+    Returns:
+        datetime.date for Easter Sunday.
+    """
+    p = pfm_days - weekday_offset + gregorian_correction
+    d = 1 + (p + 27 + (p + 6) // 40) % 31
+    m = 3 + (p + 26) // 30
+    return datetime.date(int(year), int(m), int(d))
+
+
 def easter(year, method=EASTER_WESTERN):
     """
     This method was ported from the work done by GM Arts,
@@ -52,38 +128,13 @@ def easter(year, method=EASTER_WESTERN):
     if not (1 <= method <= 3):
         raise ValueError("invalid method")
 
-    # g - Golden year - 1
-    # c - Century
-    # h - (23 - Epact) mod 30
-    # i - Number of days from March 21 to Paschal Full Moon
-    # j - Weekday for PFM (0=Sunday, etc)
-    # p - Number of days from March 21 to Sunday on or before PFM
-    #     (-6 to 28 methods 1 & 3, to 56 for method 2)
-    # e - Extra days to add for method 2 (converting Julian
-    #     date to Gregorian date)
-
-    y = year
-    g = y % 19
-    e = 0
     if method < 3:
-        # Old method
-        i = (19*g + 15) % 30
-        j = (y + y//4 + i) % 7
-        if method == 2:
-            # Extra dates to convert Julian to Gregorian date
-            e = 10
-            if y > 1600:
-                e = e + y//100 - 16 - (y//100 - 16)//4
+        # Old method (Julian or Orthodox)
+        i, j = _compute_julian_pfm_offset(year)
+        gregorian_correction = _compute_gregorian_correction(year) if method == 2 else 0
     else:
-        # New method
-        c = y//100
-        h = (c - c//4 - (8*c + 13)//25 + 19*g + 15) % 30
-        i = h - (h//28)*(1 - (h//28)*(29//(h + 1))*((21 - g)//11))
-        j = (y + y//4 + i + 2 - c + c//4) % 7
+        # New method (Western/Revised)
+        i, j = _compute_western_pfm_offset(year)
+        gregorian_correction = 0
 
-    # p can be from -6 to 56 corresponding to dates 22 March to 23 May
-    # (later dates apply to method 2, although 23 May never actually occurs)
-    p = i - j + e
-    d = 1 + (p + 27 + (p + 6)//40) % 31
-    m = 3 + (p + 26)//30
-    return datetime.date(int(y), int(m), int(d))
+    return _pfm_offset_to_date(year, i, j, gregorian_correction)
