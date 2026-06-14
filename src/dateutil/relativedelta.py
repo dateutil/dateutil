@@ -16,6 +16,11 @@ __all__ = ["relativedelta", "MO", "TU", "WE", "TH", "FR", "SA", "SU"]
 
 
 class relativedelta(object):
+    # Class-level attribute definitions to avoid re-spelling in every method
+    _relative_attrs = ('years', 'months', 'days', 'leapdays',
+                       'hours', 'minutes', 'seconds', 'microseconds')
+    _absolute_attrs = ('year', 'month', 'day', 'weekday',
+                       'hour', 'minute', 'second', 'microsecond')
     """
     The relativedelta type is designed to be applied to an existing datetime and
     can replace specific components of that datetime, or represents an interval
@@ -229,37 +234,51 @@ class relativedelta(object):
         self._fix()
 
     def _fix(self):
+        self._cascade_time_units()
+        self._update_has_time_flag()
+
+    def _cascade_time_units(self):
+        """Normalize overflow in time units by cascading remainders upward.
+
+        Carries overflow from microseconds → seconds → minutes → hours → days → months → years
+        so that each unit stays within its natural range.
+        """
         if abs(self.microseconds) > 999999:
-            s = _sign(self.microseconds)
-            div, mod = divmod(self.microseconds * s, 1000000)
-            self.microseconds = mod * s
-            self.seconds += div * s
+            sign = _sign(self.microseconds)
+            div, mod = divmod(self.microseconds * sign, 1000000)
+            self.microseconds = mod * sign
+            self.seconds += div * sign
         if abs(self.seconds) > 59:
-            s = _sign(self.seconds)
-            div, mod = divmod(self.seconds * s, 60)
-            self.seconds = mod * s
-            self.minutes += div * s
+            sign = _sign(self.seconds)
+            div, mod = divmod(self.seconds * sign, 60)
+            self.seconds = mod * sign
+            self.minutes += div * sign
         if abs(self.minutes) > 59:
-            s = _sign(self.minutes)
-            div, mod = divmod(self.minutes * s, 60)
-            self.minutes = mod * s
-            self.hours += div * s
+            sign = _sign(self.minutes)
+            div, mod = divmod(self.minutes * sign, 60)
+            self.minutes = mod * sign
+            self.hours += div * sign
         if abs(self.hours) > 23:
-            s = _sign(self.hours)
-            div, mod = divmod(self.hours * s, 24)
-            self.hours = mod * s
-            self.days += div * s
+            sign = _sign(self.hours)
+            div, mod = divmod(self.hours * sign, 24)
+            self.hours = mod * sign
+            self.days += div * sign
         if abs(self.months) > 11:
-            s = _sign(self.months)
-            div, mod = divmod(self.months * s, 12)
-            self.months = mod * s
-            self.years += div * s
-        if (self.hours or self.minutes or self.seconds or self.microseconds
-                or self.hour is not None or self.minute is not None or
-                self.second is not None or self.microsecond is not None):
-            self._has_time = 1
-        else:
-            self._has_time = 0
+            sign = _sign(self.months)
+            div, mod = divmod(self.months * sign, 12)
+            self.months = mod * sign
+            self.years += div * sign
+
+    def _update_has_time_flag(self):
+        """Set _has_time if any time-related attribute has a value."""
+        has_relative_time = bool(
+            self.hours or self.minutes or self.seconds or self.microseconds
+        )
+        has_absolute_time = any(
+            getattr(self, attr) is not None
+            for attr in ('hour', 'minute', 'second', 'microsecond')
+        )
+        self._has_time = 1 if (has_relative_time or has_absolute_time) else 0
 
     @property
     def weeks(self):
@@ -361,9 +380,18 @@ class relativedelta(object):
                                   microsecond=self.microsecond)
         if not isinstance(other, datetime.date):
             return NotImplemented
-        elif self._has_time and not isinstance(other, datetime.datetime):
+        return self._add_to_date(other)
+
+    def _add_to_date(self, other):
+        """Apply this relativedelta to a date/datetime object.
+
+        This is the core date arithmetic logic, extracted from __add__ for
+        clarity and testability. The caller is responsible for ensuring
+        `other` is a datetime.date instance.
+        """
+        if self._has_time and not isinstance(other, datetime.datetime):
             other = datetime.datetime.fromordinal(other.toordinal())
-        year = (self.year or other.year)+self.years
+        year = (self.year or other.year) + self.years
         month = self.month or other.month
         if self.months:
             assert 1 <= abs(self.months) <= 12
@@ -376,30 +404,38 @@ class relativedelta(object):
                 month += 12
         day = min(calendar.monthrange(year, month)[1],
                   self.day or other.day)
-        repl = {"year": year, "month": month, "day": day}
-        for attr in ["hour", "minute", "second", "microsecond"]:
+        replacement = {"year": year, "month": month, "day": day}
+        for attr in ("hour", "minute", "second", "microsecond"):
             value = getattr(self, attr)
             if value is not None:
-                repl[attr] = value
+                replacement[attr] = value
         days = self.days
         if self.leapdays and month > 2 and calendar.isleap(year):
             days += self.leapdays
-        ret = (other.replace(**repl)
-               + datetime.timedelta(days=days,
-                                    hours=self.hours,
-                                    minutes=self.minutes,
-                                    seconds=self.seconds,
-                                    microseconds=self.microseconds))
+        result = (other.replace(**replacement)
+                  + datetime.timedelta(days=days,
+                                       hours=self.hours,
+                                       minutes=self.minutes,
+                                       seconds=self.seconds,
+                                       microseconds=self.microseconds))
         if self.weekday:
-            weekday, nth = self.weekday.weekday, self.weekday.n or 1
-            jumpdays = (abs(nth) - 1) * 7
-            if nth > 0:
-                jumpdays += (7 - ret.weekday() + weekday) % 7
-            else:
-                jumpdays += (ret.weekday() - weekday) % 7
-                jumpdays *= -1
-            ret += datetime.timedelta(days=jumpdays)
-        return ret
+            result = self._apply_weekday_adjustment(result)
+        return result
+
+    def _apply_weekday_adjustment(self, date_value):
+        """Adjust a date to the specified weekday (e.g., MO(+1) for next Monday).
+
+        If the weekday attribute is set on this delta, shift the date
+        to the Nth occurrence of that weekday from the current position.
+        """
+        target_weekday, nth = self.weekday.weekday, self.weekday.n or 1
+        jumpdays = (abs(nth) - 1) * 7
+        if nth > 0:
+            jumpdays += (7 - date_value.weekday() + target_weekday) % 7
+        else:
+            jumpdays += (date_value.weekday() - target_weekday) % 7
+            jumpdays *= -1
+        return date_value + datetime.timedelta(days=jumpdays)
 
     def __radd__(self, other):
         return self.__add__(other)
@@ -578,19 +614,17 @@ class relativedelta(object):
     __truediv__ = __div__
 
     def __repr__(self):
-        l = []
-        for attr in ["years", "months", "days", "leapdays",
-                     "hours", "minutes", "seconds", "microseconds"]:
+        parts = []
+        for attr in self._relative_attrs:
             value = getattr(self, attr)
             if value:
-                l.append("{attr}={value:+g}".format(attr=attr, value=value))
-        for attr in ["year", "month", "day", "weekday",
-                     "hour", "minute", "second", "microsecond"]:
+                parts.append("{attr}={value:+g}".format(attr=attr, value=value))
+        for attr in self._absolute_attrs:
             value = getattr(self, attr)
             if value is not None:
-                l.append("{attr}={value}".format(attr=attr, value=repr(value)))
+                parts.append("{attr}={value}".format(attr=attr, value=repr(value)))
         return "{classname}({attrs})".format(classname=self.__class__.__name__,
-                                             attrs=", ".join(l))
+                                             attrs=", ".join(parts))
 
 
 def _sign(x):
