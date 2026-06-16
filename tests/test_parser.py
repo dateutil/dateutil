@@ -49,6 +49,7 @@ PARSER_TEST_CASES = [
     ("20030925T10", datetime(2003, 9, 25, 10), "iso stripped format strip"),
     ("20030925", datetime(2003, 9, 25), "iso stripped format strip"),
     ("2003-09-25 10:49:41,502", datetime(2003, 9, 25, 10, 49, 41, 502000), "python logger format"),
+    ("2025-1-10,0:57:17", datetime(2025, 1, 10, 0, 57, 17), "comma separator, two-digit day (GH#1409)"),
     ("199709020908", datetime(1997, 9, 2, 9, 8), "no separator"),
     ("19970902090807", datetime(1997, 9, 2, 9, 8, 7), "no separator"),
     ("09-25-2003", datetime(2003, 9, 25), "date with dash"),
