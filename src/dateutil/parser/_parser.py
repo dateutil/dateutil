@@ -114,8 +114,11 @@ def _try_iso_fastpath(timestr):
         second = int(ss) if ss is not None else 0
         frac = m.group(7)
         if frac is not None:
-            # Same as _parsems: pad/truncate to 6 digits.
-            microsecond = int(frac.ljust(6, "0")[:6])
+            # Same as _parsems: pad/truncate to 6 digits. The fill char is
+            # str("0"), not "0": under Python 2.7 the fast path can receive a
+            # bytes timestr, and bytes.ljust rejects the unicode "0" produced
+            # by unicode_literals. str("0") is a native str on both 2 and 3.
+            microsecond = int(frac.ljust(6, str("0"))[:6])
         else:
             microsecond = 0
 
