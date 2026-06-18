@@ -52,6 +52,109 @@ from .. import tz
 __all__ = ["parse", "parserinfo", "ParserError"]
 
 
+# Fast path for fully-specified ISO-8601 timestamps at the top of
+# parser.parse(). The vast majority of real-world inputs are complete ISO
+# dates (YYYY-MM-DD[(T| )HH:MM[:SS[.ffffff]]][Z|+-HH[:]MM]); for those forms we
+# build the datetime directly, short-circuiting the tokenizer (_timelex.split),
+# _parse, resolve_ymd and _build_naive/_build_tzaware.
+#
+# STRICT EQUIVALENCE CONTRACT (the fast path only engages when the result is
+# guaranteed identical to a full parse() call):
+#   - 4-digit year, 2-digit month/day => unambiguous YMD resolution: with
+#     dayfirst=False/yearfirst=False (the defaults), a year-first ISO date
+#     always yields (year, month, day) in that order. We therefore require
+#     dayfirst/yearfirst falsy AND the default parserinfo (DEFAULTPARSER).
+#   - default=None (otherwise missing fields -- e.g. a date-only string --
+#     inherit from default; here we fill with midnight, matching default=None).
+#   - ignoretz=False and tzinfos=None (otherwise tz handling differs).
+#   - no fuzzy / fuzzy_with_tokens.
+#   - 2-digit hour/minute/second, decimal fraction on '.' truncated/padded to
+#     6 digits EXACTLY like _parsems.
+#   - offset: 'Z'/'z' or +-HH / +-HHMM / +-HH:MM; offset==0 => tz.UTC (like
+#     validate(): a tzoffset of 0 with no tzname is UTC), otherwise
+#     tz.tzoffset(None, off) with sign*(hh*3600+mm*60), as in the slow path.
+#
+# SAFETY: anything that does not match the regex, or whose construction raises
+# (out-of-range date/time component: month 13, day 32, hour 25, year 0, ...),
+# falls back to the slow path -- which then produces EXACTLY the same datetime
+# or the same exception (type + message). No divergence is possible.
+_ISO_FASTPATH_RE = re.compile(
+    r"(\d{4})-(\d{2})-(\d{2})"  # YYYY-MM-DD
+    r"(?:"
+    r"[T t]"  # 'T'/'t'/space separator
+    r"(\d{2}):(\d{2})"  # HH:MM
+    r"(?::(\d{2})(?:\.(\d+))?)?"  # [:SS[.ffffff]]
+    r"(?:([Zz])|([+-])(\d{2})(?::?(\d{2}))?)?"  # [Z | +-HH[:]MM]
+    r")?"
+)
+
+
+def _try_iso_fastpath(timestr):
+    """Try to build an ISO datetime directly. Returns the datetime on a
+    proven-equivalent match, or None to signal a fall back to the slow path
+    (non-ISO input, or an out-of-range value that must raise via the slow
+    path)."""
+    if type(timestr) is not str:
+        return None
+    m = _ISO_FASTPATH_RE.match(timestr)
+    if m is None or m.end() != len(timestr):
+        return None
+
+    year = int(m.group(1))
+    month = int(m.group(2))
+    day = int(m.group(3))
+
+    hh = m.group(4)
+    if hh is None:
+        hour = minute = second = microsecond = 0
+    else:
+        hour = int(hh)
+        minute = int(m.group(5))
+        ss = m.group(6)
+        second = int(ss) if ss is not None else 0
+        frac = m.group(7)
+        if frac is not None:
+            # Same as _parsems: pad/truncate to 6 digits.
+            microsecond = int(frac.ljust(6, "0")[:6])
+        else:
+            microsecond = 0
+
+    # ORDER IS CRITICAL for exception parity with the slow path:
+    #   slow path = _build_naive (inside a try -> ValueError wrapped into a
+    #   ParserError) THEN _build_tzaware (outside the try -> raw ValueError).
+    # So we build the naive datetime FIRST: any out-of-range date/time
+    # component raises a ValueError that we catch to fall back to the slow path
+    # (which then raises the exact ParserError). The offset is only built AFTER,
+    # outside the try, so that any ValueError from tz.tzoffset would propagate
+    # raw (unwrapped) exactly as _build_tzaware does, rather than being caught.
+    try:
+        naive = datetime.datetime(
+            year, month, day, hour, minute, second, microsecond
+        )
+    except ValueError:
+        return None
+
+    zulu = m.group(8)
+    sign = m.group(9)
+    if zulu is not None:
+        return naive.replace(tzinfo=tz.UTC)
+    if sign is not None:
+        off_h = int(m.group(10))
+        off_m_str = m.group(11)
+        off_m = int(off_m_str) if off_m_str is not None else 0
+        offset = off_h * 3600 + off_m * 60
+        if sign == "-":
+            offset = -offset
+        if offset == 0:
+            # validate(): a tzoffset of 0 with no tzname is UTC (tzutc()).
+            return naive.replace(tzinfo=tz.UTC)
+        # tz.tzoffset may raise ValueError (offset >= 24h) -- intentional
+        # propagation, matching the slow path (_build_tzaware outside try).
+        return naive.replace(tzinfo=tz.tzoffset(None, offset))
+
+    return naive
+
+
 # TODO: pandas.core.tools.datetimes imports this explicitly.  Might be worth
 # making public and/or figuring out if there is something we can
 # take off their plate.
@@ -632,6 +735,24 @@ class parser(object):
             Raised if the parsed date exceeds the largest valid C integer on
             your system.
         """
+
+        # Fast path for complete ISO-8601 timestamps (see _try_iso_fastpath).
+        # Only engages under the default kwargs and the default parserinfo, and
+        # only for complete ISO forms proven equivalent; everything else falls
+        # through to the slow path below.
+        if (
+            self is DEFAULTPARSER
+            and default is None
+            and ignoretz is False
+            and tzinfos is None
+            and not kwargs.get("fuzzy", False)
+            and not kwargs.get("fuzzy_with_tokens", False)
+            and not kwargs.get("dayfirst")
+            and not kwargs.get("yearfirst")
+        ):
+            _fp = _try_iso_fastpath(timestr)
+            if _fp is not None:
+                return _fp
 
         if default is None:
             default = datetime.datetime.now().replace(hour=0, minute=0,

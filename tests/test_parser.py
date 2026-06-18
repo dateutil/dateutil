@@ -962,3 +962,65 @@ def test_parsererror_repr():
     s = repr(ParserError("Problem with string: %s", "2019-01-01"))
 
     assert s == "ParserError('Problem with string: %s', '2019-01-01')"
+
+
+@pytest.mark.parametrize(
+    "isostr,expected",
+    [
+        ("2026-06-18", datetime(2026, 6, 18)),
+        ("2026-06-18T15:30", datetime(2026, 6, 18, 15, 30)),
+        ("2026-06-18 15:30", datetime(2026, 6, 18, 15, 30)),
+        ("2026-06-18T15:30:45", datetime(2026, 6, 18, 15, 30, 45)),
+        ("2026-06-18T15:30:45.5", datetime(2026, 6, 18, 15, 30, 45, 500000)),
+        (
+            "2026-06-18T15:30:45.123456",
+            datetime(2026, 6, 18, 15, 30, 45, 123456),
+        ),
+        (
+            "2026-06-18T15:30:45.1234567",
+            datetime(2026, 6, 18, 15, 30, 45, 123456),
+        ),
+        (
+            "2026-06-18T15:30:45Z",
+            datetime(2026, 6, 18, 15, 30, 45, tzinfo=tz.UTC),
+        ),
+        (
+            "2026-06-18T15:30:45+00:00",
+            datetime(2026, 6, 18, 15, 30, 45, tzinfo=tz.UTC),
+        ),
+        (
+            "2026-06-18T15:30:45+02:00",
+            datetime(2026, 6, 18, 15, 30, 45, tzinfo=tzoffset(None, 7200)),
+        ),
+        (
+            "2026-06-18T15:30:45-0700",
+            datetime(2026, 6, 18, 15, 30, 45, tzinfo=tzoffset(None, -25200)),
+        ),
+        (
+            "2026-06-18T15:30:45+0530",
+            datetime(2026, 6, 18, 15, 30, 45, tzinfo=tzoffset(None, 19800)),
+        ),
+    ],
+)
+def test_iso_fastpath_matches_full_parse(isostr, expected):
+    # Complete ISO-8601 timestamps take a fast path that builds the datetime
+    # directly; it must produce exactly the same result as the general parser.
+    assert parse(isostr) == expected
+
+
+@pytest.mark.parametrize(
+    "badstr",
+    [
+        "2026-13-01",  # month out of range
+        "2026-00-10",  # month 0
+        "2026-06-32",  # day out of range
+        "2026-06-18T25:00",  # hour out of range
+        "0000-01-01",  # year 0
+    ],
+)
+def test_iso_fastpath_out_of_range_still_raises(badstr):
+    # Out-of-range date/time components must fall back to the slow path and
+    # raise exactly as before -- the fast path must never silently accept an
+    # invalid value.
+    with pytest.raises(ValueError):  # ParserError is a ValueError subclass
+        parse(badstr)
