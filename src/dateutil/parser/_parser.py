@@ -140,14 +140,17 @@ class _timelex(object):
                 # numbers until we find something that doesn't fit.
                 if self.isnum(nextchar):
                     token += nextchar
-                elif nextchar == '.':
+                elif nextchar == ".":
                     token += nextchar
-                    state = '0.'
-                elif (nextchar == ',' and len(token) >= 2 and
-                      not self._comma_is_separator()):
+                    state = "0."
+                elif (
+                    nextchar == ","
+                    and len(token) >= 2
+                    and not self._comma_is_separator()
+                ):
                     token += nextchar
-                    state = '0.'
-                elif nextchar == ',' and len(token) >= 2:
+                    state = "0."
+                elif nextchar == "," and len(token) >= 2:
                     # ``_comma_is_separator`` already pushed the peeked chars
                     # back onto the charstack; re-queue the comma in front of
                     # them so it is tokenized as a standalone separator.
@@ -203,14 +206,14 @@ class _timelex(object):
         result = False
         while True:
             c = self.instream.read(1)
-            if c == '\x00':
+            if c == "\x00":
                 continue
             if not c:
                 break  # end of stream: comma terminates the number
             peeked.append(c)
             if c.isdigit():
                 continue
-            result = (c == ':')
+            result = c == ":"
             break
         # Push back everything we peeked, at the front and in order, so
         # tokenizing continues exactly as if we had never looked ahead.

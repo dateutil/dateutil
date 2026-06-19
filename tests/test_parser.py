@@ -2,22 +2,24 @@
 from __future__ import unicode_literals
 
 import itertools
-from datetime import datetime, timedelta
-import unittest
 import sys
-
-from dateutil import tz
-from dateutil.tz import tzoffset
-from dateutil.parser import parse, parserinfo
-from dateutil.parser import ParserError
-from dateutil.parser import UnknownTimezoneWarning
-
-from ._common import TZEnvContext
-
-from six import assertRaisesRegex, PY2
+import unittest
+from datetime import datetime, timedelta
 from io import StringIO
 
 import pytest
+from six import PY2, assertRaisesRegex
+
+from dateutil import tz
+from dateutil.parser import (
+    ParserError,
+    UnknownTimezoneWarning,
+    parse,
+    parserinfo,
+)
+from dateutil.tz import tzoffset
+
+from ._common import TZEnvContext
 
 # Platform info
 IS_WIN = sys.platform.startswith('win')
@@ -48,8 +50,16 @@ PARSER_TEST_CASES = [
     ("20030925T1049", datetime(2003, 9, 25, 10, 49, 0), "iso stripped format strip"),
     ("20030925T10", datetime(2003, 9, 25, 10), "iso stripped format strip"),
     ("20030925", datetime(2003, 9, 25), "iso stripped format strip"),
-    ("2003-09-25 10:49:41,502", datetime(2003, 9, 25, 10, 49, 41, 502000), "python logger format"),
-    ("2025-1-10,0:57:17", datetime(2025, 1, 10, 0, 57, 17), "comma separator, two-digit day (GH#1409)"),
+    (
+        "2003-09-25 10:49:41,502",
+        datetime(2003, 9, 25, 10, 49, 41, 502000),
+        "python logger format",
+    ),
+    (
+        "2025-1-10,0:57:17",
+        datetime(2025, 1, 10, 0, 57, 17),
+        "comma separator, two-digit day (GH#1409)",
+    ),
     ("199709020908", datetime(1997, 9, 2, 9, 8), "no separator"),
     ("19970902090807", datetime(1997, 9, 2, 9, 8, 7), "no separator"),
     ("09-25-2003", datetime(2003, 9, 25), "date with dash"),
@@ -615,7 +625,7 @@ class ParserTest(unittest.TestCase):
 
     def testCustomParserInfo(self):
         # Custom parser info wasn't working, as Michael Elsdörfer discovered.
-        from dateutil.parser import parserinfo, parser
+        from dateutil.parser import parser, parserinfo
 
         class myparserinfo(parserinfo):
             MONTHS = parserinfo.MONTHS[:]
@@ -628,7 +638,7 @@ class ParserTest(unittest.TestCase):
         # Horacio Hoyos discovered that day names shorter than 3 characters,
         # for example two letter German day name abbreviations, don't work:
         # https://github.com/dateutil/dateutil/issues/343
-        from dateutil.parser import parserinfo, parser
+        from dateutil.parser import parser, parserinfo
 
         class GermanParserInfo(parserinfo):
             WEEKDAYS = [("Mo", "Montag"),
