@@ -140,9 +140,22 @@ class _timelex(object):
                 # numbers until we find something that doesn't fit.
                 if self.isnum(nextchar):
                     token += nextchar
-                elif nextchar == '.' or (nextchar == ',' and len(token) >= 2):
+                elif nextchar == ".":
                     token += nextchar
-                    state = '0.'
+                    state = "0."
+                elif (
+                    nextchar == ","
+                    and len(token) >= 2
+                    and not self._comma_is_separator()
+                ):
+                    token += nextchar
+                    state = "0."
+                elif nextchar == "," and len(token) >= 2:
+                    # ``_comma_is_separator`` already pushed the peeked chars
+                    # back onto the charstack; re-queue the comma in front of
+                    # them so it is tokenized as a standalone separator.
+                    self.charstack.insert(0, nextchar)
+                    break  # emit token
                 else:
                     self.charstack.append(nextchar)
                     break  # emit token
@@ -182,6 +195,30 @@ class _timelex(object):
             token = token.replace(',', '.')
 
         return token
+
+    def _comma_is_separator(self):
+        # Called when a ',' might extend a numeric token as a decimal point
+        # (e.g. the seconds in the logger format ``HH:MM:SS,fff``). Peek past
+        # the digits following the comma: if they lead into a ':' the comma is
+        # a field separator (e.g. the day in ``2025-1-10,0:57``) rather than a
+        # decimal point, so it should not be merged into the number.
+        peeked = []
+        result = False
+        while True:
+            c = self.instream.read(1)
+            if c == "\x00":
+                continue
+            if not c:
+                break  # end of stream: comma terminates the number
+            peeked.append(c)
+            if c.isdigit():
+                continue
+            result = c == ":"
+            break
+        # Push back everything we peeked, at the front and in order, so
+        # tokenizing continues exactly as if we had never looked ahead.
+        self.charstack[:0] = peeked
+        return result
 
     def __iter__(self):
         return self

@@ -1,0 +1,5 @@
+Fixed a tokenizer bug where a comma separating a date from a time was merged
+into the preceding number as a decimal point when the number had two or more
+digits, so strings such as ``2025-1-10,0:57:17`` raised ``ParserError`` even
+though the same string with a one-digit day parsed. Reported by @shifqu
+(gh issue #1409). Fixed by @gaoflow (gh pr #1522).
