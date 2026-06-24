@@ -55,6 +55,7 @@ switch, and thus all their contributions are dual-licensed.
 - Gökçen Nurlu <gnurlu1@bloomberg.net> (gh: @gokcennurlu) **D**
 - Grant Garrett-Grossman <grantlycee@gmail.com> (gh: @FakeNameSE) **D**
 - Gustavo Niemeyer <gustavo@niemeyer.net> (gh: @niemeyer)
+- Hongkuan Lin (gh: @lin-hongkuan) **D**
 - Holger Joukl <holger.joukl@MASKED> (gh: @hjoukl)
 - Hugo van Kemenade (gh: @hugovk) **D**
 - Igor <mrigor83@MASKED>

@@ -1,0 +1,2 @@
+Added regression coverage to ensure parsing ``19/040400`` raises
+``ParserError`` instead of leaking a lower-level exception.

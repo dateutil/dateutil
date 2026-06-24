@@ -748,6 +748,10 @@ class TestOutOfBounds(object):
         with pytest.raises(ParserError):
             parse("0-100")
 
+    def test_illegal_month_error_with_large_dayfirst_candidate(self):
+        with pytest.raises(ParserError):
+            parse("19/040400")
+
     def test_day_sanity(self, fuzzy):
         dstr = "2014-15-25"
         with pytest.raises(ParserError):
