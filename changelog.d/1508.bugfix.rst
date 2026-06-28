@@ -1,0 +1,5 @@
+Fixed ``parser.parse()`` silently accepting out-of-range timezone offsets
+(minutes ``>= 60`` or a total offset ``>= 24`` hours, e.g. ``+0060`` or
+``+2400``), which produced incorrect or unusable ("toxic") datetimes. These
+inputs are now rejected, consistent with ``isoparse()``.
+Reported and fixed by @vineethsaivs (gh issue #1508).
