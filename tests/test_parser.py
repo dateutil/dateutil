@@ -2,22 +2,24 @@
 from __future__ import unicode_literals
 
 import itertools
-from datetime import datetime, timedelta
-import unittest
 import sys
-
-from dateutil import tz
-from dateutil.tz import tzoffset
-from dateutil.parser import parse, parserinfo
-from dateutil.parser import ParserError
-from dateutil.parser import UnknownTimezoneWarning
-
-from ._common import TZEnvContext
-
-from six import assertRaisesRegex, PY2
+import unittest
+from datetime import datetime, timedelta
 from io import StringIO
 
 import pytest
+from six import PY2, assertRaisesRegex
+
+from dateutil import tz
+from dateutil.parser import (
+    ParserError,
+    UnknownTimezoneWarning,
+    parse,
+    parserinfo,
+)
+from dateutil.tz import tzoffset
+
+from ._common import TZEnvContext
 
 # Platform info
 IS_WIN = sys.platform.startswith('win')
@@ -221,6 +223,39 @@ def test_parse_with_tzoffset(dstr, expected):
     # In these cases, we are _not_ passing a tzinfos arg
     result = parse(dstr)
     assert result == expected
+
+
+@pytest.mark.parametrize(
+    "dstr",
+    [
+        "2024-01-15T12:00:00+0060",  # minutes >= 60
+        "2024-01-15T12:00:00+0099",
+        "2024-01-15T12:00:00+05:60",  # minutes >= 60, with colon
+        "2024-01-15T12:00:00+2400",  # total offset >= 24h
+        "2024-01-15T12:00:00+9900",
+    ],
+)
+def test_parse_rejects_out_of_range_tzoffset(dstr):
+    # Out-of-range offsets must be rejected like isoparse(), rather than silently
+    # producing a wrong or unusable ("toxic") tzoffset. See GH #1508.
+    with pytest.raises(ParserError):
+        parse(dstr)
+
+
+@pytest.mark.parametrize(
+    "dstr,expected_offset",
+    [
+        ("2024-01-15T12:00:00+0000", 0),
+        (
+            "2024-01-15T12:00:00+2359",
+            23 * 3600 + 59 * 60,
+        ),  # largest valid offset
+        ("2024-01-15T12:00:00+05:45", 5 * 3600 + 45 * 60),
+    ],
+)
+def test_parse_accepts_boundary_tzoffset(dstr, expected_offset):
+    # Valid boundary offsets must still parse.
+    assert parse(dstr).utcoffset().total_seconds() == expected_offset
 
 
 class TestFormat(object):
@@ -614,7 +649,7 @@ class ParserTest(unittest.TestCase):
 
     def testCustomParserInfo(self):
         # Custom parser info wasn't working, as Michael Elsdörfer discovered.
-        from dateutil.parser import parserinfo, parser
+        from dateutil.parser import parser, parserinfo
 
         class myparserinfo(parserinfo):
             MONTHS = parserinfo.MONTHS[:]
@@ -627,7 +662,7 @@ class ParserTest(unittest.TestCase):
         # Horacio Hoyos discovered that day names shorter than 3 characters,
         # for example two letter German day name abbreviations, don't work:
         # https://github.com/dateutil/dateutil/issues/343
-        from dateutil.parser import parserinfo, parser
+        from dateutil.parser import parser, parserinfo
 
         class GermanParserInfo(parserinfo):
             WEEKDAYS = [("Mo", "Montag"),
