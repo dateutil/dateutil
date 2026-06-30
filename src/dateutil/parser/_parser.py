@@ -904,6 +904,12 @@ class parser(object):
                 ymd.append(s[:2])
                 ymd.append(s[2:4])
                 ymd.append(s[4:])
+            elif '.' in s and len_li == 6 and s.count('.') == 1:
+                # day.year (e.g., "5.2014")
+                part_before_dot, part_after_dot = s.split('.')
+                ymd.append(part_before_dot)
+                ymd.append(part_after_dot, 'Y')
+                idx += 1
             else:
                 # 19990101T235959[.59]
 
