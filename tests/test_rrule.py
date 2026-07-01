@@ -13,7 +13,7 @@ from dateutil.rrule import (
     MO, TU, WE, TH, FR, SA, SU
 )
 
-from freezegun import freeze_time
+from unittest import mock
 
 import pytest
 
@@ -4616,27 +4616,33 @@ class RRuleTest(unittest.TestCase):
 
 
 @pytest.mark.rrule
-@freeze_time(datetime(2018, 3, 6, 5, 36, tzinfo=tz.UTC))
 def test_generated_aware_dtstart():
-    dtstart_exp = datetime(2018, 3, 6, 5, 36, tzinfo=tz.UTC)
+    frozen = datetime(2018, 3, 6, 5, 36, tzinfo=tz.UTC)
+    dtstart_exp = frozen
     UNTIL = datetime(2018, 3, 6, 8, 0, tzinfo=tz.UTC)
 
-    rule_without_dtstart = rrule(freq=HOURLY, until=UNTIL)
-    rule_with_dtstart = rrule(freq=HOURLY, dtstart=dtstart_exp, until=UNTIL)
-    assert list(rule_without_dtstart) == list(rule_with_dtstart)
+    with mock.patch("dateutil.rrule.datetime") as mock_dt:
+        mock_dt.datetime.now.return_value = frozen
+        mock_dt.datetime.side_effect = lambda *a, **kw: datetime(*a, **kw)
+        rule_without_dtstart = rrule(freq=HOURLY, until=UNTIL)
+        rule_with_dtstart = rrule(freq=HOURLY, dtstart=dtstart_exp, until=UNTIL)
+        assert list(rule_without_dtstart) == list(rule_with_dtstart)
 
 
 @pytest.mark.rrule
 @pytest.mark.rrulestr
 @pytest.mark.xfail(reason="rrulestr loses time zone, gh issue #637")
-@freeze_time(datetime(2018, 3, 6, 5, 36, tzinfo=tz.UTC))
 def test_generated_aware_dtstart_rrulestr():
-    rrule_without_dtstart = rrule(freq=HOURLY,
-                                  until=datetime(2018, 3, 6, 8, 0,
-                                                 tzinfo=tz.UTC))
-    rrule_r = rrulestr(str(rrule_without_dtstart))
+    frozen = datetime(2018, 3, 6, 5, 36, tzinfo=tz.UTC)
 
-    assert list(rrule_r) == list(rrule_without_dtstart)
+    with mock.patch("dateutil.rrule.datetime") as mock_dt:
+        mock_dt.datetime.now.return_value = frozen
+        mock_dt.datetime.side_effect = lambda *a, **kw: datetime(*a, **kw)
+        rrule_without_dtstart = rrule(
+            freq=HOURLY, until=datetime(2018, 3, 6, 8, 0, tzinfo=tz.UTC)
+        )
+        rrule_r = rrulestr(str(rrule_without_dtstart))
+        assert list(rrule_r) == list(rrule_without_dtstart)
 
 
 @pytest.mark.rruleset

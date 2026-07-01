@@ -260,6 +260,8 @@ def test_bytes(isostr, dt):
         ValueError),
     ('2012-W00', ValueError),                   # Invalid ISO week
     ('2012-W55', ValueError),                   # Invalid ISO week
+    ('2021-W53', ValueError),                   # 2021 has only 52 ISO weeks
+    ('2021-W53-1', ValueError),                 # 2021 has only 52 ISO weeks
     ('2012-W01-0', ValueError),                 # Invalid ISO week day
     ('2012-W01-8', ValueError),                 # Invalid ISO week day
     ('2013-000', ValueError),                   # Invalid ordinal day

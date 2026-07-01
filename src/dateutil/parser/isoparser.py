@@ -316,6 +316,9 @@ class isoparser(object):
         if not 0 < week < 54:
             raise ValueError('Invalid week: {}'.format(week))
 
+        if week == 53 and date(year, 12, 28).isocalendar()[1] != 53:
+            raise ValueError('Year {} does not have a week 53'.format(year))
+
         if not 0 < day < 8:     # Range is 1-7
             raise ValueError('Invalid weekday: {}'.format(day))
 
