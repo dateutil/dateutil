@@ -1,0 +1,4 @@
+Fixed test collection under newer pytest by materializing a generator
+expression passed to ``pytest.mark.parametrize`` in ``test_isoparser`` as a
+list; ``PytestRemovedIn10Warning`` combined with ``filterwarnings = error``
+was aborting collection of the whole test session. Fixed by @apoorvdarshan (gh pr #1531).
