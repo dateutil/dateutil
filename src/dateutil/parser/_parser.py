@@ -1268,10 +1268,16 @@ DEFAULTPARSER = parser()
 
 
 def parse(timestr, parserinfo=None, **kwargs):
-    """
-
-    Parse a string in one of the supported formats, using the
+    """Parse a string in one of the supported formats, using the
     ``parserinfo`` parameters.
+
+    .. caution::
+
+        This function is intended to parse strings that represent a
+        :class:`~datetime.datetime`. Passing strings that do not represent
+        a valid datetime (e.g. "ABC123") may result in unexpected behavior
+        or a :class:`ParserError`. The exact behavior is **not** part of
+        the contract and may change across versions.
 
     :param timestr:
         A string containing a date/time stamp.
