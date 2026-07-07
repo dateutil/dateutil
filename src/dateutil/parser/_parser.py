@@ -1145,6 +1145,13 @@ class parser(object):
             #  via `_to_decimal`
             if not decimal_value.is_finite():
                 raise ValueError("Converted decimal value is infinite or NaN")
+            # See GH 1359 and GH 1366: a value with more digits than the active
+            # decimal context precision constructs fine but raises
+            # decimal.InvalidOperation on later arithmetic such as ``value % 1``.
+            # Probe that operation here so an over-large numeric token is
+            # reported as a ValueError (and ultimately a ParserError) instead of
+            # leaking an ArithmeticError out of parse().
+            decimal_value % 1
         except Exception as e:
             msg = "Could not convert %s to decimal" % val
             six.raise_from(ValueError(msg), e)

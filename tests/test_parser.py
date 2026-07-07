@@ -954,6 +954,24 @@ def test_decimal_error(value):
     with pytest.raises(ParserError):
         parse(value)
 
+
+@pytest.mark.parametrize('value', [
+    # GH 1366 - over-long numeric token in an HMS field
+    '19970902090807197090209080710h',
+    # GH 1359 - over-long numeric token in a colon-separated minute field
+    '12:99999999999999999999999999999999999',
+    b'9999999999999999999999999999999999999999939999999999999999999999999999'
+    b':99999999999999999999999999999',
+])
+def test_decimal_invalid_operation_error(value):
+    # GH 1359, GH 1366 - a numeric token with more digits than the decimal
+    # context precision constructs as a Decimal but raises
+    # decimal.InvalidOperation on later arithmetic (e.g. ``value % 1``). That
+    # ArithmeticError leaked out of parse() instead of being reported as a
+    # ParserError. Ensure it is now surfaced consistently.
+    with pytest.raises(ParserError):
+        parse(value)
+
 def test_parsererror_repr():
     # GH 991 — the __repr__ was not properly indented and so was never defined.
     # This tests the current behavior of the ParserError __repr__, but the
