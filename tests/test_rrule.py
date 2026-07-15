@@ -301,6 +301,36 @@ class RRuleTest(unittest.TestCase):
                           datetime(2004, 12, 27, 9, 0),
                           datetime(2009, 12, 28, 9, 0)])
 
+    def testYearlyByWeekNoLastWeekOfPrevYear(self):
+        # The first days of a year may belong to the last ISO week of the
+        # *previous* year, so that week number must be derived from the
+        # previous year's length. 2011-01-01 and 2011-01-02 are ISO week 52
+        # of 2010 (2010 has no week 53), so byweekno=52 must yield them and
+        # byweekno=53 must not.
+        self.assertEqual(
+            list(
+                rrule(
+                    YEARLY,
+                    count=2,
+                    byweekno=52,
+                    byweekday=(SA, SU),
+                    dtstart=datetime(2011, 1, 1, 9, 0),
+                )
+            ),
+            [datetime(2011, 1, 1, 9, 0), datetime(2011, 1, 2, 9, 0)],
+        )
+        self.assertEqual(
+            list(
+                rrule(
+                    YEARLY,
+                    byweekno=53,
+                    dtstart=datetime(2011, 1, 1, 9, 0),
+                    until=datetime(2011, 1, 10, 9, 0),
+                )
+            ),
+            [],
+        )
+
     def testYearlyByHour(self):
         self.assertEqual(list(rrule(YEARLY,
                               count=3,
