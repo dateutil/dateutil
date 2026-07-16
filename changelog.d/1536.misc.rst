@@ -1,0 +1,1 @@
+Silenced setuptools build deprecation warnings for the ``distutils.version.LooseVersion`` check, ``license_file``, and the missing ``tool.setuptools_scm`` section. Fixed by @pctablet505 (gh pr #1536).
