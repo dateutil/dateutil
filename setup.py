@@ -15,7 +15,7 @@ if isfile("MANIFEST"):
     os.unlink("MANIFEST")
 
 _setuptools_version = tuple(
-    int(x) for x in setuptools.__version__.split('.')[:2]
+    int(x) for x in setuptools.__version__.split(".")[:2]
 )
 
 if _setuptools_version <= (24, 3):
