@@ -1,0 +1,1 @@
+Fixed ``rrulestr`` raising a bare ``TypeError`` instead of ``ValueError`` when the rule string omits the required ``FREQ`` component. Fixed by @santhreal (gh pr #1538).
