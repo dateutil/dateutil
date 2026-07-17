@@ -3007,6 +3007,12 @@ class RRuleTest(unittest.TestCase):
                           "RRULE:FREQ=YEARLY;"
                           "UNTIL=TheCowsComeHome;BYDAY=1TU,-1TH\n"))
 
+    def testStrNoFreq(self):
+        # FREQ is required by RFC 5545; without it rrulestr used to leak a TypeError.
+        for rule in ("COUNT=5", "BYDAY=MO", "INTERVAL=2", "RRULE:COUNT=5"):
+            with self.assertRaises(ValueError):
+                rrulestr(rule)
+
     def testStrUntilMustBeUTC(self):
         with self.assertRaises(ValueError):
             list(rrulestr("DTSTART;TZID=America/New_York:19970902T090000\n"

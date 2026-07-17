@@ -1558,6 +1558,8 @@ class _rrulestr(object):
                 raise ValueError("unknown parameter '%s'" % name)
             except (KeyError, ValueError):
                 raise ValueError("invalid '%s': %s" % (name, value))
+        if "freq" not in rrkwargs:
+            raise ValueError("Missing FREQ in RRULE")
         return rrule(dtstart=dtstart, cache=cache, **rrkwargs)
 
     def _parse_date_value(self, date_value, parms, rule_tzids,
