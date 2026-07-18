@@ -1,3 +1,8 @@
 Sphinx>=1.7.3,!=1.8.0
 sphinx_rtd_theme>=0.3.0
 readme-renderer>=21.0
+# Needed so that `python setup.py check` (invoked below in the "docs" tox
+# env) can resolve a version via the [tool.setuptools_scm] table in
+# pyproject.toml; setuptools reads that table even for legacy `setup.py`
+# invocations, but only setuptools_scm itself can turn it into a version.
+setuptools_scm<8.0
