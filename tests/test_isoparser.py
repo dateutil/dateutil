@@ -121,7 +121,7 @@ DATETIMES = [datetime(2017, 11, 27, 6, 14, 30, 123456)]
 @pytest.mark.parametrize('dt', tuple(DATETIMES))
 @pytest.mark.parametrize('date_fmt', YMD_FMTS)
 @pytest.mark.parametrize(
-    'time_fmt', [x + sep + '%f' for x in HMS_FMTS for sep in '.,']
+    "time_fmt", [x + sep + "%f" for x in HMS_FMTS for sep in ".,"]
 )
 @pytest.mark.parametrize('tzoffset', TZOFFSETS)
 @pytest.mark.parametrize('precision', list(range(3, 7)))
