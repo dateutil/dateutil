@@ -1,5 +1,5 @@
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import pytest
 from hypothesis import assume, example, given
@@ -7,8 +7,22 @@ from hypothesis import strategies as st
 
 from dateutil import tz
 
-EPOCHALYPSE = datetime.fromtimestamp(2147483647)
-NEGATIVE_EPOCHALYPSE = datetime.fromtimestamp(0) - timedelta(seconds=2147483648)
+# hypothesis' st.datetimes() requires naive min_value/max_value, but we still
+# derive them from UTC (rather than the environment-dependent, naive-local
+# datetime.fromtimestamp()) and then strip tzinfo. The datetimes generated
+# below are UTC (see `timezones=st.just(tz.UTC)`), and tzfile's transition
+# table is bounded by a transition derived from the 32-bit timestamp min,
+# expressed in UTC. Computing the bound via local time can shift it by the
+# local UTC offset, letting examples fall into the narrow pre-first-transition
+# window where tzfile intentionally reports "LMT" for a date the system
+# zoneinfo/libc resolves to the zone's standard abbreviation (e.g. 'EST' for
+# America/New_York, which is what CI runs under); see the tzfile docstring.
+EPOCHALYPSE = (
+    datetime(1970, 1, 1, tzinfo=timezone.utc) + timedelta(seconds=2147483647)
+).replace(tzinfo=None)
+NEGATIVE_EPOCHALYPSE = (
+    datetime(1970, 1, 1, tzinfo=timezone.utc) - timedelta(seconds=2147483648)
+).replace(tzinfo=None)
 
 
 @pytest.mark.gettz
@@ -25,7 +39,7 @@ NEGATIVE_EPOCHALYPSE = datetime.fromtimestamp(0) - timedelta(seconds=2147483648)
     )
 )
 @example(dt=datetime(2005, 10, 30, 1, 15))  # Ambiguous in US time zones
-@example(dt=datetime(1901, 12, 13, 18, 19, 3))  # Very old
+@example(dt=NEGATIVE_EPOCHALYPSE)  # Very old
 def test_gettz_returns_local(gettz_arg, dt):
     act_tz = tz.gettz(gettz_arg)
     if isinstance(act_tz, tz.tzlocal):
@@ -48,8 +62,13 @@ def test_gettz_returns_local(gettz_arg, dt):
     ):
         assert dt_act == dt_exp
     else:
+        # `dt` is UTC, which is never fold-ambiguous, so enfolding it has no
+        # effect on the local time it converts to; re-derive the local wall
+        # time's ambiguity from its own (naive) representation instead, the
+        # same way a directly-supplied naive local datetime would be folded.
+        dt_exp_naive = dt_exp.replace(tzinfo=None)
         assert (
-            tz.enfold(dt, fold=0).astimezone().utcoffset()
-            != tz.enfold(dt, fold=1).astimezone().utcoffset()
+            tz.enfold(dt_exp_naive, fold=0).astimezone().utcoffset()
+            != tz.enfold(dt_exp_naive, fold=1).astimezone().utcoffset()
         )
         assert dt_act != dt_exp
