@@ -2,7 +2,7 @@ import sys
 from datetime import datetime, timedelta
 
 import pytest
-from hypothesis import assume, example, given
+from hypothesis import example, given
 from hypothesis import strategies as st
 
 from dateutil import tz
