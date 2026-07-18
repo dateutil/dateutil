@@ -6,7 +6,6 @@ import setuptools
 from setuptools import setup, find_packages
 from setuptools.command.test import test as TestCommand
 
-from distutils.version import LooseVersion
 import warnings
 
 import io
@@ -15,7 +14,11 @@ import sys
 if isfile("MANIFEST"):
     os.unlink("MANIFEST")
 
-if LooseVersion(setuptools.__version__) <= LooseVersion("24.3"):
+_setuptools_version = tuple(
+    int(x) for x in setuptools.__version__.split(".")[:2]
+)
+
+if _setuptools_version <= (24, 3):
     warnings.warn("python_requires requires setuptools version > 24.3",
                   UserWarning)
 
@@ -47,9 +50,6 @@ README = README()  # NOQA
 
 
 setup(
-      use_scm_version={
-          'write_to': 'src/dateutil/_version.py',
-      },
       ## Needed since doctest not supported by PyPA.
       long_description = README,
       cmdclass={
