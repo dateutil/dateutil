@@ -1,5 +1,5 @@
 import sys
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 
 import pytest
 from hypothesis import assume, example, given
@@ -9,19 +9,21 @@ from dateutil import tz
 
 # hypothesis' st.datetimes() requires naive min_value/max_value, but we still
 # derive them from UTC (rather than the environment-dependent, naive-local
-# datetime.fromtimestamp()) and then strip tzinfo. The datetimes generated
-# below are UTC (see `timezones=st.just(tz.UTC)`), and tzfile's transition
-# table is bounded by a transition derived from the 32-bit timestamp min,
-# expressed in UTC. Computing the bound via local time can shift it by the
-# local UTC offset, letting examples fall into the narrow pre-first-transition
-# window where tzfile intentionally reports "LMT" for a date the system
-# zoneinfo/libc resolves to the zone's standard abbreviation (e.g. 'EST' for
-# America/New_York, which is what CI runs under); see the tzfile docstring.
+# datetime.fromtimestamp()) and then strip tzinfo. `tz.UTC` is used instead of
+# datetime.timezone.utc so this stays importable on Python 2. The datetimes
+# generated below are UTC (see `timezones=st.just(tz.UTC)`), and tzfile's
+# transition table is bounded by a transition derived from the 32-bit
+# timestamp min, expressed in UTC. Computing the bound via local time can
+# shift it by the local UTC offset, letting examples fall into the narrow
+# pre-first-transition window where tzfile intentionally reports "LMT" for a
+# date the system zoneinfo/libc resolves to the zone's standard abbreviation
+# (e.g. 'EST' for America/New_York, which is what CI runs under); see the
+# tzfile docstring.
 EPOCHALYPSE = (
-    datetime(1970, 1, 1, tzinfo=timezone.utc) + timedelta(seconds=2147483647)
+    datetime(1970, 1, 1, tzinfo=tz.UTC) + timedelta(seconds=2147483647)
 ).replace(tzinfo=None)
 NEGATIVE_EPOCHALYPSE = (
-    datetime(1970, 1, 1, tzinfo=timezone.utc) - timedelta(seconds=2147483648)
+    datetime(1970, 1, 1, tzinfo=tz.UTC) - timedelta(seconds=2147483648)
 ).replace(tzinfo=None)
 
 
