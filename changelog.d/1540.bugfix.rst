@@ -1,0 +1,4 @@
+Fixed ``relativedelta.__hash__`` so that objects which compare equal but
+differ only in a weekday's ``n`` being ``None``/``0``/``1`` (e.g. ``MO`` and
+``MO(1)``) also hash equally, restoring correct ``set``/``dict`` membership.
+Reported and fixed by @Osamaali313 (gh pr #1540).

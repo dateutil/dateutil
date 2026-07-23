@@ -545,8 +545,14 @@ class relativedelta(object):
                 self.microsecond == other.microsecond)
 
     def __hash__(self):
+        # __eq__ treats a weekday with n in (None, 0, 1) as equal (not
+        # specifying n is the same as +1), so the hash must ignore that
+        # distinction to keep equal objects hashing equally.
+        weekday = self.weekday
+        if weekday is not None and (weekday.n or 1) == 1:
+            weekday = weekday.weekday
         return hash((
-            self.weekday,
+            weekday,
             self.years,
             self.months,
             self.days,
