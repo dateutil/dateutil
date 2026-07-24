@@ -1,0 +1,1 @@
+Fixed ``parser.parse()`` discarding the ``default`` datetime's ``microsecond`` whenever the parsed string specified seconds without a fractional part, since ``_parsems()`` reported ``microsecond=0`` (rather than "unspecified") in that case, silently overriding a non-zero ``default.microsecond``. Reported by @kricka91 (gh issue #1032).

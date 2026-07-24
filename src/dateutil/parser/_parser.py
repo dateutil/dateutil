@@ -1131,9 +1131,17 @@ class parser(object):
     #  of functions for the sake of customizability via subclassing.
 
     def _parsems(self, value):
-        """Parse a I[.F] seconds value into (seconds, microseconds)."""
+        """Parse a I[.F] seconds value into (seconds, microseconds).
+
+        The microsecond return value is None (not 0) when no fractional
+        part is present, so that the caller's None-check when merging in
+        the ``default`` datetime (see ``_build_naive``) correctly treats
+        an unspecified microsecond as unspecified, rather than silently
+        overriding a provided ``default.microsecond`` with 0 whenever
+        seconds are present without a fractional part. See GH #1032.
+        """
         if "." not in value:
-            return int(value), 0
+            return int(value), None
         else:
             i, f = value.split(".")
             return int(i), int(f.ljust(6, "0")[:6])
