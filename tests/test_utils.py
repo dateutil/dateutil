@@ -21,15 +21,13 @@ def test_utils_today():
 def test_utils_today_tz_info():
     now = datetime(2014, 12, 15, 17, tzinfo=UTC)
     with mock_datetime_now("dateutil.utils.datetime", now):
-        assert utils.today(NYC) == datetime(2014, 12, 15, 0, 0, 0,
-                                            tzinfo=NYC)
+        assert utils.today(NYC) == datetime(2014, 12, 15, 0, 0, 0, tzinfo=NYC)
 
 
 def test_utils_today_tz_info_different_day():
     now = datetime(2014, 12, 16, 4, tzinfo=UTC)
     with mock_datetime_now("dateutil.utils.datetime", now):
-        assert utils.today(UTC) == datetime(2014, 12, 16, 0, 0, 0,
-                                            tzinfo=UTC)
+        assert utils.today(UTC) == datetime(2014, 12, 16, 0, 0, 0, tzinfo=UTC)
 
 
 def test_utils_default_tz_info_naive():

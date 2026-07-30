@@ -1,21 +1,34 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from datetime import datetime, date
 import unittest
+from datetime import date, datetime
+
+import pytest
 from six import PY2
 
 from dateutil import tz
 from dateutil.rrule import (
-    rrule, rruleset, rrulestr,
-    YEARLY, MONTHLY, WEEKLY, DAILY,
-    HOURLY, MINUTELY, SECONDLY,
-    MO, TU, WE, TH, FR, SA, SU
+    DAILY,
+    FR,
+    HOURLY,
+    MINUTELY,
+    MO,
+    MONTHLY,
+    SA,
+    SECONDLY,
+    SU,
+    TH,
+    TU,
+    WE,
+    WEEKLY,
+    YEARLY,
+    rrule,
+    rruleset,
+    rrulestr,
 )
 
 from ._common import mock_datetime_now
-
-import pytest
 
 
 @pytest.mark.rrule
@@ -4622,8 +4635,7 @@ def test_generated_aware_dtstart():
 
     with mock_datetime_now("dateutil.rrule.datetime.datetime", dtstart_exp):
         rule_without_dtstart = rrule(freq=HOURLY, until=UNTIL)
-        rule_with_dtstart = rrule(freq=HOURLY, dtstart=dtstart_exp,
-                                  until=UNTIL)
+        rule_with_dtstart = rrule(freq=HOURLY, dtstart=dtstart_exp, until=UNTIL)
         assert list(rule_without_dtstart) == list(rule_with_dtstart)
 
 
@@ -4633,9 +4645,9 @@ def test_generated_aware_dtstart():
 def test_generated_aware_dtstart_rrulestr():
     now = datetime(2018, 3, 6, 5, 36, tzinfo=tz.UTC)
     with mock_datetime_now("dateutil.rrule.datetime.datetime", now):
-        rrule_without_dtstart = rrule(freq=HOURLY,
-                                      until=datetime(2018, 3, 6, 8, 0,
-                                                     tzinfo=tz.UTC))
+        rrule_without_dtstart = rrule(
+            freq=HOURLY, until=datetime(2018, 3, 6, 8, 0, tzinfo=tz.UTC)
+        )
         rrule_r = rrulestr(str(rrule_without_dtstart))
 
         assert list(rrule_r) == list(rrule_without_dtstart)
