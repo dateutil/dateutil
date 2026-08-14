@@ -507,3 +507,13 @@ def test_isotime_raises(isostr, exception):
     iparser = isoparser()
     with pytest.raises(exception):
         iparser.parse_isotime(isostr)
+
+
+def test_isoparse_rounds_fractional_seconds():
+    from datetime import datetime
+    from dateutil.parser import isoparse
+
+    assert isoparse("2020-01-01T00:00:00.1234567").microsecond == 123457
+    assert isoparse("2020-01-01T00:00:00.1234564").microsecond == 123456
+    assert isoparse("2020-01-01T00:00:00.123456").microsecond == 123456
+    assert isoparse("2020-01-01T00:00:00.9999997") == datetime(2020, 1, 1, 0, 0, 1)
