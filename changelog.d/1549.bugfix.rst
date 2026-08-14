@@ -1,0 +1,1 @@
+Round extra fractional-second digits in ``parser.parse`` and ``isoparse`` instead of truncating them. (gh-1545, gh-1546, gh-1549)

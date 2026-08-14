@@ -55,6 +55,26 @@ __all__ = ["parse", "parserinfo", "ParserError"]
 # TODO: pandas.core.tools.datetimes imports this explicitly.  Might be worth
 # making public and/or figuring out if there is something we can
 # take off their plate.
+
+def _round_fraction_to_us(seconds, frac_digits):
+    """Round a fractional-second digit string to microseconds.
+
+    ISO-8601 allows more than 6 fraction digits. Truncating them silently
+    returns the wrong instant (e.g. 0.1234567 -> 123456us instead of 123457).
+    """
+    if not frac_digits:
+        return seconds, 0
+    if len(frac_digits) <= 6:
+        return seconds, int(frac_digits.ljust(6, "0"))
+    microseconds = int(frac_digits[:6])
+    if frac_digits[6] >= "5":
+        microseconds += 1
+    if microseconds >= 1000000:
+        seconds += 1
+        microseconds = 0
+    return seconds, microseconds
+
+
 class _timelex(object):
     # Fractional seconds are sometimes split by a comma
     _split_decimal = re.compile("([.,])")
@@ -1136,7 +1156,8 @@ class parser(object):
             return int(value), 0
         else:
             i, f = value.split(".")
-            return int(i), int(f.ljust(6, "0")[:6])
+            seconds, microseconds = _round_fraction_to_us(int(i), f)
+            return seconds, microseconds
 
     def _to_decimal(self, val):
         try:
