@@ -328,7 +328,7 @@ class isoparser(object):
         # ISO week of the year, so its ISO week number is the number of weeks
         # in the year.
         if week > date(year, 12, 28).isocalendar()[1]:
-            raise ValueError('Invalid week {} for year {}'.format(week, year))
+            raise ValueError("Invalid week {} for year {}".format(week, year))
 
         # Now add the specific number of weeks and days to get what we want
         week_offset = (week - 1) * 7 + (day - 1)
