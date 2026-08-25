@@ -182,6 +182,7 @@ TIME_ARGS = ('time_args',
     ((2017, 10), datetime(2017, 3, 6)),
     ((2020, 1), datetime(2019, 12, 30)),    # ISO year != Cal year
     ((2004, 53), datetime(2004, 12, 27)),   # Only half the week is in 2014
+    ((2020, 53), datetime(2020, 12, 28)),   # 2020 is a 53-week year
 ])
 def test_isoweek(isocal, dt_expected):
     # TODO: Figure out how to parametrize this on formats, too
@@ -260,6 +261,9 @@ def test_bytes(isostr, dt):
         ValueError),
     ('2012-W00', ValueError),                   # Invalid ISO week
     ('2012-W55', ValueError),                   # Invalid ISO week
+    ('2021-W53', ValueError),                   # Week 53 does not exist in 2021
+    ('2021-W53-1', ValueError),                 # Week 53 does not exist in 2021
+    ('2021-W53-7', ValueError),                 # Week 53 does not exist in 2021
     ('2012-W01-0', ValueError),                 # Invalid ISO week day
     ('2012-W01-8', ValueError),                 # Invalid ISO week day
     ('2013-000', ValueError),                   # Invalid ordinal day
