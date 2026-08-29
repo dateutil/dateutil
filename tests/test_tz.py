@@ -416,7 +416,7 @@ class TzFoldMixin(object):
         self._test_imaginary_time(datetime(2012, 4, 1, 3, 30),
                                   'Australia/Sydney', True)
 
-    @unittest.skip("Known failure in Python 3.6.")
+    @unittest.skipIf(sys.version_info < (3, 7), "Known failure in Python 3.6.")
     def testEqualAmbiguousComparison(self):
         tzname = self._get_tzname('Australia/Sydney')
 
