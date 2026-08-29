@@ -1,0 +1,1 @@
+Re-enabled ``testEqualAmbiguousComparison`` on Python 3.7+ (it guarded a CPython 3.6-era fold-comparison bug fixed in 3.7).
