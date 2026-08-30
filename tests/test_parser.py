@@ -2,22 +2,24 @@
 from __future__ import unicode_literals
 
 import itertools
-from datetime import datetime, timedelta
-import unittest
 import sys
-
-from dateutil import tz
-from dateutil.tz import tzoffset
-from dateutil.parser import parse, parserinfo
-from dateutil.parser import ParserError
-from dateutil.parser import UnknownTimezoneWarning
-
-from ._common import TZEnvContext
-
-from six import assertRaisesRegex, PY2
+import unittest
+from datetime import datetime, timedelta
 from io import StringIO
 
 import pytest
+from six import PY2, assertRaisesRegex
+
+from dateutil import tz
+from dateutil.parser import (
+    ParserError,
+    UnknownTimezoneWarning,
+    parse,
+    parserinfo,
+)
+from dateutil.tz import tzoffset
+
+from ._common import TZEnvContext
 
 # Platform info
 IS_WIN = sys.platform.startswith('win')
@@ -321,6 +323,20 @@ class TestInputTypes(object):
         expected = datetime(2014, 1, 19)
         assert res == expected
 
+    def test_mock_stream_rejected(self):
+        # GH#1428: a MagicMock has a `read` attribute (it auto-vivifies
+        # any attribute access), so it used to pass the duck-typing check
+        # in _timelex.__init__ and then feed non-str tokens into the
+        # tokenizer forever, since a MagicMock is never falsy. This should
+        # fail fast with a clear TypeError instead of looping.
+        try:
+            from unittest.mock import MagicMock
+        except ImportError:
+            from mock import MagicMock
+
+        with pytest.raises(TypeError):
+            parse(MagicMock())
+
     def test_parse_stream(self):
         dstr = StringIO('2014 January 19')
 
@@ -614,7 +630,7 @@ class ParserTest(unittest.TestCase):
 
     def testCustomParserInfo(self):
         # Custom parser info wasn't working, as Michael Elsdörfer discovered.
-        from dateutil.parser import parserinfo, parser
+        from dateutil.parser import parser, parserinfo
 
         class myparserinfo(parserinfo):
             MONTHS = parserinfo.MONTHS[:]
@@ -627,7 +643,7 @@ class ParserTest(unittest.TestCase):
         # Horacio Hoyos discovered that day names shorter than 3 characters,
         # for example two letter German day name abbreviations, don't work:
         # https://github.com/dateutil/dateutil/issues/343
-        from dateutil.parser import parserinfo, parser
+        from dateutil.parser import parser, parserinfo
 
         class GermanParserInfo(parserinfo):
             WEEKDAYS = [("Mo", "Montag"),
