@@ -896,8 +896,8 @@ class parser(object):
             if len_li == 4:
                 res.minute = int(s[2:])
 
-        elif len_li == 6 or (len_li > 6 and tokens[idx].find('.') == 6):
-            # YYMMDD or HHMMSS[.ss]
+        elif len_li == 6 or len_li == 9 or (len_li > 6 and tokens[idx].find('.') == 6):
+            # YYMMDD or HHMMSS[.ss] or HHMMSSmmm
             s = tokens[idx]
 
             if not ymd and '.' not in tokens[idx]:
@@ -905,12 +905,17 @@ class parser(object):
                 ymd.append(s[2:4])
                 ymd.append(s[4:])
             else:
-                # 19990101T235959[.59]
+                # 19990101T235959[.59] or 19990101T040506789
 
                 # TODO: Check if res attributes already set.
                 res.hour = int(s[:2])
                 res.minute = int(s[2:4])
-                res.second, res.microsecond = self._parsems(s[4:])
+                if len_li == 9:
+                    # HHMMSSmmm format - last 3 digits are milliseconds
+                    res.second = int(s[4:6])
+                    res.microsecond = int(s[6:]) * 1000
+                else:
+                    res.second, res.microsecond = self._parsems(s[4:])
 
         elif len_li in (8, 12, 14):
             # YYYYMMDD
