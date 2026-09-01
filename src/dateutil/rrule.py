@@ -110,6 +110,10 @@ class rrulebase(object):
         else:
             return self._iter_cached()
 
+    def _iter_from(self, dt):
+        """Return an iterator positioned near *dt* when supported."""
+        return iter(self)
+
     def _invalidate_cache(self):
         if self._cache is not None:
             self._cache = []
@@ -275,6 +279,8 @@ class rrulebase(object):
         list, if they are found in the recurrence set. """
         if self._cache_complete:
             gen = self._cache
+        elif self._cache is None:
+            gen = self._iter_from(after)
         else:
             gen = self
         started = False
@@ -772,6 +778,36 @@ class rrule(rrulebase):
         new_kwargs.update(self._original_rule)
         new_kwargs.update(kwargs)
         return rrule(**new_kwargs)
+
+    def _iter_from(self, dt):
+        # between() discards every occurrence through its lower bound.  For a
+        # daily rule with no COUNT, move an equivalent rule near the last
+        # aligned interval instead of replaying from DTSTART.
+        if (type(self) is not rrule or
+                self._freq != DAILY or self._count is not None or
+                not isinstance(dt, datetime.datetime) or
+                not isinstance(self._interval, integer_types) or
+                self._interval <= 0):
+            return self._iter()
+
+        dtstart = self._dtstart
+        if (dt.tzinfo is None) != (dtstart.tzinfo is None):
+            return self._iter()
+
+        if dt.tzinfo is not None:
+            dt = dt.astimezone(dtstart.tzinfo)
+
+        elapsed_days = (dt.date() - dtstart.date()).days
+        elapsed_intervals = elapsed_days // self._interval
+        if elapsed_intervals <= 0:
+            return self._iter()
+
+        # Start one complete interval earlier.  The iterator suppresses times
+        # before DTSTART on its first day, which could otherwise drop an
+        # explicit BYHOUR value that is still after the between() bound.
+        seek_start = dtstart + datetime.timedelta(
+            days=(elapsed_intervals - 1) * self._interval)
+        return self.replace(dtstart=seek_start)._iter()
 
     def _iter(self):
         year, month, day, hour, minute, second, weekday, yearday, _ = \
