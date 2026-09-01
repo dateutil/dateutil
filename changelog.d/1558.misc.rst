@@ -1,0 +1,1 @@
+Fixed test collection aborting under pytest 8.4 by passing a list, rather than a generator expression, to the ``test_ymd_hms_micro`` parametrize. Fixed by @Osamaali313 (gh pr #1558).
