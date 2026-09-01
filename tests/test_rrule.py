@@ -2633,6 +2633,49 @@ class RRuleTest(unittest.TestCase):
                        datetime(2020, 7, 2, 5, tzinfo=tz.UTC)),
             [datetime(2020, 7, 1, 23, 30, tzinfo=nyc)])
 
+    def testBetweenDailyDifferentTimezoneAtDatetimeMin(self):
+        west = tz.tzoffset('west-14', -14 * 60 * 60)
+        rr = rrule(DAILY,
+                   dtstart=datetime(1, 1, 1, tzinfo=west),
+                   until=datetime(1, 1, 10, tzinfo=west))
+
+        self.assertEqual(
+            rr.between(datetime.min.replace(tzinfo=tz.UTC),
+                       datetime(1, 1, 3, tzinfo=tz.UTC)),
+            [datetime(1, 1, day, tzinfo=west) for day in (1, 2)])
+
+    def testBetweenDailyDifferentTimezoneAtDatetimeMax(self):
+        east = tz.tzoffset('east-14', 14 * 60 * 60)
+        rr = rrule(DAILY,
+                   dtstart=datetime(9999, 12, 20, tzinfo=east),
+                   until=datetime.max.replace(tzinfo=east))
+
+        self.assertEqual(
+            rr.between(datetime.max.replace(tzinfo=tz.UTC),
+                       datetime.max.replace(tzinfo=tz.UTC)),
+            [])
+
+    def testBetweenDailyDifferentFloatingTimezones(self):
+        from datetime import tzinfo
+
+        class FloatingTZ(tzinfo):
+            def utcoffset(self, dt):
+                return None
+
+            def dst(self, dt):
+                return None
+
+        start_tz = FloatingTZ()
+        bound_tz = FloatingTZ()
+        rr = rrule(DAILY,
+                   dtstart=datetime(2000, 1, 1, tzinfo=start_tz),
+                   until=datetime(2030, 1, 1, tzinfo=start_tz))
+
+        self.assertEqual(
+            rr.between(datetime(2020, 1, 1, tzinfo=bound_tz),
+                       datetime(2020, 1, 3, tzinfo=bound_tz)),
+            [datetime(2020, 1, 2, tzinfo=start_tz)])
+
     def testBetweenDailyDistantStartPopulatesCache(self):
         start = datetime(2000, 1, 1)
         rr = rrule(DAILY,

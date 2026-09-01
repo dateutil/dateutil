@@ -791,11 +791,30 @@ class rrule(rrulebase):
             return self._iter()
 
         dtstart = self._dtstart
-        if (dt.tzinfo is None) != (dtstart.tzinfo is None):
-            return self._iter()
+        if dt.tzinfo is not dtstart.tzinfo:
+            dt_offset = dt.utcoffset()
+            dtstart_offset = dtstart.utcoffset()
 
-        if dt.tzinfo is not None:
-            dt = dt.astimezone(dtstart.tzinfo)
+            # Python treats a datetime whose utcoffset() is None as naive,
+            # even when it has a tzinfo object.  Mixed naive/aware values retain
+            # the legacy comparison behavior; two naive values use wall time.
+            if (dt_offset is None) != (dtstart_offset is None):
+                return self._iter()
+
+            if dt_offset is not None:
+                # There is nothing to seek past when the bound precedes
+                # DTSTART.
+                if dt <= dtstart:
+                    return self._iter()
+
+                # astimezone() may overflow while normalizing through UTC near
+                # datetime's representational limits, even when source and
+                # target offsets are equal.  Keep boundary years outside the
+                # seek optimization's supported domain.
+                if dt.year in (datetime.MINYEAR, datetime.MAXYEAR):
+                    return self._iter()
+
+                dt = dt.astimezone(dtstart.tzinfo)
 
         elapsed_days = (dt.date() - dtstart.date()).days
         elapsed_intervals = elapsed_days // self._interval
