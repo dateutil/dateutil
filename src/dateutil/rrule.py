@@ -783,11 +783,14 @@ class rrule(rrulebase):
         # between() discards every occurrence through its lower bound.  For a
         # daily rule with no COUNT, move an equivalent rule near the last
         # aligned interval instead of replaying from DTSTART.
-        if (type(self) is not rrule or
-                self._freq != DAILY or self._count is not None or
-                not isinstance(dt, datetime.datetime) or
-                not isinstance(self._interval, integer_types) or
-                self._interval <= 0):
+        if (
+            type(self) is not rrule
+            or self._freq != DAILY
+            or self._count is not None
+            or not isinstance(dt, datetime.datetime)
+            or not isinstance(self._interval, integer_types)
+            or self._interval <= 0
+        ):
             return self._iter()
 
         dtstart = self._dtstart
@@ -825,7 +828,8 @@ class rrule(rrulebase):
         # before DTSTART on its first day, which could otherwise drop an
         # explicit BYHOUR value that is still after the between() bound.
         seek_start = dtstart + datetime.timedelta(
-            days=(elapsed_intervals - 1) * self._interval)
+            days=(elapsed_intervals - 1) * self._interval
+        )
         return self.replace(dtstart=seek_start)._iter()
 
     def _iter(self):

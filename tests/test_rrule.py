@@ -2593,67 +2593,88 @@ class RRuleTest(unittest.TestCase):
                           datetime(1997, 9, 6, 9, 0)])
 
     def testBetweenDailyDistantStart(self):
-        rr = rrule(DAILY,
-                   dtstart=datetime(2000, 1, 1),
-                   until=datetime(2030, 1, 1))
+        rr = rrule(
+            DAILY, dtstart=datetime(2000, 1, 1), until=datetime(2030, 1, 1)
+        )
 
         self.assertEqual(
             rr.between(datetime(2020, 1, 1), datetime(2020, 2, 1)),
-            [datetime(2020, 1, day) for day in range(2, 32)])
+            [datetime(2020, 1, day) for day in range(2, 32)],
+        )
 
     def testBetweenDailyDistantStartInterval(self):
-        rr = rrule(DAILY,
-                   interval=3,
-                   dtstart=datetime(2000, 1, 2, 9),
-                   until=datetime(2030, 1, 1))
+        rr = rrule(
+            DAILY,
+            interval=3,
+            dtstart=datetime(2000, 1, 2, 9),
+            until=datetime(2030, 1, 1),
+        )
 
         self.assertEqual(
             rr.between(datetime(2020, 1, 1), datetime(2020, 2, 1)),
-            [datetime(2020, 1, day, 9) for day in range(2, 30, 3)])
+            [datetime(2020, 1, day, 9) for day in range(2, 30, 3)],
+        )
 
     def testBetweenDailyDistantStartEarlierByHour(self):
-        rr = rrule(DAILY,
-                   byhour=(8, 20),
-                   dtstart=datetime(2000, 1, 1, 9),
-                   until=datetime(2030, 1, 1))
+        rr = rrule(
+            DAILY,
+            byhour=(8, 20),
+            dtstart=datetime(2000, 1, 1, 9),
+            until=datetime(2030, 1, 1),
+        )
 
         self.assertEqual(
-            rr.between(datetime(2020, 1, 1, 7),
-                       datetime(2020, 1, 1, 21)),
-            [datetime(2020, 1, 1, 8), datetime(2020, 1, 1, 20)])
+            rr.between(datetime(2020, 1, 1, 7), datetime(2020, 1, 1, 21)),
+            [datetime(2020, 1, 1, 8), datetime(2020, 1, 1, 20)],
+        )
 
     def testBetweenDailyDistantStartDifferentTimezone(self):
-        nyc = tz.gettz('America/New_York')
-        rr = rrule(DAILY,
-                   dtstart=datetime(2000, 1, 1, 23, 30, tzinfo=nyc),
-                   until=datetime(2030, 1, 1, 23, 30, tzinfo=nyc))
+        nyc = tz.gettz("America/New_York")
+        rr = rrule(
+            DAILY,
+            dtstart=datetime(2000, 1, 1, 23, 30, tzinfo=nyc),
+            until=datetime(2030, 1, 1, 23, 30, tzinfo=nyc),
+        )
 
         self.assertEqual(
-            rr.between(datetime(2020, 7, 2, 2, tzinfo=tz.UTC),
-                       datetime(2020, 7, 2, 5, tzinfo=tz.UTC)),
-            [datetime(2020, 7, 1, 23, 30, tzinfo=nyc)])
+            rr.between(
+                datetime(2020, 7, 2, 2, tzinfo=tz.UTC),
+                datetime(2020, 7, 2, 5, tzinfo=tz.UTC),
+            ),
+            [datetime(2020, 7, 1, 23, 30, tzinfo=nyc)],
+        )
 
     def testBetweenDailyDifferentTimezoneAtDatetimeMin(self):
-        west = tz.tzoffset('west-14', -14 * 60 * 60)
-        rr = rrule(DAILY,
-                   dtstart=datetime(1, 1, 1, tzinfo=west),
-                   until=datetime(1, 1, 10, tzinfo=west))
+        west = tz.tzoffset("west-14", -14 * 60 * 60)
+        rr = rrule(
+            DAILY,
+            dtstart=datetime(1, 1, 1, tzinfo=west),
+            until=datetime(1, 1, 10, tzinfo=west),
+        )
 
         self.assertEqual(
-            rr.between(datetime.min.replace(tzinfo=tz.UTC),
-                       datetime(1, 1, 3, tzinfo=tz.UTC)),
-            [datetime(1, 1, day, tzinfo=west) for day in (1, 2)])
+            rr.between(
+                datetime.min.replace(tzinfo=tz.UTC),
+                datetime(1, 1, 3, tzinfo=tz.UTC),
+            ),
+            [datetime(1, 1, day, tzinfo=west) for day in (1, 2)],
+        )
 
     def testBetweenDailyDifferentTimezoneAtDatetimeMax(self):
-        east = tz.tzoffset('east-14', 14 * 60 * 60)
-        rr = rrule(DAILY,
-                   dtstart=datetime(9999, 12, 20, tzinfo=east),
-                   until=datetime.max.replace(tzinfo=east))
+        east = tz.tzoffset("east-14", 14 * 60 * 60)
+        rr = rrule(
+            DAILY,
+            dtstart=datetime(9999, 12, 20, tzinfo=east),
+            until=datetime.max.replace(tzinfo=east),
+        )
 
         self.assertEqual(
-            rr.between(datetime.max.replace(tzinfo=tz.UTC),
-                       datetime.max.replace(tzinfo=tz.UTC)),
-            [])
+            rr.between(
+                datetime.max.replace(tzinfo=tz.UTC),
+                datetime.max.replace(tzinfo=tz.UTC),
+            ),
+            [],
+        )
 
     def testBetweenDailyDifferentFloatingTimezones(self):
         from datetime import tzinfo
@@ -2667,21 +2688,23 @@ class RRuleTest(unittest.TestCase):
 
         start_tz = FloatingTZ()
         bound_tz = FloatingTZ()
-        rr = rrule(DAILY,
-                   dtstart=datetime(2000, 1, 1, tzinfo=start_tz),
-                   until=datetime(2030, 1, 1, tzinfo=start_tz))
+        rr = rrule(
+            DAILY,
+            dtstart=datetime(2000, 1, 1, tzinfo=start_tz),
+            until=datetime(2030, 1, 1, tzinfo=start_tz),
+        )
 
         self.assertEqual(
-            rr.between(datetime(2020, 1, 1, tzinfo=bound_tz),
-                       datetime(2020, 1, 3, tzinfo=bound_tz)),
-            [datetime(2020, 1, 2, tzinfo=start_tz)])
+            rr.between(
+                datetime(2020, 1, 1, tzinfo=bound_tz),
+                datetime(2020, 1, 3, tzinfo=bound_tz),
+            ),
+            [datetime(2020, 1, 2, tzinfo=start_tz)],
+        )
 
     def testBetweenDailyDistantStartPopulatesCache(self):
         start = datetime(2000, 1, 1)
-        rr = rrule(DAILY,
-                   dtstart=start,
-                   until=datetime(2030, 1, 1),
-                   cache=True)
+        rr = rrule(DAILY, dtstart=start, until=datetime(2030, 1, 1), cache=True)
 
         rr.between(datetime(2020, 1, 1), datetime(2020, 2, 1))
 
@@ -2698,8 +2721,8 @@ class RRuleTest(unittest.TestCase):
         rr = CustomRRule(DAILY, dtstart=datetime(2000, 1, 1))
 
         self.assertEqual(
-            rr.between(datetime(2020, 1, 1), datetime(2020, 2, 1)),
-            [expected])
+            rr.between(datetime(2020, 1, 1), datetime(2020, 2, 1)), [expected]
+        )
 
     def testCachePre(self):
         rr = rrule(DAILY, count=15, cache=True,
