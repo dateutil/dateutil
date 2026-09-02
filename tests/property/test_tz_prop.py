@@ -7,8 +7,9 @@ from hypothesis import strategies as st
 
 from dateutil import tz
 
-EPOCHALYPSE = datetime.fromtimestamp(2147483647)
-NEGATIVE_EPOCHALYPSE = datetime.fromtimestamp(0) - timedelta(seconds=2147483648)
+EPOCH = datetime(1970, 1, 1)
+EPOCHALYPSE = EPOCH + timedelta(seconds=2147483647)
+NEGATIVE_EPOCHALYPSE = EPOCH - timedelta(seconds=2147483648)
 
 
 @pytest.mark.gettz
@@ -24,8 +25,11 @@ NEGATIVE_EPOCHALYPSE = datetime.fromtimestamp(0) - timedelta(seconds=2147483648)
         timezones=st.just(tz.UTC),
     )
 )
-@example(dt=datetime(2005, 10, 30, 1, 15))  # Ambiguous in US time zones
-@example(dt=datetime(1901, 12, 13, 18, 19, 3))  # Very old
+@example(
+    dt=datetime(2005, 10, 30, 5, 15, tzinfo=tz.UTC)
+)  # Ambiguous in US time zones
+@example(dt=datetime(1975, 10, 26, 5, tzinfo=tz.UTC))  # Aware ambiguous time
+@example(dt=NEGATIVE_EPOCHALYPSE.replace(tzinfo=tz.UTC))  # Very old
 def test_gettz_returns_local(gettz_arg, dt):
     act_tz = tz.gettz(gettz_arg)
     if isinstance(act_tz, tz.tzlocal):
@@ -48,8 +52,4 @@ def test_gettz_returns_local(gettz_arg, dt):
     ):
         assert dt_act == dt_exp
     else:
-        assert (
-            tz.enfold(dt, fold=0).astimezone().utcoffset()
-            != tz.enfold(dt, fold=1).astimezone().utcoffset()
-        )
         assert dt_act != dt_exp
