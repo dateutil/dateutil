@@ -764,4 +764,31 @@ class RelativeDeltaWeeksPropertySetterTest(unittest.TestCase):
         self.assertEqual(rd.weeks, -1)
 
 
+
+class RelativeDeltaInequalityTest(unittest.TestCase):
+    """`__ne__` must not choke on operands `__eq__` refuses (gh issue #1157)"""
+
+    OTHERS = [None, 'foo', 1, object(), timedelta(days=1)]
+
+    def test_ne_returns_true_for_other_types(self):
+        rd = relativedelta(days=1)
+        for other in self.OTHERS:
+            self.assertTrue(rd != other, msg=repr(other))
+
+    def test_eq_returns_false_for_other_types(self):
+        rd = relativedelta(days=1)
+        for other in self.OTHERS:
+            self.assertFalse(rd == other, msg=repr(other))
+
+    def test_eq_and_ne_are_consistent(self):
+        rd = relativedelta(days=1)
+        for other in self.OTHERS + [relativedelta(days=1),
+                                    relativedelta(days=2)]:
+            self.assertNotEqual(rd == other, rd != other, msg=repr(other))
+
+    def test_ne_still_works_between_relativedeltas(self):
+        self.assertFalse(relativedelta(days=1) != relativedelta(days=1))
+        self.assertTrue(relativedelta(days=1) != relativedelta(days=2))
+
+
 # vim:ts=4:sw=4:et
