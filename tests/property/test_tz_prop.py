@@ -48,8 +48,8 @@ def test_gettz_returns_local(gettz_arg, dt):
     ):
         assert dt_act == dt_exp
     else:
-        assert (
-            tz.enfold(dt, fold=0).astimezone().utcoffset()
-            != tz.enfold(dt, fold=1).astimezone().utcoffset()
-        )
+        # `dt` is UTC-aware and so never ambiguous: its own `fold` has no
+        # effect on `astimezone()`, so the ambiguity has to be confirmed on
+        # the converted value rather than on the input.
+        assert tz.datetime_ambiguous(dt_act.replace(tzinfo=None), act_tz)
         assert dt_act != dt_exp
