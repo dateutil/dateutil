@@ -7,8 +7,15 @@ from hypothesis import strategies as st
 
 from dateutil import tz
 
-EPOCHALYPSE = datetime.fromtimestamp(2147483647)
-NEGATIVE_EPOCHALYPSE = datetime.fromtimestamp(0) - timedelta(seconds=2147483648)
+# `dateutil` only reads the 32-bit (version 1) block of a TZif file, so it
+# has no transition data outside the range representable by a signed 32-bit
+# timestamp.  The strategy below generates *UTC* datetimes, so these bounds
+# must be UTC as well -- deriving them from `datetime.fromtimestamp()` made
+# them local wall times, which in any zone with a non-zero offset let the
+# strategy wander outside the representable range (GH #590).
+EPOCH = datetime(1970, 1, 1)
+EPOCHALYPSE = EPOCH + timedelta(seconds=2147483647)
+NEGATIVE_EPOCHALYPSE = EPOCH - timedelta(seconds=2147483648)
 
 
 @pytest.mark.gettz
@@ -25,7 +32,10 @@ NEGATIVE_EPOCHALYPSE = datetime.fromtimestamp(0) - timedelta(seconds=2147483648)
     )
 )
 @example(dt=datetime(2005, 10, 30, 1, 15))  # Ambiguous in US time zones
-@example(dt=datetime(1901, 12, 13, 18, 19, 3))  # Very old
+# The strategy above yields UTC-aware datetimes; keep this example aware
+# too, so that it names an instant rather than a local wall time that
+# lands outside the 32-bit range in zones east of UTC.
+@example(dt=datetime(1901, 12, 13, 20, 45, 52, tzinfo=tz.UTC))
 def test_gettz_returns_local(gettz_arg, dt):
     act_tz = tz.gettz(gettz_arg)
     if isinstance(act_tz, tz.tzlocal):
