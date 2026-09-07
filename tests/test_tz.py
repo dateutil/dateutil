@@ -2813,3 +2813,21 @@ def test_resolve_imaginary(tzi, dt, dt_exp):
     assert dt_r == dt_exp
     assert dt_r.tzname() == dt_exp.tzname()
     assert dt_r.utcoffset() == dt_exp.utcoffset()
+
+
+@pytest.mark.tzstr
+@pytest.mark.parametrize('tzstr', ['GMT', 'UTC'])
+def test_tzstr_utc_without_offset(tzstr):
+    # A TZ string without an offset used to hit `None * -1` and raise
+    # TypeError instead of behaving like any other offset-less abbreviation
+    # (gh issue #1432, gh issue #1402).
+    tzi = tz.tzstr(tzstr)
+
+    assert tzi.utcoffset(datetime(2020, 1, 1)) == timedelta(0)
+    assert tzi.dst(datetime(2020, 1, 1)) == timedelta(0)
+
+
+@pytest.mark.tzstr
+def test_gettz_offsetless_utc_string_does_not_raise():
+    # gh issue #1402: this reached `tzstr` and raised TypeError
+    assert tz.gettz("GMT,4;3/4") is not None
