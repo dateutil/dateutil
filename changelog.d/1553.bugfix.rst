@@ -1,0 +1,1 @@
+Fixed `_common.weekday` being unpicklable with pickle protocols 0 and 1, which are still the default on Python 2: the class uses `__slots__` without a `__dict__` and did not define `__getstate__`. This also made the `MO`..`SU` constants, and any `relativedelta` carrying a weekday, unpicklable at those protocols. Reported and fixed by @<submitter> (gh pr #<PR>)
