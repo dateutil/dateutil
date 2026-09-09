@@ -4912,3 +4912,23 @@ class WeekdayTest(unittest.TestCase):
 
         for repstr, wday in zip(with_n_reprs, with_n_wdays):
             self.assertEqual(repr(wday), repstr)
+
+
+@pytest.mark.rrule
+@pytest.mark.rrulestr
+def test_rrulestr_multiple_dtstart_roundtrip():
+    # gh issue #942: rrulestr dropped all but the last DTSTART, so a
+    # multi-RRULE string (the exact form str(rruleset) emits) lost the
+    # events of every RRULE whose DTSTART was not the final one.
+    from datetime import timedelta
+    base = datetime(2019, 8, 2, 9, 34, 57)
+    r1 = rrule(DAILY, count=10, dtstart=base)
+    r2 = rrule(DAILY, count=10, dtstart=base + timedelta(5))
+    rs = rruleset()
+    rs.rrule(r1)
+    rs.rrule(r2)
+    s = str(r1) + "\n" + str(r2)
+
+    rs2 = rrulestr(s)
+    lo, hi = base, base + timedelta(10)
+    assert set(rs.between(lo, hi)) == set(rs2.between(lo, hi))

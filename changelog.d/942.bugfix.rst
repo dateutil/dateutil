@@ -1,0 +1,1 @@
+Fix rrulestr dropping all but the last DTSTART when parsing a multi-RRULE string (the exact form ``str(rruleset)`` emits), so each RRULE now uses the DTSTART that precedes it. gh issue #942
