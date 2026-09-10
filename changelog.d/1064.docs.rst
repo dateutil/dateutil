@@ -1,0 +1,5 @@
+Fixed a misleading example in the docstring of ``dateutil.parser.parse``:
+the ``tzinfos`` example mapped the abbreviation ``"CST"`` (a fixed ``-06:00``
+offset) to ``gettz("America/Chicago")``, whose offset shifts to ``-05:00``
+(CDT) under daylight saving time.Reported by @aa1371 (gh issue #1064). 
+
