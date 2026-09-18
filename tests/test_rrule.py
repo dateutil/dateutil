@@ -4912,3 +4912,18 @@ class WeekdayTest(unittest.TestCase):
 
         for repstr, wday in zip(with_n_reprs, with_n_wdays):
             self.assertEqual(repr(wday), repstr)
+
+
+def test_rrule_rejects_bool_count_interval():
+    import datetime
+    dt = datetime.datetime(2020, 1, 1)
+    try:
+        rrule(DAILY, count=True, dtstart=dt)
+        raise AssertionError("expected TypeError for count=True")
+    except TypeError:
+        pass
+    try:
+        rrule(DAILY, interval=True, count=3, dtstart=dt)
+        raise AssertionError("expected TypeError for interval=True")
+    except TypeError:
+        pass

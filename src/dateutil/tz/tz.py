@@ -149,6 +149,13 @@ class tzoffset(datetime.tzinfo):
         except (TypeError, AttributeError):
             pass
 
+        # bool is a subclass of int; offset=True would silently become 1 second
+        if isinstance(offset, bool):
+            raise TypeError(
+                "offset must be an integer or timedelta, not bool (got %r)"
+                % (offset,)
+            )
+
         self._offset = datetime.timedelta(seconds=_get_supported_offset(offset))
 
     def utcoffset(self, dt):
