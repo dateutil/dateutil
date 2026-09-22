@@ -1436,6 +1436,24 @@ class TZStrTest(unittest.TestCase, TzFoldMixin):
         self.assertEqual(datetime(2003, 4, 6, 2, 00,
                                   tzinfo=tz.tzstr(str("EST5EDT"))).tzname(), "EDT")
 
+    def testStrGMTUTCWithoutOffset(self):
+        # A bare "GMT"/"UTC" has no explicit offset and used to raise a
+        # TypeError (``None *= -1``); it should behave like UTC (offset 0),
+        # as other bare abbreviations already do. See GH #1402.
+        for name in ("GMT", "UTC", "GMT,4;3/4"):
+            dt = datetime(2020, 6, 1, 12, 0, tzinfo=tz.tzstr(name))
+            self.assertEqual(dt.utcoffset(), timedelta(0))
+
+        # Explicit offsets are unaffected: GMT-3 still means the -3 timezone.
+        self.assertEqual(
+            datetime(2020, 6, 1, tzinfo=tz.tzstr("GMT-3")).utcoffset(),
+            timedelta(hours=-3),
+        )
+        self.assertEqual(
+            datetime(2020, 6, 1, tzinfo=tz.tzstr("GMT+3")).utcoffset(),
+            timedelta(hours=3),
+        )
+
     def testStrInequality(self):
         TZS1 = tz.tzstr('EST5EDT4')
 
