@@ -1,0 +1,3 @@
+Fixed recurrence slices with a zero stop returning occurrences and slices with
+a zero step failing to raise ValueError before their cache was complete.
+Reported and fixed by @Eric3-jp (gh pr #1574).

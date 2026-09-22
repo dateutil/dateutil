@@ -4615,6 +4615,55 @@ class RRuleTest(unittest.TestCase):
                              [datetime(1997, 1, 6)])
 
 
+@pytest.fixture(params=[False, True])
+def slice_recurrence(request, cache_state):
+    rule = rrule(
+        DAILY,
+        count=3,
+        dtstart=datetime(1997, 9, 2, 9),
+        cache=cache_state != "uncached",
+    )
+    if request.param:
+        recurrence = rruleset(cache=cache_state != "uncached")
+        recurrence.rrule(rule)
+    else:
+        recurrence = rule
+    if cache_state == "complete":
+        list(recurrence)
+    return recurrence
+
+
+@pytest.fixture(params=["uncached", "pending", "complete"])
+def cache_state(request):
+    return request.param
+
+
+@pytest.mark.rrule
+@pytest.mark.rruleset
+@pytest.mark.parametrize(
+    "index",
+    [
+        slice(None, 0),
+        slice(0, 0),
+        slice(1, 0),
+        slice(None),
+        slice(0, 2),
+        slice(None, None, 2),
+        slice(None, None, -1),
+    ],
+)
+def test_recurrence_slice_bounds(slice_recurrence, index):
+    dates = [datetime(1997, 9, day, 9) for day in (2, 3, 4)]
+    assert slice_recurrence[index] == dates[index]
+
+
+@pytest.mark.rrule
+@pytest.mark.rruleset
+def test_recurrence_slice_zero_step(slice_recurrence):
+    with pytest.raises(ValueError):
+        slice_recurrence[::0]
+
+
 @pytest.mark.rrule
 @freeze_time(datetime(2018, 3, 6, 5, 36, tzinfo=tz.UTC))
 def test_generated_aware_dtstart():

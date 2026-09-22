@@ -10,7 +10,6 @@ import datetime
 import heapq
 import itertools
 import re
-import sys
 from functools import wraps
 # For warning about deprecation of until and count
 from warnings import warn
@@ -153,10 +152,9 @@ class rrulebase(object):
             if item.step and item.step < 0:
                 return list(iter(self))[item]
             else:
-                return list(itertools.islice(self,
-                                             item.start or 0,
-                                             item.stop or sys.maxsize,
-                                             item.step or 1))
+                return list(
+                    itertools.islice(self, item.start, item.stop, item.step)
+                )
         elif item >= 0:
             gen = iter(self)
             try:
