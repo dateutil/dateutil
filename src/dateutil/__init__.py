@@ -22,5 +22,5 @@ def __getattr__(name):
 def __dir__():
     # __dir__ should include all the lazy-importable modules as well.
     return (
-        [x for x in globals() if x not in sys.modules] + __all__ + ["zoneinfo,"]
+        [x for x in globals() if x not in sys.modules] + __all__ + ["zoneinfo"]
     )
