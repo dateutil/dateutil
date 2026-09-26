@@ -1216,6 +1216,10 @@ def available_iana_timezones():
         # posixrules is a special symlink-only time zone where it exists, it
         # should not be included in the output
         valid_zones.remove("posixrules")
+    if "localtime" in valid_zones:
+        # localtime is a special symlink-only time zone where it exists, it
+        # should not be included in the output
+        valid_zones.remove("localtime")
 
     return valid_zones
 
