@@ -274,6 +274,25 @@ class RelativeDeltaTest(unittest.TestCase):
         self.assertEqual(datetime(2000, 1, 1) + 28 * relativedelta(days=1),
                          datetime(2000, 1, 29))
 
+    def testMultiplicationFractional(self):
+        # GH issue #1318: multiplication used to truncate the fractional part of
+        # the day and time fields (e.g. relativedelta(days=1.5) * 1 -> days=1).
+        self.assertEqual(relativedelta(days=1.5) * 1, relativedelta(days=1.5))
+        self.assertEqual(relativedelta(hours=1.5) * 1, relativedelta(hours=1.5))
+        self.assertEqual(
+            relativedelta(days=1, hours=6) * 0.5,
+            relativedelta(days=0.5, hours=3),
+        )
+        self.assertEqual(
+            datetime(2000, 1, 1) + relativedelta(days=1.5) * 1,
+            datetime(2000, 1, 2, 12, 0),
+        )
+        # years and months must stay integral, so they are still coerced to int.
+        self.assertEqual(
+            relativedelta(years=2, months=2) * 1.5,
+            relativedelta(years=3, months=3),
+        )
+
     def testMultiplicationUnsupportedType(self):
         self.assertIs(relativedelta(days=1) * NotAValue, NotAValue)
 
