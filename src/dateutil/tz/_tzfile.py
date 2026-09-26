@@ -683,16 +683,13 @@ def load_data(fobj):
     fobj.seek(skip_bytes, 1)
     if header.version >= 2:
         c = fobj.read(1)  # Should be \n
-        assert c == b"\n", c
+        if c != b"\n":
+            raise ValueError("Invalid TZif file: expected newline, got %r" % c)
 
-        tz_bytes = b""
-        while True:
-            c = fobj.read(1)
-            if c == b"\n":
-                break
-            tz_bytes += c
-
-        tz_str = tz_bytes
+        line = fobj.readline()
+        if not line.endswith(b"\n"):
+            raise ValueError("Invalid TZif file: unexpected end of file")
+        tz_str = line.rstrip(b"\n")
     else:
         tz_str = None
 

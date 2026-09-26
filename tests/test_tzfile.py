@@ -1522,3 +1522,26 @@ def test_tzdata_bad_keys(key):
     with set_tzpath(()):
         tz.gettz.cache_clear()
         assert tz.gettz(key) is None
+
+
+@pytest.mark.parametrize("strip", [1, 2, 4, 8])
+def test_truncated_footer(strip):
+    """A file cut off inside the TZ string footer must not hang."""
+    zf = construct_zone([], "EST5EDT,M3.2.0,M11.1.0")
+    data = zf.read()
+    assert data.endswith(b"\n")
+
+    with pytest.raises(ValueError):
+        tz.tzfile(six.BytesIO(data[:-strip]))
+
+
+def test_missing_footer_newline():
+    """Version 2+ files must have a newline before the TZ string."""
+    zf = construct_zone([], "EST5EDT,M3.2.0,M11.1.0")
+    data = zf.read()
+    # The footer is "\n<tzstr>\n"; drop the leading newline.
+    footer_start = data.rfind(b"\n", 0, len(data) - 1)
+    data = data[:footer_start] + data[footer_start + 1 :]
+
+    with pytest.raises(ValueError):
+        tz.tzfile(six.BytesIO(data))
