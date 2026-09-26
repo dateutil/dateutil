@@ -464,25 +464,6 @@ def tzpath_zoneinfo_cache(zoneinfo_cache):
         yield zoneinfo_cache[1]
 
 
-@functools_cache
-def rearguard():
-    # If we know that we're using the rearguard tzdata file, skip tests
-    # that rely on rearguard features.
-    for path in tz.TZPATH:
-        # Technically you could have more than one set of tzdata, some which
-        # are reaguard and some vanguard or whatever, but we'll just assume
-        # that the first tzdata file we find is authoritative in terms of
-        # version.
-        tzdata_zi = os.path.join(path, "tzdata.zi")
-        if os.path.exists(tzdata_zi):
-            with open(tzdata_zi, "rt") as f:
-                if "-rearguard" in next(iter(f)):
-                    return True
-                else:
-                    break
-        return False
-
-
 def as_list(f):
     @functools.wraps(f)
     def inner_func(*args, **kwargs):
@@ -835,9 +816,6 @@ def _get_unambiguous_transitions():
             )
 
 
-@pytest.mark.skipif(
-    rearguard(), reason="Skipping TZ tests with rearguard files"
-)
 @pytest.mark.parametrize("zoneinfo_cache", ["v1", "slim", "fat"], indirect=True)
 @pytest.mark.parametrize(
     "transition", _get_unambiguous_transitions(), indirect=True
@@ -886,9 +864,6 @@ def _get_folds_and_gaps():
             yield (key, dt, 1, zt.offset_after)
 
 
-@pytest.mark.skipif(
-    rearguard(), reason="Skipping TZ tests with rearguard files"
-)
 @pytest.mark.parametrize("zoneinfo_cache", ["v1", "slim", "fat"], indirect=True)
 @pytest.mark.parametrize("transition", _get_folds_and_gaps(), indirect=True)
 def test_gaps_and_folds(transition):
