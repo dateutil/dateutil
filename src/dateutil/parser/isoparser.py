@@ -305,7 +305,8 @@ class isoparser(object):
             The year in the ISO calendar
 
         :param week:
-            The week in the ISO calendar - range is [1, 53]
+            The week in the ISO calendar. The range is [1, 52], or
+            [1, 53] when the year contains week 53.
 
         :param day:
             The day in the ISO calendar - range is [1 (MON), 7 (SUN)]
@@ -314,6 +315,10 @@ class isoparser(object):
             Returns a :class:`datetime.date`
         """
         if not 0 < week < 54:
+            raise ValueError('Invalid week: {}'.format(week))
+
+        # 28 December is always in the last ISO week of its year.
+        if week == 53 and date(year, 12, 28).isocalendar()[1] != 53:
             raise ValueError('Invalid week: {}'.format(week))
 
         if not 0 < day < 8:     # Range is 1-7
