@@ -1,0 +1,1 @@
+Fixed collection of ``tests/test_isoparser.py`` under pytest 9.1, which turns passing a generator to ``parametrize`` into an error when combined with ``filterwarnings = error``. Reported by @apoorvdarshan (gh pr #1531) and @Osamaali313 (gh pr #1558). (gh pr #1577)
