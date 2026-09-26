@@ -1891,3 +1891,93 @@ def test_gettz_missing_search_path_entry(zoneinfo_cache, tmp_path):
         tz.gettz.cache_clear()
         assert tz.gettz("America/New_York") is not None
         assert tz.gettz("America/Nope") is None
+
+
+####
+# available_iana_timezones
+def _make_fake_tzpath(root):
+    """Populate a directory the way a zoneinfo installation is laid out."""
+    STD = ZoneOffset("STD", ZERO)
+    DST = ZoneOffset("DST", ONE_H, ONE_H)
+    tzif = construct_zone(
+        [ZoneTransition(datetime(2010, 3, 14, 2), STD, DST)],
+        "STD0DST,M3.2.0,M11.1.0",
+    ).read()
+
+    zones = [
+        "Fictional/Liliput",
+        "Fictional/Blefuscu",
+        "Fictional/Nested/Deep",
+        "Fictional/right/NotExcluded",  # Only top-level right/ is excluded
+        "UTC",
+        "posixrules",  # Excluded by name
+        "posix/Fictional/Liliput",  # Excluded top-level directory
+        "right/Fictional/Liliput",  # Excluded top-level directory
+    ]
+    for zone in zones:
+        path = os.path.join(root, *zone.split("/"))
+        makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "wb") as f:
+            f.write(tzif)
+
+    for not_zone in ["tzdata.zi", "Fictional/README", "leap-seconds.list"]:
+        path = os.path.join(root, *not_zone.split("/"))
+        with open(path, "wb") as f:
+            f.write(b"This is not a TZif file\n")
+
+    return {
+        "Fictional/Liliput",
+        "Fictional/Blefuscu",
+        "Fictional/Nested/Deep",
+        "Fictional/right/NotExcluded",
+        "UTC",
+    }
+
+
+def test_available_iana_timezones_tzpath_only(tmp_path):
+    root = str(tmp_path)
+    expected = _make_fake_tzpath(root)
+
+    with set_tzpath((root,), block_tzdata=True):
+        assert tz.available_iana_timezones() == expected
+
+
+def test_available_iana_timezones_missing_path(tmp_path):
+    """Search path entries that do not exist are skipped."""
+    root = str(tmp_path / "zoneinfo")
+    makedirs(root)
+    expected = _make_fake_tzpath(root)
+    missing = str(tmp_path / "missing")
+
+    with set_tzpath((missing, root), block_tzdata=True):
+        assert tz.available_iana_timezones() == expected
+
+
+def test_available_iana_timezones_empty(tmp_path):
+    with set_tzpath((), block_tzdata=True):
+        assert tz.available_iana_timezones() == set()
+
+
+def test_available_iana_timezones_with_tzdata(tmp_path):
+    """Zones on the search path are merged with the ones from tzdata."""
+    tzdata = pytest.importorskip("tzdata")
+    from dateutil._tzdata_impl import _load_tzdata_keys
+
+    root = str(tmp_path)
+    fake_zones = _make_fake_tzpath(root)
+    tzdata_zones = set(_load_tzdata_keys())
+
+    with set_tzpath((root,)):
+        zones = tz.available_iana_timezones()
+
+    assert zones == fake_zones | tzdata_zones
+    assert "posixrules" not in zones
+
+
+def test_available_iana_timezones_fresh_set():
+    """Each call returns a new set, so callers may mutate it."""
+    with set_tzpath((), block_tzdata=True):
+        a = tz.available_iana_timezones()
+        b = tz.available_iana_timezones()
+
+    assert a is not b
