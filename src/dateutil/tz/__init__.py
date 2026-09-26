@@ -38,6 +38,8 @@ if sys.version_info < (3, 7):
         global TZPATH
         TZPATH = new_tzpath
 
+    _tzpath.TZPATH_CALLBACKS.append(_tzpath_callback)
+
 else:
 
     def __getattr__(name):
