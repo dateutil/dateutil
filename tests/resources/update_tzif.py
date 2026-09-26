@@ -95,7 +95,7 @@ async def unpack_tzdb_tarball(
     # tzdb-..., which is annoying to deal with. We will delete that and
     # unpack its contents into `output_dir`
     for i, subdir in list(enumerate(output_dir.glob("tzdb-*"))):
-        if i > 1:
+        if i >= 1:
             raise ValueError("TZDB directory contains more than one subdir")
         for p in subdir.iterdir():
             p.rename(output_dir / p.name)
@@ -117,7 +117,7 @@ async def _file_to_v1(tzif_file: pathlib.Path, out_path: pathlib.Path) -> None:
     header_start = 4 + 16
     header_end = header_start + 24  # 6l == 24 bytes
     if version < 2:
-        logging.warn(
+        logging.warning(
             "Version 1 file found, no conversion necessary (%s)", tzif_file
         )
         shutil.copyfile(tzif_file, out_path)
@@ -153,7 +153,7 @@ async def tzif_files_to_v1(
             asyncio.create_task(_file_to_v1(tzif_in_file, tzif_v1_file))
         )
 
-    asyncio.gather(*tasks)
+    await asyncio.gather(*tasks)
 
 
 async def make_tzdb_install(
