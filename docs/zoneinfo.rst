@@ -7,4 +7,4 @@ zoneinfo
    :undoc-members:
 
 .. automodule:: dateutil.zoneinfo.rebuild
-   :members: rebuild
+   :members: rebuild, RebuildDeprecationWarning

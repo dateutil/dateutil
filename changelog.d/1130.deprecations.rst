@@ -1,4 +1,6 @@
 Deprecated the ``dateutil.zoneinfo`` module. The module now acts as a wrapper
 around the ``tzdata`` package and will be removed in a future version. Users are
 encouraged to migrate to ``dateutil.tz.gettz`` or the standard library's
-``zoneinfo`` module. (gh pr #1130)
+``zoneinfo`` module. ``dateutil.zoneinfo.rebuild.rebuild`` no longer does
+anything, and by default raises ``RebuildDeprecationWarning`` as an error;
+filter the warning to call it as a no-op. (gh pr #1130)

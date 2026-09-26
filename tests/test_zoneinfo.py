@@ -112,3 +112,44 @@ def test_legacy_gettz():
 
     with pytest.warns(DeprecationWarning):
         assert zoneinfo.gettz("Fictional/Liliput") is None
+
+
+####
+# rebuild
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore", category=DeprecationWarning)
+    from dateutil.zoneinfo import rebuild as zoneinfo_rebuild
+
+
+def test_rebuild_is_an_error_by_default(tmp_path):
+    target = tmp_path / "dateutil-zoneinfo.tar.gz"
+    with warnings.catch_warnings():
+        warnings.resetwarnings()
+        with pytest.raises(zoneinfo_rebuild.RebuildDeprecationWarning):
+            zoneinfo_rebuild.rebuild(str(target))
+
+    assert not target.exists()
+
+
+def test_rebuild_filter_can_be_overridden(tmp_path):
+    target = tmp_path / "dateutil-zoneinfo.tar.gz"
+    with warnings.catch_warnings(record=True) as record:
+        warnings.resetwarnings()
+        warnings.simplefilter(
+            "always", category=zoneinfo_rebuild.RebuildDeprecationWarning
+        )
+        assert zoneinfo_rebuild.rebuild(str(target)) is None
+
+    assert len(record) == 1
+    assert record[0].category is zoneinfo_rebuild.RebuildDeprecationWarning
+    assert record[0].filename == __file__.replace(".pyc", ".py")
+    assert not target.exists()
+
+
+def test_rebuild_can_be_ignored():
+    with warnings.catch_warnings():
+        warnings.resetwarnings()
+        warnings.filterwarnings(
+            "ignore", category=zoneinfo_rebuild.RebuildDeprecationWarning
+        )
+        assert zoneinfo_rebuild.rebuild("unused.tar.gz") is None
