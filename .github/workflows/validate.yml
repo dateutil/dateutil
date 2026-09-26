@@ -32,7 +32,6 @@ jobs:
           curl --fail --location "https://data.iana.org/time-zones/releases/tzdb-${{ env.TZDATA_VERSION }}.tar.lz" -o tzdb.tar.lz
           tar --lzip -xf tzdb.tar.lz
           cd tzdb-${{ env.TZDATA_VERSION }}
-          # TODO: Don't use fat when slim builds are available
           make install DESTDIR=$GITHUB_WORKSPACE/tzdata_built \
                         DATAFORM=main
 
