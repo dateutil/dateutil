@@ -9,7 +9,6 @@ set -e
 TMP_DIR=$(readlink -f ${1})
 REPO_DIR=$(readlink -f ${2})
 ORIG_DIR=$(pwd)
-CITOOLS_DIR=$REPO_DIR/ci_tools
 
 UPSTREAM_URL="https://github.com/eggert/tz.git"
 
@@ -39,30 +38,10 @@ if [ "$DIR_EXISTS" = false ]; then
     cd tz
 fi
 
-# Get the version
-make version
-VERSION=$(cat version)
-TARBALL_NAME=tzdata${VERSION}.tar.gz
-
-# Make the tzdata tarball - deactivate errors because
-# I don't know how to make just the .tar.gz and I don't
-# care if the others fail
-set +e
-make traditional_tarballs
-set -e
-
-mv $TARBALL_NAME $ORIG_DIR
-
-# Install everything else
+# Build and install the compiled zoneinfo files
 make ZFLAGS='-b fat' TOPDIR="${TMP_DIR}/tzdir" install
 
-#
-# Make the zoneinfo tarball
-#
 cd $ORIG_DIR
-
-# Put the latest version of zic on the path
-PATH=$TMP_DIR/tzdir/usr/sbin:${PATH}
 
 # Run the tests
 python -m pytest ${REPO_DIR}/tests $EXTRA_TEST_ARGS -x --pdb
