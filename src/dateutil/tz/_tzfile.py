@@ -574,7 +574,17 @@ class tzfile(_tzinfo):
             self._trans_utc == other._trans_utc
             and self._trans_local == other._trans_local
             and self._ttinfos == other._ttinfos
+            and self._tti_before == other._tti_before
+            and self._fallback_key() == other._fallback_key()
         )
+
+    def _fallback_key(self):
+        # The behavior after the last transition is determined either by the
+        # TZ string or, in its absence, by a single _ttinfo; _TZStr objects
+        # do not define equality, so compare the string they came from.
+        if isinstance(self._tz_after, _ttinfo):
+            return self._tz_after
+        return self._tz_str
 
     __hash__ = None
 
@@ -735,6 +745,9 @@ class _ttinfo(object):
         self.tzname = tzname
 
     def __eq__(self, other):
+        if not isinstance(other, _ttinfo):
+            return NotImplemented
+
         return (
             self.utcoff == other.utcoff
             and self.dstoff == other.dstoff

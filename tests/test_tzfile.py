@@ -1477,3 +1477,29 @@ def test_tzfile_repr():
     )
     zi = tz.tzfile(zf, key="Europe/London")
     assert "Europe/London" in repr(zi)
+
+
+def test_eq_no_transitions():
+    """Zones with no transitions must compare by their fixed offset."""
+    plus_five = zone_from_tzstr("<+05>-5")
+    minus_five = zone_from_tzstr("<-05>5")
+    utc = zone_from_tzstr("UTC0")
+
+    assert plus_five == zone_from_tzstr("<+05>-5")
+    assert plus_five != minus_five
+    assert plus_five != utc
+    assert minus_five != utc
+
+
+def test_eq_same_transitions_different_tzstr():
+    """Zones that differ only in the TZ string are not equal."""
+    STD = ZoneOffset("STD", ZERO)
+    DST = ZoneOffset("DST", ONE_H, ONE_H)
+    transitions = [ZoneTransition(datetime(2010, 3, 14, 2), STD, DST)]
+
+    with_rule = tz.tzfile(construct_zone(transitions, "STD0DST,M3.2.0,M11.1.0"))
+    same_rule = tz.tzfile(construct_zone(transitions, "STD0DST,M3.2.0,M11.1.0"))
+    no_rule = tz.tzfile(construct_zone(transitions, ""))
+
+    assert with_rule == same_rule
+    assert with_rule != no_rule
