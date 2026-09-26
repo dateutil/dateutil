@@ -50,12 +50,14 @@ if six.PY2:
 
         @functools.wraps(f)
         def cached_load_timedelta(seconds):
-            rv = TIMEDELTA_CACHE.get(seconds, None)
-            if rv is None:
-                rv = TIMEDELTA_CACHE.setdefault(seconds, f(seconds))
-
+            # OrderedDict is implemented in Python on Python 2, so every
+            # access has to hold the lock to keep its linked list intact.
             with CACHE_LOCK:
-                TIMEDELTA_CACHE[seconds] = TIMEDELTA_CACHE.pop(seconds, rv)
+                rv = TIMEDELTA_CACHE.pop(seconds, None)
+                if rv is None:
+                    rv = f(seconds)
+
+                TIMEDELTA_CACHE[seconds] = rv
 
                 if len(TIMEDELTA_CACHE) > _TIMEDELTA_CACHE_SIZE:
                     TIMEDELTA_CACHE.popitem(last=False)
@@ -649,7 +651,7 @@ def load_data(fobj):
     return trans_idx, trans_list_utc, utcoff, isdst, abbr, tz_str
 
 
-class _TZifHeader:
+class _TZifHeader(object):
     __slots__ = [
         "version",
         "isutcnt",
@@ -686,7 +688,7 @@ class _TZifHeader:
         return cls(*args)
 
 
-class _ttinfo:
+class _ttinfo(object):
     __slots__ = ["utcoff", "dstoff", "tzname"]
 
     def __init__(self, utcoff, dstoff, tzname):
@@ -700,6 +702,13 @@ class _ttinfo:
             and self.dstoff == other.dstoff
             and self.tzname == other.tzname
         )
+
+    def __ne__(self, other):
+        # Python 2 does not derive __ne__ from __eq__
+        eq = self.__eq__(other)
+        if eq is NotImplemented:
+            return eq
+        return not eq
 
     def __repr__(self):  # pragma: nocover
         return "%s(%s, %s, %s)" % (
@@ -853,7 +862,7 @@ def _parse_tz_delta(tz_delta):
     return total
 
 
-class _TZStr:
+class _TZStr(object):
     __slots__ = (
         "std",
         "dst",
@@ -948,7 +957,7 @@ def _post_epoch_days_before_year(year):
     return y * 365 + y // 4 - y // 100 + y // 400 - EPOCHORDINAL
 
 
-class _DayOffset:
+class _DayOffset(object):
     __slots__ = ["d", "julian", "hour", "minute", "second"]
 
     def __init__(self, d, julian, hour=2, minute=0, second=0):
@@ -975,7 +984,7 @@ class _DayOffset:
         return epoch
 
 
-class _CalendarOffset:
+class _CalendarOffset(object):
     __slots__ = ["m", "w", "d", "hour", "minute", "second"]
 
     _DAYS_BEFORE_MONTH = (
