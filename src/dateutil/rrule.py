@@ -1204,10 +1204,15 @@ class _iterinfo(object):
                         lyearlen = 365+calendar.isleap(year-1)
                         if lno1wkst >= 4:
                             lno1wkst = 0
-                            lnumweeks = 52+(lyearlen +
-                                            (lyearweekday-rr._wkst) % 7) % 7//4
+                            # Number of days in last year, plus the days it
+                            # got from the year before.
+                            lwyearlen = lyearlen + (lyearweekday - rr._wkst) % 7
                         else:
-                            lnumweeks = 52+(self.yearlen-no1wkst) % 7//4
+                            # Number of days in last year, minus the days it
+                            # left in the year before.
+                            lwyearlen = lyearlen - lno1wkst
+                        ldiv, lmod = divmod(lwyearlen, 7)
+                        lnumweeks = ldiv + lmod // 4
                     else:
                         lnumweeks = -1
                     if lnumweeks in rr._byweekno:
