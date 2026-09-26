@@ -228,11 +228,11 @@ async def main() -> None:
             V1_OUT, DATA_DIR / "zoneinfo_v1.json", keys=required_keys
         )
         zonefile_to_json(
-            V2P_ZONEINFO, DATA_DIR / "zoneinfo_slim.json", keys=required_keys
+            V2P_ZONEINFO, DATA_DIR / "zoneinfo_fat.json", keys=required_keys
         )
         zonefile_to_json(
             V2P_SLIM_ZONEINFO,
-            DATA_DIR / "zoneinfo_fat.json",
+            DATA_DIR / "zoneinfo_slim.json",
             keys=required_keys,
         )
 
