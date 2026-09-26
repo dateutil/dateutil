@@ -29,14 +29,23 @@ if sys.version_info < (3, 8):
         def _nullcontext(v):
             yield v
 
-    def _open_text(package, resource):
+    def _get_data(package, resource):
+        # pkgutil.get_data returns None rather than raising when the package
+        # cannot be found, so turn that into the ImportError the callers
+        # expect from the importlib.resources versions of these functions.
         pkg_data = pkgutil.get_data(package, resource)
-        str_package_data = pkg_data.decode("utf-8")
+        if pkg_data is None:
+            raise ImportError("No package named %r" % package)
+
+        return pkg_data
+
+    def _open_text(package, resource):
+        str_package_data = _get_data(package, resource).decode("utf-8")
 
         return _nullcontext(io.StringIO(str_package_data))
 
     def _open_binary(package, resource):
-        return io.BytesIO(pkgutil.get_data(package, resource))
+        return io.BytesIO(_get_data(package, resource))
 
 else:
     import importlib.resources
