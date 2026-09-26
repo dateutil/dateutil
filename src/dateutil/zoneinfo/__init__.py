@@ -180,5 +180,5 @@ def gettz_db_metadata():
                   DeprecationWarning)
 
     if len(_CLASS_ZONE_INSTANCE) == 0:
-        _CLASS_ZONE_INSTANCE.append(ZoneInfoFile(getzoneinfofile_stream()))
+        _CLASS_ZONE_INSTANCE.append(ZoneInfoFile())
     return _CLASS_ZONE_INSTANCE[0].metadata

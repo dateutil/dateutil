@@ -1280,6 +1280,19 @@ class ZoneInfoGettzTest(GettzTest):
         with pytest.warns(DeprecationWarning):
             zoneinfo.gettz_db_metadata()
 
+    def testZoneInfoMetadataFreshInstance(self):
+        # gettz_db_metadata must be able to create the module-level
+        # instance itself if gettz has not been called first.
+        old_instances = list(zoneinfo._CLASS_ZONE_INSTANCE)
+        del zoneinfo._CLASS_ZONE_INSTANCE[:]
+        try:
+            with pytest.warns(DeprecationWarning):
+                metadata = zoneinfo.gettz_db_metadata()
+        finally:
+            zoneinfo._CLASS_ZONE_INSTANCE[:] = old_instances
+
+        assert metadata["tzversion"]
+
 
 class TZRangeTest(unittest.TestCase, TzFoldMixin):
     TZ_EST = tz.tzrange('EST', timedelta(hours=-5),
