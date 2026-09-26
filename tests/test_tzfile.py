@@ -1804,3 +1804,130 @@ def test_tzfile_repr():
     )
     zi = tz.tzfile(zf, key="Europe/London")
     assert "Europe/London" in repr(zi)
+
+
+@pytest.mark.parametrize("zoneinfo_cache", ["fat"], indirect=True)
+@pytest.mark.parametrize("source", ["tzdata", "tzpath"])
+def test_gettz_space_for_underscore(source, zoneinfo_cache):
+    """Spaces in a key are tried as underscores, whichever source is used."""
+    if source == "tzdata":
+        pytest.importorskip("tzdata")
+        paths = ()
+    else:
+        paths = (zoneinfo_cache[0],)
+
+    with set_tzpath(paths, block_tzdata=(source != "tzdata")):
+        tz.gettz.cache_clear()
+        with_space = tz.gettz("America/New York")
+        assert with_space is not None
+        assert with_space.key == "America/New York"
+        assert with_space == tz.gettz("America/New_York")
+
+
+####
+# Key handling in gettz
+@pytest.mark.parametrize("zoneinfo_cache", ["fat"], indirect=True)
+@pytest.mark.parametrize("source", ["tzdata", "tzpath"])
+def test_gettz_key_attribute_by_source(source, zoneinfo_cache):
+    """The key is the string passed to gettz whichever source supplied it."""
+    if source == "tzdata":
+        pytest.importorskip("tzdata")
+        paths = ()
+    else:
+        paths = (zoneinfo_cache[0],)
+
+    with set_tzpath(paths, block_tzdata=(source != "tzdata")):
+        tz.gettz.cache_clear()
+        for key in ("America/New_York", "Europe/London"):
+            zone = tz.gettz(key)
+            assert isinstance(zone, tz.tzfile)
+            assert zone.key == key
+
+
+@pytest.mark.parametrize("zoneinfo_cache", ["fat"], indirect=True)
+def test_gettz_absolute_path(zoneinfo_cache):
+    """An absolute path to a TZif file is loaded directly and has no key."""
+    fpath = os.path.join(zoneinfo_cache[0], "America", "New_York")
+
+    with set_tzpath((), block_tzdata=True):
+        tz.gettz.cache_clear()
+        zone = tz.gettz(fpath)
+
+    assert isinstance(zone, tz.tzfile)
+    assert zone.key is None
+    assert repr(zone) == "tzfile(%r)" % fpath
+
+
+@pytest.mark.parametrize("zoneinfo_cache", ["fat"], indirect=True)
+def test_gettz_absolute_path_not_a_zone(zoneinfo_cache, tmp_path):
+    """Absolute paths that are not TZif files return None."""
+    not_tzif = tmp_path / "not_a_zone"
+    not_tzif.write_bytes(b"This is not a TZif file")
+
+    with set_tzpath((), block_tzdata=True):
+        tz.gettz.cache_clear()
+        # A directory
+        assert tz.gettz(os.path.join(zoneinfo_cache[0], "America")) is None
+        # A file that does not exist
+        assert tz.gettz(os.path.join(zoneinfo_cache[0], "Nope")) is None
+        # A file that exists but is not a zone is an error, since an
+        # absolute path is an explicit request for that file.
+        with pytest.raises(ValueError):
+            tz.gettz(str(not_tzif))
+
+
+@pytest.mark.parametrize("zoneinfo_cache", ["fat"], indirect=True)
+@pytest.mark.parametrize(
+    "key",
+    [
+        "America/Nope",
+        "America",  # A directory on the search path
+        "America/",
+        "America/New_York\x00",
+        "\x00",
+    ],
+)
+def test_gettz_tzpath_bad_keys(zoneinfo_cache, key):
+    """Keys that do not name a zone on the search path return None."""
+    with set_tzpath((zoneinfo_cache[0],), block_tzdata=True):
+        tz.gettz.cache_clear()
+        assert tz.gettz(key) is None
+
+
+@pytest.mark.parametrize("zoneinfo_cache", ["fat"], indirect=True)
+def test_gettz_missing_search_path_entry(zoneinfo_cache, tmp_path):
+    """Search path entries that do not exist are skipped, not errors."""
+    missing = str(tmp_path / "does_not_exist")
+    with set_tzpath((missing, zoneinfo_cache[0]), block_tzdata=True):
+        tz.gettz.cache_clear()
+        assert tz.gettz("America/New_York") is not None
+        assert tz.gettz("America/Nope") is None
+
+
+@pytest.mark.parametrize(
+    "key",
+    [
+        "America",  # A directory
+        "America/",
+        "Fictional/Zone",
+        "Fictional",
+        "America/New_York\x00",  # Not a valid path
+        "America/../UTC",  # Not a valid package name
+        # Files in the tzdata package that are not TZif files
+        "__init__.py",
+        "America/__init__.py",
+        "zone.tab",
+        "tzdata.zi",
+        "leapseconds",
+        # Not encodable as a module or file name on some versions
+        "Am" + six.unichr(0xE9) + "rica/New_York",
+        "America/" + six.unichr(0xD800),
+        six.unichr(0xD800),
+    ],
+)
+def test_tzdata_bad_keys(key):
+    """Keys that do not name a zone in tzdata return None, not an error."""
+    pytest.importorskip("tzdata")
+    with set_tzpath(()):
+        tz.gettz.cache_clear()
+        assert tz.gettz(key) is None
