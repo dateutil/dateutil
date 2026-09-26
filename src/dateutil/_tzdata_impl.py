@@ -50,7 +50,7 @@ if sys.version_info < (3, 8):
 else:
     import importlib.resources
 
-    if sys.version_info > (3, 9):
+    if sys.version_info >= (3, 9):
 
         def _open_text(package, resource):
             return (
