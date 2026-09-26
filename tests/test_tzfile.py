@@ -1793,3 +1793,83 @@ def test_invalid_tzstr(tzstr):
 def test_invalid_tzstr_non_ascii(tzstr):
     with pytest.raises(ValueError):
         zone_from_tzstr(tzstr, encoding="utf-8")
+
+
+####
+# Key handling in gettz
+@pytest.mark.parametrize("zoneinfo_cache", ["fat"], indirect=True)
+@pytest.mark.parametrize("source", ["tzdata", "tzpath"])
+def test_gettz_key_attribute_by_source(source, zoneinfo_cache):
+    """The key is the string passed to gettz whichever source supplied it."""
+    if source == "tzdata":
+        pytest.importorskip("tzdata")
+        paths = ()
+    else:
+        paths = (zoneinfo_cache[0],)
+
+    with set_tzpath(paths, block_tzdata=(source != "tzdata")):
+        tz.gettz.cache_clear()
+        for key in ("America/New_York", "Europe/London"):
+            zone = tz.gettz(key)
+            assert isinstance(zone, tz.tzfile)
+            assert zone.key == key
+
+
+@pytest.mark.parametrize("zoneinfo_cache", ["fat"], indirect=True)
+def test_gettz_absolute_path(zoneinfo_cache):
+    """An absolute path to a TZif file is loaded directly and has no key."""
+    fpath = os.path.join(zoneinfo_cache[0], "America", "New_York")
+
+    with set_tzpath((), block_tzdata=True):
+        tz.gettz.cache_clear()
+        zone = tz.gettz(fpath)
+
+    assert isinstance(zone, tz.tzfile)
+    assert zone.key is None
+    assert repr(zone) == "tzfile(%r)" % fpath
+
+
+@pytest.mark.parametrize("zoneinfo_cache", ["fat"], indirect=True)
+def test_gettz_absolute_path_not_a_zone(zoneinfo_cache, tmp_path):
+    """Absolute paths that are not TZif files return None."""
+    not_tzif = tmp_path / "not_a_zone"
+    not_tzif.write_bytes(b"This is not a TZif file")
+
+    with set_tzpath((), block_tzdata=True):
+        tz.gettz.cache_clear()
+        # A directory
+        assert tz.gettz(os.path.join(zoneinfo_cache[0], "America")) is None
+        # A file that does not exist
+        assert tz.gettz(os.path.join(zoneinfo_cache[0], "Nope")) is None
+        # A file that exists but is not a zone is an error, since an
+        # absolute path is an explicit request for that file.
+        with pytest.raises(ValueError):
+            tz.gettz(str(not_tzif))
+
+
+@pytest.mark.parametrize("zoneinfo_cache", ["fat"], indirect=True)
+@pytest.mark.parametrize(
+    "key",
+    [
+        "America/Nope",
+        "America",  # A directory on the search path
+        "America/",
+        "America/New_York\x00",
+        "\x00",
+    ],
+)
+def test_gettz_tzpath_bad_keys(zoneinfo_cache, key):
+    """Keys that do not name a zone on the search path return None."""
+    with set_tzpath((zoneinfo_cache[0],), block_tzdata=True):
+        tz.gettz.cache_clear()
+        assert tz.gettz(key) is None
+
+
+@pytest.mark.parametrize("zoneinfo_cache", ["fat"], indirect=True)
+def test_gettz_missing_search_path_entry(zoneinfo_cache, tmp_path):
+    """Search path entries that do not exist are skipped, not errors."""
+    missing = str(tmp_path / "does_not_exist")
+    with set_tzpath((missing, zoneinfo_cache[0]), block_tzdata=True):
+        tz.gettz.cache_clear()
+        assert tz.gettz("America/New_York") is not None
+        assert tz.gettz("America/Nope") is None
