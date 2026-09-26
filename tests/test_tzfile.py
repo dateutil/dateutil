@@ -982,6 +982,37 @@ def weirdzone_test_cases():
             cases["utc"].append((dt_naive.replace(tzinfo=zi), dt_utc))
 
     @add_cases
+    def _one_transition_fold():
+        # A zone whose only transition moves the offset backwards, so the
+        # fold it creates has no earlier transition to compare against.
+        AAA = ZoneOffset("AAA", ZERO)
+        BBB = ZoneOffset("BBB", -3 * ONE_H)
+
+        transitions = [
+            ZoneTransition(datetime(1976, 12, 1), AAA, BBB),
+        ]
+
+        after = "BBB3"
+
+        zf = construct_zone(transitions, after)
+        zi = tz.tzfile(zf, key="Etc/One_Transition_Fold")
+        cases["varying_zones"].append((zi,))
+
+        dts = [
+            (datetime(1976, 11, 30, 20), datetime(1976, 11, 30, 20), 0),
+            (datetime(1976, 11, 30, 22), datetime(1976, 11, 30, 22), 0),
+            (datetime(1976, 11, 30, 21), datetime(1976, 12, 1, 0), 1),
+            (datetime(1976, 11, 30, 22), datetime(1976, 12, 1, 1), 1),
+            (datetime(1976, 11, 30, 23, 59), datetime(1976, 12, 1, 2, 59), 1),
+            (datetime(1976, 12, 1), datetime(1976, 12, 1, 3), 0),
+            (datetime(2020, 1, 1), datetime(2020, 1, 1, 3), 0),
+        ]
+
+        for dt_naive, dt_utc, fold in dts:
+            dt = tz.enfold(dt_naive.replace(tzinfo=zi), fold=fold)
+            cases["utc"].append((dt, dt_utc.replace(tzinfo=tz.UTC)))
+
+    @add_cases
     def _one_transition_zone_dst():
         DST = ZoneOffset("DST", ONE_H, ONE_H)
         transitions = [
@@ -1449,7 +1480,14 @@ def test_weirdzone_offsets(dt, offset):
 def test_weirdzone_utc(dt, dt_utc):
     assert dt.tzinfo is not None
     assert dt.astimezone(tz.UTC) == dt_utc
-    assert dt_utc.astimezone(dt.tzinfo) == dt
+
+    # Comparisons between datetimes with the same tzinfo ignore fold, so
+    # also check the round trip back to UTC and, for ambiguous times, fold.
+    dt_act = dt_utc.astimezone(dt.tzinfo)
+    assert dt_act == dt
+    assert dt_act.astimezone(tz.UTC) == dt_utc
+    if tz.datetime_ambiguous(dt):
+        assert getattr(dt_act, "fold", 0) == getattr(dt, "fold", 0)
 
 
 @pytest.mark.parametrize("zone", weirdzone_test_cases()["varying_zones"])
