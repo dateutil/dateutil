@@ -2216,3 +2216,43 @@ def test_sub_minute_offset_pickle(protocol):
         datetime(1900, 1, 1, tzinfo=unpickled).utcoffset()
         == datetime(1900, 1, 1, tzinfo=zone).utcoffset()
     )
+
+
+####
+# Thread safety
+def test_gettz_thread_safety():
+    """Concurrent gettz calls, with the cache being cleared underneath them."""
+    keys = ["America/New_York", "Europe/London", "Asia/Tokyo", "UTC"]
+    expected = {key: tz.gettz(key) for key in keys}
+    assert all(isinstance(v, tz.tzfile) for v in expected.values())
+
+    errors = []
+    n_iterations = 200
+
+    def worker(key):
+        try:
+            for i in range(n_iterations):
+                zone = tz.gettz(key)
+                if zone != expected[key]:
+                    raise AssertionError(
+                        "%s: %r != %r" % (key, zone, expected[key])
+                    )
+        except Exception as e:  # pragma: nocover
+            errors.append(e)
+
+    def clearer():
+        try:
+            for i in range(n_iterations // 4):
+                tz.gettz.cache_clear()
+        except Exception as e:  # pragma: nocover
+            errors.append(e)
+
+    threads = [threading.Thread(target=worker, args=(key,)) for key in keys * 2]
+    threads.append(threading.Thread(target=clearer))
+
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+
+    assert not errors
