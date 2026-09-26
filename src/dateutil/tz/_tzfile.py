@@ -793,6 +793,14 @@ def _fullmatch(pattern, string, flags=0):
     return re.match(r"(?:%s)\Z" % pattern, string, flags)
 
 
+def _round_offset(seconds):
+    # Python < 3.6 does not support sub-minute offsets, see the comment in
+    # tzfile._load_from_data.
+    if sys.version_info < (3, 6):
+        return 60 * ((seconds + 30) // 60)
+    return seconds
+
+
 def _parse_tz_str(tz_str):
     # The tz string has the format:
     #
@@ -836,7 +844,7 @@ def _parse_tz_str(tz_str):
     std_offset = m.group("stdoff")
     if std_offset:
         try:
-            std_offset = _parse_tz_delta(std_offset)
+            std_offset = _round_offset(_parse_tz_delta(std_offset))
         except ValueError as e:
             raise ValueError("Invalid STD offset in %s" % tz_str)
     else:
@@ -847,7 +855,7 @@ def _parse_tz_str(tz_str):
         dst_offset = m.group("dstoff")
         if dst_offset:
             try:
-                dst_offset = _parse_tz_delta(dst_offset)
+                dst_offset = _round_offset(_parse_tz_delta(dst_offset))
             except ValueError as e:
                 raise ValueError("Invalid DST offset in %s" % tz_str)
         else:

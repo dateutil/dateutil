@@ -2244,6 +2244,30 @@ def test_sub_minute_offset_round_trip():
         assert dt_utc.astimezone(zone).astimezone(tz.UTC) == dt_utc
 
 
+@pytest.mark.parametrize(
+    "tz_str, dt, expected_seconds",
+    [
+        ("<-0044>0:44:30", datetime(2020, 1, 15), -2670),
+        ("AAA0:44:30BBB,M3.2.0,M11.1.0", datetime(2020, 1, 15), -2670),
+        ("AAA0:44:30BBB,M3.2.0,M11.1.0", datetime(2020, 7, 15), 930),
+        ("AAA0:44:30BBB-0:44:30,M3.2.0,M11.1.0", datetime(2020, 7, 15), 2670),
+    ],
+)
+def test_sub_minute_offset_tz_str(tz_str, dt, expected_seconds):
+    """Sub-minute offsets in the TZ string are rounded like those in the file."""
+    GMT = _RawZoneOffset("GMT", ZERO)
+    zone = tz.tzfile(
+        construct_zone([ZoneTransition(datetime(1900, 1, 1), GMT, GMT)], tz_str)
+    )
+
+    if SUPPORTS_SUB_MINUTE_OFFSETS:
+        expected = timedelta(seconds=expected_seconds)
+    else:
+        expected = timedelta(minutes=(expected_seconds + 30) // 60)
+
+    assert dt.replace(tzinfo=zone).utcoffset() == expected
+
+
 @pytest.mark.parametrize("protocol", range(0, pickle.HIGHEST_PROTOCOL + 1))
 def test_sub_minute_offset_pickle(protocol):
     """Pickling preserves the raw offset, even where it has been rounded."""
