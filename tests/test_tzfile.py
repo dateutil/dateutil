@@ -1013,6 +1013,39 @@ def weirdzone_test_cases():
             cases["utc"].append((dt, dt_utc.replace(tzinfo=tz.UTC)))
 
     @add_cases
+    def _last_transition_fold_before_tzstr():
+        # Like America/Ciudad_Juarez in slim builds: the last explicit
+        # transition moves the offset backwards, and the TZ string that
+        # takes over after it has a DST rule of its own.
+        LMT = ZoneOffset("LMT", -timedelta(hours=7))
+        CST = ZoneOffset("CST", -6 * ONE_H)
+        MST = ZoneOffset("MST", -7 * ONE_H)
+        MDT = ZoneOffset("MDT", -6 * ONE_H, ONE_H)
+
+        transitions = [
+            ZoneTransition(datetime(2000, 1, 1), LMT, CST),
+            ZoneTransition(datetime(2022, 11, 30), CST, MST),
+        ]
+
+        after = "MST7MDT,M3.2.0,M11.1.0"
+
+        zf = construct_zone(transitions, after)
+        zi = tz.tzfile(zf, key="Etc/Last_Transition_Fold")
+        cases["varying_zones"].append((zi,))
+
+        dts = [
+            (datetime(2022, 11, 29, 23, 30), datetime(2022, 11, 30, 5, 30), 0),
+            (datetime(2022, 11, 29, 23), datetime(2022, 11, 30, 6), 1),
+            (datetime(2022, 11, 29, 23, 30), datetime(2022, 11, 30, 6, 30), 1),
+            (datetime(2022, 11, 30, 0, 30), datetime(2022, 11, 30, 7, 30), 0),
+            (datetime(2023, 7, 1, 12), datetime(2023, 7, 1, 18), 0),
+        ]
+
+        for dt_naive, dt_utc, fold in dts:
+            dt = tz.enfold(dt_naive.replace(tzinfo=zi), fold=fold)
+            cases["utc"].append((dt, dt_utc.replace(tzinfo=tz.UTC)))
+
+    @add_cases
     def _one_transition_zone_dst():
         DST = ZoneOffset("DST", ONE_H, ONE_H)
         transitions = [

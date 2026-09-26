@@ -287,6 +287,17 @@ class tzfile(_tzinfo):
             tti, fold = self._tz_after.get_trans_info_fromutc(
                 timestamp, dt.year
             )
+
+            # The TZ string only knows about its own transitions, so check
+            # whether we are in a fold created by the last explicit one.
+            if num_trans and not fold:
+                if num_trans > 1:
+                    tti_prev = self._ttinfos[-2]
+                else:
+                    tti_prev = self._tti_before
+
+                shift = tti_prev.utcoff - tti.utcoff
+                fold = shift.total_seconds() > timestamp - self._trans_utc[-1]
         elif num_trans == 0:
             tti = self._tz_after
             fold = 0
