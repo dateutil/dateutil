@@ -2087,7 +2087,9 @@ def test_backport_reset_pathlike(backport_tzpath, tmp_path):
     assert tuple(map(str, backport_tzpath.TZPATH)) == (str(tmp_path),)
 
 
-@pytest.mark.parametrize("bad", ["/a/string", b"/a/bytestring"])
+@pytest.mark.parametrize(
+    "bad", ["/a/string", b"/a/bytestring", six.text_type("/a/text_string")]
+)
 def test_backport_reset_type_error(backport_tzpath, bad):
     with pytest.raises(TypeError):
         backport_tzpath.reset_tzpath(to=bad)
