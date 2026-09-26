@@ -7,6 +7,7 @@ import gzip
 import io
 import json
 import os
+import pickle
 import shutil
 import struct
 import sys
@@ -1831,6 +1832,30 @@ def test_invalid_tzstr_non_ascii(tzstr):
         zone_from_tzstr(tzstr, encoding="utf-8")
 
 
+@pytest.mark.parametrize(
+    "tz_str, dt, expected_seconds",
+    [
+        ("<-0044>0:44:30", datetime(2020, 1, 15), -2670),
+        ("AAA0:44:30BBB,M3.2.0,M11.1.0", datetime(2020, 1, 15), -2670),
+        ("AAA0:44:30BBB,M3.2.0,M11.1.0", datetime(2020, 7, 15), 930),
+        ("AAA0:44:30BBB-0:44:30,M3.2.0,M11.1.0", datetime(2020, 7, 15), 2670),
+    ],
+)
+def test_sub_minute_offset_tz_str(tz_str, dt, expected_seconds):
+    """Sub-minute offsets in the TZ string are rounded like those in the file."""
+    GMT = _RawZoneOffset("GMT", ZERO)
+    zone = tz.tzfile(
+        construct_zone([ZoneTransition(datetime(1900, 1, 1), GMT, GMT)], tz_str)
+    )
+
+    if SUPPORTS_SUB_MINUTE_OFFSETS:
+        expected = timedelta(seconds=expected_seconds)
+    else:
+        expected = timedelta(minutes=(expected_seconds + 30) // 60)
+
+    assert dt.replace(tzinfo=zone).utcoffset() == expected
+
+
 def test_tzfile_repr():
     """When the key is specified with a file object, it should be used in the repr."""
     GMT = ZoneOffset("GMT", ZERO, ZERO)
@@ -2216,3 +2241,130 @@ def test_backport_callbacks(backport_tzpath, tmp_path):
     backport_tzpath.reset_tzpath(to=())
 
     assert seen == [(str(tmp_path),), ()]
+
+
+####
+# Sub-minute offsets
+class _RawZoneOffset(object):
+    """Like ZoneOffset, but without rounding the offset on Python < 3.6."""
+
+    def __init__(self, tzname, utcoffset, dst=ZERO):
+        self.tzname = tzname
+        self.utcoffset = utcoffset
+        self.raw_utcoffset = utcoffset
+        self.dst = dst
+
+
+def _sub_minute_zone():
+    # Africa/Abidjan's LMT offset is -0:16:08; the file must contain the
+    # exact value even where the tzinfo will round it.
+    LMT = _RawZoneOffset("LMT", timedelta(seconds=-968))
+    GMT = _RawZoneOffset("GMT", ZERO)
+    return construct_zone(
+        [ZoneTransition(datetime(1912, 1, 1), LMT, GMT)], "GMT0"
+    )
+
+
+def test_sub_minute_offset():
+    """Sub-minute offsets are exact on 3.6+ and rounded to a minute before."""
+    zone = tz.tzfile(_sub_minute_zone())
+    dt = datetime(1900, 1, 1, tzinfo=zone)
+
+    if SUPPORTS_SUB_MINUTE_OFFSETS:
+        assert dt.utcoffset() == timedelta(seconds=-968)
+    else:
+        assert dt.utcoffset() == timedelta(minutes=-16)
+
+    assert dt.tzname() == "LMT"
+    assert datetime(2000, 1, 1, tzinfo=zone).utcoffset() == ZERO
+
+
+def test_sub_minute_offset_round_trip():
+    """Converting to and from UTC near a sub-minute transition round trips."""
+    # America/New_York's LMT offset is -4:56:02, so the switch to EST in 1883
+    # creates a fold whose boundaries move when the offset is rounded.
+    LMT = _RawZoneOffset("LMT", timedelta(seconds=-17762))
+    EST = _RawZoneOffset("EST", timedelta(hours=-5))
+    zone = tz.tzfile(
+        construct_zone(
+            [ZoneTransition(datetime(1883, 11, 18, 12, 3, 58), LMT, EST)],
+            "EST5",
+        )
+    )
+    transition = datetime(1883, 11, 18, 17, tzinfo=tz.UTC)
+
+    for seconds in range(-120, 121):
+        dt_utc = transition + timedelta(seconds=seconds)
+        assert dt_utc.astimezone(zone).astimezone(tz.UTC) == dt_utc
+
+
+@pytest.mark.parametrize("protocol", range(0, pickle.HIGHEST_PROTOCOL + 1))
+def test_sub_minute_offset_pickle(protocol):
+    """Pickling preserves the raw offset, even where it has been rounded."""
+    zone = tz.tzfile(_sub_minute_zone(), key="Africa/Abidjan")
+    data = pickle.dumps(zone, protocol=protocol)
+
+    # The pickled data carries the unrounded offsets from the file, so a
+    # pickle made on a version that rounds still loads exactly elsewhere.
+    _, args = zone.__reduce_ex__(protocol)
+    _, _, _, zone_data = args
+    utcoff = zone_data[2]
+    assert -968 in utcoff
+
+    unpickled = pickle.loads(data)
+    assert unpickled == zone
+    assert unpickled.key == "Africa/Abidjan"
+    assert (
+        datetime(1900, 1, 1, tzinfo=unpickled).utcoffset()
+        == datetime(1900, 1, 1, tzinfo=zone).utcoffset()
+    )
+
+
+class _DescribedTzfile(tz.tzfile):
+    def __init__(self, fileobj, description, **kwargs):
+        super(_DescribedTzfile, self).__init__(fileobj, **kwargs)
+        self.description = description
+
+
+@pytest.mark.parametrize("protocol", range(0, pickle.HIGHEST_PROTOCOL + 1))
+def test_pickle_subclass_attributes(protocol):
+    """Pickling preserves attributes added by subclasses."""
+    STD = ZoneOffset("STD", -5 * ONE_H)
+    DST = ZoneOffset("DST", -4 * ONE_H, ONE_H)
+    transitions = [
+        ZoneTransition(datetime(2020, 3, 8, 2), STD, DST),
+        ZoneTransition(datetime(2020, 11, 1, 2), DST, STD),
+    ]
+    zone = _DescribedTzfile(
+        construct_zone(transitions, "STD5DST,M3.2.0,M11.1.0"),
+        "Somewhere in the eastern US",
+        key="Fictional/Eastern",
+    )
+
+    unpickled = pickle.loads(pickle.dumps(zone, protocol=protocol))
+
+    assert type(unpickled) is _DescribedTzfile
+    assert unpickled == zone
+    assert unpickled.key == "Fictional/Eastern"
+    assert unpickled.description == "Somewhere in the eastern US"
+    assert (
+        datetime(2020, 7, 1, tzinfo=unpickled).utcoffset()
+        == datetime(2020, 7, 1, tzinfo=zone).utcoffset()
+    )
+
+
+@pytest.mark.parametrize("key", ["America/New_York", "UTC", None])
+def test_pickle_no_extra_state(key):
+    """A plain tzfile is pickled entirely from its data.
+
+    If this fails, an attribute set when loading a tzfile is missing from
+    tzfile._UNPICKLE_ATTRS, so it is pickled twice.
+    """
+    if key is None:
+        zone = tz.tzfile(_sub_minute_zone())
+    else:
+        zone = tz.gettz(key)
+        assert isinstance(zone, tz.tzfile)
+
+    assert len(zone.__reduce_ex__(pickle.HIGHEST_PROTOCOL)) == 2
+
