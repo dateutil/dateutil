@@ -13,7 +13,12 @@ import sys
 import six
 
 if six.PY2:
-    _TZDATA_LOAD_EXCEPTIONS = (ImportError, IOError, UnicodeEncodeError, ValueError)
+    _TZDATA_LOAD_EXCEPTIONS = (
+        ImportError,
+        IOError,
+        UnicodeEncodeError,
+        ValueError,
+    )
 else:
     _TZDATA_LOAD_EXCEPTIONS = (
         ImportError,
