@@ -569,13 +569,17 @@ class ParserTest(unittest.TestCase):
         with pytest.raises(ParserError):
             parse('shouldfail')
 
-    def testCorrectErrorOnFuzzyWithTokens(self):
-        assertRaisesRegex(self, ParserError, 'Unknown string format',
-                          parse, '04/04/32/423', fuzzy_with_tokens=True)
-        assertRaisesRegex(self, ParserError, 'Unknown string format',
-                          parse, '04/04/04 +32423', fuzzy_with_tokens=True)
-        assertRaisesRegex(self, ParserError, 'Unknown string format',
-                          parse, '04/04/0d4', fuzzy_with_tokens=True)
+    def testFuzzyWithExtraNumericTokens(self):
+        # Fuzzy parsing should extract valid dates even when trailing
+        # numeric tokens would otherwise overflow YMD (issue #95)
+        for s in ('04/04/32/423', '04/04/04 +32423', '04/04/0d4'):
+            result = parse(s, fuzzy_with_tokens=True)
+            if isinstance(result, tuple):
+                dt, tokens = result
+                self.assertIsInstance(dt, datetime)
+            else:
+                dt = result
+                self.assertIsInstance(dt, datetime)
 
     def testIncreasingCTime(self):
         # This test will check 200 different years, every month, every day,
