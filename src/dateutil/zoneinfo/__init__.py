@@ -29,7 +29,7 @@ METADATA_FN = 'METADATA'
 warnings.warn(
     "The `dateutil.zoneinfo` module has been replaced with a wrapper around "
     "the tzdata package, and its use is deprecated, to be removed in a future "
-    "version. Use the standard library module `zoneinfo` or `dateutil.tz`"
+    "version. Use the standard library module `zoneinfo` or `dateutil.tz` "
     "instead.",
     DeprecationWarning,
     stacklevel=2,
