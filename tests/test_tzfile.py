@@ -420,14 +420,14 @@ def _tzstr_header():
     return bytes(out)
 
 
-def zone_from_tzstr(tzstr):
+def zone_from_tzstr(tzstr, encoding="ascii"):
     """Creates a zoneinfo file following a POSIX rule."""
     zonefile = six.BytesIO(_tzstr_header())
     zonefile.seek(0, 2)
 
     # Write the footer
     zonefile.write(b"\x0a")
-    zonefile.write(tzstr.encode("ascii"))
+    zonefile.write(tzstr.encode(encoding))
     zonefile.write(b"\x0a")
 
     zonefile.seek(0)
@@ -1586,3 +1586,206 @@ def test_transition_lookahead_out_of_bounds():
     )
 
     assert tz.tzfile(zf) is not None
+
+
+EXTREME_TZSTRS = [
+    # Extreme offset hour
+    "AAA24",
+    "AAA+24",
+    "AAA-24",
+    "AAA24BBB,J60/2,J300/2",
+    "AAA+24BBB,J60/2,J300/2",
+    "AAA-24BBB,J60/2,J300/2",
+    "AAA4BBB24,J60/2,J300/2",
+    "AAA4BBB+24,J60/2,J300/2",
+    "AAA4BBB-24,J60/2,J300/2",
+    # Extreme offset minutes
+    "AAA4:00BBB,J60/2,J300/2",
+    "AAA4:59BBB,J60/2,J300/2",
+    "AAA4BBB5:00,J60/2,J300/2",
+    "AAA4BBB5:59,J60/2,J300/2",
+    # Extreme offset seconds
+    "AAA4:00:00BBB,J60/2,J300/2",
+    "AAA4:00:59BBB,J60/2,J300/2",
+    "AAA4BBB5:00:00,J60/2,J300/2",
+    "AAA4BBB5:00:59,J60/2,J300/2",
+    # Extreme total offset
+    "AAA24:59:59BBB5,J60/2,J300/2",
+    "AAA-24:59:59BBB5,J60/2,J300/2",
+    "AAA4BBB24:59:59,J60/2,J300/2",
+    "AAA4BBB-24:59:59,J60/2,J300/2",
+    # Extreme months
+    "AAA4BBB,M12.1.1/2,M1.1.1/2",
+    "AAA4BBB,M1.1.1/2,M12.1.1/2",
+    # Extreme weeks
+    "AAA4BBB,M1.5.1/2,M1.1.1/2",
+    "AAA4BBB,M1.1.1/2,M1.5.1/2",
+    # Extreme weekday
+    "AAA4BBB,M1.1.6/2,M2.1.1/2",
+    "AAA4BBB,M1.1.1/2,M2.1.6/2",
+    # Extreme numeric offset
+    "AAA4BBB,0/2,20/2",
+    "AAA4BBB,0/2,0/14",
+    "AAA4BBB,20/2,365/2",
+    "AAA4BBB,365/2,365/14",
+    # Extreme julian offset
+    "AAA4BBB,J1/2,J20/2",
+    "AAA4BBB,J1/2,J1/14",
+    "AAA4BBB,J20/2,J365/2",
+    "AAA4BBB,J365/2,J365/14",
+    # Leading-zero day-of-year
+    "AAA4BBB,J001/2,J065/2",
+    "AAA4BBB,001/2,065/2",
+    # Extreme transition hour
+    "AAA4BBB,J60/167,J300/2",
+    "AAA4BBB,J60/+167,J300/2",
+    "AAA4BBB,J60/-167,J300/2",
+    "AAA4BBB,J60/2,J300/167",
+    "AAA4BBB,J60/2,J300/+167",
+    "AAA4BBB,J60/2,J300/-167",
+    # Extreme transition minutes
+    "AAA4BBB,J60/2:00,J300/2",
+    "AAA4BBB,J60/2:59,J300/2",
+    "AAA4BBB,J60/2,J300/2:00",
+    "AAA4BBB,J60/2,J300/2:59",
+    # Extreme transition seconds
+    "AAA4BBB,J60/2:00:00,J300/2",
+    "AAA4BBB,J60/2:00:59,J300/2",
+    "AAA4BBB,J60/2,J300/2:00:00",
+    "AAA4BBB,J60/2,J300/2:00:59",
+    # Extreme total transition time
+    "AAA4BBB,J60/167:59:59,J300/2",
+    "AAA4BBB,J60/-167:59:59,J300/2",
+    "AAA4BBB,J60/2,J300/167:59:59",
+    "AAA4BBB,J60/2,J300/-167:59:59",
+]
+
+
+@pytest.mark.parametrize("tzstr", EXTREME_TZSTRS)
+def test_extreme_tzstr(tzstr):
+    """TZ strings at the edge of the valid range are accepted."""
+    assert zone_from_tzstr(tzstr) is not None
+
+
+INVALID_TZSTRS = [
+    "PST8PDT",  # DST but no transition specified
+    # The std offset is required (POSIX TZ grammar)
+    "AAA",
+    "A",
+    "AA",
+    "B",
+    "+11",  # Unquoted alphanumeric
+    "GMT,M3.2.0/2,M11.1.0/3",  # Transition rule but no DST
+    "GMT0+11,M3.2.0/2,M11.1.0/3",  # Unquoted alphanumeric in DST
+    # Unquoted abbreviation with embedded or leading whitespace
+    "AB C3",
+    " A B 3",
+    "AAA4BB B,J60/2,J300/2",  # Embedded whitespace in DST
+    # Empty quoted abbreviation
+    "<>5",
+    "AAA4<>,M3.2.0/2,M11.1.0/3",
+    "PST8PDT,M3.2.0/2",  # Only one transition rule
+    # Invalid offset hours
+    "AAA168",
+    "AAA+168",
+    "AAA-168",
+    "AAA168BBB,J60/2,J300/2",
+    "AAA+168BBB,J60/2,J300/2",
+    "AAA-168BBB,J60/2,J300/2",
+    "AAA4BBB168,J60/2,J300/2",
+    "AAA4BBB+168,J60/2,J300/2",
+    "AAA4BBB-168,J60/2,J300/2",
+    # Invalid offset minutes
+    "AAA4:0BBB,J60/2,J300/2",
+    "AAA4:100BBB,J60/2,J300/2",
+    "AAA4BBB5:0,J60/2,J300/2",
+    "AAA4BBB5:100,J60/2,J300/2",
+    # Invalid offset seconds
+    "AAA4:00:0BBB,J60/2,J300/2",
+    "AAA4:00:100BBB,J60/2,J300/2",
+    "AAA4BBB5:00:0,J60/2,J300/2",
+    "AAA4BBB5:00:100,J60/2,J300/2",
+    # Completely invalid dates
+    "AAA4BBB,M1443339,M11.1.0/3",
+    "AAA4BBB,M3.2.0/2,0349309483959c",
+    "AAA4BBB,,J300/2",
+    "AAA4BBB,z,J300/2",
+    "AAA4BBB,J60/2,",
+    "AAA4BBB,J60/2,z",
+    # Invalid months
+    "AAA4BBB,M13.1.1/2,M1.1.1/2",
+    "AAA4BBB,M1.1.1/2,M13.1.1/2",
+    "AAA4BBB,M0.1.1/2,M1.1.1/2",
+    "AAA4BBB,M1.1.1/2,M0.1.1/2",
+    # Invalid weeks
+    "AAA4BBB,M1.6.1/2,M1.1.1/2",
+    "AAA4BBB,M1.1.1/2,M1.6.1/2",
+    # Invalid weekday
+    "AAA4BBB,M1.1.7/2,M2.1.1/2",
+    "AAA4BBB,M1.1.1/2,M2.1.7/2",
+    # Invalid Mm.w.d separator
+    "AAA4BBB,M3.2X0,M11.1.0",
+    "AAA4BBB,M3.2.0,M11.1X0",
+    "AAA4BBB,M3.2-0,M11.1.0/3",
+    "AAA4BBB,M3.2.0/2,M11.1:0",
+    # Invalid numeric offset
+    "AAA4BBB,-1/2,20/2",
+    "AAA4BBB,1/2,-1/2",
+    "AAA4BBB,367,20/2",
+    "AAA4BBB,1/2,367/2",
+    # Invalid julian offset
+    "AAA4BBB,J0/2,J20/2",
+    "AAA4BBB,J20/2,J366/2",
+    # Non-digit day-of-year
+    "AAA4BBB,J1_0,J300/2",
+    "AAA4BBB,J60/2,J30_0/2",
+    "AAA4BBB,1_0,J300/2",
+    "AAA4BBB,J+1,J300/2",
+    "AAA4BBB,J 1,J300/2",
+    "AAA4BBB, 1,J300/2",
+    "AAA4BBB,J0001,J300/2",
+    "AAA4BBB,0001,J300/2",
+    # Invalid transition time
+    "AAA4BBB,J60/2/3,J300/2",
+    "AAA4BBB,J60/2,J300/2/3",
+    # Invalid transition hour
+    "AAA4BBB,J60/168,J300/2",
+    "AAA4BBB,J60/+168,J300/2",
+    "AAA4BBB,J60/-168,J300/2",
+    "AAA4BBB,J60/2,J300/168",
+    "AAA4BBB,J60/2,J300/+168",
+    "AAA4BBB,J60/2,J300/-168",
+    # Invalid transition minutes
+    "AAA4BBB,J60/2:0,J300/2",
+    "AAA4BBB,J60/2:100,J300/2",
+    "AAA4BBB,J60/2,J300/2:0",
+    "AAA4BBB,J60/2,J300/2:100",
+    # Invalid transition seconds
+    "AAA4BBB,J60/2:00:0,J300/2",
+    "AAA4BBB,J60/2:00:100,J300/2",
+    "AAA4BBB,J60/2,J300/2:00:0",
+    "AAA4BBB,J60/2,J300/2:00:100",
+]
+
+
+@pytest.mark.parametrize("tzstr", INVALID_TZSTRS)
+def test_invalid_tzstr(tzstr):
+    """Malformed TZ strings raise ValueError naming the string."""
+    import re
+
+    with pytest.raises(ValueError, match=re.escape(tzstr)):
+        zone_from_tzstr(tzstr)
+
+
+@pytest.mark.parametrize(
+    "tzstr",
+    [
+        # Non-ASCII letter in the abbreviation
+        "AB" + six.unichr(0xC0) + "C3",
+        # Non-ASCII digit in the day-of-year
+        "AAA4BBB,J" + six.unichr(0x661) + ",J300/2",
+    ],
+)
+def test_invalid_tzstr_non_ascii(tzstr):
+    with pytest.raises(ValueError):
+        zone_from_tzstr(tzstr, encoding="utf-8")
