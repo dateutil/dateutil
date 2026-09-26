@@ -16,6 +16,8 @@ except ImportError:
     import sys
     import warnings
 
+    import six
+
     def _parse_python_tzpath(env_var):
         if not env_var:
             return ()
@@ -50,7 +52,7 @@ except ImportError:
         global TZPATH
         tzpaths = to
         if tzpaths is not None:
-            if isinstance(tzpaths, (str, bytes)):
+            if isinstance(tzpaths, six.string_types + (bytes,)):
                 raise TypeError(
                     "tzpaths must be a sequence, not %s: %s"
                     % (
