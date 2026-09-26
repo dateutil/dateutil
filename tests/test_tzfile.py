@@ -1911,6 +1911,7 @@ def _make_fake_tzpath(root):
         "Fictional/right/NotExcluded",  # Only top-level right/ is excluded
         "UTC",
         "posixrules",  # Excluded by name
+        "localtime",  # Excluded by name
         "posix/Fictional/Liliput",  # Excluded top-level directory
         "right/Fictional/Liliput",  # Excluded top-level directory
     ]
