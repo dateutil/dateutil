@@ -1103,9 +1103,7 @@ def __get_gettz():
 
                         for candidate in candidates:
                             try:
-                                with _tzdata_impl._load_tzdata(
-                                    candidate
-                                ) as f:
+                                with _tzdata_impl._load_tzdata(candidate) as f:
                                     return tzfile(f, key=name)
                             except _tzdata_impl.TZFileNotFound:
                                 pass
