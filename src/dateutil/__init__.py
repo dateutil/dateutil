@@ -15,7 +15,7 @@ def __getattr__(name):
     if name in __all__ or name == "zoneinfo":
         return importlib.import_module("." + name, __name__)
     raise AttributeError(
-        "module {!r} has not attribute {!r}".format(__name__, name)
+        "module {!r} has no attribute {!r}".format(__name__, name)
     )
 
 
