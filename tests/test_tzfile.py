@@ -1512,6 +1512,8 @@ def test_eq_same_transitions_different_tzstr():
         "America/",
         "Fictional/Zone",
         "Fictional",
+        "America/New_York\x00",  # Not a valid path
+        "America/../UTC",  # Not a valid package name
     ],
 )
 def test_tzdata_bad_keys(key):
