@@ -39,8 +39,12 @@ if sys.version_info < (3, 8):
 
     def _get_data(package, resource):
         # pkgutil.get_data returns None rather than raising when the package
-        # cannot be found, so turn that into the ImportError the callers
-        # expect from the importlib.resources versions of these functions.
+        # cannot be found (and on Python 2 raises AttributeError if the
+        # package has been blocked by setting sys.modules[name] = None), so
+        # import the package first to get the ImportError the callers expect
+        # from the importlib.resources versions of these functions.
+        importlib.import_module(package)
+
         pkg_data = pkgutil.get_data(package, resource)
         if pkg_data is None:
             raise ImportError("No package named %r" % package)
@@ -102,9 +106,14 @@ def _load_tzdata(key):
     package_name = ".".join(["tzdata.zoneinfo"] + components[:-1])
     resource_name = components[-1]
 
-    # A key naming a directory (or ending in "/") is not a zone; opening it
-    # would raise a platform-dependent error, see CPython gh-85702.
-    if not resource_name or _is_package_directory(package_name, resource_name):
+    # Empty or relative path components cannot name a zone, and they produce
+    # module names that the import machinery handles inconsistently across
+    # versions, so treat them as not found up front. A key naming a directory
+    # (a subpackage) is not a zone either, and opening it raises a
+    # platform-dependent error, see CPython gh-85702.
+    if any(c in ("", ".", "..") for c in components) or _is_package_directory(
+        package_name, resource_name
+    ):
         raise TZFileNotFound("Time zone not found: %s", zone_key=key)
 
     try:
