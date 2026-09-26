@@ -13,12 +13,13 @@ import sys
 import six
 
 if six.PY2:
-    _TZDATA_LOAD_EXCEPTIONS = (ImportError, IOError, UnicodeEncodeError)
+    _TZDATA_LOAD_EXCEPTIONS = (ImportError, IOError, UnicodeEncodeError, ValueError)
 else:
     _TZDATA_LOAD_EXCEPTIONS = (
         ImportError,
         FileNotFoundError,
         UnicodeEncodeError,
+        ValueError,
     )
 
 if sys.version_info < (3, 8):
