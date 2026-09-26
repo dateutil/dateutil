@@ -1081,6 +1081,14 @@ def __get_gettz():
                         six.raise_from(TypeError(new_msg), e)
                     else:
                         raise
+
+                # A NUL byte can never be part of a key or a path, and
+                # depending on the platform and Python version it raises
+                # ValueError from os.path, winreg or open(), so reject it
+                # up front rather than catching it in every branch.
+                if "\x00" in name:
+                    return None
+
                 if os.path.isabs(name):
                     if _isfile(name):
                         tz = tzfile(name)
