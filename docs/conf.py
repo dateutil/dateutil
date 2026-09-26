@@ -288,6 +288,8 @@ linkcheck_ignore = [
     r"https://metacpan.org/.*",
     # timeanddate.com is now returning 403 for the automated link checker
     r"https://www\.timeanddate.com/.*",
+    # Oracle Java docs often fail TLS from CI runners
+    r"https://docs\.oracle\.com/.*",
     # gnu.org is intermittently unreachable from GitHub Actions runners
     r"https://www\.gnu\.org/.*",
 ]
