@@ -1,0 +1,1 @@
+Fixed the ``isoparse`` round trip property test failing for ambiguous local times, where PEP 495 makes the comparison between the parsed fixed-offset datetime and the original always false. The test now checks the wall time and offset directly, as ``test_gettz_returns_local`` does. (gh pr #1581)
