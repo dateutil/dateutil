@@ -1111,11 +1111,20 @@ def __get_gettz():
                                 tz = None
 
                         if not tz:
-                            try:
-                                with _tzdata_impl._load_tzdata(name) as f:
-                                    return tzfile(f, key=name)
-                            except _tzdata_impl.TZFileNotFound:
-                                pass
+                            # As with the search path lookup above, also try
+                            # the name with spaces replaced by underscores.
+                            candidates = [name]
+                            if " " in name:
+                                candidates.append(name.replace(" ", "_"))
+
+                            for candidate in candidates:
+                                try:
+                                    with _tzdata_impl._load_tzdata(
+                                        candidate
+                                    ) as f:
+                                        return tzfile(f, key=name)
+                                except _tzdata_impl.TZFileNotFound:
+                                    pass
 
                         if not tz:
                             for c in name:
