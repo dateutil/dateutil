@@ -1982,3 +1982,127 @@ def test_available_iana_timezones_fresh_set():
         b = tz.available_iana_timezones()
 
     assert a is not b
+
+
+####
+# TZPATH and reset_tzpath
+def test_tz_tzpath_tracks_reset(tmp_path):
+    """dateutil.tz.TZPATH reflects reset_tzpath on every Python version."""
+    new_path = str(tmp_path)
+    with set_tzpath((new_path,)):
+        assert tz.TZPATH == (new_path,)
+        assert "TZPATH" in dir(tz)
+
+    assert tz.TZPATH != (new_path,)
+
+
+@pytest.fixture
+def backport_tzpath(monkeypatch):
+    """The pure-Python _tzpath implementation, regardless of Python version.
+
+    On Python 3.9+ dateutil.tz._tzpath is a thin alias for zoneinfo's search
+    path handling, so to test the backport itself the module source is
+    executed with the standard library zoneinfo module blocked.
+    """
+    import types
+
+    import dateutil.tz._tzpath as real_tzpath
+
+    source_path = real_tzpath.__file__
+    if source_path.endswith((".pyc", ".pyo")):  # Python 2
+        source_path = source_path[:-1]
+
+    monkeypatch.setitem(sys.modules, "zoneinfo", None)
+    monkeypatch.delenv("PYTHONTZPATH", raising=False)
+
+    module = types.ModuleType("_tzpath_backport")
+    module.__file__ = source_path
+    with open(source_path, "rb") as f:
+        code = compile(f.read(), source_path, "exec")
+    six.exec_(code, module.__dict__)
+
+    return module
+
+
+@pytest.mark.parametrize("platform", ["linux", "darwin", "win32"])
+def test_backport_default_tzpath(backport_tzpath, monkeypatch, platform):
+    monkeypatch.setattr(sys, "platform", platform)
+    backport_tzpath.reset_tzpath()
+
+    if platform == "win32":
+        assert backport_tzpath.TZPATH == ()
+    else:
+        assert backport_tzpath.TZPATH == (
+            "/usr/share/zoneinfo",
+            "/usr/lib/zoneinfo",
+            "/usr/share/lib/zoneinfo",
+            "/etc/zoneinfo",
+        )
+
+
+def test_backport_env_variable(backport_tzpath, monkeypatch, tmp_path):
+    paths = [str(tmp_path / "a"), str(tmp_path / "b")]
+    monkeypatch.setenv("PYTHONTZPATH", os.pathsep.join(paths))
+    backport_tzpath.reset_tzpath()
+
+    assert backport_tzpath.TZPATH == tuple(paths)
+
+
+def test_backport_env_variable_empty(backport_tzpath, monkeypatch):
+    monkeypatch.setenv("PYTHONTZPATH", "")
+    backport_tzpath.reset_tzpath()
+
+    assert backport_tzpath.TZPATH == ()
+
+
+def test_backport_env_variable_relative_paths(
+    backport_tzpath, monkeypatch, tmp_path
+):
+    absolute = str(tmp_path / "a")
+    monkeypatch.setenv(
+        "PYTHONTZPATH", os.pathsep.join(["relative/path", absolute, "other"])
+    )
+
+    with pytest.warns(backport_tzpath.InvalidTZPathWarning) as record:
+        backport_tzpath.reset_tzpath()
+
+    assert backport_tzpath.TZPATH == (absolute,)
+    message = str(record[0].message)
+    assert "relative/path" in message
+    assert "other" in message
+    assert absolute not in message
+
+
+def test_backport_reset_explicit(backport_tzpath, tmp_path):
+    paths = [str(tmp_path / "a"), str(tmp_path / "b")]
+    backport_tzpath.reset_tzpath(to=paths)
+    assert backport_tzpath.TZPATH == tuple(paths)
+
+    backport_tzpath.reset_tzpath(to=())
+    assert backport_tzpath.TZPATH == ()
+
+
+def test_backport_reset_pathlike(backport_tzpath, tmp_path):
+    backport_tzpath.reset_tzpath(to=[tmp_path])
+    assert tuple(map(str, backport_tzpath.TZPATH)) == (str(tmp_path),)
+
+
+@pytest.mark.parametrize("bad", ["/a/string", b"/a/bytestring"])
+def test_backport_reset_type_error(backport_tzpath, bad):
+    with pytest.raises(TypeError):
+        backport_tzpath.reset_tzpath(to=bad)
+
+
+def test_backport_reset_relative_paths(backport_tzpath, tmp_path):
+    with pytest.raises(ValueError, match="relative"):
+        backport_tzpath.reset_tzpath(to=[str(tmp_path), "relative/path"])
+
+
+def test_backport_callbacks(backport_tzpath, tmp_path):
+    seen = []
+    backport_tzpath.TZPATH_CALLBACKS.append(seen.append)
+
+    backport_tzpath.reset_tzpath(to=[str(tmp_path)])
+    backport_tzpath.reset_tzpath(to=())
+
+    assert seen == [(str(tmp_path),), ()]
