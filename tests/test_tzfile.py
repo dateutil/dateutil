@@ -1795,6 +1795,24 @@ def test_invalid_tzstr_non_ascii(tzstr):
         zone_from_tzstr(tzstr, encoding="utf-8")
 
 
+@pytest.mark.parametrize("zoneinfo_cache", ["fat"], indirect=True)
+@pytest.mark.parametrize("source", ["tzdata", "tzpath"])
+def test_gettz_space_for_underscore(source, zoneinfo_cache):
+    """Spaces in a key are tried as underscores, whichever source is used."""
+    if source == "tzdata":
+        pytest.importorskip("tzdata")
+        paths = ()
+    else:
+        paths = (zoneinfo_cache[0],)
+
+    with set_tzpath(paths, block_tzdata=(source != "tzdata")):
+        tz.gettz.cache_clear()
+        with_space = tz.gettz("America/New York")
+        assert with_space is not None
+        assert with_space.key == "America/New York"
+        assert with_space == tz.gettz("America/New_York")
+
+
 ####
 # Key handling in gettz
 @pytest.mark.parametrize("zoneinfo_cache", ["fat"], indirect=True)
