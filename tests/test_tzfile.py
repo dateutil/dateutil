@@ -1503,3 +1503,20 @@ def test_eq_same_transitions_different_tzstr():
 
     assert with_rule == same_rule
     assert with_rule != no_rule
+
+
+@pytest.mark.parametrize(
+    "key",
+    [
+        "America",  # A directory
+        "America/",
+        "Fictional/Zone",
+        "Fictional",
+    ],
+)
+def test_tzdata_bad_keys(key):
+    """Keys that do not name a zone in tzdata return None, not an error."""
+    pytest.importorskip("tzdata")
+    with set_tzpath(()):
+        tz.gettz.cache_clear()
+        assert tz.gettz(key) is None

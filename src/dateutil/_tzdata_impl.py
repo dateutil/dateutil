@@ -5,6 +5,7 @@ It will only live as long as :mod:`dateutil.zoneinfo` lives; when the
 """
 
 import contextlib
+import importlib
 import io
 import os
 import pkgutil
@@ -24,6 +25,7 @@ else:
         ImportError,
         FileNotFoundError,
         UnicodeEncodeError,
+        IsADirectoryError,
         ValueError,
     )
 
@@ -75,14 +77,44 @@ else:
         _open_binary = importlib.resources.open_binary
 
 
+def _is_package_directory(package, resource):
+    """Whether ``resource`` names a directory inside ``package``.
+
+    Opening a directory raises IsADirectoryError on POSIX but PermissionError
+    on Windows, and on Python < 3.9 there is no portable way to ask the
+    resource API, so check the package's search path directly (the tzdata
+    package is a regular directory-backed package).
+    """
+    try:
+        pkg = importlib.import_module(package)
+    except ImportError:
+        return False
+
+    for base in getattr(pkg, "__path__", ()):
+        if os.path.isdir(os.path.join(base, resource)):
+            return True
+
+    return False
+
+
 def _load_tzdata(key):
     components = key.split("/")
     package_name = ".".join(["tzdata.zoneinfo"] + components[:-1])
     resource_name = components[-1]
 
+    # A key naming a directory (or ending in "/") is not a zone; opening it
+    # would raise a platform-dependent error, see CPython gh-85702.
+    if not resource_name or _is_package_directory(package_name, resource_name):
+        raise TZFileNotFound("Time zone not found: %s", zone_key=key)
+
     try:
         return _open_binary(package_name, resource_name)
     except _TZDATA_LOAD_EXCEPTIONS:
+        # ImportError: package does not exist (or tzdata is not installed)
+        # FileNotFoundError: the key is not a file in the package
+        # UnicodeEncodeError: the key is not encodable as a filename
+        # IsADirectoryError: the key names a package rather than a resource
+        # ValueError: the key is not a valid path (e.g. contains a NUL byte)
         six.raise_from(
             TZFileNotFound("Time zone not found: %s", zone_key=key), None
         )
