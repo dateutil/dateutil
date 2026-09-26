@@ -152,8 +152,7 @@ def get_zonefile_instance(new_instance=False):
 
 def gettz(name):
     """
-    This retrieves a time zone from the local zoneinfo tarball that is packaged
-    with dateutil.
+    This retrieves a time zone from the ``tzdata`` package.
 
     :param name:
         An IANA-style time zone name, as found in the zoneinfo file.
