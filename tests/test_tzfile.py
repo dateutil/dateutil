@@ -1545,3 +1545,44 @@ def test_missing_footer_newline():
 
     with pytest.raises(ValueError):
         tz.tzfile(six.BytesIO(data))
+
+
+def test_invalid_transition_index():
+    """A transition index past the end of the ttinfo table is an error."""
+    STD = ZoneOffset("STD", ZERO)
+    DST = ZoneOffset("DST", ONE_H, ONE_H)
+
+    zf = construct_zone(
+        [
+            ZoneTransition(datetime(2026, 3, 1, 2), STD, DST),
+            ZoneTransition(datetime(2026, 11, 1, 2), DST, STD),
+        ],
+        after="",
+        version=1,
+    )
+
+    data = bytearray(zf.read())
+    timecnt = struct.unpack_from(">l", data, 32)[0]
+    idx_offset = 44 + timecnt * 4
+    data[idx_offset + 1] = 2  # typecnt is 2, so index 2 is out of bounds
+
+    with pytest.raises(ValueError):
+        tz.tzfile(six.BytesIO(bytes(data)))
+
+
+def test_transition_lookahead_out_of_bounds():
+    """Inferring DST offsets must not look past the last transition."""
+    STD = ZoneOffset("STD", ZERO)
+    DST = ZoneOffset("DST", ONE_H, ONE_H)
+    EXT = ZoneOffset("EXT", ONE_H)
+
+    zf = construct_zone(
+        [
+            ZoneTransition(datetime(2026, 3, 1), STD, DST),
+            ZoneTransition(datetime(2026, 6, 1), DST, EXT),
+            ZoneTransition(datetime(2026, 9, 1), EXT, DST),
+        ],
+        after="",
+    )
+
+    assert tz.tzfile(zf) is not None
