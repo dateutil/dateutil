@@ -1118,7 +1118,11 @@ def __get_gettz():
                             try:
                                 with _tzdata_impl._load_tzdata(candidate) as f:
                                     return tzfile(f, key=name)
-                            except _tzdata_impl.TZFileNotFound:
+                            except ValueError:
+                                # TZFileNotFound is a ValueError, and so is
+                                # the error raised for files in tzdata that
+                                # are not TZif files (e.g. "zone.tab"),
+                                # which are skipped just as on TZPATH.
                                 pass
 
                         if tzwin is not None:

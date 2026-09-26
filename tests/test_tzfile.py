@@ -1553,6 +1553,16 @@ def test_eq_same_transitions_different_tzstr():
         "Fictional",
         "America/New_York\x00",  # Not a valid path
         "America/../UTC",  # Not a valid package name
+        # Files in the tzdata package that are not TZif files
+        "__init__.py",
+        "America/__init__.py",
+        "zone.tab",
+        "tzdata.zi",
+        "leapseconds",
+        # Not encodable as a module or file name on some versions
+        "Am" + six.unichr(0xE9) + "rica/New_York",
+        "America/" + six.unichr(0xD800),
+        six.unichr(0xD800),
     ],
 )
 def test_tzdata_bad_keys(key):
