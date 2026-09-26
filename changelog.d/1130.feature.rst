@@ -4,5 +4,8 @@ resolving issues with timestamps beyond 2038 and "slim" format binaries.
 Additionally, the new implementation improves PEP 495 compliance by correctly
 handling the ``fold`` attribute during gaps in local time. Also added
 ``dateutil.tz.TZPATH`` and ``dateutil.tz.reset_tzpath`` to allow for runtime
-configuration of the IANA time zone data search path.
+configuration of the IANA time zone data search path. ``dateutil`` now depends
+on the ``tzdata`` package, which ``gettz`` consults after the search path and
+before the Windows registry; on Windows this means that IANA keys such as
+``"America/New_York"`` now return a ``tzfile`` rather than a ``tzwin``.
 (gh issues #462, #1059, gh pr #1130)
