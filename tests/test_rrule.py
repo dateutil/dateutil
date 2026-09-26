@@ -1,21 +1,33 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from datetime import datetime, date
 import unittest
+from datetime import date, datetime, timedelta
+
+import pytest
+from freezegun import freeze_time
 from six import PY2
 
 from dateutil import tz
 from dateutil.rrule import (
-    rrule, rruleset, rrulestr,
-    YEARLY, MONTHLY, WEEKLY, DAILY,
-    HOURLY, MINUTELY, SECONDLY,
-    MO, TU, WE, TH, FR, SA, SU
+    DAILY,
+    FR,
+    HOURLY,
+    MINUTELY,
+    MO,
+    MONTHLY,
+    SA,
+    SECONDLY,
+    SU,
+    TH,
+    TU,
+    WE,
+    WEEKLY,
+    YEARLY,
+    rrule,
+    rruleset,
+    rrulestr,
 )
-
-from freezegun import freeze_time
-
-import pytest
 
 
 @pytest.mark.rrule
@@ -4613,6 +4625,83 @@ class RRuleTest(unittest.TestCase):
         self.assertEqual(list(rr), [datetime(1997, 1, 1)])
         self.assertEqual(list(newrr),
                              [datetime(1997, 1, 6)])
+
+
+@pytest.mark.rrule
+@pytest.mark.parametrize(
+    "bysetpos, day", [(2, 11), (-2, 11), (3, 12), (-1, 12)]
+)
+@pytest.mark.parametrize("interval", [1, 2])
+@pytest.mark.parametrize("tzinfo", [None, tz.UTC, tz.tzoffset(None, 19800)])
+def test_weekly_bysetpos_first_period(bysetpos, day, interval, tzinfo):
+    # Wednesday, Monday, Tuesday is the order within a Wednesday-start week.
+    # DTSTART is itself a selected occurrence, even when it is not Wednesday.
+    dtstart = datetime(2024, 11, day, 9, tzinfo=tzinfo)
+    rule = rrule(
+        WEEKLY,
+        dtstart=dtstart,
+        wkst=WE,
+        byweekday=(MO, TU, WE),
+        bysetpos=bysetpos,
+        interval=interval,
+        count=3,
+    )
+    assert list(rule) == [
+        dtstart + timedelta(weeks=interval * i) for i in range(3)
+    ]
+
+
+@pytest.mark.rrule
+@pytest.mark.parametrize(
+    "dtstart, bysetpos, expected",
+    [
+        (
+            datetime(2024, 1, 1, 9),
+            2,
+            [datetime(2024, 1, day, 9) for day in (1, 8, 15)],
+        ),
+        (
+            datetime(1, 1, 2, 9),
+            2,
+            [datetime(1, 1, day, 9) for day in (2, 8, 15)],
+        ),
+    ],
+)
+def test_weekly_bysetpos_first_period_year_boundary(
+    dtstart, bysetpos, expected
+):
+    rule = rrule(
+        WEEKLY,
+        dtstart=dtstart,
+        wkst=WE,
+        byweekday=(MO, TU, WE),
+        bysetpos=bysetpos,
+        count=len(expected),
+    )
+    assert list(rule) == expected
+
+
+@pytest.mark.rrule
+def test_weekly_bysetpos_first_period_max_year():
+    dtstart = datetime(9999, 12, 28, 9)
+    rule = rrule(
+        WEEKLY, dtstart=dtstart, wkst=WE, byweekday=(MO, TU, WE), bysetpos=3
+    )
+    assert rule[0] == dtstart
+
+
+@pytest.mark.rrule
+def test_weekly_bysetpos_first_period_times_until():
+    rule = rrule(
+        WEEKLY,
+        dtstart=datetime(2024, 11, 11, 18),
+        until=datetime(2024, 11, 25, 18),
+        wkst=WE,
+        byweekday=(MO, TU, WE),
+        byhour=(9, 18),
+        bysetpos=(4, -3),
+    )
+    assert list(rule) == [datetime(2024, 11, day, 18) for day in (11, 18, 25)]
 
 
 @pytest.mark.rrule

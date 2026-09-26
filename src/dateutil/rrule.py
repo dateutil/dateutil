@@ -794,6 +794,14 @@ class rrule(rrulebase):
         byminute = self._byminute
         bysecond = self._bysecond
 
+        if freq == WEEKLY and bysetpos:
+            # Select positions from the whole week, including days before
+            # DTSTART. The output loop still excludes those earlier dates.
+            week_start = self._dtstart.toordinal() - (weekday - wkst) % 7
+            first_day = datetime.date.fromordinal(max(1, week_start))
+            year, month, day = first_day.year, first_day.month, first_day.day
+            weekday = first_day.weekday()
+
         ii = _iterinfo(self)
         ii.rebuild(year, month)
 
