@@ -25,10 +25,7 @@ class ZoneInfoFile(object):
         if zonefile_stream is not None:
             self._load_legacy_zonefile_stream(zonefile_stream)
         else:
-            self.zones = {}
-            self.metadata = None
-
-        self._eager_load_tzdata()
+            self._eager_load_tzdata()
 
     def _eager_load_tzdata(self):
         import tzdata
