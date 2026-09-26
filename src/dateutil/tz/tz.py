@@ -945,8 +945,8 @@ def __get_gettz():
         following order:
 
         1. On the search path defined in :data:`TZPATH`.
-        2. Using the system-specific mechanisms (e.g. the Windows registry).
-        3. In the `tzdata <https://pypi.org/project/tzdata/>`_ Python package.
+        2. In the `tzdata <https://pypi.org/project/tzdata/>`_ Python package.
+        3. Using the system-specific mechanisms (e.g. the Windows registry).
 
         .. code-block:: python3
 
