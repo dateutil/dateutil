@@ -263,6 +263,8 @@ def test_bytes(isostr, dt):
         ValueError),
     ('2012-W00', ValueError),                   # Invalid ISO week
     ('2012-W55', ValueError),                   # Invalid ISO week
+    ('2024-W53', ValueError),                   # Week 53 in a short ISO year
+    ('2024-W53-1', ValueError),                 # Week 53 in a short ISO year
     ('2012-W01-0', ValueError),                 # Invalid ISO week day
     ('2012-W01-8', ValueError),                 # Invalid ISO week day
     ('2013-000', ValueError),                   # Invalid ordinal day
