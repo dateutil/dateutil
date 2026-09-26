@@ -6,6 +6,7 @@ import functools
 import gzip
 import json
 import os
+import pickle
 import shutil
 import struct
 import sys
@@ -2138,3 +2139,61 @@ def test_backport_callbacks(backport_tzpath, tmp_path):
     backport_tzpath.reset_tzpath(to=())
 
     assert seen == [(str(tmp_path),), ()]
+
+
+####
+# Sub-minute offsets
+class _RawZoneOffset(object):
+    """Like ZoneOffset, but without rounding the offset on Python < 3.6."""
+
+    def __init__(self, tzname, utcoffset, dst=ZERO):
+        self.tzname = tzname
+        self.utcoffset = utcoffset
+        self.raw_utcoffset = utcoffset
+        self.dst = dst
+
+
+def _sub_minute_zone():
+    # Africa/Abidjan's LMT offset is -0:16:08; the file must contain the
+    # exact value even where the tzinfo will round it.
+    LMT = _RawZoneOffset("LMT", timedelta(seconds=-968))
+    GMT = _RawZoneOffset("GMT", ZERO)
+    return construct_zone(
+        [ZoneTransition(datetime(1912, 1, 1), LMT, GMT)], "GMT0"
+    )
+
+
+def test_sub_minute_offset():
+    """Sub-minute offsets are exact on 3.6+ and rounded to a minute before."""
+    zone = tz.tzfile(_sub_minute_zone())
+    dt = datetime(1900, 1, 1, tzinfo=zone)
+
+    if SUPPORTS_SUB_MINUTE_OFFSETS:
+        assert dt.utcoffset() == timedelta(seconds=-968)
+    else:
+        assert dt.utcoffset() == timedelta(minutes=-16)
+
+    assert dt.tzname() == "LMT"
+    assert datetime(2000, 1, 1, tzinfo=zone).utcoffset() == ZERO
+
+
+@pytest.mark.parametrize("protocol", range(0, pickle.HIGHEST_PROTOCOL + 1))
+def test_sub_minute_offset_pickle(protocol):
+    """Pickling preserves the raw offset, even where it has been rounded."""
+    zone = tz.tzfile(_sub_minute_zone(), key="Africa/Abidjan")
+    data = pickle.dumps(zone, protocol=protocol)
+
+    # The pickled data carries the unrounded offsets from the file, so a
+    # pickle made on a version that rounds still loads exactly elsewhere.
+    _, args = zone.__reduce_ex__(protocol)
+    _, _, _, zone_data = args
+    utcoff = zone_data[2]
+    assert -968 in utcoff
+
+    unpickled = pickle.loads(data)
+    assert unpickled == zone
+    assert unpickled.key == "Africa/Abidjan"
+    assert (
+        datetime(1900, 1, 1, tzinfo=unpickled).utcoffset()
+        == datetime(1900, 1, 1, tzinfo=zone).utcoffset()
+    )
