@@ -31,6 +31,16 @@ with warnings.catch_warnings():
     warnings.simplefilter("ignore", category=DeprecationWarning)
     from dateutil import zoneinfo
 
+try:
+    import tzdata
+except ImportError:
+    tzdata = None
+
+# The deprecated dateutil.zoneinfo module is a wrapper around tzdata.
+requires_tzdata = pytest.mark.skipif(
+    tzdata is None, reason="dateutil.zoneinfo requires tzdata"
+)
+
 # dateutil imports
 from dateutil.relativedelta import SU, TH, relativedelta
 
@@ -1204,6 +1214,7 @@ def test_gettz_weakref():
     assert NYC_ref() is None    # Should have been pushed out
     assert tz.gettz('America/New_York') is not NYC_ref()
 
+@requires_tzdata
 class ZoneInfoGettzTest(GettzTest):
     def gettz(self, name):
         zoneinfo_file = zoneinfo.get_zonefile_instance()
@@ -2447,6 +2458,7 @@ class TzPickleTest(PicklableMixin, unittest.TestCase):
     def testPickleTzGettz(self):
         self.assertPicklable(tz.gettz('America/New_York'))
 
+    @requires_tzdata
     def testPickleZoneFileGettz(self):
         zoneinfo_file = zoneinfo.get_zonefile_instance()
         tzi = zoneinfo_file.get('America/New_York')
