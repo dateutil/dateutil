@@ -60,7 +60,9 @@ else:
 
         def _open_text(package, resource):
             return (
-                importlib.resources.files(package).joinpath(resource).open("r")
+                importlib.resources.files(package)
+                .joinpath(resource)
+                .open("r", encoding="utf-8")
             )
 
         def _open_binary(package, resource):
