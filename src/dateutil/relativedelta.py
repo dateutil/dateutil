@@ -324,7 +324,7 @@ class relativedelta(object):
                                  seconds=other.seconds + self.seconds,
                                  microseconds=(other.microseconds +
                                                self.microseconds),
-                                 leapdays=other.leapdays or self.leapdays,
+                                 leapdays=other.leapdays + self.leapdays,
                                  year=(other.year if other.year is not None
                                        else self.year),
                                  month=(other.month if other.month is not None
@@ -417,7 +417,7 @@ class relativedelta(object):
                              minutes=self.minutes - other.minutes,
                              seconds=self.seconds - other.seconds,
                              microseconds=self.microseconds - other.microseconds,
-                             leapdays=self.leapdays or other.leapdays,
+                             leapdays=self.leapdays - other.leapdays,
                              year=(self.year if self.year is not None
                                    else other.year),
                              month=(self.month if self.month is not None else
@@ -444,7 +444,7 @@ class relativedelta(object):
                               minutes=abs(self.minutes),
                               seconds=abs(self.seconds),
                               microseconds=abs(self.microseconds),
-                              leapdays=self.leapdays,
+                              leapdays=abs(self.leapdays),
                               year=self.year,
                               month=self.month,
                               day=self.day,
@@ -462,7 +462,7 @@ class relativedelta(object):
                              minutes=-self.minutes,
                              seconds=-self.seconds,
                              microseconds=-self.microseconds,
-                             leapdays=self.leapdays,
+                             leapdays=-self.leapdays,
                              year=self.year,
                              month=self.month,
                              day=self.day,
@@ -505,7 +505,7 @@ class relativedelta(object):
                              minutes=int(self.minutes * f),
                              seconds=int(self.seconds * f),
                              microseconds=int(self.microseconds * f),
-                             leapdays=self.leapdays,
+                             leapdays=int(self.leapdays * f),
                              year=self.year,
                              month=self.month,
                              day=self.day,
