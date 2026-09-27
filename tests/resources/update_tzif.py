@@ -197,6 +197,16 @@ def zonefile_to_json(
     json_outfile.write_text(json.dumps(out_data, sort_keys=True, indent=2))
 
 
+def write_metadata(json_outfile: pathlib.Path, tzdb_dir: pathlib.Path) -> None:
+    """Record which tzdb release the data files were generated from."""
+    version = (tzdb_dir / "version").read_text().strip()
+    logging.info("Generated data from tzdb version %s", version)
+    metadata = {"tzdata_version": version}
+    json_outfile.write_text(
+        json.dumps(metadata, sort_keys=True, indent=2) + "\n"
+    )
+
+
 def read_required_keys(loc: pathlib.Path) -> frozenset[str]:
     json_str = loc.read_text()
     return frozenset(json.loads(json_str))
@@ -235,6 +245,7 @@ async def main() -> None:
             DATA_DIR / "zoneinfo_slim.json",
             keys=required_keys,
         )
+        write_metadata(DATA_DIR / "metadata.json", tzdata_dir)
 
 
 if __name__ == "__main__":
