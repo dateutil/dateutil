@@ -1840,6 +1840,85 @@ def test_update_tzif_file_to_v1(tmp_path, version):
     assert out_path.read_bytes() == make_zone(1)
 
 
+def _assert_constant_offset_around_new_year(zone, offset, years):
+    for year in years:
+        base = datetime(year, 12, 31, 18, tzinfo=tz.UTC)
+        for minutes in range(0, 12 * 60, 15):
+            dt_utc = base + timedelta(minutes=minutes)
+            dt = dt_utc.astimezone(zone)
+            assert dt.utcoffset() == offset, dt_utc
+            assert dt.astimezone(tz.UTC) == dt_utc
+
+            for fold in (0, 1):
+                wall = tz.enfold(dt, fold=fold)
+                assert wall.utcoffset() == offset, (wall, fold)
+                assert tz.datetime_exists(wall)
+                assert not tz.datetime_ambiguous(wall)
+
+
+@as_list
+def _near_min_and_max_year_cases():
+    EST = -5 * ONE_H
+    STD = ZERO
+    DST = ONE_H
+
+    for dt in [
+        datetime(1, 1, 1, 0, 30),
+        datetime(1, 1, 1, 12),
+        datetime(1, 1, 5, 12),
+        datetime(9999, 12, 28, 6, 55),
+        datetime(9999, 12, 31, 12),
+        datetime(9999, 12, 31, 23, 30),
+    ]:
+        yield "EST5EDT,M3.2.0,M11.1.0", dt, EST
+
+    # The rules for year 10000 start DST on 9999-12-31.
+    for dt, offset in [
+        (datetime(1, 1, 1, 12), DST),
+        (datetime(9999, 4, 10, 12), STD),
+        (datetime(9999, 12, 30, 12), STD),
+        (datetime(9999, 12, 31, 12), DST),
+        (datetime(9999, 12, 31, 23, 30), DST),
+    ]:
+        yield "STD0DST,J1/-24,J100/0", dt, offset
+
+
+@pytest.mark.parametrize("tz_str, dt, offset", _near_min_and_max_year_cases())
+def test_tzstr_near_min_and_max_year(tz_str, dt, offset):
+    """The rules for years 0 and 10000 apply to the dates around them."""
+    zone = tz.tzfile(construct_zone([], tz_str))
+    for fold in (0, 1):
+        dt_fold = tz.enfold(dt.replace(tzinfo=zone), fold=fold)
+        assert dt_fold.utcoffset() == offset, fold
+
+    try:
+        dt_utc = (dt - offset).replace(tzinfo=tz.UTC)
+    except OverflowError:
+        # The UTC time is past the end of what datetime can represent
+        return
+
+    dt_local = dt_utc.astimezone(zone)
+    assert dt_local.replace(tzinfo=None) == dt
+    assert dt_local.utcoffset() == offset
+
+
+@pytest.mark.parametrize(
+    "tz_str",
+    [
+        # DST all year, written the way zic writes it: each year's DST period
+        # ends at the same instant as the next one starts.
+        "<+00>0<+01>,J1/0,J365/25",
+        # The same, with negative DST, as in the rearguard format for
+        # Africa/Casablanca.
+        "XXX-2<+01>-1,J1/0,J365/23",
+    ],
+)
+def test_tzstr_dst_all_year(tz_str):
+    """Rules whose transitions meet at the new year don't create a gap."""
+    zone = tz.tzfile(construct_zone([], tz_str))
+    _assert_constant_offset_around_new_year(zone, ONE_H, (2023, 2024, 2100))
+
+
 @pytest.mark.parametrize("version", [1, 2, 3])
 def test_truncated_file(version):
     """A file cut off anywhere is either still valid or raises ValueError."""

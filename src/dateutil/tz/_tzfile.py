@@ -8,7 +8,7 @@ import re
 import stat
 import struct
 import sys
-from datetime import datetime, timedelta
+from datetime import MAXYEAR, MINYEAR, datetime, timedelta
 
 import six
 
@@ -1088,8 +1088,21 @@ class _TZStr(object):
         end = self.end.year_to_epoch(year)
         return start, end
 
+    def _near_new_year(self, ts, year):
+        """Whether ts is close enough to the new year that the rules for the
+        previous or next year might matter."""
+        year_start = _post_epoch_days_before_year(year) * 86400
+        year_end = _post_epoch_days_before_year(year + 1) * 86400
+        return (
+            ts < year_start + _NEW_YEAR_MARGIN
+            or ts >= year_end - _NEW_YEAR_MARGIN
+        )
+
     def _get_trans_info(self, ts, year, fold):
         """Get the information about the current transition - tti"""
+        if self._near_new_year(ts, year):
+            return self._get_trans_info_near_new_year(ts, fold)
+
         start, end = self.transitions(year)
 
         # With fold = 0, the period (denominated in local time) with the
@@ -1112,7 +1125,87 @@ class _TZStr(object):
 
         return self.dst if isdst else self.std
 
+    def _get_trans_info_near_new_year(self, ts, fold):
+        # Answer the question in terms of UTC, where the transitions from the
+        # adjacent years are taken into account: a local time is valid for
+        # an offset if the rules give that offset at the corresponding UTC
+        # time.
+        valid = []
+        for tti in (self.std, self.dst):
+            utc_ts = ts - tti.utcoff.total_seconds()
+            try:
+                utc_year = (EPOCH + timedelta(seconds=utc_ts)).year
+            except OverflowError:
+                # Before year 1 or after year 9999
+                utc_year = MINYEAR if utc_ts < 0 else MAXYEAR
+            actual, _ = self._get_trans_info_fromutc_near_new_year(
+                utc_ts, utc_year
+            )
+            if actual is tti:
+                valid.append(tti)
+
+        if len(valid) == 1:
+            return valid[0]
+
+        smaller, larger = sorted((self.std, self.dst), key=lambda t: t.utcoff)
+        if valid:
+            # Ambiguous: fold=0 is the first occurrence, with the larger offset
+            return larger if fold == 0 else smaller
+        else:
+            # Imaginary: fold=0 uses the offset from before the transition
+            return smaller if fold == 0 else larger
+
+    def _get_trans_info_fromutc_near_new_year(self, ts, year):
+        # The rules are in terms of the local year, which near the new year
+        # is not always the UTC year, and a rule can put a transition up to a
+        # week into the previous or next year (e.g. "J365/25"), so look at the
+        # transitions for the years on either side as well and use the last
+        # one before ts.
+        std_utcoff = self.std.utcoff.total_seconds()
+        dst_utcoff = self.dst.utcoff.total_seconds()
+
+        transitions = []
+        for y in (year - 1, year, year + 1):
+            start, end = self.transitions(y)
+            transitions.append((start - std_utcoff, True))
+            transitions.append((end - dst_utcoff, False))
+
+        # When one DST period ends at the same instant as the next one starts,
+        # as with "DST all year" rules like "0/0,J365/25", sorting puts the
+        # end first, so these stay in DST without a transition in between.
+        transitions.sort()
+
+        isdst = not transitions[0][1]
+        last_change = None
+        i = 0
+        while i < len(transitions) and transitions[i][0] <= ts:
+            trans_ts = transitions[i][0]
+            new_isdst = isdst
+            while i < len(transitions) and transitions[i][0] == trans_ts:
+                new_isdst = transitions[i][1]
+                i += 1
+
+            if new_isdst != isdst:
+                isdst = new_isdst
+                last_change = trans_ts
+
+        if isdst:
+            tti, tti_prev = self.dst, self.std
+        else:
+            tti, tti_prev = self.std, self.dst
+
+        # A transition to a smaller offset creates a fold just after it.
+        fold = False
+        if last_change is not None:
+            shift = (tti_prev.utcoff - tti.utcoff).total_seconds()
+            fold = shift > ts - last_change
+
+        return (tti, fold)
+
     def _get_trans_info_fromutc(self, ts, year):
+        if self._near_new_year(ts, year):
+            return self._get_trans_info_fromutc_near_new_year(ts, year)
+
         start, end = self.transitions(year)
         start -= self.std.utcoff.total_seconds()
         end -= self.dst.utcoff.total_seconds()
@@ -1135,6 +1228,13 @@ class _TZStr(object):
         fold = ambig_start <= ts < ambig_end
 
         return (self.dst if isdst else self.std, fold)
+
+
+# A rule can put a transition up to 167 hours (just under a week) away from
+# the day it names, and local time is at most a day or so away from UTC, so
+# only times within this distance of the new year can be affected by the
+# rules for the previous or next year.
+_NEW_YEAR_MARGIN = 10 * 86400
 
 
 def _post_epoch_days_before_year(year):
@@ -1223,7 +1323,18 @@ class _CalendarOffset(object):
         # Week 1 is the first week in which day `d` (where 0 = Sunday) appears.
         # Week 5 represents the last occurrence of day `d`, so we need to know
         # the range of the month.
-        first_day, days_in_month = calendar.monthrange(year, self.m)
+        #
+        # This doesn't use calendar.monthrange because the rules for years 0
+        # and 10000 can affect times that datetime can represent, and
+        # calendar.monthrange constructs a datetime.date. Instead, get the
+        # weekday (0 = Monday) from the ordinal: 1970-01-01 was a Thursday.
+        first_ordinal = self._ymd2ord(year, self.m, 1)
+        first_day = (first_ordinal + 3) % 7
+        if self.m == 12:
+            next_ordinal = self._ymd2ord(year + 1, 1, 1)
+        else:
+            next_ordinal = self._ymd2ord(year, self.m + 1, 1)
+        days_in_month = next_ordinal - first_ordinal
 
         # This equation seems magical, so I'll break it down:
         # 1. calendar says 0 = Monday, POSIX says 0 = Sunday
