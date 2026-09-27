@@ -2,7 +2,6 @@
 
 import io
 import json
-import sys
 import tarfile
 import warnings
 from datetime import datetime
@@ -16,14 +15,6 @@ from .test_tzfile import ONE_H, ZERO, ZoneOffset, ZoneTransition, construct_zone
 with warnings.catch_warnings():
     warnings.simplefilter("ignore", category=DeprecationWarning)
     from dateutil import zoneinfo
-
-
-@pytest.fixture
-def block_tzdata(monkeypatch):
-    for modname in list(sys.modules):
-        if modname.split(".", 1)[0] == "tzdata":
-            monkeypatch.delitem(sys.modules, modname)
-    monkeypatch.setitem(sys.modules, "tzdata", None)
 
 
 def _legacy_tarball(with_metadata=True):

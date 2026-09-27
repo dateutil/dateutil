@@ -1,7 +1,6 @@
 """Tests for `tz.tzfile`."""
 
 import base64
-import contextlib
 import functools
 import gzip
 import io
@@ -12,6 +11,7 @@ import shutil
 import struct
 import sys
 import threading
+import time as time_module
 import warnings
 from datetime import date, datetime, time, timedelta
 
@@ -20,6 +20,8 @@ import pytest
 import six
 
 from dateutil import tz
+
+from ._common import TZPATH_LOCK, pop_tzdata_modules, set_tzpath
 
 # Backwards compatibility shims
 try:
@@ -57,7 +59,6 @@ else:
     gzip_decompress = gzip.decompress
 
 
-TZPATH_LOCK = threading.Lock()
 CACHE_DIR = ".cache"
 ZONEINFO_DIR = os.path.join(CACHE_DIR, "zoneinfo")
 CACHE_INFO_FILE = os.path.join(CACHE_DIR, "zoneinfo_cache_info")
@@ -82,38 +83,6 @@ if functools_cache is None:
 
         return inner_func
 
-
-if sys.version_info < (3, 4):
-
-    def contextdecorator(wrapped):
-        @functools.wraps(wrapped)
-        def wrapper(*args, **kwargs):
-            class ContextDecorator:
-                def __init__(self):
-                    self.cm = contextlib.contextmanager(wrapped)(
-                        *args, **kwargs
-                    )
-
-                def __enter__(self):
-                    return self.cm.__enter__()
-
-                def __exit__(self, *args, **kwargs):
-                    return self.cm.__exit__(*args, **kwargs)
-
-                def __call__(self, f):
-                    @functools.wraps(f)
-                    def inner(*iargs, **ikwargs):
-                        with self:
-                            return f(*iargs, **ikwargs)
-
-                    return inner
-
-            return ContextDecorator()
-
-        return wrapper
-
-else:
-    contextdecorator = contextlib.contextmanager
 
 if six.PY2:
 
@@ -257,17 +226,6 @@ def extract_tzif_files(input_file, cache_dir):
                 input_file=input_file, e=e
             )
         )
-
-
-def pop_tzdata_modules():
-    tzdata_modules = {}
-    for modname in list(sys.modules):
-        if modname.split(".", 1)[0] != "tzdata":  # pragma: nocover
-            continue
-
-        tzdata_modules[modname] = sys.modules.pop(modname)
-
-    return tzdata_modules
 
 
 def construct_zone(
@@ -447,33 +405,6 @@ def zone_from_tzstr(tzstr, encoding="ascii"):
     zonefile.seek(0)
 
     return tz.tzfile(zonefile, key=tzstr)
-
-
-@contextdecorator
-def set_tzpath(tzpath, block_tzdata=False, clear_cache=True):
-    tzdata_modules = {}
-    with TZPATH_LOCK:
-        if block_tzdata:
-            tzdata_modules = pop_tzdata_modules()
-            sys.modules["tzdata"] = None
-
-        old_tzpath = tuple(tz.TZPATH)
-        try:
-            tz._tzpath.reset_tzpath(to=tzpath)
-            # Zones already in the cache may have come from somewhere else
-            # (another TZPATH, or tzdata when it is now blocked), and zones
-            # cached in here must not leak out, so clear it on both ends.
-            if clear_cache:
-                tz.gettz.cache_clear()
-            yield
-        finally:
-            if block_tzdata:
-                sys.modules.pop("tzdata", None)
-                sys.modules.update(tzdata_modules)
-
-            tz._tzpath.reset_tzpath(to=old_tzpath)
-            if clear_cache:
-                tz.gettz.cache_clear()
 
 
 @pytest.fixture
@@ -2056,6 +1987,99 @@ def test_truncated_file_on_tzpath(tmp_path):
     with set_tzpath((str(tmp_path),), block_tzdata=True):
         tz.gettz.cache_clear()
         assert tz.gettz("Fictional/Truncated") is None
+
+
+def _valid_tzif_data():
+    STD = ZoneOffset("STD", ZERO)
+    return construct_zone(
+        [ZoneTransition(datetime(2020, 1, 1), STD, STD)], "STD0"
+    ).read()
+
+
+def _unreadable_file(path):
+    path.write_bytes(_valid_tzif_data())
+    os.chmod(str(path), 0)
+    if os.access(str(path), os.R_OK):  # pragma: nocover
+        # e.g. running as root
+        pytest.skip("Cannot make a file unreadable here")
+
+
+INVALID_TZPATH_FILES = [
+    pytest.param(
+        lambda path: path.write_bytes(b"Not a TZif file\n"), id="not_tzif"
+    ),
+    pytest.param(
+        lambda path: path.write_bytes(_valid_tzif_data()[:30]), id="truncated"
+    ),
+    pytest.param(
+        _unreadable_file,
+        id="unreadable",
+        marks=pytest.mark.skipif(IS_WIN, reason="POSIX permissions"),
+    ),
+]
+
+
+@pytest.mark.parametrize("make_invalid", INVALID_TZPATH_FILES)
+def test_gettz_skips_invalid_file_on_tzpath(tmp_path, make_invalid):
+    """An invalid file on TZPATH falls through to the next TZPATH entry."""
+    first = tmp_path / "first" / "Fictional"
+    second = tmp_path / "second" / "Fictional"
+    for directory in (first, second):
+        makedirs(str(directory))
+
+    make_invalid(first / "Zone")
+    (second / "Zone").write_bytes(_valid_tzif_data())
+
+    tzpath = (str(tmp_path / "first"), str(tmp_path / "second"))
+    with set_tzpath(tzpath, block_tzdata=True):
+        zone = tz.gettz("Fictional/Zone")
+
+    assert isinstance(zone, tz.tzfile)
+    assert zone._filename == str(second / "Zone")
+
+
+@pytest.mark.parametrize("make_invalid", INVALID_TZPATH_FILES)
+def test_gettz_invalid_file_on_tzpath_falls_back_to_tzdata(
+    tmp_path, make_invalid
+):
+    """An invalid file on TZPATH falls through to the tzdata package."""
+    pytest.importorskip("tzdata")
+    with set_tzpath((), block_tzdata=False):
+        expected = tz.gettz("America/New_York")
+
+    makedirs(str(tmp_path / "America"))
+    make_invalid(tmp_path / "America" / "New_York")
+
+    with set_tzpath((str(tmp_path),), block_tzdata=False):
+        zone = tz.gettz("America/New_York")
+
+    assert isinstance(zone, tz.tzfile)
+    assert zone == expected
+    assert zone._filename != str(tmp_path / "America" / "New_York")
+
+
+@pytest.mark.skipif(IS_WIN, reason="The Windows registry has these names")
+@pytest.mark.parametrize("name", ["UTC", "GMT"])
+def test_gettz_utc_without_time_zone_data(name):
+    """With no time zone data at all, "UTC" and "GMT" are still UTC."""
+    with set_tzpath((), block_tzdata=True):
+        assert tz.gettz(name) is tz.UTC
+
+
+@pytest.mark.skipif(IS_WIN, reason="The Windows registry has these names")
+def test_gettz_local_abbreviation_without_time_zone_data():
+    """Abbreviations of the local zone that aren't keys give tzlocal()."""
+    names = [
+        name
+        for name in time_module.tzname
+        if name and not any(c.isdigit() for c in name)
+    ]
+    if not names:  # pragma: nocover
+        pytest.skip("The local zone has no alphabetic abbreviations")
+
+    with set_tzpath((), block_tzdata=True):
+        for name in names:
+            assert isinstance(tz.gettz(name), tz.tzlocal)
 
 
 def test_missing_footer_newline():
