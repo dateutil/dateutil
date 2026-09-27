@@ -1504,6 +1504,59 @@ def weirdzone_test_cases():
     return _real_cases
 
 
+def _fixed_offset_zone():
+    STD = ZoneOffset("STD", -5 * ONE_H)
+    return tz.tzfile(
+        construct_zone([ZoneTransition(datetime(2020, 1, 1), STD, STD)], "STD5")
+    )
+
+
+@pytest.mark.parametrize(
+    "dt",
+    [
+        datetime(2019, 12, 31, 23, 30),
+        datetime(2020, 1, 1),
+        datetime(2020, 1, 1, 0, 30),
+        datetime(2100, 1, 1),
+    ],
+)
+def test_fixed_offset_never_ambiguous_or_imaginary(dt):
+    """A fixed-offset zone has no ambiguous or imaginary times."""
+    zone = _fixed_offset_zone()
+    for fold in (0, 1):
+        dt_fold = tz.enfold(dt.replace(tzinfo=zone), fold=fold)
+        assert not zone.is_ambiguous(dt_fold)
+        assert not tz.datetime_ambiguous(dt_fold)
+        assert tz.datetime_exists(dt_fold)
+        assert dt_fold.utcoffset() == -5 * ONE_H
+
+
+@pytest.mark.parametrize(
+    "zone",
+    [
+        pytest.param(_fixed_offset_zone(), id="fixed"),
+        pytest.param(
+            tz.tzfile(
+                construct_zone(
+                    [
+                        ZoneTransition(
+                            datetime(2020, 11, 1, 2),
+                            ZoneOffset("DST", -4 * ONE_H, ONE_H),
+                            ZoneOffset("STD", -5 * ONE_H),
+                        )
+                    ],
+                    "STD5",
+                )
+            ),
+            id="varying",
+        ),
+    ],
+)
+def test_is_ambiguous_none(zone):
+    """is_ambiguous(None) is False, as it is for other tzinfo classes."""
+    assert zone.is_ambiguous(None) is False
+
+
 @pytest.mark.parametrize("dt, offset", weirdzone_test_cases()["offset"])
 def test_weirdzone_offsets(dt, offset):
     assert dt.tzname() == offset.tzname
