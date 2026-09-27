@@ -270,13 +270,16 @@ def pop_tzdata_modules():
     return tzdata_modules
 
 
-def construct_zone(transitions, after=None, version=3):
-    # These are not used for anything, so we're not going to include
-    # them for now.
-    isutc = []
-    isstd = []
-    leap_seconds = []
+def construct_zone(
+    transitions, after=None, version=3, leap_seconds=(), indicators=False
+):
+    """Builds a TZif file.
 
+    ``leap_seconds`` is a sequence of ``(timestamp, correction)`` pairs, and
+    ``indicators`` adds standard/wall and UT/local indicators for every local
+    time type. Neither affects what the file means to ``tzfile``, which skips
+    over them, but they change the layout of the file.
+    """
     offset_lists = [[], []]
     trans_times_lists = [[], []]
     trans_idx_lists = [[], []]
@@ -323,10 +326,6 @@ def construct_zone(transitions, after=None, version=3):
                 trans_times.append(trans_time)
                 trans_idx.append(offsets.index(offset_after))
 
-    isutcnt = len(isutc)
-    isstdcnt = len(isstd)
-    leapcnt = len(leap_seconds)
-
     zonefile = six.BytesIO()
 
     time_types = ("l", "q")
@@ -352,6 +351,18 @@ def construct_zone(transitions, after=None, version=3):
         typecnt = len(offsets)
         timecnt = len(trans_times)
         charcnt = len(abbrstr)
+
+        dt_min, dt_max = ranges[v]
+        leaps = [
+            (trans_time, correction)
+            for trans_time, correction in leap_seconds
+            if dt_min <= trans_time <= dt_max
+        ]
+        leapcnt = len(leaps)
+
+        isstd = isutc = [0] * typecnt if indicators else []
+        isstdcnt = len(isstd)
+        isutcnt = len(isutc)
 
         # Write the header
         zonefile.write(b"TZif")
@@ -382,15 +393,15 @@ def construct_zone(transitions, after=None, version=3):
 
         zonefile.write(bytes(abbrstr))
 
-        # Now the metadata and leap seconds
-        zonefile.write(
-            struct.pack("{isutcnt}b".format(isutcnt=isutcnt), *isutc)
-        )
+        # Now the leap second records and the indicators, in that order
+        for leap in leaps:
+            zonefile.write(struct.pack(">%sl" % time_type, *leap))
+
         zonefile.write(
             struct.pack("{isstdcnt}b".format(isstdcnt=isstdcnt), *isstd)
         )
         zonefile.write(
-            struct.pack(">{leapcnt}l".format(leapcnt=leapcnt), *leap_seconds)
+            struct.pack("{isutcnt}b".format(isutcnt=isutcnt), *isutc)
         )
 
         # Finally we write the TZ string if we're writing a Version 2+ file
@@ -1776,6 +1787,55 @@ def test_gettz_key_inside_tzpath_does_not_warn(tzpath_and_outside_zone, key):
         warnings.resetwarnings()
         warnings.simplefilter("error")
         assert isinstance(tz.gettz(key), tz.tzfile)
+
+
+@pytest.mark.parametrize("version", [1, 2, 3, 4])
+@pytest.mark.parametrize(
+    "leap_seconds",
+    [
+        pytest.param((), id="no_leap_seconds"),
+        pytest.param(((78796800, 1), (94694401, 2)), id="leap_seconds"),
+        # Version 4 files may truncate the start of the leap second table, so
+        # that the first correction is not +1 or -1.
+        pytest.param(((1435708825, 26), (1483228826, 27)), id="truncated"),
+    ],
+)
+@pytest.mark.parametrize("indicators", [False, True])
+def test_leap_seconds_and_indicators(version, leap_seconds, indicators):
+    """Leap second records and indicators don't change how a zone behaves."""
+    STD = ZoneOffset("STD", -5 * ONE_H)
+    DST = ZoneOffset("DST", -4 * ONE_H, ONE_H)
+    transitions = [
+        ZoneTransition(datetime(2020, 3, 8, 2), STD, DST),
+        ZoneTransition(datetime(2020, 11, 1, 2), DST, STD),
+    ]
+    after = "STD5DST,M3.2.0,M11.1.0"
+
+    expected = tz.tzfile(construct_zone(transitions, after, version=version))
+    zone = tz.tzfile(
+        construct_zone(
+            transitions,
+            after,
+            version=version,
+            leap_seconds=leap_seconds,
+            indicators=indicators,
+        )
+    )
+
+    assert zone == expected
+    for dt_utc in [
+        datetime(2019, 12, 1, tzinfo=tz.UTC),
+        datetime(2020, 7, 1, tzinfo=tz.UTC),
+        datetime(2020, 11, 1, 5, 30, tzinfo=tz.UTC),
+        datetime(2020, 11, 1, 6, 30, tzinfo=tz.UTC),
+        datetime(2030, 7, 1, tzinfo=tz.UTC),
+    ]:
+        dt = dt_utc.astimezone(zone)
+        dt_expected = dt_utc.astimezone(expected)
+        assert dt.replace(tzinfo=None) == dt_expected.replace(tzinfo=None)
+        assert getattr(dt, "fold", 0) == getattr(dt_expected, "fold", 0)
+        assert dt.tzname() == dt_expected.tzname()
+        assert dt.utcoffset() == dt_expected.utcoffset()
 
 
 @pytest.mark.parametrize("version", [1, 2, 3])
