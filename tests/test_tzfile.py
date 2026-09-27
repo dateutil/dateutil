@@ -446,15 +446,20 @@ def set_tzpath(tzpath, block_tzdata=False, clear_cache=True):
         old_tzpath = tuple(tz.TZPATH)
         try:
             tz._tzpath.reset_tzpath(to=tzpath)
-            if clear_cache and tzpath != old_tzpath:
+            # Zones already in the cache may have come from somewhere else
+            # (another TZPATH, or tzdata when it is now blocked), and zones
+            # cached in here must not leak out, so clear it on both ends.
+            if clear_cache:
                 tz.gettz.cache_clear()
             yield
         finally:
-            sys.modules.pop("tzdata", None)
-            for modname, module in tzdata_modules.items():
-                sys.modules[modname] = module
+            if block_tzdata:
+                sys.modules.pop("tzdata", None)
+                sys.modules.update(tzdata_modules)
 
             tz._tzpath.reset_tzpath(to=old_tzpath)
+            if clear_cache:
+                tz.gettz.cache_clear()
 
 
 @pytest.fixture
