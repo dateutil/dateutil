@@ -82,23 +82,6 @@ def _fold(dt):
     return getattr(dt, "fold", 0)
 
 
-# In slim builds, America/Nuuk's last explicit transition (2023-10-29 01:00
-# UTC, from -02 DST to -02 standard) is followed by a TZ string whose own DST
-# period for 2023 runs until 00:00 local time on 2023-10-29. For wall times in
-# the hour between those two, utcoffset() uses the TZ string (-01) while
-# fromutc() uses the explicit transition (-02), so datetime_exists() says
-# they don't exist. CPython's zoneinfo behaves the same way.
-KNOWN_FOOTER_SEAMS = {
-    "America/Godthab": (datetime(2023, 10, 28, 23), datetime(2023, 10, 29)),
-    "America/Nuuk": (datetime(2023, 10, 28, 23), datetime(2023, 10, 29)),
-}
-
-
-def _in_known_seam(key, wall):
-    start, end = KNOWN_FOOTER_SEAMS.get(key, (None, None))
-    return start is not None and start <= wall < end
-
-
 def test_every_key_loads(tz_source):
     """Every available key loads, from the source it was found in."""
     tzpath = [os.path.join(path, "") for path in tz.TZPATH]
@@ -133,9 +116,6 @@ def test_ambiguous_and_imaginary(tz_source):
                 local,
                 local + timedelta(hours=1),
             ):
-                if _in_known_seam(key, wall):
-                    continue
-
                 dt = wall.replace(tzinfo=zone)
                 offset_0 = tz.enfold(dt, fold=0).utcoffset()
                 offset_1 = tz.enfold(dt, fold=1).utcoffset()
