@@ -1103,6 +1103,38 @@ def weirdzone_test_cases():
             )
 
     @add_cases
+    def _last_transition_same_offset_as_tzstr():
+        # Like Africa/Casablanca in the rearguard format: the last explicit
+        # transition goes to +01 as DST, and the TZ string that follows it
+        # describes +01 as (negative) DST from a standard offset of +02. The
+        # offset is the same either way, so times in the gap before it get
+        # the TZ string's answer, the same as the times after the gap.
+        STD = ZoneOffset("+00", ZERO)
+        DST = ZoneOffset("+01", ONE_H, ONE_H)
+        AFTER = ZoneOffset("+01", ONE_H, -ONE_H)
+
+        transitions = [
+            ZoneTransition(datetime(2087, 3, 1, 3), DST, STD),
+            ZoneTransition(datetime(2087, 5, 11, 2), STD, DST),
+        ]
+
+        after = "XXX-2<+01>-1,0/0,J365/23"
+
+        zf = construct_zone(transitions, after)
+        zi = tz.tzfile(zf, key="Etc/Last_Transition_Same_Offset_As_TZStr")
+        cases["varying_zones"].append((zi,))
+
+        for dt, fold, offset in [
+            (datetime(2087, 5, 11, 1, 30), 0, STD),
+            (datetime(2087, 5, 11, 2, 30), 0, STD),
+            (datetime(2087, 5, 11, 2, 30), 1, AFTER),
+            (datetime(2087, 5, 11, 3, 30), 0, AFTER),
+        ]:
+            cases["offset"].append(
+                (tz.enfold(dt.replace(tzinfo=zi), fold), offset)
+            )
+
+    @add_cases
     def _one_transition_zone_dst():
         DST = ZoneOffset("DST", ONE_H, ONE_H)
         transitions = [

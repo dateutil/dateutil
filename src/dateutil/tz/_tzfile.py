@@ -353,14 +353,18 @@ class tzfile(_tzinfo):
                 tti = self._tz_after.get_trans_info(ts, dt.year, fold)
 
                 # The TZ string only describes times after the last explicit
-                # transition. If its answer for this local time corresponds
-                # to a time before that transition (e.g. when the TZ string's
-                # own DST period for that year ends after the transition), the
-                # offset from the last explicit transition applies instead.
-                if num_trans and (
-                    ts - tti.utcoff.total_seconds() < self._trans_utc[-1]
+                # transition. If its answer for this local time is a different
+                # offset from the last transition's, and corresponds to a time
+                # before that transition (e.g. when the TZ string's own DST
+                # period for that year ends after the transition), the offset
+                # from the last explicit transition applies instead.
+                last_tti = self._ttinfos[-1] if num_trans else None
+                if (
+                    last_tti is not None
+                    and tti.utcoff != last_tti.utcoff
+                    and ts - tti.utcoff.total_seconds() < self._trans_utc[-1]
                 ):
-                    return self._ttinfos[-1]
+                    return last_tti
 
                 return tti
             else:
