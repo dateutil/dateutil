@@ -38,10 +38,12 @@ if [ "$DIR_EXISTS" = false ]; then
     cd tz
 fi
 
-# Build and install the compiled zoneinfo files, as "fat" TZif files unless
-# TZ_BLOAT says otherwise
+# Build and install the compiled zoneinfo files, as "fat" TZif files of the
+# "main" data form unless TZ_BLOAT and TZ_DATAFORM say otherwise
 TZ_BLOAT=${TZ_BLOAT:-fat}
-make ZFLAGS="-b ${TZ_BLOAT}" TOPDIR="${TMP_DIR}/tzdir" install
+TZ_DATAFORM=${TZ_DATAFORM:-main}
+make ZFLAGS="-b ${TZ_BLOAT}" DATAFORM="${TZ_DATAFORM}" \
+    TOPDIR="${TMP_DIR}/tzdir" install
 
 cd $ORIG_DIR
 
@@ -49,7 +51,7 @@ cd $ORIG_DIR
 # tests that are about the data on TZPATH block the tzdata package
 # themselves (see the tz_source fixture), so that anything missing from or
 # unreadable in this data fails, rather than being answered by tzdata.
-TZ_BLOAT=${TZ_BLOAT} python - <<'EOF'
+TZ_BLOAT=${TZ_BLOAT} TZ_DATAFORM=${TZ_DATAFORM} python - <<'EOF'
 import os
 import struct
 import sys
@@ -61,8 +63,20 @@ tzpath = os.environ["PYTHONTZPATH"]
 if tuple(tz.TZPATH) != (tzpath,):
     sys.exit("Expected TZPATH to be (%r,), got %r" % (tzpath, tz.TZPATH))
 
+# tzdata.zi starts with a "# version" line, followed by a "# dataform" line
+# for anything other than the main data form.
 with open(os.path.join(tzpath, "tzdata.zi")) as f:
-    print("Testing against: %s" % f.readline().strip())
+    header = [f.readline().strip() for _ in range(2)]
+print("Testing against: %s" % header[0])
+
+dataform = "main"
+if header[1].startswith("# dataform "):
+    dataform = header[1].split()[-1]
+if dataform != os.environ["TZ_DATAFORM"]:
+    sys.exit(
+        "Expected the %s data form, got %s" % (os.environ["TZ_DATAFORM"], dataform)
+    )
+print("Using the %s data form" % dataform)
 
 zone = tz.gettz("America/New_York")
 if zone is None or not zone._filename.startswith(tzpath):
