@@ -350,7 +350,19 @@ class tzfile(_tzinfo):
             return self._tti_before
         elif not num_trans or ts > lt[-1]:
             if isinstance(self._tz_after, _TZStr):
-                return self._tz_after.get_trans_info(ts, dt.year, fold)
+                tti = self._tz_after.get_trans_info(ts, dt.year, fold)
+
+                # The TZ string only describes times after the last explicit
+                # transition. If its answer for this local time corresponds
+                # to a time before that transition (e.g. when the TZ string's
+                # own DST period for that year ends after the transition), the
+                # offset from the last explicit transition applies instead.
+                if num_trans and (
+                    ts - tti.utcoff.total_seconds() < self._trans_utc[-1]
+                ):
+                    return self._ttinfos[-1]
+
+                return tti
             else:
                 return self._tz_after
         else:

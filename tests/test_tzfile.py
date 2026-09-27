@@ -1059,6 +1059,50 @@ def weirdzone_test_cases():
             cases["utc"].append((dt, dt_utc.replace(tzinfo=tz.UTC)))
 
     @add_cases
+    def _last_transition_inside_tzstr_dst():
+        # Like America/Nuuk in slim builds: the last explicit transition is a
+        # change from DST to standard time with the same offset, which falls
+        # inside a DST period that the TZ string would otherwise give.
+        STD3 = ZoneOffset("-03", -3 * ONE_H)
+        DST2 = ZoneOffset("-02", -2 * ONE_H, ONE_H)
+        STD2 = ZoneOffset("-02", -2 * ONE_H)
+
+        transitions = [
+            ZoneTransition(datetime(2023, 3, 25, 22), STD3, DST2),
+            ZoneTransition(datetime(2023, 10, 28, 23), DST2, STD2),
+        ]
+
+        after = "<-02>2<-01>,M3.5.0/-1,M10.5.0/0"
+
+        zf = construct_zone(transitions, after)
+        zi = tz.tzfile(zf, key="Etc/Last_Transition_Inside_TZStr_DST")
+        cases["varying_zones"].append((zi,))
+
+        for dt, offset in [
+            (datetime(2023, 10, 28, 22, 30), DST2),
+            (datetime(2023, 10, 28, 23), STD2),
+            (datetime(2023, 10, 28, 23, 30), STD2),
+            (datetime(2023, 10, 29, 1), STD2),
+        ]:
+            for fold in (0, 1):
+                dt_fold = tz.enfold(dt.replace(tzinfo=zi), fold=fold)
+                cases["offset"].append((dt_fold, offset))
+
+        dts = [
+            (datetime(2023, 10, 28, 22, 30), datetime(2023, 10, 29, 0, 30)),
+            (datetime(2023, 10, 28, 23), datetime(2023, 10, 29, 1)),
+            (datetime(2023, 10, 28, 23, 30), datetime(2023, 10, 29, 1, 30)),
+            (datetime(2023, 10, 29, 1), datetime(2023, 10, 29, 3)),
+            # From here on, the TZ string applies
+            (datetime(2024, 7, 1, 12), datetime(2024, 7, 1, 13)),
+        ]
+
+        for dt_naive, dt_utc in dts:
+            cases["utc"].append(
+                (dt_naive.replace(tzinfo=zi), dt_utc.replace(tzinfo=tz.UTC))
+            )
+
+    @add_cases
     def _one_transition_zone_dst():
         DST = ZoneOffset("DST", ONE_H, ONE_H)
         transitions = [
