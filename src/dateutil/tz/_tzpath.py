@@ -2,6 +2,7 @@ try:
     import zoneinfo
 
     reset_tzpath = zoneinfo.reset_tzpath
+    InvalidTZPathWarning = zoneinfo.InvalidTZPathWarning
 
     def __getattr__(name):
         if name == "TZPATH":
@@ -18,7 +19,10 @@ except ImportError:
 
     import six
 
-    def _parse_python_tzpath(env_var):
+    class InvalidTZPathWarning(RuntimeWarning):
+        """Warning raised if an invalid path is specified in PYTHONTZPATH."""
+
+    def _parse_python_tzpath(env_var, stacklevel):
         if not env_var:
             return ()
 
@@ -30,9 +34,10 @@ except ImportError:
             msg = _get_invalid_paths_message(raw_tzpath)
 
             warnings.warn(
-                "Invalid paths specified in PYTHONTZPATH environment variable."
+                "Invalid paths specified in PYTHONTZPATH environment variable. "
                 + msg,
                 InvalidTZPathWarning,
+                stacklevel=stacklevel,
             )
 
         return new_tzpath
@@ -48,7 +53,7 @@ except ImportError:
             + indented_str
         )
 
-    def reset_tzpath(to=None):
+    def _reset_tzpath(to=None, stacklevel=4):
         global TZPATH
         tzpaths = to
         if tzpaths is not None:
@@ -71,7 +76,7 @@ except ImportError:
         else:
             env_var = os.environ.get("PYTHONTZPATH", None)
             if env_var is not None:
-                base_tzpath = _parse_python_tzpath(env_var)
+                base_tzpath = _parse_python_tzpath(env_var, stacklevel)
             elif sys.platform != "win32":
                 base_tzpath = (
                     "/usr/share/zoneinfo",
@@ -87,11 +92,13 @@ except ImportError:
             for callback in TZPATH_CALLBACKS:
                 callback(TZPATH)
 
+    def reset_tzpath(to=None):
+        # As in CPython, the warning about PYTHONTZPATH is raised from a
+        # helper that is used both at import time and by this function, so
+        # that each can pass the stacklevel that points at its caller.
+        _reset_tzpath(to)
+
     TZPATH = ()
     TZPATH_CALLBACKS = []
 
-    reset_tzpath()
-
-
-class InvalidTZPathWarning(RuntimeWarning):
-    """Warning raised if an invalid path is specified in PYTHONTZPATH."""
+    _reset_tzpath(stacklevel=5)
