@@ -1617,6 +1617,45 @@ def test_truncated_footer(strip):
         tz.tzfile(six.BytesIO(data[:-strip]))
 
 
+@pytest.mark.parametrize("version", [1, 2, 3])
+def test_truncated_file(version):
+    """A file cut off anywhere is either still valid or raises ValueError."""
+    STD = ZoneOffset("STD", -5 * ONE_H)
+    DST = ZoneOffset("DST", -4 * ONE_H, ONE_H)
+    zf = construct_zone(
+        [
+            ZoneTransition(datetime(2020, 3, 8, 2), STD, DST),
+            ZoneTransition(datetime(2020, 11, 1, 2), DST, STD),
+        ],
+        "STD5DST,M3.2.0,M11.1.0",
+        version=version,
+    )
+    data = zf.read()
+
+    for length in range(len(data)):
+        try:
+            tz.tzfile(six.BytesIO(data[:length]))
+        except ValueError:
+            pass
+
+
+def test_truncated_file_on_tzpath(tmp_path):
+    """gettz skips a truncated file on TZPATH like any other invalid file."""
+    STD = ZoneOffset("STD", ZERO)
+    data = construct_zone(
+        [ZoneTransition(datetime(2020, 1, 1), STD, STD)], "STD0"
+    ).read()
+
+    zone_dir = tmp_path / "Fictional"
+    zone_dir.mkdir()
+    # Cut off inside the header
+    (zone_dir / "Truncated").write_bytes(data[:30])
+
+    with set_tzpath((str(tmp_path),), block_tzdata=True):
+        tz.gettz.cache_clear()
+        assert tz.gettz("Fictional/Truncated") is None
+
+
 def test_missing_footer_newline():
     """Version 2+ files must have a newline before the TZ string."""
     zf = construct_zone([], "EST5EDT,M3.2.0,M11.1.0")
