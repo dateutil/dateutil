@@ -210,7 +210,13 @@ class relativedelta(object):
                 yday = nlyearday
             elif yearday:
                 yday = yearday
-                if yearday > 59:
+                # leapdays=-1 shifts a common-year day back one day when
+                # applied to a leap year ("jump leap days"). That shift
+                # does not apply to yearday=366: it maps to the virtual
+                # day 32 of December, which is the leap year's last day
+                # itself, so shifting it would land on Dec 30 and collide
+                # with yearday=365.
+                if 59 < yearday < 366:
                     self.leapdays = -1
             if yday:
                 ydayidx = [31, 59, 90, 120, 151, 181, 212,

@@ -177,6 +177,22 @@ class RelativeDeltaTest(unittest.TestCase):
         self.assertEqual(self.today+relativedelta(yearday=261),
                          date(2003, 9, 18))
 
+    def testYearDayLeapYearEnd(self):
+        # yearday=366 is the last day of a leap year (Dec 31); it must not
+        # be shifted back by the internal leapdays=-1 the way other
+        # post-February yeardays are, or it would collide with 365.
+        self.assertEqual(date(2000, 1, 1) + relativedelta(yearday=366),
+                         date(2000, 12, 31))
+        self.assertEqual(date(2024, 1, 1) + relativedelta(yearday=366),
+                         date(2024, 12, 31))
+        self.assertEqual(date(2000, 1, 1) + relativedelta(yearday=365),
+                         date(2000, 12, 30))
+        # In a common year both clamp to Dec 31.
+        self.assertEqual(date(2001, 1, 1) + relativedelta(yearday=366),
+                         date(2001, 12, 31))
+        self.assertEqual(date(2001, 1, 1) + relativedelta(yearday=365),
+                         date(2001, 12, 31))
+
     def testYearDayBug(self):
         # Tests a problem reported by Adam Ryan.
         self.assertEqual(date(2010, 1, 1)+relativedelta(yearday=15),
