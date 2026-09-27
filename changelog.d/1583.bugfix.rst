@@ -1,0 +1,3 @@
+Fixed issue where ``relativedelta(yearday=366)`` resolved to December 30
+instead of December 31 in leap years, colliding with ``yearday=365``.
+Reported and fixed by @Master-Norna (gh pr #1583)

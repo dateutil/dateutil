@@ -89,6 +89,7 @@ switch, and thus all their contributions are dual-licensed.
 - Nicholas Herrriot <Nicholas.Herriot@gmail.com> **D**
 - Nicolas Évrard (gh: @nicoe) **D**
 - Nick Smith <nick.smith@MASKED>
+- Nor.na (gh: @Master-Norna) **D**
 - Orson Adams <orson.network@MASKED> (gh: @parsethis) **D**
 - Paul Brown (gh: @pawl) **D**
 - Paul Dickson (gh @prdickson) **D**
