@@ -138,7 +138,7 @@ jobs:
     needs: build-tzdata
     strategy:
       matrix:
-        toxenv: ["docs", "tz", "precommit"]
+        toxenv: ["docs", "tz-fat", "tz-slim", "precommit"]
     env:
       TOXENV: ${{ matrix.toxenv }}
       TZ: ${{ !startsWith(matrix.os, 'windows-latest') && 'America/New_York' || null }}

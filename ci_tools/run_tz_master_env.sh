@@ -38,8 +38,10 @@ if [ "$DIR_EXISTS" = false ]; then
     cd tz
 fi
 
-# Build and install the compiled zoneinfo files
-make ZFLAGS='-b fat' TOPDIR="${TMP_DIR}/tzdir" install
+# Build and install the compiled zoneinfo files, as "fat" TZif files unless
+# TZ_BLOAT says otherwise
+TZ_BLOAT=${TZ_BLOAT:-fat}
+make ZFLAGS="-b ${TZ_BLOAT}" TOPDIR="${TMP_DIR}/tzdir" install
 
 cd $ORIG_DIR
 
@@ -49,8 +51,9 @@ cd $ORIG_DIR
 python -m pip uninstall -y tzdata
 
 # Make sure that the tests will actually see the data we just built.
-python - <<'EOF'
+TZ_BLOAT=${TZ_BLOAT} python - <<'EOF'
 import os
+import struct
 import sys
 
 from dateutil import tz
@@ -73,6 +76,15 @@ with open(os.path.join(tzpath, "tzdata.zi")) as f:
 zone = tz.gettz("America/New_York")
 if zone is None or not zone._filename.startswith(tzpath):
     sys.exit("America/New_York was not loaded from %s: %r" % (tzpath, zone))
+
+# Slim files have an empty version 1 data block, fat files do not.
+with open(zone._filename, "rb") as f:
+    v1_timecnt = struct.unpack(">6l", f.read(44)[20:])[3]
+
+bloat = "fat" if v1_timecnt else "slim"
+if bloat != os.environ["TZ_BLOAT"]:
+    sys.exit("Expected %s TZif files, got %s" % (os.environ["TZ_BLOAT"], bloat))
+print("Using %s TZif files" % bloat)
 EOF
 
 # Run the tests
