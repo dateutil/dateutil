@@ -40,8 +40,8 @@ DIR_EXISTS=false
 if [ -d tz ]; then
     cd tz
     if [[ $(git remote get-url origin) == ${UPSTREAM_URL} ]]; then
-        git fetch origin master
-        git reset --hard origin/master
+        git fetch origin main
+        git reset --hard origin/main
         DIR_EXISTS=true
     else
         cd ..
@@ -94,5 +94,5 @@ ${CITOOLS_DIR}/make_zonefile_metadata.py \
 python ${REPO_DIR}/updatezinfo.py $ZONEFILE_METADATA_NAME
 
 # Run the tests
-python -m pytest ${REPO_DIR}/tests $EXTRA_TEST_ARGS -x --pdb
+python -m pytest ${REPO_DIR}/tests $EXTRA_TEST_ARGS -x
 
