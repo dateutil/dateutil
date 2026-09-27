@@ -1047,6 +1047,63 @@ class RRuleTest(unittest.TestCase):
                           datetime(1997, 9, 3, 9, 0),
                           datetime(1997, 9, 4, 9, 0)])
 
+    def testDailySkipsNonexistentLocalTime(self):
+        NYC = tz.gettz("America/New_York")
+        self.assertEqual(
+            list(
+                rrule(
+                    DAILY,
+                    count=5,
+                    dtstart=datetime(2025, 3, 7, 2, 30, tzinfo=NYC),
+                )
+            ),
+            [
+                datetime(2025, 3, 7, 2, 30, tzinfo=NYC),
+                datetime(2025, 3, 8, 2, 30, tzinfo=NYC),
+                datetime(2025, 3, 10, 2, 30, tzinfo=NYC),
+                datetime(2025, 3, 11, 2, 30, tzinfo=NYC),
+                datetime(2025, 3, 12, 2, 30, tzinfo=NYC),
+            ],
+        )
+
+    def testDailyBySetPosSkipsNonexistentLocalTime(self):
+        NYC = tz.gettz("America/New_York")
+        self.assertEqual(
+            list(
+                rrule(
+                    DAILY,
+                    count=3,
+                    byhour=(1, 2, 3),
+                    byminute=30,
+                    bysetpos=2,
+                    dtstart=datetime(2025, 3, 8, tzinfo=NYC),
+                )
+            ),
+            [
+                datetime(2025, 3, 8, 2, 30, tzinfo=NYC),
+                datetime(2025, 3, 9, 3, 30, tzinfo=NYC),
+                datetime(2025, 3, 10, 2, 30, tzinfo=NYC),
+            ],
+        )
+
+    def testDailySkipsNonexistentTzRangeTime(self):
+        tzi = tz.tzstr("EST5EDT,M3.2.0/2,M11.1.0/2")
+        self.assertEqual(
+            list(
+                rrule(
+                    DAILY,
+                    count=4,
+                    dtstart=datetime(2026, 3, 7, 2, 30, tzinfo=tzi),
+                )
+            ),
+            [
+                datetime(2026, 3, 7, 2, 30, tzinfo=tzi),
+                datetime(2026, 3, 9, 2, 30, tzinfo=tzi),
+                datetime(2026, 3, 10, 2, 30, tzinfo=tzi),
+                datetime(2026, 3, 11, 2, 30, tzinfo=tzi),
+            ],
+        )
+
     def testDailyInterval(self):
         self.assertEqual(list(rrule(DAILY,
                               count=3,

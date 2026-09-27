@@ -1,0 +1,4 @@
+Fixed ``rrule`` generating recurrence instances in nonexistent local times
+during forward time zone transitions. Such instances are now ignored and do
+not count toward ``COUNT``, including before ``BYSETPOS`` selection. Reported
+by @BurntSushi (gh issue #1425). Fixed by @HanpuLi (gh pr #1573).
