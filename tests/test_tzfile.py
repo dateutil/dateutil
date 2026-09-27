@@ -1838,6 +1838,39 @@ def test_leap_seconds_and_indicators(version, leap_seconds, indicators):
         assert dt.utcoffset() == dt_expected.utcoffset()
 
 
+def _assert_constant_offset_around_new_year(zone, offset, years):
+    for year in years:
+        base = datetime(year, 12, 31, 18, tzinfo=tz.UTC)
+        for minutes in range(0, 12 * 60, 15):
+            dt_utc = base + timedelta(minutes=minutes)
+            dt = dt_utc.astimezone(zone)
+            assert dt.utcoffset() == offset, dt_utc
+            assert dt.astimezone(tz.UTC) == dt_utc
+
+            for fold in (0, 1):
+                wall = tz.enfold(dt, fold=fold)
+                assert wall.utcoffset() == offset, (wall, fold)
+                assert tz.datetime_exists(wall)
+                assert not tz.datetime_ambiguous(wall)
+
+
+@pytest.mark.parametrize(
+    "tz_str",
+    [
+        # DST all year, written the way zic writes it: each year's DST period
+        # ends at the same instant as the next one starts.
+        "<+00>0<+01>,J1/0,J365/25",
+        # The same, with negative DST, as in the rearguard format for
+        # Africa/Casablanca.
+        "XXX-2<+01>-1,J1/0,J365/23",
+    ],
+)
+def test_tzstr_dst_all_year(tz_str):
+    """Rules whose transitions meet at the new year don't create a gap."""
+    zone = tz.tzfile(construct_zone([], tz_str))
+    _assert_constant_offset_around_new_year(zone, ONE_H, (2023, 2024, 2100))
+
+
 @pytest.mark.parametrize("version", [1, 2, 3])
 def test_truncated_file(version):
     """A file cut off anywhere is either still valid or raises ValueError."""
