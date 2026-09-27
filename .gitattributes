@@ -16,3 +16,6 @@ RELEASING text
 # NEWS and Windows batch files should be crlf
 NEWS eol=crlf
 *.bat eol=crlf
+
+# Generated test data
+tests/resources/data/zoneinfo_*.json linguist-generated=true

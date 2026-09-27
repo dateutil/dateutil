@@ -1,0 +1,6 @@
+``tz.tzfile`` objects for fixed-offset zones, such as ``tz.gettz("UTC")``, now
+return their offset, DST offset and abbreviation when ``utcoffset``, ``dst``
+and ``tzname`` are called with ``None``, as ``tz.tzutc``, ``tz.tzoffset`` and
+``zoneinfo.ZoneInfo`` do. This means that ``datetime.time`` objects with such
+a zone attached are now aware: ``time(12, tzinfo=tz.gettz("UTC")).isoformat()``
+is now ``"12:00:00+00:00"`` rather than ``"12:00:00"``. (gh pr #1130)

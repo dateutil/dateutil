@@ -1,0 +1,2829 @@
+"""Tests for `tz.tzfile`."""
+
+import base64
+import functools
+import gzip
+import io
+import json
+import os
+import pickle
+import shutil
+import struct
+import sys
+import threading
+import time as time_module
+import warnings
+from datetime import date, datetime, time, timedelta
+
+import attr
+import pytest
+import six
+
+from dateutil import tz
+
+from ._common import TZPATH_LOCK, pop_tzdata_modules, set_tzpath
+
+# Backwards compatibility shims
+try:
+    from attr import frozen
+except ImportError:
+    # "Backport" to older versions by not bothering with frozen
+    frozen = attr.s
+
+if sys.version_info < (3, 5):
+    JSONDecodeError = ValueError
+else:
+    from json import JSONDecodeError
+
+
+def makedirs(path, exist_ok=False):
+    if exist_ok:
+        try:
+            os.makedirs(path)
+        except OSError:
+            if not os.path.isdir(path):
+                raise
+    else:
+        os.makedirs(path)
+
+
+if not hasattr(gzip, "decompress"):
+
+    def gzip_decompress(data):
+        import io
+
+        with gzip.GzipFile(fileobj=io.BytesIO(data)) as f:
+            return f.read()
+
+else:
+    gzip_decompress = gzip.decompress
+
+
+CACHE_DIR = ".cache"
+ZONEINFO_DIR = os.path.join(CACHE_DIR, "zoneinfo")
+CACHE_INFO_FILE = os.path.join(CACHE_DIR, "zoneinfo_cache_info")
+IS_WIN = sys.platform.startswith("win")
+
+MIN_DT_V1 = datetime(1970, 1, 1) - timedelta(seconds=2**31)
+MAX_DT_V1 = datetime(1970, 1, 1) + timedelta(seconds=2**31)
+
+####
+# Backports
+functools_cache = getattr(functools, "cache", None)
+if functools_cache is None:
+
+    def functools_cache(f):
+        _cache = {}
+
+        @functools.wraps(f)
+        def inner_func():
+            if "value" not in _cache:
+                _cache["value"] = f()
+            return _cache["value"]
+
+        return inner_func
+
+
+if six.PY2:
+
+    def timestamp(dt):
+        if dt.tzinfo is None:
+            dt_utc = dt.replace(tzinfo=tz.tzlocal()).astimezone(tz.UTC)
+        else:
+            dt_utc = dt.astimezone(tz.UTC)
+
+        return (dt_utc - datetime(1970, 1, 1, tzinfo=tz.UTC)).total_seconds()
+
+else:
+    timestamp = datetime.timestamp
+
+
+####
+# Test utilities
+def _copy_resource_to(resource, path):
+    """Copies a test resource to a path on disk."""
+    from dateutil._tzdata_impl import _open_binary
+
+    # Python 2.7 compat
+    parent_dir = os.path.dirname(path)
+    if not os.path.exists(parent_dir):
+        makedirs(parent_dir)
+
+    with _open_binary("tests.resources", resource) as f:
+        with open(path, "wb") as out_f:
+            out_f.write(f.read())
+
+
+@pytest.fixture
+def transition(request, tzpath_zoneinfo_cache):
+    key, dt, fold, offset = request.param
+    if dt.tzinfo is not None:
+        dt_n = dt.astimezone(tz.UTC).replace(tzinfo=None)
+    else:
+        dt_n = dt
+
+    if tzpath_zoneinfo_cache == "v1" and not (MIN_DT_V1 <= dt_n <= MAX_DT_V1):
+        pytest.skip(
+            "Out of range for V1 files"
+        )  # TODO: Avoid generating these tests at all
+    yield ExpectedTransition(key=key, dt=dt, fold=fold, offset=offset)
+
+
+@pytest.fixture(scope="module")
+def zoneinfo_cache(request):
+    """
+    A fixture that extracts TZif files from a JSON file mapping timezone names to
+    base64-encoded gzipped TZif data.
+
+    The fixture caches the extracted files and only re-extracts if the source file
+    has been modified since the cache was last created.
+
+    Returns:
+        Path: Path to the directory containing the extracted timezone files.
+    """
+    input_file = os.path.join(
+        os.path.dirname(__file__),
+        "resources",
+        "data",
+        "zoneinfo_%s.json" % request.param,
+    )
+    cache_dir = os.path.join(
+        ZONEINFO_DIR, os.path.splitext(os.path.basename(input_file))[0]
+    )
+
+    # Create cache directories if they don't exist
+    if not os.path.exists(CACHE_DIR):
+        os.mkdir(CACHE_DIR)
+    if not os.path.exists(ZONEINFO_DIR):
+        os.mkdir(ZONEINFO_DIR)
+    if not os.path.exists(cache_dir):
+        os.mkdir(cache_dir)
+
+    # Check if the cache needs to be updated
+    cache_valid = False
+    try:
+        if os.path.exists(CACHE_INFO_FILE):
+            with open(CACHE_INFO_FILE, "rt") as jf:
+                cache_info = json.load(jf)
+            cache_valid = six.ensure_text(
+                input_file
+            ) in cache_info and cache_info[
+                six.ensure_text(input_file)
+            ] >= os.path.getmtime(
+                input_file
+            )
+    except (JSONDecodeError, OSError):
+        # If there's an error reading the cache info, invalidate the cache
+        cache_valid = False
+
+    if not cache_valid:
+        # Cache is invalid, need to extract files
+        extract_tzif_files(input_file, cache_dir)
+
+        # Update cache info
+        cache_info = {}
+        if os.path.exists(CACHE_INFO_FILE):
+            with open(CACHE_INFO_FILE, "rt") as jf:
+                try:
+                    cache_info = json.load(jf)
+                except JSONDecodeError:
+                    cache_info = {}
+
+        cache_info[six.ensure_text(input_file)] = os.path.getmtime(input_file)
+        with open(CACHE_INFO_FILE, "wt") as jf:
+            json.dump(cache_info, jf, indent=2, sort_keys=True)
+
+    return os.path.abspath(cache_dir), request.param
+
+
+def extract_tzif_files(input_file, cache_dir):
+    """
+    Extract TZif files from a JSON file and save them to the cache directory.
+
+    Args:
+        input_file: Path to the JSON file containing the TZif data.
+        cache_dir: Path to the directory where the extracted files will be stored.
+    """
+    try:
+        with open(input_file, "r") as f:
+            timezone_data = json.load(f)
+
+        for timezone_name, encoded_data in timezone_data.items():
+            # Create the directory structure for the timezone
+            timezone_path = os.path.join(cache_dir, timezone_name)
+            makedirs(os.path.dirname(timezone_path), exist_ok=True)
+
+            # Decode and decompress the TZif data
+            compressed_data = base64.b64decode(encoded_data)
+            tzif_data = gzip_decompress(compressed_data)
+
+            # Write the TZif file
+            with open(timezone_path, "wb") as f:
+                f.write(tzif_data)
+    except (JSONDecodeError, OSError) as e:
+        raise RuntimeError(
+            "Failed to extract TZif files from {input_file}: {e}".format(
+                input_file=input_file, e=e
+            )
+        )
+
+
+def construct_zone(
+    transitions, after=None, version=3, leap_seconds=(), indicators=False
+):
+    """Builds a TZif file.
+
+    ``leap_seconds`` is a sequence of ``(timestamp, correction)`` pairs, and
+    ``indicators`` adds standard/wall and UT/local indicators for every local
+    time type. Neither affects what the file means to ``tzfile``, which skips
+    over them, but they change the layout of the file.
+    """
+    offset_lists = [[], []]
+    trans_times_lists = [[], []]
+    trans_idx_lists = [[], []]
+
+    v1_range = (-(2**31), 2**31)
+    v2_range = (-(2**63), 2**63)
+    ranges = [v1_range, v2_range]
+
+    def zt_as_tuple(zt):
+        # zt may be a tuple (timestamp, offset_before, offset_after) or
+        # a ZoneTransition object -- this is to allow the timestamp to be
+        # values that are outside the valid range for datetimes but still
+        # valid 64-bit timestamps.
+        if isinstance(zt, tuple):
+            return zt
+
+        if zt.transition:
+            trans_time = int(timestamp(zt.transition_utc))
+        else:
+            trans_time = None
+
+        return (trans_time, zt.offset_before, zt.offset_after)
+
+    transitions = sorted(map(zt_as_tuple, transitions), key=lambda x: x[0])
+
+    for zt in transitions:
+        trans_time, offset_before, offset_after = zt
+
+        for v, (dt_min, dt_max) in enumerate(ranges):
+            offsets = offset_lists[v]
+            trans_times = trans_times_lists[v]
+            trans_idx = trans_idx_lists[v]
+
+            if trans_time is not None and not (dt_min <= trans_time <= dt_max):
+                continue
+
+            if offset_before not in offsets:
+                offsets.append(offset_before)
+
+            if offset_after not in offsets:
+                offsets.append(offset_after)
+
+            if trans_time is not None:
+                trans_times.append(trans_time)
+                trans_idx.append(offsets.index(offset_after))
+
+    zonefile = six.BytesIO()
+
+    time_types = ("l", "q")
+    for v in range(min((version, 2))):
+        offsets = offset_lists[v]
+        trans_times = trans_times_lists[v]
+        trans_idx = trans_idx_lists[v]
+        time_type = time_types[v]
+
+        # Translate the offsets into something closer to the C values
+        abbrstr = bytearray()
+        ttinfos = []
+
+        for offset in offsets:
+            utcoff = int(offset.utcoffset.total_seconds())
+            isdst = bool(offset.dst)
+            abbrind = len(abbrstr)
+
+            ttinfos.append((utcoff, isdst, abbrind))
+            abbrstr += offset.tzname.encode("ascii") + b"\x00"
+        abbrstr = bytes(abbrstr)
+
+        typecnt = len(offsets)
+        timecnt = len(trans_times)
+        charcnt = len(abbrstr)
+
+        dt_min, dt_max = ranges[v]
+        leaps = [
+            (trans_time, correction)
+            for trans_time, correction in leap_seconds
+            if dt_min <= trans_time <= dt_max
+        ]
+        leapcnt = len(leaps)
+
+        isstd = isutc = [0] * typecnt if indicators else []
+        isstdcnt = len(isstd)
+        isutcnt = len(isutc)
+
+        # Write the header
+        zonefile.write(b"TZif")
+        zonefile.write(six.ensure_binary("%d" % version))
+        zonefile.write(b" " * 15)
+        zonefile.write(
+            struct.pack(
+                ">6l", isutcnt, isstdcnt, leapcnt, timecnt, typecnt, charcnt
+            )
+        )
+
+        # Now the transition data
+        zonefile.write(
+            struct.pack(
+                ">{timecnt}{time_type}".format(
+                    timecnt=timecnt, time_type=time_type
+                ),
+                *trans_times
+            )
+        )
+
+        zonefile.write(
+            struct.pack(">{timecnt}B".format(timecnt=timecnt), *trans_idx)
+        )
+
+        for ttinfo in ttinfos:
+            zonefile.write(struct.pack(">lbb", *ttinfo))
+
+        zonefile.write(bytes(abbrstr))
+
+        # Now the leap second records and the indicators, in that order
+        for leap in leaps:
+            zonefile.write(struct.pack(">%sl" % time_type, *leap))
+
+        zonefile.write(
+            struct.pack("{isstdcnt}b".format(isstdcnt=isstdcnt), *isstd)
+        )
+        zonefile.write(
+            struct.pack("{isutcnt}b".format(isutcnt=isutcnt), *isutc)
+        )
+
+        # Finally we write the TZ string if we're writing a Version 2+ file
+        if v > 0:
+            zonefile.write(b"\x0a")
+            if after is None:
+                after = ""
+            zonefile.write(after.encode("ascii"))
+            zonefile.write(b"\x0a")
+
+    zonefile.seek(0)
+    return zonefile
+
+
+@functools_cache
+def _tzstr_header():
+    out = bytearray()
+    # The TZif format always starts with a Version 1 file followed by
+    # the Version 2+ file. In this case, we have no transitions, just
+    # the tzstr in the footer, so up to the footer, the files are
+    # identical and we can just write the same file twice in a row.
+    for _ in range(2):
+        out += b"TZif"  # Magic value
+        out += b"3"  # Version
+        out += b" " * 15  # Reserved
+
+        # We will not write any of the manual transition parts
+        out += struct.pack(">6l", 0, 0, 0, 0, 0, 0)
+
+    return bytes(out)
+
+
+def zone_from_tzstr(tzstr, encoding="ascii"):
+    """Creates a zoneinfo file following a POSIX rule."""
+    zonefile = six.BytesIO(_tzstr_header())
+    zonefile.seek(0, 2)
+
+    # Write the footer
+    zonefile.write(b"\x0a")
+    zonefile.write(tzstr.encode(encoding))
+    zonefile.write(b"\x0a")
+
+    zonefile.seek(0)
+
+    return tz.tzfile(zonefile, key=tzstr)
+
+
+@pytest.fixture
+def tzpath_zoneinfo_cache(zoneinfo_cache):
+    # Parameterize this indirectly by parameterizing zoneinfo_cache
+    with set_tzpath((zoneinfo_cache[0],), block_tzdata=True):
+        yield zoneinfo_cache[1]
+
+
+def as_list(f):
+    @functools.wraps(f)
+    def inner_func(*args, **kwargs):
+        return list(f(*args, **kwargs))
+
+    return inner_func
+
+
+SUPPORTS_SUB_MINUTE_OFFSETS = not sys.version_info < (3, 6)
+
+
+####
+# Classes representing test data
+ZERO = timedelta(0)
+ONE_H = timedelta(hours=1)
+SECOND = timedelta(seconds=1)
+
+if SUPPORTS_SUB_MINUTE_OFFSETS:
+
+    def offset_converter(td):
+        return td
+
+else:
+
+    def offset_converter(td):
+        minutes = round(td.total_seconds() / 60.0)
+        return timedelta(minutes=minutes)
+
+
+@attr.s
+class ZoneOffset(object):
+    tzname = attr.ib()
+    utcoffset = attr.ib()
+    dst = attr.ib(default=ZERO, converter=offset_converter)
+
+    def __attrs_post_init__(self):
+        self.raw_utcoffset = self.utcoffset
+        self.utcoffset = offset_converter(self.utcoffset)
+
+
+@attr.s
+class ZoneTransition(object):
+    transition = attr.ib()
+    offset_before = attr.ib()
+    offset_after = attr.ib()
+    marks = attr.ib(default=None)
+
+    @property
+    def transition_utc(self):
+        return (self.transition - self.offset_before.raw_utcoffset).replace(
+            tzinfo=tz.UTC
+        )
+
+    @property
+    def wall_transition(self):
+        """The local transition time using the (possibly rounded) offsets
+
+        Identical to ``self.transition`` when sub-minute offsets are supported.
+        """
+        return (
+            self.transition_utc.replace(tzinfo=None)
+            + self.offset_before.utcoffset
+        )
+
+    @property
+    def fold(self):
+        """Whether this introduces a fold"""
+        return self.offset_before.utcoffset > self.offset_after.utcoffset
+
+    @property
+    def gap(self):
+        """Whether this introduces a gap"""
+        return self.offset_before.utcoffset < self.offset_after.utcoffset
+
+    @property
+    def delta(self):
+        return self.offset_after.utcoffset - self.offset_before.utcoffset
+
+    @property
+    def anomaly_start(self):
+        if self.fold:
+            return self.wall_transition + self.delta
+        else:
+            return self.wall_transition
+
+    @property
+    def anomaly_end(self):
+        if not self.fold:
+            return self.wall_transition + self.delta
+        else:
+            return self.wall_transition
+
+
+@frozen
+class ExpectedTransition(object):
+    key = attr.ib()
+    dt = attr.ib()
+    fold = attr.ib()
+    offset = attr.ib()
+
+
+####
+# Test data
+@functools_cache
+def get_zonedump_data():
+    def _zone_dump_data():
+        def _Africa_Abidjan():
+            LMT = ZoneOffset("LMT", timedelta(seconds=-968))
+            GMT = ZoneOffset("GMT", ZERO)
+
+            return [
+                ZoneTransition(datetime(1912, 1, 1), LMT, GMT),
+            ]
+
+        def _Africa_Casablanca():
+            P00_s = ZoneOffset("+00", ZERO, ZERO)
+            P01_d = ZoneOffset("+01", ONE_H, ONE_H)
+            P00_d = ZoneOffset("+00", ZERO, -ONE_H)
+            P01_s = ZoneOffset("+01", ONE_H, ZERO)
+
+            return [
+                # Morocco sometimes pauses DST during Ramadan
+                ZoneTransition(datetime(2018, 3, 25, 2), P00_s, P01_d),
+                ZoneTransition(datetime(2018, 5, 13, 3), P01_d, P00_s),
+                ZoneTransition(datetime(2018, 6, 17, 2), P00_s, P01_d),
+                # On October 28th Morocco set standard time to +01,
+                # with negative DST only during Ramadan
+                ZoneTransition(datetime(2018, 10, 28, 3), P01_d, P01_s),
+                ZoneTransition(datetime(2019, 5, 5, 3), P01_s, P00_d),
+                ZoneTransition(datetime(2019, 6, 9, 2), P00_d, P01_s),
+            ]
+
+        def _America_Los_Angeles():
+            LMT = ZoneOffset("LMT", timedelta(seconds=-28378), ZERO)
+            PST = ZoneOffset("PST", timedelta(hours=-8), ZERO)
+            PDT = ZoneOffset("PDT", timedelta(hours=-7), ONE_H)
+            PWT = ZoneOffset("PWT", timedelta(hours=-7), ONE_H)
+            PPT = ZoneOffset("PPT", timedelta(hours=-7), ONE_H)
+
+            return [
+                ZoneTransition(datetime(1883, 11, 18, 12, 7, 2), LMT, PST),
+                ZoneTransition(datetime(1918, 3, 31, 2), PST, PDT),
+                ZoneTransition(datetime(1918, 3, 31, 2), PST, PDT),
+                ZoneTransition(datetime(1918, 10, 27, 2), PDT, PST),
+                # Transition to Pacific War Time
+                ZoneTransition(datetime(1942, 2, 9, 2), PST, PWT),
+                # Transition from Pacific War Time to Pacific Peace Time
+                ZoneTransition(datetime(1945, 8, 14, 16), PWT, PPT),
+                ZoneTransition(datetime(1945, 9, 30, 2), PPT, PST),
+                ZoneTransition(datetime(2015, 3, 8, 2), PST, PDT),
+                ZoneTransition(datetime(2015, 11, 1, 2), PDT, PST),
+                # After 2038: Rules continue indefinitely
+                ZoneTransition(datetime(2450, 3, 13, 2), PST, PDT),
+                ZoneTransition(datetime(2450, 11, 6, 2), PDT, PST),
+            ]
+
+        def _America_Santiago():
+            LMT = ZoneOffset("LMT", timedelta(seconds=-16965), ZERO)
+            SMT = ZoneOffset("SMT", timedelta(seconds=-16965), ZERO)
+            N05 = ZoneOffset("-05", timedelta(seconds=-18000), ZERO)
+            N04 = ZoneOffset("-04", timedelta(seconds=-14400), ZERO)
+            N03 = ZoneOffset("-03", timedelta(seconds=-10800), ONE_H)
+
+            return [
+                ZoneTransition(datetime(1890, 1, 1), LMT, SMT),
+                ZoneTransition(datetime(1910, 1, 10), SMT, N05),
+                ZoneTransition(datetime(1916, 7, 1), N05, SMT),
+                ZoneTransition(datetime(2008, 3, 30), N03, N04),
+                ZoneTransition(datetime(2008, 10, 12), N04, N03),
+                ZoneTransition(datetime(2040, 4, 8), N03, N04),
+                ZoneTransition(datetime(2040, 9, 2), N04, N03),
+            ]
+
+        def _Asia_Tokyo():
+            JST = ZoneOffset("JST", timedelta(seconds=32400), ZERO)
+            JDT = ZoneOffset("JDT", timedelta(seconds=36000), ONE_H)
+
+            # Japan had DST from 1948 to 1951, and it was unusual in that
+            # the transition from DST to STD occurred at 25:00, and is
+            # denominated as such in the time zone database
+            return [
+                ZoneTransition(datetime(1948, 5, 2), JST, JDT),
+                ZoneTransition(datetime(1948, 9, 12, 1), JDT, JST),
+                ZoneTransition(datetime(1951, 9, 9, 1), JDT, JST),
+            ]
+
+        def _Australia_Sydney():
+            LMT = ZoneOffset("LMT", timedelta(seconds=36292), ZERO)
+            AEST = ZoneOffset("AEST", timedelta(seconds=36000), ZERO)
+            AEDT = ZoneOffset("AEDT", timedelta(seconds=39600), ONE_H)
+
+            return [
+                ZoneTransition(datetime(1895, 2, 1), LMT, AEST),
+                ZoneTransition(datetime(1917, 1, 1, 2), AEST, AEDT),
+                ZoneTransition(datetime(1917, 3, 25, 3), AEDT, AEST),
+                ZoneTransition(datetime(2012, 4, 1, 3), AEDT, AEST),
+                ZoneTransition(datetime(2012, 10, 7, 2), AEST, AEDT),
+                ZoneTransition(datetime(2040, 4, 1, 3), AEDT, AEST),
+                ZoneTransition(datetime(2040, 10, 7, 2), AEST, AEDT),
+            ]
+
+        def _Europe_Dublin():
+            LMT = ZoneOffset("LMT", timedelta(seconds=-1521), ZERO)
+            DMT = ZoneOffset("DMT", timedelta(seconds=-1521), ZERO)
+            IST_0 = ZoneOffset("IST", timedelta(seconds=2079), ONE_H)
+            GMT_0 = ZoneOffset("GMT", ZERO, ZERO)
+            BST = ZoneOffset("BST", ONE_H, ONE_H)
+            GMT_1 = ZoneOffset("GMT", ZERO, -ONE_H)
+            IST_1 = ZoneOffset("IST", ONE_H, ZERO)
+
+            return [
+                ZoneTransition(datetime(1880, 8, 2, 0), LMT, DMT),
+                ZoneTransition(datetime(1916, 5, 21, 2), DMT, IST_0),
+                ZoneTransition(datetime(1916, 10, 1, 3), IST_0, GMT_0),
+                ZoneTransition(datetime(1917, 4, 8, 2), GMT_0, BST),
+                ZoneTransition(datetime(2016, 3, 27, 1), GMT_1, IST_1),
+                ZoneTransition(datetime(2016, 10, 30, 2), IST_1, GMT_1),
+                ZoneTransition(datetime(2487, 3, 30, 1), GMT_1, IST_1),
+                ZoneTransition(datetime(2487, 10, 26, 2), IST_1, GMT_1),
+            ]
+
+        def _Europe_Lisbon():
+            WET = ZoneOffset("WET", ZERO, ZERO)
+            WEST = ZoneOffset("WEST", ONE_H, ONE_H)
+            CET = ZoneOffset("CET", ONE_H, ZERO)
+            CEST = ZoneOffset("CEST", timedelta(seconds=7200), ONE_H)
+
+            return [
+                ZoneTransition(datetime(1992, 3, 29, 1), WET, WEST),
+                ZoneTransition(datetime(1992, 9, 27, 2), WEST, CET),
+                ZoneTransition(datetime(1993, 3, 28, 2), CET, CEST),
+                ZoneTransition(datetime(1993, 9, 26, 3), CEST, CET),
+                ZoneTransition(datetime(1996, 3, 31, 2), CET, WEST),
+                ZoneTransition(datetime(1996, 10, 27, 2), WEST, WET),
+            ]
+
+        def _Europe_London():
+            LMT = ZoneOffset("LMT", timedelta(seconds=-75), ZERO)
+            GMT = ZoneOffset("GMT", ZERO, ZERO)
+            BST = ZoneOffset("BST", ONE_H, ONE_H)
+
+            return [
+                ZoneTransition(datetime(1847, 12, 1), LMT, GMT),
+                ZoneTransition(datetime(2005, 3, 27, 1), GMT, BST),
+                ZoneTransition(datetime(2005, 10, 30, 2), BST, GMT),
+                ZoneTransition(datetime(2043, 3, 29, 1), GMT, BST),
+                ZoneTransition(datetime(2043, 10, 25, 2), BST, GMT),
+            ]
+
+        def _Pacific_Kiritimati():
+            LMT = ZoneOffset("LMT", timedelta(seconds=-37760), ZERO)
+            N1040 = ZoneOffset("-1040", timedelta(seconds=-38400), ZERO)
+            N10 = ZoneOffset("-10", timedelta(seconds=-36000), ZERO)
+            P14 = ZoneOffset("+14", timedelta(seconds=50400), ZERO)
+
+            # This is literally every transition in Christmas Island history
+            return [
+                ZoneTransition(datetime(1901, 1, 1), LMT, N1040),
+                ZoneTransition(datetime(1979, 10, 1), N1040, N10),
+                # They skipped December 31, 1994
+                ZoneTransition(datetime(1994, 12, 31), N10, P14),
+            ]
+
+        return {
+            "Africa/Abidjan": _Africa_Abidjan(),
+            "Africa/Casablanca": _Africa_Casablanca(),
+            "America/Los_Angeles": _America_Los_Angeles(),
+            "America/Santiago": _America_Santiago(),
+            "Australia/Sydney": _Australia_Sydney(),
+            "Asia/Tokyo": _Asia_Tokyo(),
+            "Europe/Dublin": _Europe_Dublin(),
+            "Europe/Lisbon": _Europe_Lisbon(),
+            "Europe/London": _Europe_London(),
+            "Pacific/Kiritimati": _Pacific_Kiritimati(),
+        }
+
+    return _zone_dump_data()
+
+
+@functools_cache
+def transition_examples():
+    zonedump_data = get_zonedump_data()
+    return tuple(zonedump_data.items())
+
+
+####
+# Tests
+
+
+@set_tzpath((), block_tzdata=True)
+def test_no_tz_data():
+    """Test what happens when no TZ data is available."""
+    tz.gettz.cache_clear()
+    NYC = tz.gettz("America/New_York")
+    assert NYC is None
+
+
+def test_tzpath_setting(tmp_path):
+    """Ensure that setting tz.TZPATH changes where `tz.gettz` searches."""
+    if six.PY2:
+        tmp_path = str(tmp_path)
+
+    with set_tzpath([tmp_path]):
+        _copy_resource_to(
+            "liliput_tzif", os.path.join(str(tmp_path), "Fictional", "Liliput")
+        )
+        tz.gettz.cache_clear()
+
+        fiction_land = tz.gettz("Fictional/Liliput")
+
+        assert fiction_land is not None
+
+
+@pytest.mark.parametrize(
+    "dt, errtype",
+    [
+        # Should fail if tzinfo is not `self`
+        (datetime(2019, 1, 1, tzinfo=tz.UTC), ValueError),
+        (datetime(2019, 1, 1), ValueError),
+        # Only works with `datetime`
+        (date(2019, 1, 1), TypeError),
+        (time(0), TypeError),
+        (0, TypeError),
+        ("2019-01-01", TypeError),
+    ],
+)
+def test_fromutc_errors(dt, errtype):
+    """tzinfo.fromutc invocations that raise an error."""
+    zone = tz.gettz("Europe/London")  # Any zone should work
+    with pytest.raises(errtype):
+        zone.fromutc(dt)
+
+
+@as_list
+def _get_unambiguous_transitions():
+    for key, zone_transitions in transition_examples():
+        for zone_transition in zone_transitions:
+            # key, datetime, fold, offset
+            yield (
+                key,
+                zone_transition.transition - timedelta(days=2),
+                0,
+                zone_transition.offset_before,
+            )
+            yield (
+                key,
+                zone_transition.transition + timedelta(days=2),
+                0,
+                zone_transition.offset_after,
+            )
+
+
+@pytest.mark.parametrize("zoneinfo_cache", ["v1", "slim", "fat"], indirect=True)
+@pytest.mark.parametrize(
+    "transition", _get_unambiguous_transitions(), indirect=True
+)
+def test_unambiguous(transition):
+    """Test times that are *not* ambiguous."""
+    tzi = tz.gettz(transition.key)
+    dt = transition.dt.replace(tzinfo=tzi)
+
+    assert dt.tzname() == transition.offset.tzname
+    assert dt.utcoffset() == transition.offset.utcoffset
+    assert dt.dst() == transition.offset.dst
+
+
+@as_list
+def _get_folds_and_gaps():
+    for key, zone_transitions in transition_examples():
+        for zt in zone_transitions:
+            if not zt.fold and not zt.gap:
+                continue
+            test_group = "fold" if zt.fold else "gap"
+
+            # Cases are of the form key, dt, fold, offset
+            dt = zt.anomaly_start - timedelta(seconds=1)
+            yield (key, dt, 0, zt.offset_before)
+            yield (key, dt, 1, zt.offset_before)
+
+            dt = zt.anomaly_start
+            yield (key, dt, 0, zt.offset_before)
+            yield (key, dt, 1, zt.offset_after)
+
+            dt = zt.anomaly_start + timedelta(seconds=1)
+            yield (key, dt, 0, zt.offset_before)
+            yield (key, dt, 1, zt.offset_after)
+
+            dt = zt.anomaly_end - timedelta(seconds=1)
+            yield (key, dt, 0, zt.offset_before)
+            yield (key, dt, 1, zt.offset_after)
+
+            dt = zt.anomaly_end
+            yield (key, dt, 0, zt.offset_after)
+            yield (key, dt, 1, zt.offset_after)
+
+            dt = zt.anomaly_end + timedelta(seconds=1)
+            yield (key, dt, 0, zt.offset_after)
+            yield (key, dt, 1, zt.offset_after)
+
+
+@pytest.mark.parametrize("zoneinfo_cache", ["v1", "slim", "fat"], indirect=True)
+@pytest.mark.parametrize("transition", _get_folds_and_gaps(), indirect=True)
+def test_gaps_and_folds(transition):
+    """Test times that are ambiguous."""
+    tzi = tz.gettz(transition.key)
+    dt = tz.enfold(transition.dt.replace(tzinfo=tzi), transition.fold)
+
+    assert dt.tzname() == transition.offset.tzname
+    assert dt.utcoffset() == transition.offset.utcoffset
+    assert dt.dst() == transition.offset.dst
+
+
+@as_list
+def _get_folds_from_utc():
+    for key, zone_transitions in transition_examples():
+        for zt in zone_transitions:
+            if not zt.fold:
+                continue
+            dt_utc = zt.transition_utc
+            # key, dt_utc, expected_fold, offset
+            yield (key, dt_utc - SECOND, 0, None)
+            yield (key, dt_utc + SECOND, 1, None)
+
+
+@pytest.mark.parametrize("zoneinfo_cache", ["v1", "slim", "fat"], indirect=True)
+@pytest.mark.parametrize("transition", _get_folds_from_utc(), indirect=True)
+def test_folds_from_utc(transition):
+    tzi = tz.gettz(transition.key)
+    dt = transition.dt.astimezone(tzi)
+
+    assert getattr(dt, "fold", 0) == transition.fold
+
+
+def test_time_fixed_offset():
+    utc = tz.gettz("UTC")
+    assert isinstance(utc, tz.tzfile)
+
+    t = time(11, 1, tzinfo=utc)
+    assert t.utcoffset() == ZERO
+
+
+def test_time_varying_offset():
+    tzi = tz.gettz("America/New_York")
+    t = time(11, 1, tzinfo=tzi)
+
+    assert t.utcoffset() is None
+    assert t.tzname() is None
+    assert t.dst() is None
+
+
+@functools_cache
+def weirdzone_test_cases():
+    _real_cases = {"offset": [], "utc": [], "varying_zones": []}
+    cases = {}
+
+    def add_cases(f):
+        cases["offset"] = []
+        cases["utc"] = []
+        cases["varying_zones"] = []
+        f()
+
+        case_found = False
+        for key, values in cases.items():
+            case_found = True
+            id_base = f.__name__.strip("_") + "-%s"
+            for i, value in enumerate(values):
+                _real_cases[key].append(pytest.param(*value, id=id_base % i))
+
+        if not case_found:  # pragma: nocover
+            raise ValueError("%s did not add any tests!" % f)
+
+    @add_cases
+    def _one_transition():
+        LMT = ZoneOffset("LMT", -timedelta(hours=6, minutes=31, seconds=2))
+        STD = ZoneOffset("STD", -timedelta(hours=6))
+
+        transitions = [
+            ZoneTransition(datetime(1883, 6, 9, 14), LMT, STD),
+        ]
+
+        after = "STD6"
+
+        zf = construct_zone(transitions, after)
+        zi = tz.tzfile(zf, key="Etc/One_Transition")
+        cases["varying_zones"].append((zi,))
+
+        dt0 = datetime(1883, 6, 9, 1, tzinfo=zi)
+        dt1 = datetime(1883, 6, 10, 1, tzinfo=zi)
+
+        for dt, offset in [(dt0, LMT), (dt1, STD)]:
+            dt = dt.replace(tzinfo=zi)
+            cases["offset"].append((dt, offset))
+
+        dts = [
+            (
+                datetime(1883, 6, 9, 1),
+                (
+                    datetime(1883, 6, 9, 7, 31, 2, tzinfo=tz.UTC)
+                    if SUPPORTS_SUB_MINUTE_OFFSETS
+                    else datetime(1883, 6, 9, 7, 31, tzinfo=tz.UTC)
+                ),
+            ),
+            (
+                datetime(2010, 4, 1, 12),
+                datetime(2010, 4, 1, 18, tzinfo=tz.UTC),
+            ),
+        ]
+
+        for dt_naive, dt_utc in dts:
+            cases["utc"].append((dt_naive.replace(tzinfo=zi), dt_utc))
+
+    @add_cases
+    def _one_transition_fold():
+        # A zone whose only transition moves the offset backwards, so the
+        # fold it creates has no earlier transition to compare against.
+        AAA = ZoneOffset("AAA", ZERO)
+        BBB = ZoneOffset("BBB", -3 * ONE_H)
+
+        transitions = [
+            ZoneTransition(datetime(1976, 12, 1), AAA, BBB),
+        ]
+
+        after = "BBB3"
+
+        zf = construct_zone(transitions, after)
+        zi = tz.tzfile(zf, key="Etc/One_Transition_Fold")
+        cases["varying_zones"].append((zi,))
+
+        dts = [
+            (datetime(1976, 11, 30, 20), datetime(1976, 11, 30, 20), 0),
+            (datetime(1976, 11, 30, 22), datetime(1976, 11, 30, 22), 0),
+            (datetime(1976, 11, 30, 21), datetime(1976, 12, 1, 0), 1),
+            (datetime(1976, 11, 30, 22), datetime(1976, 12, 1, 1), 1),
+            (datetime(1976, 11, 30, 23, 59), datetime(1976, 12, 1, 2, 59), 1),
+            (datetime(1976, 12, 1), datetime(1976, 12, 1, 3), 0),
+            (datetime(2020, 1, 1), datetime(2020, 1, 1, 3), 0),
+        ]
+
+        for dt_naive, dt_utc, fold in dts:
+            dt = tz.enfold(dt_naive.replace(tzinfo=zi), fold=fold)
+            cases["utc"].append((dt, dt_utc.replace(tzinfo=tz.UTC)))
+
+    @add_cases
+    def _last_transition_fold_before_tzstr():
+        # Like America/Ciudad_Juarez in slim builds: the last explicit
+        # transition moves the offset backwards, and the TZ string that
+        # takes over after it has a DST rule of its own.
+        LMT = ZoneOffset("LMT", -timedelta(hours=7))
+        CST = ZoneOffset("CST", -6 * ONE_H)
+        MST = ZoneOffset("MST", -7 * ONE_H)
+        MDT = ZoneOffset("MDT", -6 * ONE_H, ONE_H)
+
+        transitions = [
+            ZoneTransition(datetime(2000, 1, 1), LMT, CST),
+            ZoneTransition(datetime(2022, 11, 30), CST, MST),
+        ]
+
+        after = "MST7MDT,M3.2.0,M11.1.0"
+
+        zf = construct_zone(transitions, after)
+        zi = tz.tzfile(zf, key="Etc/Last_Transition_Fold")
+        cases["varying_zones"].append((zi,))
+
+        dts = [
+            (datetime(2022, 11, 29, 23, 30), datetime(2022, 11, 30, 5, 30), 0),
+            (datetime(2022, 11, 29, 23), datetime(2022, 11, 30, 6), 1),
+            (datetime(2022, 11, 29, 23, 30), datetime(2022, 11, 30, 6, 30), 1),
+            (datetime(2022, 11, 30, 0, 30), datetime(2022, 11, 30, 7, 30), 0),
+            (datetime(2023, 7, 1, 12), datetime(2023, 7, 1, 18), 0),
+        ]
+
+        for dt_naive, dt_utc, fold in dts:
+            dt = tz.enfold(dt_naive.replace(tzinfo=zi), fold=fold)
+            cases["utc"].append((dt, dt_utc.replace(tzinfo=tz.UTC)))
+
+    @add_cases
+    def _last_transition_inside_tzstr_dst():
+        # Like America/Nuuk in slim builds: the last explicit transition is a
+        # change from DST to standard time with the same offset, which falls
+        # inside a DST period that the TZ string would otherwise give.
+        STD3 = ZoneOffset("-03", -3 * ONE_H)
+        DST2 = ZoneOffset("-02", -2 * ONE_H, ONE_H)
+        STD2 = ZoneOffset("-02", -2 * ONE_H)
+
+        transitions = [
+            ZoneTransition(datetime(2023, 3, 25, 22), STD3, DST2),
+            ZoneTransition(datetime(2023, 10, 28, 23), DST2, STD2),
+        ]
+
+        after = "<-02>2<-01>,M3.5.0/-1,M10.5.0/0"
+
+        zf = construct_zone(transitions, after)
+        zi = tz.tzfile(zf, key="Etc/Last_Transition_Inside_TZStr_DST")
+        cases["varying_zones"].append((zi,))
+
+        for dt, offset in [
+            (datetime(2023, 10, 28, 22, 30), DST2),
+            (datetime(2023, 10, 28, 23), STD2),
+            (datetime(2023, 10, 28, 23, 30), STD2),
+            (datetime(2023, 10, 29, 1), STD2),
+        ]:
+            for fold in (0, 1):
+                dt_fold = tz.enfold(dt.replace(tzinfo=zi), fold=fold)
+                cases["offset"].append((dt_fold, offset))
+
+        dts = [
+            (datetime(2023, 10, 28, 22, 30), datetime(2023, 10, 29, 0, 30)),
+            (datetime(2023, 10, 28, 23), datetime(2023, 10, 29, 1)),
+            (datetime(2023, 10, 28, 23, 30), datetime(2023, 10, 29, 1, 30)),
+            (datetime(2023, 10, 29, 1), datetime(2023, 10, 29, 3)),
+            # From here on, the TZ string applies
+            (datetime(2024, 7, 1, 12), datetime(2024, 7, 1, 13)),
+        ]
+
+        for dt_naive, dt_utc in dts:
+            cases["utc"].append(
+                (dt_naive.replace(tzinfo=zi), dt_utc.replace(tzinfo=tz.UTC))
+            )
+
+    @add_cases
+    def _last_transition_same_offset_as_tzstr():
+        # Like Africa/Casablanca in the rearguard format: the last explicit
+        # transition goes to +01 as DST, and the TZ string that follows it
+        # describes +01 as (negative) DST from a standard offset of +02. The
+        # offset is the same either way, so times in the gap before it get
+        # the TZ string's answer, the same as the times after the gap.
+        STD = ZoneOffset("+00", ZERO)
+        DST = ZoneOffset("+01", ONE_H, ONE_H)
+        AFTER = ZoneOffset("+01", ONE_H, -ONE_H)
+
+        transitions = [
+            ZoneTransition(datetime(2087, 3, 1, 3), DST, STD),
+            ZoneTransition(datetime(2087, 5, 11, 2), STD, DST),
+        ]
+
+        after = "XXX-2<+01>-1,0/0,J365/23"
+
+        zf = construct_zone(transitions, after)
+        zi = tz.tzfile(zf, key="Etc/Last_Transition_Same_Offset_As_TZStr")
+        cases["varying_zones"].append((zi,))
+
+        for dt, fold, offset in [
+            (datetime(2087, 5, 11, 1, 30), 0, STD),
+            (datetime(2087, 5, 11, 2, 30), 0, STD),
+            (datetime(2087, 5, 11, 2, 30), 1, AFTER),
+            (datetime(2087, 5, 11, 3, 30), 0, AFTER),
+        ]:
+            cases["offset"].append(
+                (tz.enfold(dt.replace(tzinfo=zi), fold), offset)
+            )
+
+    @add_cases
+    def _one_transition_zone_dst():
+        DST = ZoneOffset("DST", ONE_H, ONE_H)
+        transitions = [
+            ZoneTransition(datetime(1970, 1, 1), DST, DST),
+        ]
+
+        after = "STD0DST-1,0/0,J365/25"
+
+        zf = construct_zone(transitions, after)
+        zi = tz.tzfile(zf, key="Etc/One_Zone_DST")
+        cases["varying_zones"].append((zi,))
+
+        dts = [
+            datetime(1900, 3, 1),
+            datetime(1965, 9, 12),
+            datetime(1970, 1, 1),
+            datetime(2010, 11, 3),
+            datetime(2040, 1, 1),
+        ]
+
+        for dt in dts:
+            dt = dt.replace(tzinfo=zi)
+            cases["offset"].append((dt, DST))
+
+    @add_cases
+    def _no_tzstr_zone():
+        STD = ZoneOffset("STD", ONE_H, ZERO)
+        DST = ZoneOffset("DST", 2 * ONE_H, ONE_H)
+
+        transitions = []
+        for year in range(1996, 2000):
+            transitions.append(
+                ZoneTransition(datetime(year, 3, 1, 2), STD, DST)
+            )
+            transitions.append(
+                ZoneTransition(datetime(year, 11, 1, 2), DST, STD)
+            )
+
+        after = ""
+
+        zf = construct_zone(transitions, after)
+
+        zi = tz.tzfile(zf, key="Etc/No_TzStr")
+        cases["varying_zones"].append((zi,))
+        dts = [
+            (datetime(1995, 1, 1), STD),
+            (datetime(1996, 4, 1), DST),
+            (datetime(1996, 11, 2), STD),
+            (datetime(2001, 1, 1), STD),
+        ]
+
+        for dt, offset in dts:
+            dt = dt.replace(tzinfo=zi)
+            cases["offset"].append((dt, offset))
+
+    @add_cases
+    def _tz_no_transitions_before_only():
+        # From RFC 8536 Section 3.2:
+        #
+        #   If there are no transitions, local time for all timestamps is
+        #   specified by the TZ string in the footer if present and nonempty;
+        #   otherwise, it is specified by time type 0.
+
+        offsets = [
+            ZoneOffset("STD", ZERO, ZERO),
+            ZoneOffset("DST", ONE_H, ONE_H),
+        ]
+
+        for offset in offsets:
+            # Phantom transition to set time type 0.
+            transitions = [
+                ZoneTransition(None, offset, offset),
+            ]
+
+            after = ""
+
+            zf = construct_zone(transitions, after)
+            zi = tz.tzfile(zf, key="Etc/No_Transitions_%s" % offset.tzname)
+
+            dts = [
+                datetime(1900, 1, 1),
+                datetime(1970, 1, 1),
+                datetime(2000, 1, 1),
+                time(12, 0, 0),
+            ]
+
+            for dt in dts:
+                cases["offset"].append((dt.replace(tzinfo=zi), offset))
+
+    @add_cases
+    def _very_large_timestamp_zone():
+        """Tests using a zone with transitions very far in the past and future.
+
+        Particularly, this is a concern if something:
+
+            1. Attempts to call ``datetime.timestamp`` for a datetime outside
+               of ``[datetime.min, datetime.max]``.
+            2. Attempts to construct a timedelta outside of
+               ``[timedelta.min, timedelta.max]``.
+
+        This actually occurs "in the wild", as some time zones on Ubuntu (at
+        least as of 2020) have an initial transition added at ``-2**58``.
+        """
+
+        LMT = ZoneOffset("LMT", timedelta(seconds=-968))
+        GMT = ZoneOffset("GMT", ZERO)
+
+        transitions = [
+            (-(1 << 62), LMT, LMT),
+            ZoneTransition(datetime(1912, 1, 1), LMT, GMT),
+            ((1 << 62), GMT, GMT),
+        ]
+
+        after = "GMT0"
+
+        zf = construct_zone(transitions, after)
+        zi = tz.tzfile(zf, key="Etc/Large_Transitions")
+
+        cases["varying_zones"].append((zi,))
+
+        offset_cases = [
+            (datetime.min, LMT),
+            (datetime.max, GMT),
+            (datetime(1911, 12, 31), LMT),
+            (datetime(1912, 1, 2), GMT),
+        ]
+
+        for dt_naive, offset in offset_cases:
+            dt = dt_naive.replace(tzinfo=zi)
+            cases["offset"].append((dt, offset))
+
+        if SUPPORTS_SUB_MINUTE_OFFSETS:
+            utc_cases = [
+                (datetime.min, datetime.min + timedelta(seconds=968)),
+                (datetime(1898, 12, 31, 23, 43, 52), datetime(1899, 1, 1)),
+                (
+                    datetime(1911, 12, 31, 23, 59, 59, 999999),
+                    datetime(1912, 1, 1, 0, 16, 7, 999999),
+                ),
+                (
+                    datetime(1912, 1, 1, 0, 16, 8),
+                    (datetime(1912, 1, 1, 0, 16, 8)),
+                ),
+                (datetime(1970, 1, 1), datetime(1970, 1, 1)),
+                (datetime.max, datetime.max),
+            ]
+        else:
+            utc_cases = [
+                (datetime.min, datetime.min + timedelta(seconds=960)),
+                (datetime(1898, 12, 31, 23, 44), datetime(1899, 1, 1)),
+                (
+                    datetime(1911, 12, 31, 23, 59, 59, 999999),
+                    datetime(1912, 1, 1, 0, 15, 59, 999999),
+                ),
+                (
+                    datetime(1912, 1, 1, 0, 16, 8),
+                    (datetime(1912, 1, 1, 0, 16, 8)),
+                ),
+                (datetime(1970, 1, 1), datetime(1970, 1, 1)),
+                (datetime.max, datetime.max),
+            ]
+
+        for naive_dt, naive_dt_utc in utc_cases:
+            dt = naive_dt.replace(tzinfo=zi)
+            dt_utc = naive_dt_utc.replace(tzinfo=tz.UTC)
+            cases["utc"].append((dt, dt_utc))
+
+    @add_cases
+    def _fixed_offset_phantom_transition_zone():
+        """A zone with a phantom transition from UTC -> UTC."""
+        UTC = ZoneOffset("UTC", ZERO, ZERO)
+
+        transitions = [ZoneTransition(datetime(1970, 1, 1), UTC, UTC)]
+
+        after = "UTC0"
+        zf = construct_zone(transitions, after)
+        zi = tz.tzfile(zf, key="Etc/Phantom_UTC")
+
+        cases["offset"].append((datetime(2020, 1, 1, tzinfo=zi), UTC))
+        cases["offset"].append((time(0, tzinfo=zi), UTC))
+
+    NORMAL = 0
+    FOLD = 1
+    GAP = 2
+
+    def add_tzstr_tests(tzstr, test_cases, varying=True):
+        zi = zone_from_tzstr(tzstr)
+        if varying:
+            cases["varying_zones"].append((zi,))
+
+        for dt_naive, offset, dt_type in test_cases:
+            dt = dt_naive.replace(tzinfo=zi)
+            cases["offset"].append((dt, offset))
+            if dt_type == GAP:
+                continue
+
+            dt_utc = (dt_naive - offset.raw_utcoffset).replace(tzinfo=tz.UTC)
+            cases["utc"].append((dt, dt_utc))
+
+    @add_cases
+    def _tzstr_standard_est5edt():
+        # Transition to EDT on the 2nd Sunday in March at 4 AM, and
+        # transition back on the first Sunday in November at 3AM
+        tzstr = "EST5EDT,M3.2.0/4:00,M11.1.0/3:00"
+
+        EST = ZoneOffset("EST", timedelta(hours=-5), ZERO)
+        EDT = ZoneOffset("EDT", timedelta(hours=-4), ONE_H)
+
+        add_tzstr_tests(
+            tzstr,
+            (
+                (datetime(2019, 3, 9), EST, NORMAL),
+                (datetime(2019, 3, 10, 3, 59), EST, NORMAL),
+                (datetime(2019, 3, 10, 4, 0), EST, GAP),
+                (tz.enfold(datetime(2019, 3, 10, 4, 0), 1), EDT, GAP),
+                (tz.enfold(datetime(2019, 3, 10, 4, 1), 0), EST, GAP),
+                (tz.enfold(datetime(2019, 3, 10, 4, 1), 1), EDT, GAP),
+                (datetime(2019, 11, 2), EDT, NORMAL),
+                (datetime(2019, 11, 3, 1, 59), EDT, NORMAL),
+                (datetime(2019, 11, 3, 2, 0), EDT, FOLD),
+                (tz.enfold(datetime(2019, 11, 3, 2, 0), 1), EST, FOLD),
+                (datetime(2020, 3, 8, 3, 59), EST, NORMAL),
+                (datetime(2020, 3, 8, 4, 0), EST, GAP),
+                (tz.enfold(datetime(2020, 3, 8, 4, 0), 1), EDT, GAP),
+                (tz.enfold(datetime(2020, 11, 1, 1, 59), 1), EDT, NORMAL),
+                (tz.enfold(datetime(2020, 11, 1, 2, 0), 0), EDT, FOLD),
+                (tz.enfold(datetime(2020, 11, 1, 2, 0), 1), EST, FOLD),
+            ),
+        )
+
+    @add_cases
+    def _tzstr_gmt0bst1():
+        # Transition to BST happens on the last Sunday in March at 1 AM GMT
+        # and the transition back happens the last Sunday in October at 2AM BST
+        tzstr = "GMT0BST-1,M3.5.0/1:00,M10.5.0/2:00"
+
+        GMT = ZoneOffset("GMT", ZERO, ZERO)
+        BST = ZoneOffset("BST", ONE_H, ONE_H)
+
+        add_tzstr_tests(
+            tzstr,
+            (
+                (datetime(2019, 3, 30), GMT, NORMAL),
+                (datetime(2019, 3, 31, 0, 59), GMT, NORMAL),
+                (datetime(2019, 3, 31, 2, 0), BST, NORMAL),
+                (datetime(2019, 10, 26), BST, NORMAL),
+                (tz.enfold(datetime(2019, 10, 27, 0, 59), 1), BST, NORMAL),
+                (tz.enfold(datetime(2019, 10, 27, 1, 0), 0), BST, GAP),
+                (tz.enfold(datetime(2019, 10, 27, 2, 0), 1), GMT, GAP),
+                (datetime(2020, 3, 29, 0, 59), GMT, NORMAL),
+                (datetime(2020, 3, 29, 2, 0), BST, NORMAL),
+                (tz.enfold(datetime(2020, 10, 25, 0, 59), 1), BST, NORMAL),
+                (tz.enfold(datetime(2020, 10, 25, 1, 0), 0), BST, FOLD),
+                (tz.enfold(datetime(2020, 10, 25, 2, 0), 1), GMT, NORMAL),
+            ),
+        )
+
+    @add_cases
+    def _tzstr_aest10_aedt():
+        # Austrialian time zone - DST start is chronologically first
+        tzstr = "AEST-10AEDT,M10.1.0/2,M4.1.0/3"
+
+        AEST = ZoneOffset("AEST", timedelta(hours=10), ZERO)
+        AEDT = ZoneOffset("AEDT", timedelta(hours=11), ONE_H)
+
+        add_tzstr_tests(
+            tzstr,
+            (
+                (datetime(2019, 4, 6), AEDT, NORMAL),
+                (datetime(2019, 4, 7, 1, 59), AEDT, NORMAL),
+                (tz.enfold(datetime(2019, 4, 7, 1, 59), 1), AEDT, NORMAL),
+                (tz.enfold(datetime(2019, 4, 7, 2, 0), 0), AEDT, FOLD),
+                (tz.enfold(datetime(2019, 4, 7, 2, 1), 0), AEDT, FOLD),
+                (tz.enfold(datetime(2019, 4, 7, 2, 0), 1), AEST, FOLD),
+                (tz.enfold(datetime(2019, 4, 7, 2, 1), 1), AEST, FOLD),
+                (tz.enfold(datetime(2019, 4, 7, 3, 0), 0), AEST, NORMAL),
+                (tz.enfold(datetime(2019, 4, 7, 3, 0), 1), AEST, NORMAL),
+                (datetime(2019, 10, 5, 0), AEST, NORMAL),
+                (datetime(2019, 10, 6, 1, 59), AEST, NORMAL),
+                (tz.enfold(datetime(2019, 10, 6, 2, 0), 0), AEST, GAP),
+                (tz.enfold(datetime(2019, 10, 6, 2, 0), 1), AEDT, GAP),
+                (datetime(2019, 10, 6, 3, 0), AEDT, NORMAL),
+            ),
+        )
+
+    @add_cases
+    def _tzstr_negative_dst():
+        # Irish time zone - negative DST
+        tzstr = "IST-1GMT0,M10.5.0,M3.5.0/1"
+
+        GMT = ZoneOffset("GMT", ZERO, -ONE_H)
+        IST = ZoneOffset("IST", ONE_H, ZERO)
+
+        add_tzstr_tests(
+            tzstr,
+            (
+                (datetime(2019, 3, 30), GMT, NORMAL),
+                (datetime(2019, 3, 31, 0, 59), GMT, NORMAL),
+                (datetime(2019, 3, 31, 2, 0), IST, NORMAL),
+                (datetime(2019, 10, 26), IST, NORMAL),
+                (tz.enfold(datetime(2019, 10, 27, 0, 59), 1), IST, NORMAL),
+                (tz.enfold(datetime(2019, 10, 27, 1, 0), 0), IST, FOLD),
+                (tz.enfold(datetime(2019, 10, 27, 1, 0), 1), GMT, FOLD),
+                (tz.enfold(datetime(2019, 10, 27, 2, 0), 1), GMT, NORMAL),
+                (datetime(2020, 3, 29, 0, 59), GMT, NORMAL),
+                (datetime(2020, 3, 29, 2, 0), IST, NORMAL),
+                (tz.enfold(datetime(2020, 10, 25, 0, 59), 1), IST, NORMAL),
+                (tz.enfold(datetime(2020, 10, 25, 1, 0), 0), IST, FOLD),
+                (tz.enfold(datetime(2020, 10, 25, 2, 0), 1), GMT, NORMAL),
+            ),
+        )
+
+    @add_cases
+    def _tzstr_fixed_offset_quoted_numerical():
+        # Pacific/Kosrae: Fixed offset zone with a quoted numerical tzname
+        tzstr = "<+11>-11"
+
+        add_tzstr_tests(
+            tzstr,
+            (
+                (
+                    datetime(2020, 1, 1),
+                    ZoneOffset("+11", timedelta(hours=11)),
+                    NORMAL,
+                ),
+            ),
+            varying=False,
+        )
+
+    @add_cases
+    def _tzstr_quoted_std_and_dst_trans_at_24():
+        # Quoted STD and DST, transitions at 24:00
+        tzstr = "<-04>4<-03>,M9.1.6/24,M4.1.6/24"
+
+        M04 = ZoneOffset("-04", timedelta(hours=-4))
+        M03 = ZoneOffset("-03", timedelta(hours=-3), ONE_H)
+
+        add_tzstr_tests(
+            tzstr,
+            (
+                (datetime(2020, 5, 1), M04, NORMAL),
+                (datetime(2020, 11, 1), M03, NORMAL),
+            ),
+        )
+
+    @add_cases
+    def _tzstr_permanent_dst():
+        # Permanent daylight saving time is modeled with transitions at 0/0
+        # and J365/25, as mentioned in RFC 8536 Section 3.3.1
+        tzstr = "EST5EDT,0/0,J365/25"
+
+        EDT = ZoneOffset("EDT", timedelta(hours=-4), ONE_H)
+
+        add_tzstr_tests(
+            tzstr,
+            (
+                (datetime(2019, 1, 1), EDT, NORMAL),
+                (datetime(2019, 6, 1), EDT, NORMAL),
+                (datetime(2019, 12, 31, 23, 59, 59, 999999), EDT, NORMAL),
+                (datetime(2020, 1, 1), EDT, NORMAL),
+                (datetime(2020, 3, 1), EDT, NORMAL),
+                (datetime(2020, 6, 1), EDT, NORMAL),
+                (datetime(2020, 12, 31, 23, 59, 59, 999999), EDT, NORMAL),
+                (datetime(2400, 1, 1), EDT, NORMAL),
+                (datetime(2400, 3, 1), EDT, NORMAL),
+                (datetime(2400, 12, 31, 23, 59, 59, 999999), EDT, NORMAL),
+            ),
+        )
+
+    @add_cases
+    def _tzstr_transitions_on_julian_day():
+        # Transitions on March 1st and November 1st of each year
+        tzstr = "AAA3BBB,J60/12,J305/12"
+
+        AAA = ZoneOffset("AAA", timedelta(hours=-3))
+        BBB = ZoneOffset("BBB", timedelta(hours=-2), ONE_H)
+
+        add_tzstr_tests(
+            tzstr,
+            (
+                (datetime(2019, 1, 1), AAA, NORMAL),
+                (datetime(2019, 2, 28), AAA, NORMAL),
+                (datetime(2019, 3, 1, 11, 59), AAA, NORMAL),
+                (tz.enfold(datetime(2019, 3, 1, 12), 0), AAA, GAP),
+                (tz.enfold(datetime(2019, 3, 1, 12), 1), BBB, GAP),
+                (datetime(2019, 3, 1, 13), BBB, NORMAL),
+                (datetime(2019, 11, 1, 10, 59), BBB, NORMAL),
+                (tz.enfold(datetime(2019, 11, 1, 11), 0), BBB, FOLD),
+                (tz.enfold(datetime(2019, 11, 1, 11), 1), AAA, FOLD),
+                (datetime(2019, 11, 1, 12), AAA, NORMAL),
+                (datetime(2019, 12, 31, 23, 59, 59, 999999), AAA, NORMAL),
+                (datetime(2020, 1, 1), AAA, NORMAL),
+                (datetime(2020, 2, 29), AAA, NORMAL),
+                (datetime(2020, 3, 1, 11, 59), AAA, NORMAL),
+                (tz.enfold(datetime(2020, 3, 1, 12), 0), AAA, GAP),
+                (tz.enfold(datetime(2020, 3, 1, 12), 1), BBB, GAP),
+                (datetime(2020, 3, 1, 13), BBB, NORMAL),
+                (datetime(2020, 11, 1, 10, 59), BBB, NORMAL),
+                (tz.enfold(datetime(2020, 11, 1, 11), 0), BBB, FOLD),
+                (tz.enfold(datetime(2020, 11, 1, 11), 1), AAA, FOLD),
+                (datetime(2020, 11, 1, 12), AAA, NORMAL),
+                (datetime(2020, 12, 31, 23, 59, 59, 999999), AAA, NORMAL),
+            ),
+        )
+
+    @add_cases
+    def _tzstr_negative_transition_times():
+        # Taken from America/Godthab, this rule has a transition on the
+        # Saturday before the last Sunday of March and October, at 22:00
+        # and 23:00, respectively. This is encoded with negative start
+        # and end transition times.
+        tzstr = "<-03>3<-02>,M3.5.0/-2,M10.5.0/-1"
+
+        N03 = ZoneOffset("-03", timedelta(hours=-3))
+        N02 = ZoneOffset("-02", timedelta(hours=-2), ONE_H)
+
+        add_tzstr_tests(
+            tzstr,
+            (
+                (datetime(2020, 3, 27), N03, NORMAL),
+                (datetime(2020, 3, 28, 21, 59, 59), N03, NORMAL),
+                (tz.enfold(datetime(2020, 3, 28, 22), 0), N03, GAP),
+                (tz.enfold(datetime(2020, 3, 28, 22), 1), N02, GAP),
+                (datetime(2020, 3, 28, 23), N02, NORMAL),
+                (datetime(2020, 10, 24, 21), N02, NORMAL),
+                (tz.enfold(datetime(2020, 10, 24, 22), 0), N02, FOLD),
+                (tz.enfold(datetime(2020, 10, 24, 22), 1), N03, FOLD),
+                (datetime(2020, 10, 24, 23), N03, NORMAL),
+            ),
+        )
+
+    @add_cases
+    def _tzstr_minute_second_transition_times():
+        # Transition times with minutes and seconds
+        tzstr = "AAA3BBB,M3.2.0/01:30,M11.1.0/02:15:45"
+
+        AAA = ZoneOffset("AAA", timedelta(hours=-3))
+        BBB = ZoneOffset("BBB", timedelta(hours=-2), ONE_H)
+
+        add_tzstr_tests(
+            tzstr,
+            (
+                (datetime(2012, 3, 11, 1, 0), AAA, NORMAL),
+                (tz.enfold(datetime(2012, 3, 11, 1, 30), 0), AAA, GAP),
+                (tz.enfold(datetime(2012, 3, 11, 1, 30), 1), BBB, GAP),
+                (datetime(2012, 3, 11, 2, 30), BBB, NORMAL),
+                (datetime(2012, 11, 4, 1, 15, 44, 999999), BBB, NORMAL),
+                (tz.enfold(datetime(2012, 11, 4, 1, 15, 45), 0), BBB, FOLD),
+                (tz.enfold(datetime(2012, 11, 4, 1, 15, 45), 1), AAA, FOLD),
+                (datetime(2012, 11, 4, 2, 15, 45), AAA, NORMAL),
+            ),
+        )
+
+    return _real_cases
+
+
+def _fixed_offset_zone():
+    STD = ZoneOffset("STD", -5 * ONE_H)
+    return tz.tzfile(
+        construct_zone([ZoneTransition(datetime(2020, 1, 1), STD, STD)], "STD5")
+    )
+
+
+@pytest.mark.parametrize(
+    "dt",
+    [
+        datetime(2019, 12, 31, 23, 30),
+        datetime(2020, 1, 1),
+        datetime(2020, 1, 1, 0, 30),
+        datetime(2100, 1, 1),
+    ],
+)
+def test_fixed_offset_never_ambiguous_or_imaginary(dt):
+    """A fixed-offset zone has no ambiguous or imaginary times."""
+    zone = _fixed_offset_zone()
+    for fold in (0, 1):
+        dt_fold = tz.enfold(dt.replace(tzinfo=zone), fold=fold)
+        assert not zone.is_ambiguous(dt_fold)
+        assert not tz.datetime_ambiguous(dt_fold)
+        assert tz.datetime_exists(dt_fold)
+        assert dt_fold.utcoffset() == -5 * ONE_H
+
+
+@pytest.mark.parametrize(
+    "zone",
+    [
+        pytest.param(_fixed_offset_zone(), id="fixed"),
+        pytest.param(
+            tz.tzfile(
+                construct_zone(
+                    [
+                        ZoneTransition(
+                            datetime(2020, 11, 1, 2),
+                            ZoneOffset("DST", -4 * ONE_H, ONE_H),
+                            ZoneOffset("STD", -5 * ONE_H),
+                        )
+                    ],
+                    "STD5",
+                )
+            ),
+            id="varying",
+        ),
+    ],
+)
+def test_is_ambiguous_none(zone):
+    """is_ambiguous(None) is False, as it is for other tzinfo classes."""
+    assert zone.is_ambiguous(None) is False
+
+
+@pytest.mark.parametrize("dt, offset", weirdzone_test_cases()["offset"])
+def test_weirdzone_offsets(dt, offset):
+    assert dt.tzname() == offset.tzname
+    assert dt.utcoffset() == offset.utcoffset
+    assert dt.dst() == offset.dst
+
+
+@pytest.mark.parametrize("dt, dt_utc", weirdzone_test_cases()["utc"])
+def test_weirdzone_utc(dt, dt_utc):
+    assert dt.tzinfo is not None
+    assert dt.astimezone(tz.UTC) == dt_utc
+
+    # Comparisons between datetimes with the same tzinfo ignore fold, so
+    # also check the round trip back to UTC and, for ambiguous times, fold.
+    dt_act = dt_utc.astimezone(dt.tzinfo)
+    assert dt_act == dt
+    assert dt_act.astimezone(tz.UTC) == dt_utc
+    if tz.datetime_ambiguous(dt):
+        assert getattr(dt_act, "fold", 0) == getattr(dt, "fold", 0)
+
+
+@pytest.mark.parametrize("zone", weirdzone_test_cases()["varying_zones"])
+def test_weirdzone_time_none(zone):
+    t = time(12, 0, 0, tzinfo=zone)
+    assert t.tzname() is None
+    assert t.utcoffset() is None
+    assert t.dst() is None
+
+
+def test_empty_zone():
+    zf = construct_zone([], "")
+
+    with pytest.raises(ValueError):
+        tz.tzfile(zf)
+
+
+def test_tzfile_repr():
+    """When the key is specified with a file object, it should be used in the repr."""
+    GMT = ZoneOffset("GMT", ZERO, ZERO)
+    BST = ZoneOffset("BST", ONE_H, ONE_H)
+    zf = construct_zone(
+        [
+            ZoneTransition(datetime(2005, 3, 27, 1), GMT, BST),
+        ]
+    )
+    zi = tz.tzfile(zf, key="Europe/London")
+    assert "Europe/London" in repr(zi)
+
+
+def test_eq_no_transitions():
+    """Zones with no transitions must compare by their fixed offset."""
+    plus_five = zone_from_tzstr("<+05>-5")
+    minus_five = zone_from_tzstr("<-05>5")
+    utc = zone_from_tzstr("UTC0")
+
+    assert plus_five == zone_from_tzstr("<+05>-5")
+    assert plus_five != minus_five
+    assert plus_five != utc
+    assert minus_five != utc
+
+
+def test_eq_same_transitions_different_tzstr():
+    """Zones that differ only in the TZ string are not equal."""
+    STD = ZoneOffset("STD", ZERO)
+    DST = ZoneOffset("DST", ONE_H, ONE_H)
+    transitions = [ZoneTransition(datetime(2010, 3, 14, 2), STD, DST)]
+
+    with_rule = tz.tzfile(construct_zone(transitions, "STD0DST,M3.2.0,M11.1.0"))
+    same_rule = tz.tzfile(construct_zone(transitions, "STD0DST,M3.2.0,M11.1.0"))
+    no_rule = tz.tzfile(construct_zone(transitions, ""))
+
+    assert with_rule == same_rule
+    assert with_rule != no_rule
+
+
+@pytest.mark.parametrize(
+    "key",
+    [
+        "America",  # A directory
+        "America/",
+        "Fictional/Zone",
+        "Fictional",
+        "America/New_York\x00",  # Not a valid path
+        "America/../UTC",  # Not a valid package name
+        # Files in the tzdata package that are not TZif files
+        "__init__.py",
+        "America/__init__.py",
+        "zone.tab",
+        "tzdata.zi",
+        "leapseconds",
+        # Not encodable as a module or file name on some versions
+        "Am" + six.unichr(0xE9) + "rica/New_York",
+        "America/" + six.unichr(0xD800),
+        six.unichr(0xD800),
+    ],
+)
+def test_tzdata_bad_keys(key):
+    """Keys that do not name a zone in tzdata return None, not an error."""
+    pytest.importorskip("tzdata")
+    with set_tzpath(()):
+        tz.gettz.cache_clear()
+        assert tz.gettz(key) is None
+
+
+@pytest.mark.parametrize("strip", [1, 2, 4, 8])
+def test_truncated_footer(strip):
+    """A file cut off inside the TZ string footer must not hang."""
+    zf = construct_zone([], "EST5EDT,M3.2.0,M11.1.0")
+    data = zf.read()
+    assert data.endswith(b"\n")
+
+    with pytest.raises(ValueError):
+        tz.tzfile(six.BytesIO(data[:-strip]))
+
+
+def _zone_for_stream_tests():
+    STD = ZoneOffset("STD", -5 * ONE_H)
+    DST = ZoneOffset("DST", -4 * ONE_H, ONE_H)
+    return construct_zone(
+        [
+            ZoneTransition(datetime(2020, 3, 8, 2), STD, DST),
+            ZoneTransition(datetime(2020, 11, 1, 2), DST, STD),
+        ],
+        "STD5DST,M3.2.0,M11.1.0",
+    ).read()
+
+
+def test_tzfile_from_pipe():
+    """A zone can be read from a stream that cannot seek."""
+    data = _zone_for_stream_tests()
+    expected = tz.tzfile(six.BytesIO(data))
+
+    read_fd, write_fd = os.pipe()
+    os.write(write_fd, data)
+    os.close(write_fd)
+
+    # On Windows, pipes claim to be seekable even though they aren't.
+    with io.open(read_fd, "rb") as f:
+        zone = tz.tzfile(f, filename="pipe")
+
+    assert zone == expected
+    assert datetime(2030, 7, 1, tzinfo=zone).tzname() == "DST"
+
+
+def test_tzfile_from_read_only_object():
+    """A zone can be read from an object that only has a read() method."""
+
+    class ReadOnly(object):
+        def __init__(self, data):
+            self._stream = six.BytesIO(data)
+
+        def read(self, *args):
+            return self._stream.read(*args)
+
+    data = _zone_for_stream_tests()
+    zone = tz.tzfile(ReadOnly(data), filename="read-only")
+
+    assert zone == tz.tzfile(six.BytesIO(data))
+
+
+@pytest.fixture
+def tzpath_and_outside_zone(tmp_path):
+    """A TZPATH entry, and a zone in a sibling directory outside of it."""
+    STD = ZoneOffset("STD", ZERO)
+    data = construct_zone(
+        [ZoneTransition(datetime(2020, 1, 1), STD, STD)], "STD0"
+    ).read()
+
+    tzpath = tmp_path / "zoneinfo"
+    outside = tmp_path / "outside"
+    for directory in (tzpath / "Fictional", outside):
+        makedirs(str(directory))
+
+    (tzpath / "Fictional" / "Inside").write_bytes(data)
+    (outside / "Outside").write_bytes(data)
+
+    with set_tzpath((str(tzpath),), block_tzdata=True):
+        tz.gettz.cache_clear()
+        yield
+        tz.gettz.cache_clear()
+
+
+@pytest.mark.parametrize(
+    "key",
+    [
+        "../outside/Outside",
+        "Fictional/../../outside/Outside",
+        "./../outside/Outside",
+    ],
+)
+def test_gettz_key_outside_tzpath_is_an_error(tzpath_and_outside_zone, key):
+    with warnings.catch_warnings():
+        warnings.resetwarnings()
+        with pytest.raises(tz.DeprecatedTzKeyWarning):
+            tz.gettz(key)
+
+
+def test_gettz_key_outside_tzpath_can_be_allowed(tzpath_and_outside_zone):
+    with warnings.catch_warnings(record=True) as record:
+        warnings.resetwarnings()
+        warnings.simplefilter("always", category=tz.DeprecatedTzKeyWarning)
+        zone = tz.gettz("../outside/Outside")
+
+    assert isinstance(zone, tz.tzfile)
+    assert [w.category for w in record] == [tz.DeprecatedTzKeyWarning]
+    assert (
+        os.path.splitext(record[0].filename)[0] == os.path.splitext(__file__)[0]
+    )
+
+
+@pytest.mark.parametrize(
+    "key",
+    ["Fictional/Inside", "Fictional/../Fictional/Inside", "./Fictional/Inside"],
+)
+def test_gettz_key_inside_tzpath_does_not_warn(tzpath_and_outside_zone, key):
+    with warnings.catch_warnings():
+        warnings.resetwarnings()
+        warnings.simplefilter("error")
+        assert isinstance(tz.gettz(key), tz.tzfile)
+
+
+@pytest.mark.parametrize("version", [1, 2, 3, 4])
+@pytest.mark.parametrize(
+    "leap_seconds",
+    [
+        pytest.param((), id="no_leap_seconds"),
+        pytest.param(((78796800, 1), (94694401, 2)), id="leap_seconds"),
+        # Version 4 files may truncate the start of the leap second table, so
+        # that the first correction is not +1 or -1.
+        pytest.param(((1435708825, 26), (1483228826, 27)), id="truncated"),
+    ],
+)
+@pytest.mark.parametrize("indicators", [False, True])
+def test_leap_seconds_and_indicators(version, leap_seconds, indicators):
+    """Leap second records and indicators don't change how a zone behaves."""
+    STD = ZoneOffset("STD", -5 * ONE_H)
+    DST = ZoneOffset("DST", -4 * ONE_H, ONE_H)
+    transitions = [
+        ZoneTransition(datetime(2020, 3, 8, 2), STD, DST),
+        ZoneTransition(datetime(2020, 11, 1, 2), DST, STD),
+    ]
+    after = "STD5DST,M3.2.0,M11.1.0"
+
+    expected = tz.tzfile(construct_zone(transitions, after, version=version))
+    zone = tz.tzfile(
+        construct_zone(
+            transitions,
+            after,
+            version=version,
+            leap_seconds=leap_seconds,
+            indicators=indicators,
+        )
+    )
+
+    assert zone == expected
+    for dt_utc in [
+        datetime(2019, 12, 1, tzinfo=tz.UTC),
+        datetime(2020, 7, 1, tzinfo=tz.UTC),
+        datetime(2020, 11, 1, 5, 30, tzinfo=tz.UTC),
+        datetime(2020, 11, 1, 6, 30, tzinfo=tz.UTC),
+        datetime(2030, 7, 1, tzinfo=tz.UTC),
+    ]:
+        dt = dt_utc.astimezone(zone)
+        dt_expected = dt_utc.astimezone(expected)
+        assert dt.replace(tzinfo=None) == dt_expected.replace(tzinfo=None)
+        assert getattr(dt, "fold", 0) == getattr(dt_expected, "fold", 0)
+        assert dt.tzname() == dt_expected.tzname()
+        assert dt.utcoffset() == dt_expected.utcoffset()
+
+
+def _assert_constant_offset_around_new_year(zone, offset, years):
+    for year in years:
+        base = datetime(year, 12, 31, 18, tzinfo=tz.UTC)
+        for minutes in range(0, 12 * 60, 15):
+            dt_utc = base + timedelta(minutes=minutes)
+            dt = dt_utc.astimezone(zone)
+            assert dt.utcoffset() == offset, dt_utc
+            assert dt.astimezone(tz.UTC) == dt_utc
+
+            for fold in (0, 1):
+                wall = tz.enfold(dt, fold=fold)
+                assert wall.utcoffset() == offset, (wall, fold)
+                assert tz.datetime_exists(wall)
+                assert not tz.datetime_ambiguous(wall)
+
+
+@pytest.mark.parametrize(
+    "dt",
+    [
+        datetime(1, 1, 1, 0, 30),
+        datetime(1, 1, 1, 12),
+        datetime(1, 1, 5, 12),
+        datetime(9999, 12, 28, 6, 55),
+        datetime(9999, 12, 31, 12),
+        datetime(9999, 12, 31, 23, 30),
+    ],
+)
+@pytest.mark.parametrize(
+    "tz_str", ["EST5EDT,M3.2.0,M11.1.0", "<+00>0<+01>,0/0,J365/25"]
+)
+def test_tzstr_near_min_and_max_year(tz_str, dt):
+    """The rules for the years around year 1 and year 9999 don't break."""
+    zone = tz.tzfile(construct_zone([], tz_str))
+    for fold in (0, 1):
+        dt_fold = tz.enfold(dt.replace(tzinfo=zone), fold=fold)
+        assert dt_fold.utcoffset() is not None
+
+    dt_utc = dt.replace(tzinfo=tz.UTC)
+    try:
+        dt_utc.astimezone(zone)
+    except OverflowError:
+        # The local time is past the end of what datetime can represent
+        pass
+
+
+@pytest.mark.parametrize(
+    "tz_str",
+    [
+        # DST all year, written the way zic writes it: each year's DST period
+        # ends at the same instant as the next one starts.
+        "<+00>0<+01>,J1/0,J365/25",
+        # The same, with negative DST, as in the rearguard format for
+        # Africa/Casablanca.
+        "XXX-2<+01>-1,J1/0,J365/23",
+        # The same two, spelled the way zic actually writes them
+        "<+00>0<+01>,0/0,J365/25",
+        "XXX-2<+01>-1,0/0,J365/23",
+    ],
+)
+def test_tzstr_dst_all_year(tz_str):
+    """Rules whose transitions meet at the new year don't create a gap."""
+    zone = tz.tzfile(construct_zone([], tz_str))
+    _assert_constant_offset_around_new_year(zone, ONE_H, (2023, 2024, 2100))
+
+
+@pytest.mark.parametrize(
+    "tz_str, std_dts, dst_dts",
+    [
+        # "n" counts from 0, so day 10 is January 11th
+        (
+            "STD0DST-1,10/0,J100/0",
+            [datetime(2021, 1, 10, 12)],
+            [datetime(2021, 1, 11, 12)],
+        ),
+        # ... and it includes February 29th: day 59 is February 29th in leap
+        # years and March 1st otherwise
+        (
+            "STD0DST-1,59/0,300/0",
+            [datetime(2024, 2, 28, 12), datetime(2023, 2, 28, 12)],
+            [datetime(2024, 2, 29, 12), datetime(2023, 3, 1, 12)],
+        ),
+        # "Jn" counts from 1 and never counts February 29th, so J59 is always
+        # February 28th and J60 is always March 1st
+        (
+            "STD0DST-1,J59/0,J300/0",
+            [datetime(2024, 2, 27, 12), datetime(2023, 2, 27, 12)],
+            [datetime(2024, 2, 28, 12), datetime(2023, 2, 28, 12)],
+        ),
+        (
+            "STD0DST-1,J60/0,J300/0",
+            [datetime(2024, 2, 29, 12), datetime(2023, 2, 28, 12)],
+            [datetime(2024, 3, 1, 12), datetime(2023, 3, 1, 12)],
+        ),
+    ],
+)
+def test_tzstr_day_of_year_rules(tz_str, std_dts, dst_dts):
+    """The dates of "n" and "Jn" rules match POSIX (and glibc)."""
+    zone = tz.tzfile(construct_zone([], tz_str))
+    for dts, tzname in ((std_dts, "STD"), (dst_dts, "DST")):
+        for dt in dts:
+            assert dt.replace(tzinfo=zone).tzname() == tzname, dt
+            dt_utc = dt.replace(tzinfo=tz.UTC)
+            assert dt_utc.astimezone(zone).tzname() == tzname, dt_utc
+
+
+@pytest.mark.parametrize("version", [1, 2, 3])
+def test_truncated_file(version):
+    """A file cut off anywhere is either still valid or raises ValueError."""
+    STD = ZoneOffset("STD", -5 * ONE_H)
+    DST = ZoneOffset("DST", -4 * ONE_H, ONE_H)
+    zf = construct_zone(
+        [
+            ZoneTransition(datetime(2020, 3, 8, 2), STD, DST),
+            ZoneTransition(datetime(2020, 11, 1, 2), DST, STD),
+        ],
+        "STD5DST,M3.2.0,M11.1.0",
+        version=version,
+    )
+    data = zf.read()
+
+    for length in range(len(data)):
+        try:
+            tz.tzfile(six.BytesIO(data[:length]))
+        except ValueError:
+            pass
+
+
+def test_truncated_file_on_tzpath(tmp_path):
+    """gettz skips a truncated file on TZPATH like any other invalid file."""
+    STD = ZoneOffset("STD", ZERO)
+    data = construct_zone(
+        [ZoneTransition(datetime(2020, 1, 1), STD, STD)], "STD0"
+    ).read()
+
+    zone_dir = tmp_path / "Fictional"
+    zone_dir.mkdir()
+    # Cut off inside the header
+    (zone_dir / "Truncated").write_bytes(data[:30])
+
+    with set_tzpath((str(tmp_path),), block_tzdata=True):
+        tz.gettz.cache_clear()
+        assert tz.gettz("Fictional/Truncated") is None
+
+
+def _valid_tzif_data():
+    STD = ZoneOffset("STD", ZERO)
+    return construct_zone(
+        [ZoneTransition(datetime(2020, 1, 1), STD, STD)], "STD0"
+    ).read()
+
+
+def _unreadable_file(path):
+    path.write_bytes(_valid_tzif_data())
+    os.chmod(str(path), 0)
+    if os.access(str(path), os.R_OK):  # pragma: nocover
+        # e.g. running as root
+        pytest.skip("Cannot make a file unreadable here")
+
+
+INVALID_TZPATH_FILES = [
+    pytest.param(
+        lambda path: path.write_bytes(b"Not a TZif file\n"), id="not_tzif"
+    ),
+    pytest.param(
+        lambda path: path.write_bytes(_valid_tzif_data()[:30]), id="truncated"
+    ),
+    pytest.param(
+        _unreadable_file,
+        id="unreadable",
+        marks=pytest.mark.skipif(IS_WIN, reason="POSIX permissions"),
+    ),
+]
+
+
+@pytest.mark.parametrize("make_invalid", INVALID_TZPATH_FILES)
+def test_gettz_skips_invalid_file_on_tzpath(tmp_path, make_invalid):
+    """An invalid file on TZPATH falls through to the next TZPATH entry."""
+    first = tmp_path / "first" / "Fictional"
+    second = tmp_path / "second" / "Fictional"
+    for directory in (first, second):
+        makedirs(str(directory))
+
+    make_invalid(first / "Zone")
+    (second / "Zone").write_bytes(_valid_tzif_data())
+
+    tzpath = (str(tmp_path / "first"), str(tmp_path / "second"))
+    with set_tzpath(tzpath, block_tzdata=True):
+        zone = tz.gettz("Fictional/Zone")
+
+    assert isinstance(zone, tz.tzfile)
+    # On Windows the key's "/" ends up in the path as it is
+    assert os.path.normpath(zone._filename) == str(second / "Zone")
+
+
+@pytest.mark.parametrize("make_invalid", INVALID_TZPATH_FILES)
+def test_gettz_invalid_file_on_tzpath_falls_back_to_tzdata(
+    tmp_path, make_invalid
+):
+    """An invalid file on TZPATH falls through to the tzdata package."""
+    pytest.importorskip("tzdata")
+    with set_tzpath((), block_tzdata=False):
+        expected = tz.gettz("America/New_York")
+
+    makedirs(str(tmp_path / "America"))
+    make_invalid(tmp_path / "America" / "New_York")
+
+    with set_tzpath((str(tmp_path),), block_tzdata=False):
+        zone = tz.gettz("America/New_York")
+
+    assert isinstance(zone, tz.tzfile)
+    assert zone == expected
+    assert zone._filename != str(tmp_path / "America" / "New_York")
+
+
+@pytest.mark.skipif(IS_WIN, reason="The Windows registry has these names")
+@pytest.mark.parametrize("name", ["UTC", "GMT"])
+def test_gettz_utc_without_time_zone_data(name):
+    """With no time zone data at all, "UTC" and "GMT" are still UTC."""
+    with set_tzpath((), block_tzdata=True):
+        assert tz.gettz(name) is tz.UTC
+
+
+@pytest.mark.skipif(IS_WIN, reason="The Windows registry has these names")
+def test_gettz_local_abbreviation_without_time_zone_data():
+    """Abbreviations of the local zone that aren't keys give tzlocal()."""
+    names = [
+        name
+        for name in time_module.tzname
+        if name and not any(c.isdigit() for c in name)
+    ]
+    if not names:  # pragma: nocover
+        pytest.skip("The local zone has no alphabetic abbreviations")
+
+    with set_tzpath((), block_tzdata=True):
+        for name in names:
+            assert isinstance(tz.gettz(name), tz.tzlocal)
+
+
+def test_missing_footer_newline():
+    """Version 2+ files must have a newline before the TZ string."""
+    zf = construct_zone([], "EST5EDT,M3.2.0,M11.1.0")
+    data = zf.read()
+    # The footer is "\n<tzstr>\n"; drop the leading newline.
+    footer_start = data.rfind(b"\n", 0, len(data) - 1)
+    data = data[:footer_start] + data[footer_start + 1 :]
+
+    with pytest.raises(ValueError):
+        tz.tzfile(six.BytesIO(data))
+
+
+def test_invalid_transition_index():
+    """A transition index past the end of the ttinfo table is an error."""
+    STD = ZoneOffset("STD", ZERO)
+    DST = ZoneOffset("DST", ONE_H, ONE_H)
+
+    zf = construct_zone(
+        [
+            ZoneTransition(datetime(2026, 3, 1, 2), STD, DST),
+            ZoneTransition(datetime(2026, 11, 1, 2), DST, STD),
+        ],
+        after="",
+        version=1,
+    )
+
+    data = bytearray(zf.read())
+    timecnt = struct.unpack_from(">l", data, 32)[0]
+    idx_offset = 44 + timecnt * 4
+    data[idx_offset + 1] = 2  # typecnt is 2, so index 2 is out of bounds
+
+    with pytest.raises(ValueError):
+        tz.tzfile(six.BytesIO(bytes(data)))
+
+
+def test_transition_lookahead_out_of_bounds():
+    """Inferring DST offsets must not look past the last transition."""
+    STD = ZoneOffset("STD", ZERO)
+    DST = ZoneOffset("DST", ONE_H, ONE_H)
+    EXT = ZoneOffset("EXT", ONE_H)
+
+    zf = construct_zone(
+        [
+            ZoneTransition(datetime(2026, 3, 1), STD, DST),
+            ZoneTransition(datetime(2026, 6, 1), DST, EXT),
+            ZoneTransition(datetime(2026, 9, 1), EXT, DST),
+        ],
+        after="",
+    )
+
+    assert tz.tzfile(zf) is not None
+
+
+EXTREME_TZSTRS = [
+    # Extreme offset hour
+    "AAA24",
+    "AAA+24",
+    "AAA-24",
+    "AAA24BBB,J60/2,J300/2",
+    "AAA+24BBB,J60/2,J300/2",
+    "AAA-24BBB,J60/2,J300/2",
+    "AAA4BBB24,J60/2,J300/2",
+    "AAA4BBB+24,J60/2,J300/2",
+    "AAA4BBB-24,J60/2,J300/2",
+    # Extreme offset minutes
+    "AAA4:00BBB,J60/2,J300/2",
+    "AAA4:59BBB,J60/2,J300/2",
+    "AAA4BBB5:00,J60/2,J300/2",
+    "AAA4BBB5:59,J60/2,J300/2",
+    # Extreme offset seconds
+    "AAA4:00:00BBB,J60/2,J300/2",
+    "AAA4:00:59BBB,J60/2,J300/2",
+    "AAA4BBB5:00:00,J60/2,J300/2",
+    "AAA4BBB5:00:59,J60/2,J300/2",
+    # Extreme total offset
+    "AAA24:59:59BBB5,J60/2,J300/2",
+    "AAA-24:59:59BBB5,J60/2,J300/2",
+    "AAA4BBB24:59:59,J60/2,J300/2",
+    "AAA4BBB-24:59:59,J60/2,J300/2",
+    # Extreme months
+    "AAA4BBB,M12.1.1/2,M1.1.1/2",
+    "AAA4BBB,M1.1.1/2,M12.1.1/2",
+    # Extreme weeks
+    "AAA4BBB,M1.5.1/2,M1.1.1/2",
+    "AAA4BBB,M1.1.1/2,M1.5.1/2",
+    # Extreme weekday
+    "AAA4BBB,M1.1.6/2,M2.1.1/2",
+    "AAA4BBB,M1.1.1/2,M2.1.6/2",
+    # Extreme numeric offset
+    "AAA4BBB,0/2,20/2",
+    "AAA4BBB,0/2,0/14",
+    "AAA4BBB,20/2,365/2",
+    "AAA4BBB,365/2,365/14",
+    # Extreme julian offset
+    "AAA4BBB,J1/2,J20/2",
+    "AAA4BBB,J1/2,J1/14",
+    "AAA4BBB,J20/2,J365/2",
+    "AAA4BBB,J365/2,J365/14",
+    # Leading-zero day-of-year
+    "AAA4BBB,J001/2,J065/2",
+    "AAA4BBB,001/2,065/2",
+    # Extreme transition hour
+    "AAA4BBB,J60/167,J300/2",
+    "AAA4BBB,J60/+167,J300/2",
+    "AAA4BBB,J60/-167,J300/2",
+    "AAA4BBB,J60/2,J300/167",
+    "AAA4BBB,J60/2,J300/+167",
+    "AAA4BBB,J60/2,J300/-167",
+    # Extreme transition minutes
+    "AAA4BBB,J60/2:00,J300/2",
+    "AAA4BBB,J60/2:59,J300/2",
+    "AAA4BBB,J60/2,J300/2:00",
+    "AAA4BBB,J60/2,J300/2:59",
+    # Extreme transition seconds
+    "AAA4BBB,J60/2:00:00,J300/2",
+    "AAA4BBB,J60/2:00:59,J300/2",
+    "AAA4BBB,J60/2,J300/2:00:00",
+    "AAA4BBB,J60/2,J300/2:00:59",
+    # Extreme total transition time
+    "AAA4BBB,J60/167:59:59,J300/2",
+    "AAA4BBB,J60/-167:59:59,J300/2",
+    "AAA4BBB,J60/2,J300/167:59:59",
+    "AAA4BBB,J60/2,J300/-167:59:59",
+]
+
+
+@pytest.mark.parametrize("tzstr", EXTREME_TZSTRS)
+def test_extreme_tzstr(tzstr):
+    """TZ strings at the edge of the valid range are accepted."""
+    assert zone_from_tzstr(tzstr) is not None
+
+
+INVALID_TZSTRS = [
+    "PST8PDT",  # DST but no transition specified
+    # The std offset is required (POSIX TZ grammar)
+    "AAA",
+    "A",
+    "AA",
+    "B",
+    "+11",  # Unquoted alphanumeric
+    "GMT,M3.2.0/2,M11.1.0/3",  # Transition rule but no DST
+    # Transition rules but no DST abbreviation
+    "EST5,M3.2.0,M11.1.0",
+    "<+04>-4,J60,J300",
+    "AAA3,0/0,J365/25",
+    "GMT0+11,M3.2.0/2,M11.1.0/3",  # Unquoted alphanumeric in DST
+    # Unquoted abbreviation with embedded or leading whitespace
+    "AB C3",
+    " A B 3",
+    "AAA4BB B,J60/2,J300/2",  # Embedded whitespace in DST
+    # Empty quoted abbreviation
+    "<>5",
+    "AAA4<>,M3.2.0/2,M11.1.0/3",
+    "PST8PDT,M3.2.0/2",  # Only one transition rule
+    # Invalid offset hours
+    "AAA168",
+    "AAA+168",
+    "AAA-168",
+    "AAA168BBB,J60/2,J300/2",
+    "AAA+168BBB,J60/2,J300/2",
+    "AAA-168BBB,J60/2,J300/2",
+    "AAA4BBB168,J60/2,J300/2",
+    "AAA4BBB+168,J60/2,J300/2",
+    "AAA4BBB-168,J60/2,J300/2",
+    # Invalid offset minutes
+    "AAA4:0BBB,J60/2,J300/2",
+    "AAA4:100BBB,J60/2,J300/2",
+    "AAA4BBB5:0,J60/2,J300/2",
+    "AAA4BBB5:100,J60/2,J300/2",
+    # Invalid offset seconds
+    "AAA4:00:0BBB,J60/2,J300/2",
+    "AAA4:00:100BBB,J60/2,J300/2",
+    "AAA4BBB5:00:0,J60/2,J300/2",
+    "AAA4BBB5:00:100,J60/2,J300/2",
+    # Completely invalid dates
+    "AAA4BBB,M1443339,M11.1.0/3",
+    "AAA4BBB,M3.2.0/2,0349309483959c",
+    "AAA4BBB,,J300/2",
+    "AAA4BBB,z,J300/2",
+    "AAA4BBB,J60/2,",
+    "AAA4BBB,J60/2,z",
+    # Invalid months
+    "AAA4BBB,M13.1.1/2,M1.1.1/2",
+    "AAA4BBB,M1.1.1/2,M13.1.1/2",
+    "AAA4BBB,M0.1.1/2,M1.1.1/2",
+    "AAA4BBB,M1.1.1/2,M0.1.1/2",
+    # Invalid weeks
+    "AAA4BBB,M1.6.1/2,M1.1.1/2",
+    "AAA4BBB,M1.1.1/2,M1.6.1/2",
+    # Invalid weekday
+    "AAA4BBB,M1.1.7/2,M2.1.1/2",
+    "AAA4BBB,M1.1.1/2,M2.1.7/2",
+    # Invalid Mm.w.d separator
+    "AAA4BBB,M3.2X0,M11.1.0",
+    "AAA4BBB,M3.2.0,M11.1X0",
+    "AAA4BBB,M3.2-0,M11.1.0/3",
+    "AAA4BBB,M3.2.0/2,M11.1:0",
+    # Invalid numeric offset
+    "AAA4BBB,-1/2,20/2",
+    "AAA4BBB,1/2,-1/2",
+    "AAA4BBB,367,20/2",
+    "AAA4BBB,1/2,367/2",
+    # Invalid julian offset
+    "AAA4BBB,J0/2,J20/2",
+    "AAA4BBB,J20/2,J366/2",
+    # Non-digit day-of-year
+    "AAA4BBB,J1_0,J300/2",
+    "AAA4BBB,J60/2,J30_0/2",
+    "AAA4BBB,1_0,J300/2",
+    "AAA4BBB,J+1,J300/2",
+    "AAA4BBB,J 1,J300/2",
+    "AAA4BBB, 1,J300/2",
+    "AAA4BBB,J0001,J300/2",
+    "AAA4BBB,0001,J300/2",
+    # Invalid transition time
+    "AAA4BBB,J60/2/3,J300/2",
+    "AAA4BBB,J60/2,J300/2/3",
+    # Invalid transition hour
+    "AAA4BBB,J60/168,J300/2",
+    "AAA4BBB,J60/+168,J300/2",
+    "AAA4BBB,J60/-168,J300/2",
+    "AAA4BBB,J60/2,J300/168",
+    "AAA4BBB,J60/2,J300/+168",
+    "AAA4BBB,J60/2,J300/-168",
+    # Invalid transition minutes
+    "AAA4BBB,J60/2:0,J300/2",
+    "AAA4BBB,J60/2:100,J300/2",
+    "AAA4BBB,J60/2,J300/2:0",
+    "AAA4BBB,J60/2,J300/2:100",
+    # Invalid transition seconds
+    "AAA4BBB,J60/2:00:0,J300/2",
+    "AAA4BBB,J60/2:00:100,J300/2",
+    "AAA4BBB,J60/2,J300/2:00:0",
+    "AAA4BBB,J60/2,J300/2:00:100",
+]
+
+
+@pytest.mark.parametrize("tzstr", INVALID_TZSTRS)
+def test_invalid_tzstr(tzstr):
+    """Malformed TZ strings raise ValueError naming the string."""
+    import re
+
+    with pytest.raises(ValueError, match=re.escape(tzstr)):
+        zone_from_tzstr(tzstr)
+
+
+@pytest.mark.parametrize(
+    "tzstr",
+    [
+        # Non-ASCII letter in the abbreviation
+        "AB" + six.unichr(0xC0) + "C3",
+        # Non-ASCII digit in the day-of-year
+        "AAA4BBB,J" + six.unichr(0x661) + ",J300/2",
+    ],
+)
+def test_invalid_tzstr_non_ascii(tzstr):
+    with pytest.raises(ValueError):
+        zone_from_tzstr(tzstr, encoding="utf-8")
+
+
+@pytest.mark.parametrize("zoneinfo_cache", ["fat"], indirect=True)
+@pytest.mark.parametrize("source", ["tzdata", "tzpath"])
+def test_gettz_space_for_underscore(source, zoneinfo_cache):
+    """Spaces in a key are tried as underscores, whichever source is used."""
+    if source == "tzdata":
+        pytest.importorskip("tzdata")
+        paths = ()
+    else:
+        paths = (zoneinfo_cache[0],)
+
+    with set_tzpath(paths, block_tzdata=(source != "tzdata")):
+        tz.gettz.cache_clear()
+        with_space = tz.gettz("America/New York")
+        assert with_space is not None
+        assert with_space.key == "America/New York"
+        assert with_space == tz.gettz("America/New_York")
+
+
+####
+# Key handling in gettz
+@pytest.mark.parametrize("zoneinfo_cache", ["fat"], indirect=True)
+@pytest.mark.parametrize("source", ["tzdata", "tzpath"])
+def test_gettz_key_attribute_by_source(source, zoneinfo_cache):
+    """The key is the string passed to gettz whichever source supplied it."""
+    if source == "tzdata":
+        pytest.importorskip("tzdata")
+        paths = ()
+    else:
+        paths = (zoneinfo_cache[0],)
+
+    with set_tzpath(paths, block_tzdata=(source != "tzdata")):
+        tz.gettz.cache_clear()
+        for key in ("America/New_York", "Europe/London"):
+            zone = tz.gettz(key)
+            assert isinstance(zone, tz.tzfile)
+            assert zone.key == key
+
+
+@pytest.mark.parametrize("zoneinfo_cache", ["fat"], indirect=True)
+def test_gettz_absolute_path(zoneinfo_cache):
+    """An absolute path to a TZif file is loaded directly and has no key."""
+    fpath = os.path.join(zoneinfo_cache[0], "America", "New_York")
+
+    with set_tzpath((), block_tzdata=True):
+        tz.gettz.cache_clear()
+        zone = tz.gettz(fpath)
+
+    assert isinstance(zone, tz.tzfile)
+    assert zone.key is None
+    assert repr(zone) == "tzfile(%r)" % fpath
+
+
+@pytest.mark.parametrize("zoneinfo_cache", ["fat"], indirect=True)
+def test_gettz_absolute_path_not_a_zone(zoneinfo_cache, tmp_path):
+    """Absolute paths that are not TZif files return None."""
+    not_tzif = tmp_path / "not_a_zone"
+    not_tzif.write_bytes(b"This is not a TZif file")
+
+    with set_tzpath((), block_tzdata=True):
+        tz.gettz.cache_clear()
+        # A directory
+        assert tz.gettz(os.path.join(zoneinfo_cache[0], "America")) is None
+        # A file that does not exist
+        assert tz.gettz(os.path.join(zoneinfo_cache[0], "Nope")) is None
+        # A file that exists but is not a zone is an error, since an
+        # absolute path is an explicit request for that file.
+        with pytest.raises(ValueError):
+            tz.gettz(str(not_tzif))
+
+
+@pytest.mark.parametrize("zoneinfo_cache", ["fat"], indirect=True)
+@pytest.mark.parametrize(
+    "key",
+    [
+        "America/Nope",
+        "America",  # A directory on the search path
+        "America/",
+        "America/New_York\x00",
+        "\x00",
+    ],
+)
+def test_gettz_tzpath_bad_keys(zoneinfo_cache, key):
+    """Keys that do not name a zone on the search path return None."""
+    with set_tzpath((zoneinfo_cache[0],), block_tzdata=True):
+        tz.gettz.cache_clear()
+        assert tz.gettz(key) is None
+
+
+@pytest.mark.parametrize("zoneinfo_cache", ["fat"], indirect=True)
+def test_gettz_missing_search_path_entry(zoneinfo_cache, tmp_path):
+    """Search path entries that do not exist are skipped, not errors."""
+    missing = str(tmp_path / "does_not_exist")
+    with set_tzpath((missing, zoneinfo_cache[0]), block_tzdata=True):
+        tz.gettz.cache_clear()
+        assert tz.gettz("America/New_York") is not None
+        assert tz.gettz("America/Nope") is None
+
+
+####
+# available_iana_timezones
+def _make_fake_tzpath(root):
+    """Populate a directory the way a zoneinfo installation is laid out."""
+    STD = ZoneOffset("STD", ZERO)
+    DST = ZoneOffset("DST", ONE_H, ONE_H)
+    tzif = construct_zone(
+        [ZoneTransition(datetime(2010, 3, 14, 2), STD, DST)],
+        "STD0DST,M3.2.0,M11.1.0",
+    ).read()
+
+    zones = [
+        "Fictional/Liliput",
+        "Fictional/Blefuscu",
+        "Fictional/Nested/Deep",
+        "Fictional/right/NotExcluded",  # Only top-level right/ is excluded
+        "UTC",
+        "posixrules",  # Excluded by name
+        "localtime",  # Excluded by name
+        "posix/Fictional/Liliput",  # Excluded top-level directory
+        "right/Fictional/Liliput",  # Excluded top-level directory
+    ]
+    for zone in zones:
+        path = os.path.join(root, *zone.split("/"))
+        makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "wb") as f:
+            f.write(tzif)
+
+    for not_zone in ["tzdata.zi", "Fictional/README", "leap-seconds.list"]:
+        path = os.path.join(root, *not_zone.split("/"))
+        with open(path, "wb") as f:
+            f.write(b"This is not a TZif file\n")
+
+    return {
+        "Fictional/Liliput",
+        "Fictional/Blefuscu",
+        "Fictional/Nested/Deep",
+        "Fictional/right/NotExcluded",
+        "UTC",
+    }
+
+
+def test_available_iana_timezones_tzpath_only(tmp_path):
+    root = str(tmp_path)
+    expected = _make_fake_tzpath(root)
+
+    with set_tzpath((root,), block_tzdata=True):
+        assert tz.available_iana_timezones() == expected
+
+
+def test_available_iana_timezones_missing_path(tmp_path):
+    """Search path entries that do not exist are skipped."""
+    root = str(tmp_path / "zoneinfo")
+    makedirs(root)
+    expected = _make_fake_tzpath(root)
+    missing = str(tmp_path / "missing")
+
+    with set_tzpath((missing, root), block_tzdata=True):
+        assert tz.available_iana_timezones() == expected
+
+
+def test_available_iana_timezones_empty(tmp_path):
+    with set_tzpath((), block_tzdata=True):
+        assert tz.available_iana_timezones() == set()
+
+
+def test_available_iana_timezones_with_tzdata(tmp_path):
+    """Zones on the search path are merged with the ones from tzdata."""
+    tzdata = pytest.importorskip("tzdata")
+    from dateutil._tzdata_impl import _load_tzdata_keys
+
+    root = str(tmp_path)
+    fake_zones = _make_fake_tzpath(root)
+    tzdata_zones = set(_load_tzdata_keys())
+
+    with set_tzpath((root,)):
+        zones = tz.available_iana_timezones()
+
+    assert zones == fake_zones | tzdata_zones
+    assert "posixrules" not in zones
+
+
+def test_available_iana_timezones_fresh_set():
+    """Each call returns a new set, so callers may mutate it."""
+    with set_tzpath((), block_tzdata=True):
+        a = tz.available_iana_timezones()
+        b = tz.available_iana_timezones()
+
+    assert a is not b
+
+
+####
+# TZPATH and reset_tzpath
+def test_tz_tzpath_tracks_reset(tmp_path):
+    """dateutil.tz.TZPATH reflects reset_tzpath on every Python version."""
+    new_path = str(tmp_path)
+    with set_tzpath((new_path,)):
+        assert tz.TZPATH == (new_path,)
+        assert "TZPATH" in dir(tz)
+
+    assert tz.TZPATH != (new_path,)
+
+
+def _load_backport_tzpath(monkeypatch):
+    """Executes the _tzpath source with the standard library zoneinfo blocked."""
+    import types
+
+    import dateutil.tz._tzpath as real_tzpath
+
+    source_path = real_tzpath.__file__
+    if source_path.endswith((".pyc", ".pyo")):  # Python 2
+        source_path = source_path[:-1]
+
+    monkeypatch.setitem(sys.modules, "zoneinfo", None)
+
+    module = types.ModuleType("_tzpath_backport")
+    module.__file__ = source_path
+    with open(source_path, "rb") as f:
+        code = compile(f.read(), source_path, "exec")
+    six.exec_(code, module.__dict__)
+
+    return module
+
+
+@pytest.fixture
+def backport_tzpath(monkeypatch):
+    """The pure-Python _tzpath implementation, regardless of Python version.
+
+    On Python 3.9+ dateutil.tz._tzpath is a thin alias for zoneinfo's search
+    path handling, so to test the backport itself the module source is
+    executed with the standard library zoneinfo module blocked.
+    """
+    monkeypatch.delenv("PYTHONTZPATH", raising=False)
+    return _load_backport_tzpath(monkeypatch)
+
+
+def test_backport_env_variable_relative_paths_at_import(monkeypatch, tmp_path):
+    """An invalid PYTHONTZPATH warns, rather than fails, at import time."""
+    absolute = str(tmp_path / "a")
+    monkeypatch.setenv(
+        "PYTHONTZPATH", os.pathsep.join(["relative/path", absolute])
+    )
+
+    with pytest.warns(RuntimeWarning, match="relative/path"):
+        module = _load_backport_tzpath(monkeypatch)
+
+    assert module.TZPATH == (absolute,)
+
+
+@pytest.mark.skipif(
+    sys.version_info < (3, 9), reason="zoneinfo was added in Python 3.9"
+)
+def test_invalid_tzpath_warning_is_zoneinfos():
+    import zoneinfo
+
+    assert tz._tzpath.InvalidTZPathWarning is zoneinfo.InvalidTZPathWarning
+
+
+@pytest.mark.parametrize("platform", ["linux", "darwin", "win32"])
+def test_backport_default_tzpath(backport_tzpath, monkeypatch, platform):
+    monkeypatch.setattr(sys, "platform", platform)
+    backport_tzpath.reset_tzpath()
+
+    if platform == "win32":
+        assert backport_tzpath.TZPATH == ()
+    else:
+        assert backport_tzpath.TZPATH == (
+            "/usr/share/zoneinfo",
+            "/usr/lib/zoneinfo",
+            "/usr/share/lib/zoneinfo",
+            "/etc/zoneinfo",
+        )
+
+
+def test_backport_env_variable(backport_tzpath, monkeypatch, tmp_path):
+    paths = [str(tmp_path / "a"), str(tmp_path / "b")]
+    monkeypatch.setenv("PYTHONTZPATH", os.pathsep.join(paths))
+    backport_tzpath.reset_tzpath()
+
+    assert backport_tzpath.TZPATH == tuple(paths)
+
+
+def test_backport_env_variable_empty(backport_tzpath, monkeypatch):
+    monkeypatch.setenv("PYTHONTZPATH", "")
+    backport_tzpath.reset_tzpath()
+
+    assert backport_tzpath.TZPATH == ()
+
+
+def test_backport_env_variable_relative_paths(
+    backport_tzpath, monkeypatch, tmp_path
+):
+    absolute = str(tmp_path / "a")
+    monkeypatch.setenv(
+        "PYTHONTZPATH", os.pathsep.join(["relative/path", absolute, "other"])
+    )
+
+    with pytest.warns(backport_tzpath.InvalidTZPathWarning) as record:
+        backport_tzpath.reset_tzpath()
+
+    assert backport_tzpath.TZPATH == (absolute,)
+    assert (
+        os.path.splitext(record[0].filename)[0] == os.path.splitext(__file__)[0]
+    )
+    message = str(record[0].message)
+    assert "relative/path" in message
+    assert "other" in message
+    assert absolute not in message
+
+
+def test_backport_reset_explicit(backport_tzpath, tmp_path):
+    paths = [str(tmp_path / "a"), str(tmp_path / "b")]
+    backport_tzpath.reset_tzpath(to=paths)
+    assert backport_tzpath.TZPATH == tuple(paths)
+
+    backport_tzpath.reset_tzpath(to=())
+    assert backport_tzpath.TZPATH == ()
+
+
+def test_backport_reset_pathlike(backport_tzpath, tmp_path):
+    backport_tzpath.reset_tzpath(to=[tmp_path])
+    assert tuple(map(str, backport_tzpath.TZPATH)) == (str(tmp_path),)
+
+
+@pytest.mark.parametrize(
+    "bad", ["/a/string", b"/a/bytestring", six.text_type("/a/text_string")]
+)
+def test_backport_reset_type_error(backport_tzpath, bad):
+    with pytest.raises(TypeError):
+        backport_tzpath.reset_tzpath(to=bad)
+
+
+def test_backport_reset_relative_paths(backport_tzpath, tmp_path):
+    with pytest.raises(ValueError, match="relative"):
+        backport_tzpath.reset_tzpath(to=[str(tmp_path), "relative/path"])
+
+
+def test_backport_callbacks(backport_tzpath, tmp_path):
+    seen = []
+    backport_tzpath.TZPATH_CALLBACKS.append(seen.append)
+
+    backport_tzpath.reset_tzpath(to=[str(tmp_path)])
+    backport_tzpath.reset_tzpath(to=())
+
+    assert seen == [(str(tmp_path),), ()]
+
+
+####
+# Sub-minute offsets
+class _RawZoneOffset(object):
+    """Like ZoneOffset, but without rounding the offset on Python < 3.6."""
+
+    def __init__(self, tzname, utcoffset, dst=ZERO):
+        self.tzname = tzname
+        self.utcoffset = utcoffset
+        self.raw_utcoffset = utcoffset
+        self.dst = dst
+
+
+def _sub_minute_zone():
+    # Africa/Abidjan's LMT offset is -0:16:08; the file must contain the
+    # exact value even where the tzinfo will round it.
+    LMT = _RawZoneOffset("LMT", timedelta(seconds=-968))
+    GMT = _RawZoneOffset("GMT", ZERO)
+    return construct_zone(
+        [ZoneTransition(datetime(1912, 1, 1), LMT, GMT)], "GMT0"
+    )
+
+
+def test_sub_minute_offset():
+    """Sub-minute offsets are exact on 3.6+ and rounded to a minute before."""
+    zone = tz.tzfile(_sub_minute_zone())
+    dt = datetime(1900, 1, 1, tzinfo=zone)
+
+    if SUPPORTS_SUB_MINUTE_OFFSETS:
+        assert dt.utcoffset() == timedelta(seconds=-968)
+    else:
+        assert dt.utcoffset() == timedelta(minutes=-16)
+
+    assert dt.tzname() == "LMT"
+    assert datetime(2000, 1, 1, tzinfo=zone).utcoffset() == ZERO
+
+
+def test_sub_minute_offset_round_trip():
+    """Converting to and from UTC near a sub-minute transition round trips."""
+    # America/New_York's LMT offset is -4:56:02, so the switch to EST in 1883
+    # creates a fold whose boundaries move when the offset is rounded.
+    LMT = _RawZoneOffset("LMT", timedelta(seconds=-17762))
+    EST = _RawZoneOffset("EST", timedelta(hours=-5))
+    zone = tz.tzfile(
+        construct_zone(
+            [ZoneTransition(datetime(1883, 11, 18, 12, 3, 58), LMT, EST)],
+            "EST5",
+        )
+    )
+    transition = datetime(1883, 11, 18, 17, tzinfo=tz.UTC)
+
+    for seconds in range(-120, 121):
+        dt_utc = transition + timedelta(seconds=seconds)
+        assert dt_utc.astimezone(zone).astimezone(tz.UTC) == dt_utc
+
+
+@pytest.mark.parametrize(
+    "tz_str, dt, expected_seconds",
+    [
+        ("<-0044>0:44:30", datetime(2020, 1, 15), -2670),
+        ("AAA0:44:30BBB,M3.2.0,M11.1.0", datetime(2020, 1, 15), -2670),
+        ("AAA0:44:30BBB,M3.2.0,M11.1.0", datetime(2020, 7, 15), 930),
+        ("AAA0:44:30BBB-0:44:30,M3.2.0,M11.1.0", datetime(2020, 7, 15), 2670),
+    ],
+)
+def test_sub_minute_offset_tz_str(tz_str, dt, expected_seconds):
+    """Sub-minute offsets in the TZ string are rounded like those in the file."""
+    GMT = _RawZoneOffset("GMT", ZERO)
+    zone = tz.tzfile(
+        construct_zone([ZoneTransition(datetime(1900, 1, 1), GMT, GMT)], tz_str)
+    )
+
+    if SUPPORTS_SUB_MINUTE_OFFSETS:
+        expected = timedelta(seconds=expected_seconds)
+    else:
+        expected = timedelta(minutes=(expected_seconds + 30) // 60)
+
+    assert dt.replace(tzinfo=zone).utcoffset() == expected
+
+
+@pytest.mark.parametrize("protocol", range(0, pickle.HIGHEST_PROTOCOL + 1))
+def test_sub_minute_offset_pickle(protocol):
+    """Pickling preserves the raw offset, even where it has been rounded."""
+    zone = tz.tzfile(_sub_minute_zone(), key="Africa/Abidjan")
+    data = pickle.dumps(zone, protocol=protocol)
+
+    # The pickled data carries the unrounded offsets from the file, so a
+    # pickle made on a version that rounds still loads exactly elsewhere.
+    _, args = zone.__reduce_ex__(protocol)
+    _, _, _, zone_data = args
+    utcoff = zone_data[2]
+    assert -968 in utcoff
+
+    unpickled = pickle.loads(data)
+    assert unpickled == zone
+    assert unpickled.key == "Africa/Abidjan"
+    assert (
+        datetime(1900, 1, 1, tzinfo=unpickled).utcoffset()
+        == datetime(1900, 1, 1, tzinfo=zone).utcoffset()
+    )
+
+
+####
+# Thread safety
+def test_gettz_thread_safety():
+    """Concurrent gettz calls, with the cache being cleared underneath them."""
+    keys = ["America/New_York", "Europe/London", "Asia/Tokyo", "UTC"]
+    expected = {key: tz.gettz(key) for key in keys}
+    assert all(isinstance(v, tz.tzfile) for v in expected.values())
+
+    errors = []
+    n_iterations = 200
+
+    def worker(key):
+        try:
+            for i in range(n_iterations):
+                zone = tz.gettz(key)
+                if zone != expected[key]:
+                    raise AssertionError(
+                        "%s: %r != %r" % (key, zone, expected[key])
+                    )
+        except Exception as e:  # pragma: nocover
+            errors.append(e)
+
+    def clearer():
+        try:
+            for i in range(n_iterations // 4):
+                tz.gettz.cache_clear()
+        except Exception as e:  # pragma: nocover
+            errors.append(e)
+
+    threads = [threading.Thread(target=worker, args=(key,)) for key in keys * 2]
+    threads.append(threading.Thread(target=clearer))
+
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+
+    assert not errors

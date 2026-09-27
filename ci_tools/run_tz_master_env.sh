@@ -9,28 +9,12 @@ set -e
 TMP_DIR=$(readlink -f ${1})
 REPO_DIR=$(readlink -f ${2})
 ORIG_DIR=$(pwd)
-CITOOLS_DIR=$REPO_DIR/ci_tools
-
-REPO_TARBALL=${REPO_DIR}/src/dateutil/zoneinfo/dateutil-zoneinfo.tar.gz
-TMP_TARBALL=${TMP_DIR}/dateutil-zoneinfo.tar.gz
 
 UPSTREAM_URL="https://github.com/eggert/tz.git"
 
 if [ -n "$TF_BUILD" ]; then
     EXTRA_TEST_ARGS=--junitxml=../unittests/TEST-tz.xml
 fi
-
-function cleanup {
-    # Since this script modifies the original repo, whether or not
-    # it fails we need to restore the original file so as to not
-    # overwrite the user's local changes.
-    echo "Cleaning up."
-    if [ -f $TMP_TARBALL ]; then
-        cp -p $TMP_TARBALL $REPO_TARBALL
-    fi
-}
-
-trap cleanup EXIT
 
 # Work in a temporary directory
 cd $TMP_DIR
@@ -54,44 +38,59 @@ if [ "$DIR_EXISTS" = false ]; then
     cd tz
 fi
 
-# Get the version
-make version
-VERSION=$(cat version)
-TARBALL_NAME=tzdata${VERSION}.tar.gz
+# Build and install the compiled zoneinfo files, as "fat" TZif files of the
+# "main" data form unless TZ_BLOAT and TZ_DATAFORM say otherwise
+TZ_BLOAT=${TZ_BLOAT:-fat}
+TZ_DATAFORM=${TZ_DATAFORM:-main}
+make ZFLAGS="-b ${TZ_BLOAT}" DATAFORM="${TZ_DATAFORM}" \
+    TOPDIR="${TMP_DIR}/tzdir" install
 
-# Make the tzdata tarball - deactivate errors because
-# I don't know how to make just the .tar.gz and I don't
-# care if the others fail
-set +e
-make traditional_tarballs
-set -e
-
-mv $TARBALL_NAME $ORIG_DIR
-
-# Install everything else
-make ZFLAGS='-b fat' TOPDIR="${TMP_DIR}/tzdir" install
-
-#
-# Make the zoneinfo tarball
-#
 cd $ORIG_DIR
 
-# Put the latest version of zic on the path
-PATH=$TMP_DIR/tzdir/usr/sbin:${PATH}
+# Make sure that the tests will actually see the data we just built. The
+# tests that are about the data on TZPATH block the tzdata package
+# themselves (see the tz_source fixture), so that anything missing from or
+# unreadable in this data fails, rather than being answered by tzdata.
+TZ_BLOAT=${TZ_BLOAT} TZ_DATAFORM=${TZ_DATAFORM} python - <<'EOF'
+import os
+import struct
+import sys
 
-# Stash the old zoneinfo file in the temporary directory
-if [ -f "${TMP_TARBALL}" ]; then
-    mv $REPO_TARBALL $TMP_TARBALL
-fi
+from dateutil import tz
 
-# Make the metadata file
-ZONEFILE_METADATA_NAME=zonefile_metadata_master.json
-${CITOOLS_DIR}/make_zonefile_metadata.py \
-    $TARBALL_NAME \
-    $VERSION \
-    $ZONEFILE_METADATA_NAME
+tzpath = os.environ["PYTHONTZPATH"]
 
-python ${REPO_DIR}/updatezinfo.py $ZONEFILE_METADATA_NAME
+if tuple(tz.TZPATH) != (tzpath,):
+    sys.exit("Expected TZPATH to be (%r,), got %r" % (tzpath, tz.TZPATH))
+
+# tzdata.zi starts with a "# version" line, followed by a "# dataform" line
+# for anything other than the main data form.
+with open(os.path.join(tzpath, "tzdata.zi")) as f:
+    header = [f.readline().strip() for _ in range(2)]
+print("Testing against: %s" % header[0])
+
+dataform = "main"
+if header[1].startswith("# dataform "):
+    dataform = header[1].split()[-1]
+if dataform != os.environ["TZ_DATAFORM"]:
+    sys.exit(
+        "Expected the %s data form, got %s" % (os.environ["TZ_DATAFORM"], dataform)
+    )
+print("Using the %s data form" % dataform)
+
+zone = tz.gettz("America/New_York")
+if zone is None or not zone._filename.startswith(tzpath):
+    sys.exit("America/New_York was not loaded from %s: %r" % (tzpath, zone))
+
+# Slim files have an empty version 1 data block, fat files do not.
+with open(zone._filename, "rb") as f:
+    v1_timecnt = struct.unpack(">6l", f.read(44)[20:])[3]
+
+bloat = "fat" if v1_timecnt else "slim"
+if bloat != os.environ["TZ_BLOAT"]:
+    sys.exit("Expected %s TZif files, got %s" % (os.environ["TZ_BLOAT"], bloat))
+print("Using %s TZif files" % bloat)
+EOF
 
 # Run the tests
 python -m pytest ${REPO_DIR}/tests $EXTRA_TEST_ARGS -x --pdb

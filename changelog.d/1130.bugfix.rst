@@ -1,0 +1,6 @@
+``tz.tzfile`` now follows PEP 495 for times that fall in a gap: with ``fold=0``
+it uses the offset from before the transition, and with ``fold=1`` the offset
+from after it. Previously it always used the offset from after the transition,
+so for example ``datetime(2003, 4, 6, 2, 30, tzinfo=tz.gettz("America/New_York"))``
+had a UTC offset of -04:00, where it now has -05:00, the same as with
+``zoneinfo``. (gh pr #1130)

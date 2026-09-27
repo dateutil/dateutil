@@ -1,18 +1,24 @@
-import os
 import pytest
+
+from ._common import (
+    TZ_SOURCES,
+    set_tzpath,
+    tz_source_context,
+    tz_source_skip_reason,
+)
 
 
 # Configure pytest to ignore xfailing tests
 # See: https://stackoverflow.com/a/53198349/467366
 def pytest_collection_modifyitems(items):
     for item in items:
-        marker_getter = getattr(item, 'get_closest_marker', None)
+        marker_getter = getattr(item, "get_closest_marker", None)
 
         # Python 3.3 support
         if marker_getter is None:
             marker_getter = item.get_marker
 
-        marker = marker_getter('xfail')
+        marker = marker_getter("xfail")
 
         # Need to query the args because conditional xfail tests still have
         # the xfail mark even if they are not expected to fail
@@ -20,22 +26,27 @@ def pytest_collection_modifyitems(items):
             item.add_marker(pytest.mark.no_cover)
 
 
-def set_tzpath():
+@pytest.fixture(params=TZ_SOURCES)
+def tz_source(request):
+    """Runs a test against each source of IANA time zone data in turn.
+
+    With ``"tzpath"``, only the data on TZPATH is used and the tzdata package
+    is blocked, so a key that is missing or broken there makes the test fail
+    instead of being silently answered by tzdata. With ``"tzdata"``, only the
+    tzdata package is used.
     """
-    Sets the TZPATH variable if it's specified in an environment variable.
-    """
-    tzpath = os.environ.get('DATEUTIL_TZPATH', None)
+    reason = tz_source_skip_reason(request.param)
+    if reason is not None:
+        pytest.skip(reason)
 
-    if tzpath is None:
-        return
+    with tz_source_context(request.param):
+        yield request.param
 
-    path_components = tzpath.split(':')
 
-    print("Setting TZPATH to {}".format(path_components))
-
+@pytest.fixture
+def block_tzdata():
+    """Makes the tzdata package impossible to import."""
     from dateutil import tz
-    tz.TZPATHS.clear()
-    tz.TZPATHS.extend(path_components)
 
-
-set_tzpath()
+    with set_tzpath(tuple(tz.TZPATH), block_tzdata=True):
+        yield
