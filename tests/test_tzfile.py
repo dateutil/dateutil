@@ -186,6 +186,17 @@ class ZoneTransition(object):
         )
 
     @property
+    def wall_transition(self):
+        """The local transition time using the (possibly rounded) offsets
+
+        Identical to ``self.transition`` when sub-minute offsets are supported.
+        """
+        return (
+            self.transition_utc.replace(tzinfo=None)
+            + self.offset_before.utcoffset
+        )
+
+    @property
     def fold(self):
         """Whether this introduces a fold"""
         return self.offset_before.utcoffset > self.offset_after.utcoffset
@@ -193,29 +204,25 @@ class ZoneTransition(object):
     @property
     def gap(self):
         """Whether this introduces a gap"""
-        return (
-            self.offset_before.raw_utcoffset < self.offset_after.raw_utcoffset
-        )
+        return self.offset_before.utcoffset < self.offset_after.utcoffset
 
     @property
     def delta(self):
-        return (
-            self.offset_after.raw_utcoffset - self.offset_before.raw_utcoffset
-        )
+        return self.offset_after.utcoffset - self.offset_before.utcoffset
 
     @property
     def anomaly_start(self):
         if self.fold:
-            return self.transition + self.delta
+            return self.wall_transition + self.delta
         else:
-            return self.transition
+            return self.wall_transition
 
     @property
     def anomaly_end(self):
         if not self.fold:
-            return self.transition + self.delta
+            return self.wall_transition + self.delta
         else:
-            return self.transition
+            return self.wall_transition
 
 
 ####
