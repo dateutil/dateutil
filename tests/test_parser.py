@@ -541,6 +541,24 @@ class ParserTest(unittest.TestCase):
             res = parse(s1, fuzzy=True)
         self.assertEqual(res, datetime(1945, 1, 29, 14, 45))
 
+    def testFuzzyTrailingColonAfterYear(self):
+        # A trailing ':' after the year must not cause the year token to be
+        # dropped (issue #326) - in fuzzy mode the colon is skipped.
+        self.assertEqual(parse('23. November 2016:', fuzzy=True),
+                         datetime(2016, 11, 23))
+        self.assertEqual(parse('18 October 1874:', fuzzy=True),
+                         datetime(1874, 10, 18))
+        # With an unlikely default, the year must come from the string,
+        # not the default.
+        self.assertEqual(parse('18 October 1874:', fuzzy=True,
+                               default=datetime.min),
+                         datetime(1874, 10, 18))
+        self.assertEqual(parse('18 October 1874:', fuzzy_with_tokens=True)[0],
+                         datetime(1874, 10, 18))
+        # The colon itself is reported as a skipped token.
+        skipped = parse('18 October 1874:', fuzzy_with_tokens=True)[1]
+        self.assertIn(':', skipped)
+
     def testRandomFormat24(self):
         self.assertEqual(parse("0:00 PM, PST", default=self.default,
                                ignoretz=True),
