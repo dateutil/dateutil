@@ -1676,6 +1676,10 @@ INVALID_TZSTRS = [
     "B",
     "+11",  # Unquoted alphanumeric
     "GMT,M3.2.0/2,M11.1.0/3",  # Transition rule but no DST
+    # Transition rules but no DST abbreviation
+    "EST5,M3.2.0,M11.1.0",
+    "<+04>-4,J60,J300",
+    "AAA3,0/0,J365/25",
     "GMT0+11,M3.2.0/2,M11.1.0/3",  # Unquoted alphanumeric in DST
     # Unquoted abbreviation with embedded or leading whitespace
     "AB C3",
