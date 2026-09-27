@@ -2177,6 +2177,25 @@ def test_sub_minute_offset():
     assert datetime(2000, 1, 1, tzinfo=zone).utcoffset() == ZERO
 
 
+def test_sub_minute_offset_round_trip():
+    """Converting to and from UTC near a sub-minute transition round trips."""
+    # America/New_York's LMT offset is -4:56:02, so the switch to EST in 1883
+    # creates a fold whose boundaries move when the offset is rounded.
+    LMT = _RawZoneOffset("LMT", timedelta(seconds=-17762))
+    EST = _RawZoneOffset("EST", timedelta(hours=-5))
+    zone = tz.tzfile(
+        construct_zone(
+            [ZoneTransition(datetime(1883, 11, 18, 12, 3, 58), LMT, EST)],
+            "EST5",
+        )
+    )
+    transition = datetime(1883, 11, 18, 17, tzinfo=tz.UTC)
+
+    for seconds in range(-120, 121):
+        dt_utc = transition + timedelta(seconds=seconds)
+        assert dt_utc.astimezone(zone).astimezone(tz.UTC) == dt_utc
+
+
 @pytest.mark.parametrize("protocol", range(0, pickle.HIGHEST_PROTOCOL + 1))
 def test_sub_minute_offset_pickle(protocol):
     """Pickling preserves the raw offset, even where it has been rounded."""
