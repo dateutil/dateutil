@@ -1113,6 +1113,12 @@ def __get_gettz():
                             tz = tzfile(filepath, key=name)
                             break
                         except (IOError, OSError, ValueError):
+                            # TODO: A file that exists but can't be read or
+                            # isn't a valid TZif file is silently skipped,
+                            # and the key is looked up in the next TZPATH
+                            # entry and then in tzdata. Consider warning
+                            # here, since this usually means the system time
+                            # zone data is broken.
                             pass
                     else:
                         tz = None
