@@ -2,7 +2,6 @@ Release Checklist
 -----------------------------------------
 [ ] Update classifiers in setup.cfg to include the latest supported Python
     versions.
-[ ] If necessary, update the tzdata mirror at https://github.com/dateutil/tzdata
 [ ] Update NEWS with list of changes:
     [ ] Invoke `tox -e news -- --version <NEXT_VERSION>`
     [ ] Make sure that only `template.rst` remains in changelog.d/
