@@ -680,6 +680,16 @@ def _is_seekable(fobj):
 
 
 def load_data(fobj):
+    try:
+        return _load_data(fobj)
+    except struct.error as e:
+        # struct.unpack fails when a read comes up short
+        six.raise_from(
+            ValueError("Invalid TZif file: unexpected end of file"), e
+        )
+
+
+def _load_data(fobj):
     header = _TZifHeader.from_file(fobj)
 
     if header.version == 1:
