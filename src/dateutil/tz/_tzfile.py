@@ -8,7 +8,7 @@ import re
 import stat
 import struct
 import sys
-from datetime import datetime, timedelta
+from datetime import MAXYEAR, MINYEAR, datetime, timedelta
 
 import six
 
@@ -1099,7 +1099,11 @@ class _TZStr(object):
         valid = []
         for tti in (self.std, self.dst):
             utc_ts = ts - tti.utcoff.total_seconds()
-            utc_year = (EPOCH + timedelta(seconds=utc_ts)).year
+            try:
+                utc_year = (EPOCH + timedelta(seconds=utc_ts)).year
+            except OverflowError:
+                # Before year 1 or after year 9999
+                utc_year = MINYEAR if utc_ts < 0 else MAXYEAR
             actual, _ = self._get_trans_info_fromutc_near_new_year(
                 utc_ts, utc_year
             )
@@ -1128,6 +1132,11 @@ class _TZStr(object):
 
         transitions = []
         for y in (year - 1, year, year + 1):
+            # The calendar module can't handle years outside datetime's range
+            # before Python 3.8, and those years can't matter anyway.
+            if not MINYEAR <= y <= MAXYEAR:
+                continue
+
             start, end = self.transitions(y)
             transitions.append((start - std_utcoff, True))
             transitions.append((end - dst_utcoff, False))

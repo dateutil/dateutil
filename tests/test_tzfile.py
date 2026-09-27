@@ -1855,6 +1855,35 @@ def _assert_constant_offset_around_new_year(zone, offset, years):
 
 
 @pytest.mark.parametrize(
+    "dt",
+    [
+        datetime(1, 1, 1, 0, 30),
+        datetime(1, 1, 1, 12),
+        datetime(1, 1, 5, 12),
+        datetime(9999, 12, 28, 6, 55),
+        datetime(9999, 12, 31, 12),
+        datetime(9999, 12, 31, 23, 30),
+    ],
+)
+@pytest.mark.parametrize(
+    "tz_str", ["EST5EDT,M3.2.0,M11.1.0", "<+00>0<+01>,0/0,J365/25"]
+)
+def test_tzstr_near_min_and_max_year(tz_str, dt):
+    """The rules for the years around year 1 and year 9999 don't break."""
+    zone = tz.tzfile(construct_zone([], tz_str))
+    for fold in (0, 1):
+        dt_fold = tz.enfold(dt.replace(tzinfo=zone), fold=fold)
+        assert dt_fold.utcoffset() is not None
+
+    dt_utc = dt.replace(tzinfo=tz.UTC)
+    try:
+        dt_utc.astimezone(zone)
+    except OverflowError:
+        # The local time is past the end of what datetime can represent
+        pass
+
+
+@pytest.mark.parametrize(
     "tz_str",
     [
         # DST all year, written the way zic writes it: each year's DST period
