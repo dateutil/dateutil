@@ -26,13 +26,41 @@ __all__ = ["get_zonefile_instance", "gettz", "gettz_db_metadata"]
 ZONEFILENAME = None
 METADATA_FN = 'METADATA'
 
+
+def _importer_stacklevel():
+    """The ``stacklevel`` that attributes a warning to the importing code.
+
+    This module can be imported through ``dateutil.__getattr__`` (e.g. by
+    ``from dateutil import zoneinfo``), which calls
+    ``importlib.import_module``; the warnings machinery skips the import
+    system's own frames, but not those two, so skip them here.
+    """
+    level = 1
+    frame = sys._getframe(1)  # The body of this module
+    while frame.f_back is not None:
+        frame = frame.f_back
+        filename = frame.f_code.co_filename
+        if "importlib" in filename and "_bootstrap" in filename:
+            # Since Python 3.5, the warnings machinery skips these frames
+            # without counting them; before that they count like any other.
+            if sys.version_info < (3, 5):
+                level += 1
+            continue
+
+        level += 1
+        if frame.f_globals.get("__name__") not in ("importlib", "dateutil"):
+            return level
+
+    return 2
+
+
 warnings.warn(
     "The `dateutil.zoneinfo` module has been replaced with a wrapper around "
     "the tzdata package, and its use is deprecated, to be removed in a future "
     "version. Use the standard library module `zoneinfo` or `dateutil.tz` "
     "instead.",
     DeprecationWarning,
-    stacklevel=2,
+    stacklevel=_importer_stacklevel(),
 )
 
 

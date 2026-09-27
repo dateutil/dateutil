@@ -1,3 +1,4 @@
+import os
 import sys
 import unittest
 
@@ -69,6 +70,16 @@ def test_lazy_import(clean_import, module):
     assert mod_obj is mod_imported
 
 
+def assert_warned_from_this_file(record):
+    """The zoneinfo deprecation warning is attributed to the importing code."""
+    filenames = [
+        os.path.normcase(os.path.splitext(w.filename)[0])
+        for w in record
+        if issubclass(w.category, DeprecationWarning)
+    ]
+    assert filenames == [os.path.normcase(os.path.splitext(__file__)[0])]
+
+
 def test_lazy_import_zoneinfo(clean_import):
     """Test that zoneinfo raises a DeprecationWarning when imported lazily."""
     if sys.version_info < (3, 7):
@@ -76,8 +87,10 @@ def test_lazy_import_zoneinfo(clean_import):
 
     import dateutil
 
-    with pytest.warns(DeprecationWarning):
+    with pytest.warns(DeprecationWarning) as record:
         assert dateutil.zoneinfo is not None
+
+    assert_warned_from_this_file(record)
 
 
 HOST_IS_WINDOWS = sys.platform.startswith('win')
@@ -246,18 +259,24 @@ def test_import_tz_windows_star():
 
 # Test imports of Zone Info
 def test_import_zone_info_direct(clean_import):
-    with pytest.warns(DeprecationWarning):
+    with pytest.warns(DeprecationWarning) as record:
         import dateutil.zoneinfo
+
+    assert_warned_from_this_file(record)
 
 
 def test_import_zone_info_from(clean_import):
-    with pytest.warns(DeprecationWarning):
+    with pytest.warns(DeprecationWarning) as record:
         from dateutil import zoneinfo
+
+    assert_warned_from_this_file(record)
 
 
 def test_import_zone_info_star(clean_import):
-    with pytest.warns(DeprecationWarning):
+    with pytest.warns(DeprecationWarning) as record:
         from dateutil.zoneinfo import gettz, gettz_db_metadata, rebuild
+
+    assert_warned_from_this_file(record)
 
     zi_all = (gettz, gettz_db_metadata, rebuild)
 
