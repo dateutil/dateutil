@@ -4,6 +4,7 @@ import base64
 import contextlib
 import functools
 import gzip
+import io
 import json
 import os
 import pickle
@@ -1615,6 +1616,51 @@ def test_truncated_footer(strip):
 
     with pytest.raises(ValueError):
         tz.tzfile(six.BytesIO(data[:-strip]))
+
+
+def _zone_for_stream_tests():
+    STD = ZoneOffset("STD", -5 * ONE_H)
+    DST = ZoneOffset("DST", -4 * ONE_H, ONE_H)
+    return construct_zone(
+        [
+            ZoneTransition(datetime(2020, 3, 8, 2), STD, DST),
+            ZoneTransition(datetime(2020, 11, 1, 2), DST, STD),
+        ],
+        "STD5DST,M3.2.0,M11.1.0",
+    ).read()
+
+
+def test_tzfile_from_pipe():
+    """A zone can be read from a stream that cannot seek."""
+    data = _zone_for_stream_tests()
+    expected = tz.tzfile(six.BytesIO(data))
+
+    read_fd, write_fd = os.pipe()
+    os.write(write_fd, data)
+    os.close(write_fd)
+
+    with io.open(read_fd, "rb") as f:
+        assert not f.seekable()
+        zone = tz.tzfile(f, filename="pipe")
+
+    assert zone == expected
+    assert datetime(2030, 7, 1, tzinfo=zone).tzname() == "DST"
+
+
+def test_tzfile_from_read_only_object():
+    """A zone can be read from an object that only has a read() method."""
+
+    class ReadOnly(object):
+        def __init__(self, data):
+            self._stream = six.BytesIO(data)
+
+        def read(self, *args):
+            return self._stream.read(*args)
+
+    data = _zone_for_stream_tests()
+    zone = tz.tzfile(ReadOnly(data), filename="read-only")
+
+    assert zone == tz.tzfile(six.BytesIO(data))
 
 
 @pytest.mark.parametrize("version", [1, 2, 3])

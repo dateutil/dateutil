@@ -2,6 +2,7 @@
 import bisect
 import calendar
 import functools
+import io
 import re
 import struct
 import sys
@@ -392,6 +393,12 @@ class tzfile(_tzinfo):
         return (_unpickle, (self.__class__, self._key, self._filename, data))
 
     def _load_file(self, fobj):
+        # Reading the file requires seeking past the parts we don't use and
+        # reading the footer a line at a time, so read anything that doesn't
+        # support that (e.g. a pipe) into memory first; TZif files are small.
+        if not _is_seekable(fobj) or not hasattr(fobj, "readline"):
+            fobj = io.BytesIO(fobj.read())
+
         # Retrieve all the data as it exists in the zoneinfo file
         data = load_data(fobj)
         self._load_from_data(data)
@@ -606,6 +613,18 @@ class tzfile(_tzinfo):
 
     def __repr__(self):
         return "%s(%s)" % (self.__class__.__name__, repr(self._filename))
+
+
+def _is_seekable(fobj):
+    if not hasattr(fobj, "seek"):
+        return False
+
+    seekable = getattr(fobj, "seekable", None)
+    if seekable is None:
+        # Python 2 file objects can seek but have no seekable() method
+        return True
+
+    return seekable()
 
 
 def load_data(fobj):
