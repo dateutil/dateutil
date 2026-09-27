@@ -45,12 +45,10 @@ make ZFLAGS="-b ${TZ_BLOAT}" TOPDIR="${TMP_DIR}/tzdir" install
 
 cd $ORIG_DIR
 
-# dateutil depends on tzdata, but while it is installed, anything missing
-# from (or unreadable in) the data we just built is silently looked up in
-# the tzdata package instead, so the tests would not be testing tz master.
-python -m pip uninstall -y tzdata
-
-# Make sure that the tests will actually see the data we just built.
+# Make sure that the tests will actually see the data we just built. The
+# tests that are about the data on TZPATH block the tzdata package
+# themselves (see the tz_source fixture), so that anything missing from or
+# unreadable in this data fails, rather than being answered by tzdata.
 TZ_BLOAT=${TZ_BLOAT} python - <<'EOF'
 import os
 import struct
@@ -59,13 +57,6 @@ import sys
 from dateutil import tz
 
 tzpath = os.environ["PYTHONTZPATH"]
-
-try:
-    import tzdata
-except ImportError:
-    pass
-else:
-    sys.exit("tzdata is still importable from %s" % tzdata.__file__)
 
 if tuple(tz.TZPATH) != (tzpath,):
     sys.exit("Expected TZPATH to be (%r,), got %r" % (tzpath, tz.TZPATH))

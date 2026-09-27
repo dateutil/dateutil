@@ -2676,6 +2676,7 @@ class RRuleTest(unittest.TestCase):
 
     def testStrWithTZID(self):
         NYC = tz.gettz('America/New_York')
+        self.assertIsNotNone(NYC)
         self.assertEqual(list(rrulestr(
                               "DTSTART;TZID=America/New_York:19970902T090000\n"
                               "RRULE:FREQ=YEARLY;COUNT=3\n"
@@ -2689,6 +2690,7 @@ class RRuleTest(unittest.TestCase):
                  "RRULE:FREQ=YEARLY;COUNT=3")
 
         NYC = tz.gettz('America/New_York')
+        self.assertIsNotNone(NYC)
         rr = rrulestr(rrstr, tzids={'Eastern': NYC})
         exp = [datetime(1997, 9, 2, 9, 0, tzinfo=NYC),
                datetime(1998, 9, 2, 9, 0, tzinfo=NYC),
@@ -2864,6 +2866,7 @@ class RRuleTest(unittest.TestCase):
 
     def testStrSetExDateWithTZID(self):
         BXL = tz.gettz('Europe/Brussels')
+        self.assertIsNotNone(BXL)
         rr = rrulestr("DTSTART;TZID=Europe/Brussels:19970902T090000\n"
                       "RRULE:FREQ=YEARLY;COUNT=6;BYDAY=TU,TH\n"
                       "EXDATE;TZID=Europe/Brussels:19970904T090000\n"
@@ -2898,6 +2901,7 @@ class RRuleTest(unittest.TestCase):
 
     def testStrSetExDateValueDateTimeWithTZID(self):
         BXL = tz.gettz('Europe/Brussels')
+        self.assertIsNotNone(BXL)
         rrstr = '\n'.join([
             "DTSTART;VALUE=DATE-TIME;TZID=Europe/Brussels:19970902T090000",
             "RRULE:FREQ=YEARLY;COUNT=4;BYDAY=TU,TH",
@@ -3015,6 +3019,7 @@ class RRuleTest(unittest.TestCase):
 
     def testStrUntilWithTZ(self):
         NYC = tz.gettz('America/New_York')
+        self.assertIsNotNone(NYC)
         rr = list(rrulestr("DTSTART;TZID=America/New_York:19970101T000000\n"
                           "RRULE:FREQ=YEARLY;"
                           "UNTIL=19990101T000000Z\n"))

@@ -5,7 +5,9 @@ import base64
 import copy
 import gc
 import os
+import pickle
 import sys
+import tempfile
 import threading
 import unittest
 import warnings
@@ -18,7 +20,13 @@ from io import BytesIO, StringIO
 
 from six import PY2
 
-from ._common import ComparesEqual, PicklableMixin, TZEnvContext, TZWinContext
+from ._common import (
+    ComparesEqual,
+    PicklableMixin,
+    TZEnvContext,
+    TzSourceMixin,
+    TZWinContext,
+)
 
 IS_WIN = sys.platform.startswith('win')
 
@@ -1035,15 +1043,15 @@ def test_tzlocal_offset_unequal(tzvar, tzoff):
 
 
 @pytest.mark.gettz
-class GettzTest(unittest.TestCase, TzFoldMixin):
+class GettzTest(TzSourceMixin, unittest.TestCase, TzFoldMixin):
     gettz = staticmethod(tz.gettz)
 
     def testGettz(self):
         # bug 892569
-        str(self.gettz('UTC'))
+        str(self.gettz("Etc/UTC"))
 
     def testGetTzEquality(self):
-        self.assertEqual(self.gettz('UTC'), self.gettz('UTC'))
+        self.assertEqual(self.gettz("Etc/UTC"), self.gettz("Etc/UTC"))
 
     def testTimeOnlyGettz(self):
         # gettz returns None
@@ -1067,7 +1075,7 @@ class GettzTest(unittest.TestCase, TzFoldMixin):
 
     def testPortugalDST(self):
         # In 1996, Portugal changed from CET to WET
-        PORTUGAL = self.gettz('Portugal')
+        PORTUGAL = self.gettz("Europe/Lisbon")
 
         t_cet = datetime(1996, 3, 31, 1, 59, tzinfo=PORTUGAL)
 
@@ -1101,6 +1109,43 @@ class GettzTest(unittest.TestCase, TzFoldMixin):
         # Also tested more thoroughly in the property tests.
         NYC = tz.gettz("America/New_York")
         assert NYC.key == "America/New_York"
+
+
+@pytest.mark.gettz
+class GettzTzdataTest(GettzTest):
+    tz_source = "tzdata"
+
+
+# Links from the "backward" file in the tz database, which some builds leave
+# out, and which may be removed in the future.
+LINKS = [
+    ("US/Eastern", "America/New_York"),
+    ("US/Pacific", "America/Los_Angeles"),
+    ("Portugal", "Europe/Lisbon"),
+    ("Europe/Kiev", "Europe/Kyiv"),
+    ("Australia/Canberra", "Australia/Sydney"),
+    ("Australia/Currie", "Australia/Hobart"),
+    ("Europe/Monaco", "Europe/Paris"),
+    ("UTC", "Etc/UTC"),
+    ("GMT", "Etc/GMT"),
+]
+
+
+@pytest.mark.gettz
+@pytest.mark.parametrize("link, target", LINKS)
+def test_gettz_link(tz_source, link, target):
+    """A link behaves like its target, but keeps its own key."""
+    if link not in tz.available_iana_timezones():
+        pytest.skip("%s is not in this time zone data" % link)
+
+    link_zone = tz.gettz(link)
+    target_zone = tz.gettz(target)
+
+    assert isinstance(link_zone, tz.tzfile)
+    assert isinstance(target_zone, tz.tzfile)
+    assert link_zone == target_zone
+    assert link_zone.key == link
+    assert target_zone.key == target
 
 
 @pytest.mark.gettz
@@ -1174,20 +1219,20 @@ def test_gettz_set_cache_size():
     tz.gettz.cache_clear()
     tz.gettz.set_cache_size(3)
 
-    MONACO_ref = weakref.ref(tz.gettz('Europe/Monaco'))
-    EASTER_ref = weakref.ref(tz.gettz('Pacific/Easter'))
-    CURRIE_ref = weakref.ref(tz.gettz('Australia/Currie'))
+    PARIS_ref = weakref.ref(tz.gettz("Europe/Paris"))
+    EASTER_ref = weakref.ref(tz.gettz("Pacific/Easter"))
+    HOBART_ref = weakref.ref(tz.gettz("Australia/Hobart"))
 
     gc.collect()
 
-    assert MONACO_ref() is not None
+    assert PARIS_ref() is not None
     assert EASTER_ref() is not None
-    assert CURRIE_ref() is not None
+    assert HOBART_ref() is not None
 
     tz.gettz.set_cache_size(2)
     gc.collect()
 
-    assert MONACO_ref() is None
+    assert PARIS_ref() is None
 
 @pytest.mark.smoke
 @pytest.mark.gettz
@@ -1206,9 +1251,9 @@ def test_gettz_weakref():
     assert tz.gettz('America/New_York') is NYC_ref()
 
     # Populate strong cache with other timezones
-    tz.gettz('Europe/Monaco')
-    tz.gettz('Pacific/Easter')
-    tz.gettz('Australia/Currie')
+    tz.gettz("Europe/Paris")
+    tz.gettz("Pacific/Easter")
+    tz.gettz("Australia/Hobart")
 
     gc.collect()
     assert NYC_ref() is None    # Should have been pushed out
@@ -1216,6 +1261,9 @@ def test_gettz_weakref():
 
 @requires_tzdata
 class ZoneInfoGettzTest(GettzTest):
+    # This reads the tzdata package through dateutil.zoneinfo directly
+    tz_source = None
+
     def gettz(self, name):
         zoneinfo_file = zoneinfo.get_zonefile_instance()
         return zoneinfo_file.get(name)
@@ -2147,9 +2195,10 @@ def test_sub_minute_rounding_tzfile():
 
 
 @pytest.mark.tzfile
-def test_samoa_transition():
+def test_samoa_transition(tz_source):
     # utcoffset() was erroneously returning +14:00 an hour early (GH #812)
     APIA = tz.gettz('Pacific/Apia')
+    assert APIA is not None
     dt = datetime(2011, 12, 29, 23, 59, tzinfo=APIA)
     assert dt.utcoffset() == timedelta(hours=-10)
 
@@ -2455,9 +2504,6 @@ class TzPickleTest(PicklableMixin, unittest.TestCase):
         tzc = tz.tzical(StringIO(TZICAL_EST5EDT)).get()
         self.assertPicklable(tzc)
 
-    def testPickleTzGettz(self):
-        self.assertPicklable(tz.gettz('America/New_York'))
-
     @requires_tzdata
     def testPickleZoneFileGettz(self):
         zoneinfo_file = zoneinfo.get_zonefile_instance()
@@ -2471,7 +2517,24 @@ class TzPickleFileTest(TzPickleTest):
     _asfile = True
 
 
-class DatetimeAmbiguousTest(unittest.TestCase):
+@pytest.mark.parametrize("asfile", [False, True])
+def test_pickle_gettz(tz_source, asfile):
+    zone = tz.gettz("America/New_York")
+    assert zone is not None
+
+    if asfile:
+        with tempfile.TemporaryFile("w+b") as f:
+            pickle.dump(zone, f)
+            f.seek(0)
+            unpickled = pickle.load(f)
+    else:
+        unpickled = pickle.loads(pickle.dumps(zone))
+
+    assert unpickled is not zone
+    assert unpickled == zone
+
+
+class DatetimeAmbiguousTest(TzSourceMixin, unittest.TestCase):
     """ Test the datetime_exists / datetime_ambiguous functions """
 
     def testNoTzSpecified(self):
@@ -2560,28 +2623,28 @@ class DatetimeAmbiguousTest(unittest.TestCase):
                                                tz=tzi))
 
     def testSupportAmbiguityFoldNaive(self):
-        tzi = tz.gettz('US/Eastern')
+        tzi = tz.gettz("America/New_York")
 
         dt = datetime(2011, 11, 6, 1, 30)
 
         self.assertTrue(tz.datetime_ambiguous(dt, tz=tzi))
 
     def testSupportAmbiguityFoldAware(self):
-        tzi = tz.gettz('US/Eastern')
+        tzi = tz.gettz("America/New_York")
 
         dt = datetime(2011, 11, 6, 1, 30, tzinfo=tzi)
 
         self.assertTrue(tz.datetime_ambiguous(dt))
 
     def testSupportAmbiguityUnambiguousAware(self):
-        tzi = tz.gettz('US/Eastern')
+        tzi = tz.gettz("America/New_York")
 
         dt = datetime(2011, 11, 6, 4, 30)
 
         self.assertFalse(tz.datetime_ambiguous(dt, tz=tzi))
 
     def testSupportAmbiguityUnambiguousNaive(self):
-        tzi = tz.gettz('US/Eastern')
+        tzi = tz.gettz("America/New_York")
 
         dt = datetime(2011, 11, 6, 4, 30, tzinfo=tzi)
 
@@ -2659,11 +2722,15 @@ class DatetimeAmbiguousTest(unittest.TestCase):
 
         self.assertFalse(tz.datetime_ambiguous(dt))
 
-        tzi = tz.gettz('US/Eastern')
+        tzi = tz.gettz("America/New_York")
         self.assertTrue(tz.datetime_ambiguous(dt, tz=tzi))
 
 
-class DatetimeExistsTest(unittest.TestCase):
+class DatetimeAmbiguousTzdataTest(DatetimeAmbiguousTest):
+    tz_source = "tzdata"
+
+
+class DatetimeExistsTest(TzSourceMixin, unittest.TestCase):
     def testNoTzSpecified(self):
         with self.assertRaises(ValueError):
             tz.datetime_exists(datetime(2016, 4, 1, 2, 9))
@@ -2697,12 +2764,16 @@ class DatetimeExistsTest(unittest.TestCase):
         self.assertTrue(tz.datetime_exists(dt))
 
     def testSpecifiedTzOverridesAttached(self):
-        EST = tz.gettz('US/Eastern')
-        AEST = tz.gettz('Australia/Sydney')
+        EST = tz.gettz("America/New_York")
+        AEST = tz.gettz("Australia/Sydney")
 
         dt = datetime(2012, 10, 7, 2, 30, tzinfo=EST)  # This time exists
 
         self.assertFalse(tz.datetime_exists(dt, tz=AEST))
+
+
+class DatetimeExistsTzdataTest(DatetimeExistsTest):
+    tz_source = "tzdata"
 
 
 class TestEnfold:
@@ -2746,9 +2817,9 @@ class TestEnfold:
 
 
 @pytest.mark.tz_resolve_imaginary
-class ImaginaryDateTest(unittest.TestCase):
-    def testCanberraForward(self):
-        tzi = tz.gettz('Australia/Canberra')
+class ImaginaryDateTest(TzSourceMixin, unittest.TestCase):
+    def testSydneyForward(self):
+        tzi = tz.gettz("Australia/Sydney")
         dt = datetime(2018, 10, 7, 2, 30, tzinfo=tzi)
         dt_act = tz.resolve_imaginary(dt)
         dt_exp = datetime(2018, 10, 7, 3, 30, tzinfo=tzi)
@@ -2761,21 +2832,37 @@ class ImaginaryDateTest(unittest.TestCase):
         dt_exp = datetime(2018, 3, 25, 2, 30, tzinfo=tzi)
         self.assertEqual(dt_act, dt_exp)
 
-    def testKeivForward(self):
-        tzi = tz.gettz('Europe/Kiev')
+    def testKyivForward(self):
+        tzi = tz.gettz("Europe/Kyiv")
         dt = datetime(2018, 3, 25, 3, 30, tzinfo=tzi)
         dt_act = tz.resolve_imaginary(dt)
         dt_exp = datetime(2018, 3, 25, 4, 30, tzinfo=tzi)
         self.assertEqual(dt_act, dt_exp)
 
 
+class ImaginaryDateTzdataTest(ImaginaryDateTest):
+    tz_source = "tzdata"
+
+
+def _gettz(key):
+    # A key missing from the data should fail the test, not pass it with a
+    # naive datetime.
+    zone = tz.gettz(key)
+    assert zone is not None, key
+    return zone
+
+
 @pytest.mark.tz_resolve_imaginary
-@pytest.mark.parametrize('dt', [
-    datetime(2017, 11, 5, 1, 30, tzinfo=tz.gettz('America/New_York')),
-    datetime(2018, 10, 28, 1, 30, tzinfo=tz.gettz('Europe/London')),
-    datetime(2017, 4, 2, 2, 30, tzinfo=tz.gettz('Australia/Sydney')),
-])
-def test_resolve_imaginary_ambiguous(dt):
+@pytest.mark.parametrize(
+    "key, dt",
+    [
+        ("America/New_York", datetime(2017, 11, 5, 1, 30)),
+        ("Europe/London", datetime(2018, 10, 28, 1, 30)),
+        ("Australia/Sydney", datetime(2017, 4, 2, 2, 30)),
+    ],
+)
+def test_resolve_imaginary_ambiguous(tz_source, key, dt):
+    dt = dt.replace(tzinfo=_gettz(key))
     assert tz.resolve_imaginary(dt) is dt
 
     dt_f = tz.enfold(dt)
@@ -2784,66 +2871,72 @@ def test_resolve_imaginary_ambiguous(dt):
 
 
 @pytest.mark.tz_resolve_imaginary
+@pytest.mark.parametrize(
+    "key, dt",
+    [
+        ("America/New_York", datetime(2017, 6, 2, 12, 30)),
+        ("Europe/London", datetime(2018, 4, 2, 9, 30)),
+        ("Australia/Sydney", datetime(2017, 2, 2, 16, 30)),
+        ("America/New_York", datetime(2017, 12, 2, 12, 30)),
+        ("Europe/London", datetime(2018, 12, 2, 9, 30)),
+        ("Australia/Sydney", datetime(2017, 6, 2, 16, 30)),
+    ],
+)
+def test_resolve_imaginary_existing(tz_source, key, dt):
+    dt = dt.replace(tzinfo=_gettz(key))
+    assert tz.resolve_imaginary(dt) is dt
+
+
+@pytest.mark.tz_resolve_imaginary
 @pytest.mark.parametrize('dt', [
-    datetime(2017, 6, 2, 12, 30, tzinfo=tz.gettz('America/New_York')),
-    datetime(2018, 4, 2, 9, 30, tzinfo=tz.gettz('Europe/London')),
-    datetime(2017, 2, 2, 16, 30, tzinfo=tz.gettz('Australia/Sydney')),
-    datetime(2017, 12, 2, 12, 30, tzinfo=tz.gettz('America/New_York')),
-    datetime(2018, 12, 2, 9, 30, tzinfo=tz.gettz('Europe/London')),
-    datetime(2017, 6, 2, 16, 30, tzinfo=tz.gettz('Australia/Sydney')),
     datetime(2025, 9, 25, 1, 17, tzinfo=tz.UTC),
     datetime(2025, 9, 25, 1, 17, tzinfo=tz.tzoffset('EST', -18000)),
     datetime(2019, 3, 4, tzinfo=None)
 ])
-def test_resolve_imaginary_existing(dt):
+def test_resolve_imaginary_existing_fixed(dt):
     assert tz.resolve_imaginary(dt) is dt
 
 
-def __get_kiritimati_resolve_imaginary_test():
-    # In the 2018d release of the IANA database, the Kiritimati "imaginary day"
-    # data was corrected, so if the system zoneinfo is older than 2018d, the
-    # Kiritimati test will fail.
-
-    tzi = tz.gettz('Pacific/Kiritimati')
-    new_version = False
-    if not tz.datetime_exists(datetime(1995, 1, 1, 12, 30), tzi):
-        zif = zoneinfo.get_zonefile_instance()
-        if zif.metadata is not None:
-            new_version = zif.metadata['tzversion'] >= '2018d'
-
-        if new_version:
-            tzi = zif.get('Pacific/Kiritimati')
-    else:
-        new_version = True
-
-    if new_version:
-        dates = (datetime(1994, 12, 31, 12, 30), datetime(1995, 1, 1, 12, 30))
-    else:
-        dates = (datetime(1995, 1, 1, 12, 30), datetime(1995, 1, 2, 12, 30))
-
-    return (tzi, ) + dates
-
-
 resolve_imaginary_tests = [
-    (tz.gettz('Europe/London'),
-     datetime(2018, 3, 25, 1, 30), datetime(2018, 3, 25, 2, 30)),
-    (tz.gettz('America/New_York'),
-     datetime(2017, 3, 12, 2, 30), datetime(2017, 3, 12, 3, 30)),
-    (tz.gettz('Australia/Sydney'),
-     datetime(2014, 10, 5, 2, 0), datetime(2014, 10, 5, 3, 0)),
-    __get_kiritimati_resolve_imaginary_test(),
+    (
+        "Europe/London",
+        datetime(2018, 3, 25, 1, 30),
+        datetime(2018, 3, 25, 2, 30),
+    ),
+    (
+        "America/New_York",
+        datetime(2017, 3, 12, 2, 30),
+        datetime(2017, 3, 12, 3, 30),
+    ),
+    (
+        "Australia/Sydney",
+        datetime(2014, 10, 5, 2, 0),
+        datetime(2014, 10, 5, 3, 0),
+    ),
+    # Kiritimati skipped 1994-12-31 when it moved across the date line. Data
+    # older than 2018d had the skipped day wrong.
+    (
+        "Pacific/Kiritimati",
+        datetime(1994, 12, 31, 12, 30),
+        datetime(1995, 1, 1, 12, 30),
+    ),
 ]
 
 
 if SUPPORTS_SUB_MINUTE_OFFSETS:
     resolve_imaginary_tests.append(
-        (tz.gettz('Africa/Monrovia'),
-         datetime(1972, 1, 7, 0, 30), datetime(1972, 1, 7, 1, 14, 30)))
+        (
+            "Africa/Monrovia",
+            datetime(1972, 1, 7, 0, 30),
+            datetime(1972, 1, 7, 1, 14, 30),
+        )
+    )
 
 
 @pytest.mark.tz_resolve_imaginary
-@pytest.mark.parametrize('tzi, dt, dt_exp', resolve_imaginary_tests)
-def test_resolve_imaginary(tzi, dt, dt_exp):
+@pytest.mark.parametrize("key, dt, dt_exp", resolve_imaginary_tests)
+def test_resolve_imaginary(tz_source, key, dt, dt_exp):
+    tzi = _gettz(key)
     dt = dt.replace(tzinfo=tzi)
     dt_exp = dt_exp.replace(tzinfo=tzi)
 

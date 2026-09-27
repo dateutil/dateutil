@@ -2,10 +2,11 @@ import sys
 from datetime import datetime, timedelta
 
 import pytest
-from hypothesis import assume, example, given
+from hypothesis import example, given
 from hypothesis import strategies as st
 
 from dateutil import tz
+from tests._common import tz_source_context, tz_source_skip_reason
 
 # Bounds of a signed 32-bit time_t, as naive *UTC* datetimes. They are naive
 # because st.datetimes() requires naive bounds; the strategy attaches tz.UTC
@@ -15,37 +16,26 @@ EPOCH = datetime(1970, 1, 1)
 EPOCHALYPSE = EPOCH + timedelta(seconds=2**31 - 1)
 NEGATIVE_EPOCHALYPSE = EPOCH - timedelta(seconds=2**31)
 
-try:
-    import zoneinfo
-except ImportError:
-    try:
-        import backports.zoneinfo as zoneinfo
-    except ImportError:
-        zoneinfo = None
-
-
-def __valid_keys():
-    key_list = tz.available_iana_timezones()
-    return tuple(sorted(key_list))
-
-
-VALID_KEYS = __valid_keys()
-del __valid_keys
-
-iana_keys = st.sampled_from(VALID_KEYS)
-
-
 @pytest.mark.gettz
-@given(key=iana_keys)
-def test_key_property(key):
-    tzi = tz.gettz(key)
-    assume(isinstance(tzi, tz.tzfile))
-    assert tzi.key == key
+def test_key_property(tz_source):
+    """Every available key loads, and keeps the key it was loaded with."""
+    keys = sorted(tz.available_iana_timezones())
+    assert keys
+
+    for key in keys:
+        tzi = tz.gettz(key)
+        assert isinstance(tzi, tz.tzfile), key
+        assert tzi.key == key
 
 
 @pytest.mark.gettz
 @pytest.mark.skipif(
     sys.version_info < (3, 6), reason="Not supported on Python < 3.6"
+)
+# The C library reads the data on TZPATH, so that's what gettz must use too.
+@pytest.mark.skipif(
+    tz_source_skip_reason("tzpath") is not None,
+    reason="No time zone data on TZPATH",
 )
 @pytest.mark.parametrize("gettz_arg", [None, ""])
 # TODO: Remove bounds when GH #590 is resolved
@@ -71,7 +61,9 @@ def test_key_property(key):
 @example(dt=NEGATIVE_EPOCHALYPSE.replace(tzinfo=tz.UTC))
 @example(dt=EPOCHALYPSE.replace(tzinfo=tz.UTC))
 def test_gettz_returns_local(gettz_arg, dt):
-    act_tz = tz.gettz(gettz_arg)
+    with tz_source_context("tzpath"):
+        act_tz = tz.gettz(gettz_arg)
+
     if isinstance(act_tz, tz.tzlocal):
         return
 
