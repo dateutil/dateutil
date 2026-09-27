@@ -261,14 +261,17 @@ class RelativeDeltaTest(unittest.TestCase):
         self.assertEqual(-r, relativedelta(days=-1, leapdays=-1))
         self.assertEqual(r + (-r), relativedelta())
         self.assertEqual(r - r, relativedelta())
-        self.assertEqual(relativedelta(leapdays=0) -
-                         relativedelta(leapdays=1),
-                         relativedelta(leapdays=-1))
-        self.assertEqual(relativedelta(leapdays=2) +
-                         relativedelta(leapdays=1),
-                         relativedelta(leapdays=3))
-        self.assertEqual(abs(relativedelta(leapdays=-1)),
-                         relativedelta(leapdays=1))
+        self.assertEqual(
+            relativedelta(leapdays=0) - relativedelta(leapdays=1),
+            relativedelta(leapdays=-1),
+        )
+        self.assertEqual(
+            relativedelta(leapdays=2) + relativedelta(leapdays=1),
+            relativedelta(leapdays=3),
+        )
+        self.assertEqual(
+            abs(relativedelta(leapdays=-1)), relativedelta(leapdays=1)
+        )
         # The arithmetic must also hold when applied to a date:
         # (d + r) - r == d in a leap year, where leapdays actually
         # shifts the result.
