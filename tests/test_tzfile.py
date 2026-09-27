@@ -2035,7 +2035,8 @@ def test_gettz_skips_invalid_file_on_tzpath(tmp_path, make_invalid):
         zone = tz.gettz("Fictional/Zone")
 
     assert isinstance(zone, tz.tzfile)
-    assert zone._filename == str(second / "Zone")
+    # On Windows the key's "/" ends up in the path as it is
+    assert os.path.normpath(zone._filename) == str(second / "Zone")
 
 
 @pytest.mark.parametrize("make_invalid", INVALID_TZPATH_FILES)
