@@ -3,7 +3,9 @@ import bisect
 import calendar
 import functools
 import io
+import os
 import re
+import stat
 import struct
 import sys
 from datetime import datetime, timedelta
@@ -615,16 +617,34 @@ class tzfile(_tzinfo):
         return "%s(%s)" % (self.__class__.__name__, repr(self._filename))
 
 
+# Before Python 3.16, pipes on Windows claim to be seekable, but seeking on
+# them silently does nothing. See https://github.com/python/cpython/issues/86768
+_SEEKABLE_PIPES_BUG = sys.platform == "win32" and sys.version_info < (3, 16)
+
+
 def _is_seekable(fobj):
     if not hasattr(fobj, "seek"):
         return False
 
     seekable = getattr(fobj, "seekable", None)
-    if seekable is None:
-        # Python 2 file objects can seek but have no seekable() method
+    # Python 2 file objects can seek but have no seekable() method
+    if seekable is not None and not seekable():
+        return False
+
+    if not _SEEKABLE_PIPES_BUG:
         return True
 
-    return seekable()
+    # For anything backed by a file descriptor, only trust regular files.
+    try:
+        fd = fobj.fileno()
+    except (AttributeError, OSError, ValueError):
+        # io.UnsupportedOperation (e.g. from BytesIO) is both of the latter
+        return True
+
+    try:
+        return stat.S_ISREG(os.fstat(fd).st_mode)
+    except OSError:
+        return True
 
 
 def load_data(fobj):
