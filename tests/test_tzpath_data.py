@@ -157,17 +157,30 @@ def test_matches_zoneinfo(tz_source):
         for dt_utc in _probe_instants(zone):
             dt = dt_utc.astimezone(zone)
             dt_ref = dt_utc.astimezone(reference)
-            assert (dt.replace(tzinfo=None), _fold(dt)) == (
+            if (dt.replace(tzinfo=None), _fold(dt)) != (
                 dt_ref.replace(tzinfo=None),
                 dt_ref.fold,
-            ), (key, dt_utc)
+            ):
+                # zoneinfo gets some TZ strings wrong near the new year (e.g.
+                # "0/0,J365/23" rules); only accept a difference where its
+                # answer doesn't round trip and ours does.
+                assert dt_ref.astimezone(UTC) != dt_utc, (key, dt_utc)
+                assert dt.astimezone(UTC) == dt_utc, (key, dt_utc)
 
             wall = dt_utc.replace(tzinfo=None)
             for fold in (0, 1):
                 dt = tz.enfold(wall.replace(tzinfo=zone), fold=fold)
                 dt_ref = wall.replace(tzinfo=reference, fold=fold)
-                assert (dt.utcoffset(), dt.dst(), dt.tzname()) == (
+                if (dt.utcoffset(), dt.dst(), dt.tzname()) != (
                     dt_ref.utcoffset(),
                     dt_ref.dst(),
                     dt_ref.tzname(),
-                ), (key, wall, fold)
+                ):
+                    # As above: zoneinfo's offset has to be one that its own
+                    # fromutc contradicts, and ours has to be one ours agrees
+                    # with, so a difference in a real gap still fails.
+                    case = (key, wall, fold)
+                    ref_rt = dt_ref.astimezone(UTC).astimezone(reference)
+                    our_rt = dt.astimezone(UTC).astimezone(zone)
+                    assert ref_rt.replace(tzinfo=None) != wall, case
+                    assert our_rt.replace(tzinfo=None) == wall, case
