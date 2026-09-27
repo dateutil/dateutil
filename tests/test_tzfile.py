@@ -1859,6 +1859,7 @@ def _assert_constant_offset_around_new_year(zone, offset, years):
 @as_list
 def _near_min_and_max_year_cases():
     EST = -5 * ONE_H
+    EDT = -4 * ONE_H
     STD = ZERO
     DST = ONE_H
 
@@ -1871,6 +1872,11 @@ def _near_min_and_max_year_cases():
         datetime(9999, 12, 31, 23, 30),
     ]:
         yield "EST5EDT,M3.2.0,M11.1.0", dt, EST
+        yield "<+00>0<+01>,0/0,J365/25", dt, DST
+
+        # DST all year: the rules for year 0 end DST at 01:00 on January 1st
+        # of year 1, just as the rules for year 1 start it, so there's no gap.
+        yield "EST5EDT,0/0,J365/25", dt, EDT
 
     # The rules for year 10000 start DST on 9999-12-31.
     for dt, offset in [
@@ -1911,12 +1917,55 @@ def test_tzstr_near_min_and_max_year(tz_str, dt, offset):
         # The same, with negative DST, as in the rearguard format for
         # Africa/Casablanca.
         "XXX-2<+01>-1,J1/0,J365/23",
+        # The same two, spelled the way zic actually writes them
+        "<+00>0<+01>,0/0,J365/25",
+        "XXX-2<+01>-1,0/0,J365/23",
     ],
 )
 def test_tzstr_dst_all_year(tz_str):
     """Rules whose transitions meet at the new year don't create a gap."""
     zone = tz.tzfile(construct_zone([], tz_str))
     _assert_constant_offset_around_new_year(zone, ONE_H, (2023, 2024, 2100))
+
+
+@pytest.mark.parametrize(
+    "tz_str, std_dts, dst_dts",
+    [
+        # "n" counts from 0, so day 10 is January 11th
+        (
+            "STD0DST-1,10/0,J100/0",
+            [datetime(2021, 1, 10, 12)],
+            [datetime(2021, 1, 11, 12)],
+        ),
+        # ... and it includes February 29th: day 59 is February 29th in leap
+        # years and March 1st otherwise
+        (
+            "STD0DST-1,59/0,300/0",
+            [datetime(2024, 2, 28, 12), datetime(2023, 2, 28, 12)],
+            [datetime(2024, 2, 29, 12), datetime(2023, 3, 1, 12)],
+        ),
+        # "Jn" counts from 1 and never counts February 29th, so J59 is always
+        # February 28th and J60 is always March 1st
+        (
+            "STD0DST-1,J59/0,J300/0",
+            [datetime(2024, 2, 27, 12), datetime(2023, 2, 27, 12)],
+            [datetime(2024, 2, 28, 12), datetime(2023, 2, 28, 12)],
+        ),
+        (
+            "STD0DST-1,J60/0,J300/0",
+            [datetime(2024, 2, 29, 12), datetime(2023, 2, 28, 12)],
+            [datetime(2024, 3, 1, 12), datetime(2023, 3, 1, 12)],
+        ),
+    ],
+)
+def test_tzstr_day_of_year_rules(tz_str, std_dts, dst_dts):
+    """The dates of "n" and "Jn" rules match POSIX (and glibc)."""
+    zone = tz.tzfile(construct_zone([], tz_str))
+    for dts, tzname in ((std_dts, "STD"), (dst_dts, "DST")):
+        for dt in dts:
+            assert dt.replace(tzinfo=zone).tzname() == tzname, dt
+            dt_utc = dt.replace(tzinfo=tz.UTC)
+            assert dt_utc.astimezone(zone).tzname() == tzname, dt_utc
 
 
 @pytest.mark.parametrize("version", [1, 2, 3])
