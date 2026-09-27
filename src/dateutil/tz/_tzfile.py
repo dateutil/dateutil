@@ -1211,7 +1211,7 @@ _NEW_YEAR_MARGIN = 10 * 86400
 def _post_epoch_days_before_year(year):
     """Get the number of days between 1970-01-01 and YEAR-01-01"""
     y = year - 1
-    return y * 365 + y // 4 - y // 100 + y // 400 - EPOCHORDINAL
+    return y * 365 + y // 4 - y // 100 + y // 400 + 1 - EPOCHORDINAL
 
 
 class _DayOffset(object):
@@ -1231,9 +1231,14 @@ class _DayOffset(object):
     def year_to_epoch(self, year):
         days_before_year = _post_epoch_days_before_year(year)
 
+        # "n" counts days from 0 and includes February 29; "Jn" counts days
+        # from 1 and never counts February 29, so in leap years, J60 (March 1)
+        # and every day after it is one day later than its number suggests.
         d = self.d
-        if self.julian and d >= 59 and calendar.isleap(year):
-            d += 1
+        if self.julian:
+            d -= 1
+            if d >= 59 and calendar.isleap(year):
+                d += 1
 
         epoch = (days_before_year + d) * 86400
         epoch += self.hour * 3600 + self.minute * 60 + self.second
@@ -1284,6 +1289,7 @@ class _CalendarOffset(object):
             + cls._DAYS_BEFORE_MONTH[month]
             + (month > 2 and calendar.isleap(year))
             + day
+            - 1
         )
 
     # TODO: These are not actually epoch dates as they are expressed in local time
