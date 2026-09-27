@@ -14,6 +14,7 @@ import os
 import struct
 import sys
 import time
+import warnings
 import weakref
 from collections import OrderedDict
 
@@ -1095,6 +1096,9 @@ def __get_gettz():
                     else:
                         tz = None
                 else:
+                    if _escapes_tzpath(name):
+                        _warn_tzpath_escape(name)
+
                     for path in _tzpath.TZPATH:
                         filepath = os.path.join(path, name)
                         if not _isfile(filepath):
@@ -1156,6 +1160,44 @@ def __get_gettz():
 
 gettz = __get_gettz()
 del __get_gettz
+
+
+class DeprecatedTzKeyWarning(FutureWarning):
+    """Warning raised when :func:`gettz` is given a key outside of TZPATH.
+
+    Relative keys like ``"../../etc/localtime"`` resolve to files outside of
+    every directory on :data:`TZPATH`. Support for these is deprecated, and a
+    warnings filter turns this warning into an error by default. To keep the
+    old behavior for now, filter it out, e.g.::
+
+        warnings.filterwarnings(
+            "ignore", category=dateutil.tz.DeprecatedTzKeyWarning
+        )
+
+    Absolute paths to TZif files are not affected.
+    """
+
+
+def _escapes_tzpath(name):
+    # A relative key stays inside every TZPATH entry unless, once normalized
+    # (which also turns os.altsep into os.sep), it starts by going up a
+    # directory.
+    return os.path.normpath(name).split(os.sep, 1)[0] == os.pardir
+
+
+def _warn_tzpath_escape(name):
+    # As in dateutil.zoneinfo.rebuild, the filter is appended at call time,
+    # so any filter the user has installed for this category wins.
+    warnings.filterwarnings(
+        "error", category=DeprecatedTzKeyWarning, append=True
+    )
+    warnings.warn(
+        "gettz(%r) refers to a file outside of TZPATH; support for keys "
+        "like this is deprecated and will be removed in a future version. "
+        "Use an absolute path instead." % (name,),
+        DeprecatedTzKeyWarning,
+        stacklevel=4,
+    )
 
 
 def available_iana_timezones():

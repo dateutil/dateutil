@@ -12,6 +12,7 @@ import shutil
 import struct
 import sys
 import threading
+import warnings
 from datetime import date, datetime, time, timedelta
 
 import attr
@@ -1661,6 +1662,67 @@ def test_tzfile_from_read_only_object():
     zone = tz.tzfile(ReadOnly(data), filename="read-only")
 
     assert zone == tz.tzfile(six.BytesIO(data))
+
+
+@pytest.fixture
+def tzpath_and_outside_zone(tmp_path):
+    """A TZPATH entry, and a zone in a sibling directory outside of it."""
+    STD = ZoneOffset("STD", ZERO)
+    data = construct_zone(
+        [ZoneTransition(datetime(2020, 1, 1), STD, STD)], "STD0"
+    ).read()
+
+    tzpath = tmp_path / "zoneinfo"
+    outside = tmp_path / "outside"
+    for directory in (tzpath / "Fictional", outside):
+        makedirs(str(directory))
+
+    (tzpath / "Fictional" / "Inside").write_bytes(data)
+    (outside / "Outside").write_bytes(data)
+
+    with set_tzpath((str(tzpath),), block_tzdata=True):
+        tz.gettz.cache_clear()
+        yield
+        tz.gettz.cache_clear()
+
+
+@pytest.mark.parametrize(
+    "key",
+    [
+        "../outside/Outside",
+        "Fictional/../../outside/Outside",
+        "./../outside/Outside",
+    ],
+)
+def test_gettz_key_outside_tzpath_is_an_error(tzpath_and_outside_zone, key):
+    with warnings.catch_warnings():
+        warnings.resetwarnings()
+        with pytest.raises(tz.DeprecatedTzKeyWarning):
+            tz.gettz(key)
+
+
+def test_gettz_key_outside_tzpath_can_be_allowed(tzpath_and_outside_zone):
+    with warnings.catch_warnings(record=True) as record:
+        warnings.resetwarnings()
+        warnings.simplefilter("always", category=tz.DeprecatedTzKeyWarning)
+        zone = tz.gettz("../outside/Outside")
+
+    assert isinstance(zone, tz.tzfile)
+    assert [w.category for w in record] == [tz.DeprecatedTzKeyWarning]
+    assert (
+        os.path.splitext(record[0].filename)[0] == os.path.splitext(__file__)[0]
+    )
+
+
+@pytest.mark.parametrize(
+    "key",
+    ["Fictional/Inside", "Fictional/../Fictional/Inside", "./Fictional/Inside"],
+)
+def test_gettz_key_inside_tzpath_does_not_warn(tzpath_and_outside_zone, key):
+    with warnings.catch_warnings():
+        warnings.resetwarnings()
+        warnings.simplefilter("error")
+        assert isinstance(tz.gettz(key), tz.tzfile)
 
 
 @pytest.mark.parametrize("version", [1, 2, 3])

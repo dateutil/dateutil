@@ -86,6 +86,12 @@ Classes
         Only available on Windows
 
 
+Warnings
+--------
+
+.. autoclass:: DeprecatedTzKeyWarning
+
+
 IANA Time Zone Data
 -------------------
 ``dateutil`` attempts to search for time zone data the same way that the

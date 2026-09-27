@@ -1,0 +1,5 @@
+Deprecated passing ``gettz`` a relative key that refers to a file outside of
+every directory on ``TZPATH``, such as ``"../../etc/localtime"``. By default
+this now raises ``dateutil.tz.DeprecatedTzKeyWarning`` as an error; filter the
+warning to keep the old behavior for now, or pass an absolute path instead.
+(gh pr #1130)

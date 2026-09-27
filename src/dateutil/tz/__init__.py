@@ -26,6 +26,7 @@ __all__ = [
     "TZPATH",
     "reset_tzpath",
     "DeprecatedTzFormatWarning",
+    "DeprecatedTzKeyWarning",
 ]
 
 if sys.version_info < (3, 7):
