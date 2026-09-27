@@ -1996,14 +1996,8 @@ def test_tz_tzpath_tracks_reset(tmp_path):
     assert tz.TZPATH != (new_path,)
 
 
-@pytest.fixture
-def backport_tzpath(monkeypatch):
-    """The pure-Python _tzpath implementation, regardless of Python version.
-
-    On Python 3.9+ dateutil.tz._tzpath is a thin alias for zoneinfo's search
-    path handling, so to test the backport itself the module source is
-    executed with the standard library zoneinfo module blocked.
-    """
+def _load_backport_tzpath(monkeypatch):
+    """Executes the _tzpath source with the standard library zoneinfo blocked."""
     import types
 
     import dateutil.tz._tzpath as real_tzpath
@@ -2013,7 +2007,6 @@ def backport_tzpath(monkeypatch):
         source_path = source_path[:-1]
 
     monkeypatch.setitem(sys.modules, "zoneinfo", None)
-    monkeypatch.delenv("PYTHONTZPATH", raising=False)
 
     module = types.ModuleType("_tzpath_backport")
     module.__file__ = source_path
@@ -2022,6 +2015,40 @@ def backport_tzpath(monkeypatch):
     six.exec_(code, module.__dict__)
 
     return module
+
+
+@pytest.fixture
+def backport_tzpath(monkeypatch):
+    """The pure-Python _tzpath implementation, regardless of Python version.
+
+    On Python 3.9+ dateutil.tz._tzpath is a thin alias for zoneinfo's search
+    path handling, so to test the backport itself the module source is
+    executed with the standard library zoneinfo module blocked.
+    """
+    monkeypatch.delenv("PYTHONTZPATH", raising=False)
+    return _load_backport_tzpath(monkeypatch)
+
+
+def test_backport_env_variable_relative_paths_at_import(monkeypatch, tmp_path):
+    """An invalid PYTHONTZPATH warns, rather than fails, at import time."""
+    absolute = str(tmp_path / "a")
+    monkeypatch.setenv(
+        "PYTHONTZPATH", os.pathsep.join(["relative/path", absolute])
+    )
+
+    with pytest.warns(RuntimeWarning, match="relative/path"):
+        module = _load_backport_tzpath(monkeypatch)
+
+    assert module.TZPATH == (absolute,)
+
+
+@pytest.mark.skipif(
+    sys.version_info < (3, 9), reason="zoneinfo was added in Python 3.9"
+)
+def test_invalid_tzpath_warning_is_zoneinfos():
+    import zoneinfo
+
+    assert tz._tzpath.InvalidTZPathWarning is zoneinfo.InvalidTZPathWarning
 
 
 @pytest.mark.parametrize("platform", ["linux", "darwin", "win32"])
@@ -2067,6 +2094,9 @@ def test_backport_env_variable_relative_paths(
         backport_tzpath.reset_tzpath()
 
     assert backport_tzpath.TZPATH == (absolute,)
+    assert (
+        os.path.splitext(record[0].filename)[0] == os.path.splitext(__file__)[0]
+    )
     message = str(record[0].message)
     assert "relative/path" in message
     assert "other" in message
