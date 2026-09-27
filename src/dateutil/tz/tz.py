@@ -1012,6 +1012,10 @@ def __get_gettz():
                 rv = self.__instances.get(name, None)
 
                 if rv is None:
+                    # TODO: This holds the cache lock while nocache() reads
+                    # the file, so a slow lookup (e.g. walking TZPATH on a
+                    # network file system) blocks every other gettz call,
+                    # including cache hits for unrelated keys.
                     rv = self.nocache(name=name)
                     if not (name is None
                             or isinstance(rv, tzlocal_classes)
