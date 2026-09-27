@@ -9,9 +9,18 @@ from dateutil import tz
 from dateutil.parser import isoparse
 
 # Strategies
-TIME_ZONE_STRATEGY = st.sampled_from([None, tz.UTC] +
-    [tz.gettz(zname) for zname in ('US/Eastern', 'US/Pacific',
-                                   'Australia/Sydney', 'Europe/London')])
+ZONES = [
+    tz.gettz(zname)
+    for zname in (
+        "America/New_York",
+        "America/Los_Angeles",
+        "Australia/Sydney",
+        "Europe/London",
+    )
+]
+# A missing zone must not silently turn into a naive datetime.
+assert None not in ZONES
+TIME_ZONE_STRATEGY = st.sampled_from([None, tz.UTC] + ZONES)
 ASCII_STRATEGY = st.characters(max_codepoint=127)
 
 
