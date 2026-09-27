@@ -386,7 +386,7 @@ class tzfile(_tzinfo):
             utcoff_adjusted = utcoff
 
         # Convert all the transition times (UTC) into "seconds since 1970-01-01 local time"
-        trans_local = self._ts_to_local(trans_idx, trans_utc, utcoff)
+        trans_local = self._ts_to_local(trans_idx, trans_utc, utcoff_adjusted)
 
         # Construct `_ttinfo` objects for each transition in the file
         _ttinfo_list = [
