@@ -561,6 +561,16 @@ class rrule(rrulebase):
 
             bymonthday = set(bymonthday)            # Ensure it's unique
 
+            for day in bymonthday:
+                # RFC 5545 3.3.10 restricts BYMONTHDAY to 1-31, or -1 to -31
+                # when counting backwards from the end of the month. Reject
+                # anything else, since an out-of-range value is silently
+                # discarded below, which would turn the BYMONTHDAY constraint
+                # into "every day of the month" for a value of 0.
+                if not 1 <= abs(day) <= 31:
+                    raise ValueError("bymonthday must be between 1 and 31, "
+                                     "or between -31 and -1")
+
             self._bymonthday = tuple(sorted(x for x in bymonthday if x > 0))
             self._bynmonthday = tuple(sorted(x for x in bymonthday if x < 0))
 

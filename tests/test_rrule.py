@@ -2366,6 +2366,23 @@ class RRuleTest(unittest.TestCase):
         self.assertRaises(ValueError, make_bad_minute_rrule)
         self.assertRaises(ValueError, make_bad_hour_rrule)
 
+    def testBadMonthDayRRule(self):
+        """
+        See RFC 5545 3.3.10 - ``BYMONTHDAY`` values are restricted to the range
+        1 to 31 (or -1 to -31 when counting from the end of the month). A value
+        of 0 is not a valid day of the month, so it must be rejected rather
+        than silently dropped, which would turn the constraint into "every
+        day of the month".
+        """
+        for bad_monthday in (0, 32, -32):
+            self.assertRaises(ValueError, rrule, MONTHLY,
+                              **dict(count=3, bymonthday=bad_monthday,
+                                     dtstart=datetime(2020, 1, 1, 9, 0)))
+
+        self.assertRaises(ValueError, rrule, MONTHLY,
+                          **dict(count=3, bymonthday=(15, 0),
+                                 dtstart=datetime(2020, 1, 1, 9, 0)))
+
     def testBadUntilCountRRule(self):
         """
         See rfc-5545 3.3.10 - This checks for the deprecation warning, and will
