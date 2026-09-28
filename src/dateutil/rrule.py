@@ -445,6 +445,8 @@ class rrule(rrulebase):
         self._dtstart = dtstart
         self._tzinfo = dtstart.tzinfo
         self._freq = freq
+        if interval == 0:
+            raise ValueError("interval must not be 0")
         self._interval = interval
         self._count = count
 
