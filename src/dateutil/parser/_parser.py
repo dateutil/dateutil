@@ -92,7 +92,7 @@ class _timelex(object):
             return self.tokenstack.pop(0)
 
         seenletters = False
-        token = None
+        token_parts = None
         state = None
 
         while not self.eof:
@@ -113,13 +113,13 @@ class _timelex(object):
             elif not state:
                 # First character of the token - determines if we're starting
                 # to parse a word, a number or something else.
-                token = nextchar
+                token_parts = [nextchar]
                 if self.isword(nextchar):
                     state = 'a'
                 elif self.isnum(nextchar):
                     state = '0'
                 elif self.isspace(nextchar):
-                    token = ' '
+                    token_parts = [" "]
                     break  # emit token
                 else:
                     break  # emit token
@@ -128,9 +128,9 @@ class _timelex(object):
                 # letters until we find something that's not part of a word.
                 seenletters = True
                 if self.isword(nextchar):
-                    token += nextchar
+                    token_parts.append(nextchar)
                 elif nextchar == '.':
-                    token += nextchar
+                    token_parts.append(nextchar)
                     state = 'a.'
                 else:
                     self.charstack.append(nextchar)
@@ -139,9 +139,11 @@ class _timelex(object):
                 # If we've already started reading a number, we keep reading
                 # numbers until we find something that doesn't fit.
                 if self.isnum(nextchar):
-                    token += nextchar
-                elif nextchar == '.' or (nextchar == ',' and len(token) >= 2):
-                    token += nextchar
+                    token_parts.append(nextchar)
+                elif nextchar == "." or (
+                    nextchar == "," and len(token_parts) >= 2
+                ):
+                    token_parts.append(nextchar)
                     state = '0.'
                 else:
                     self.charstack.append(nextchar)
@@ -151,9 +153,9 @@ class _timelex(object):
                 # parsing, and the tokens will be broken up later.
                 seenletters = True
                 if nextchar == '.' or self.isword(nextchar):
-                    token += nextchar
-                elif self.isnum(nextchar) and token[-1] == '.':
-                    token += nextchar
+                    token_parts.append(nextchar)
+                elif self.isnum(nextchar) and token_parts[-1] == ".":
+                    token_parts.append(nextchar)
                     state = '0.'
                 else:
                     self.charstack.append(nextchar)
@@ -162,14 +164,15 @@ class _timelex(object):
                 # If we've seen at least one dot separator, keep going, we'll
                 # break up the tokens later.
                 if nextchar == '.' or self.isnum(nextchar):
-                    token += nextchar
-                elif self.isword(nextchar) and token[-1] == '.':
-                    token += nextchar
+                    token_parts.append(nextchar)
+                elif self.isword(nextchar) and token_parts[-1] == ".":
+                    token_parts.append(nextchar)
                     state = 'a.'
                 else:
                     self.charstack.append(nextchar)
                     break  # emit token
 
+        token = "".join(token_parts) if token_parts is not None else None
         if (state in ('a.', '0.') and (seenletters or token.count('.') > 1 or
                                        token[-1] in '.,')):
             l = self._split_decimal.split(token)
