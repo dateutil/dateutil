@@ -1,0 +1,1 @@
+tz.tzical now ignores RFC 5545 ``X-`` properties in VTIMEZONE components instead of raising ValueError. Reported by @niccokunzmann (gh issue #1368). Fixed by @00200200 (gh pr #1587).
