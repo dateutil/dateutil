@@ -1,0 +1,3 @@
+Fixed ``rrule`` treating a ``BYDAY`` list that mixes plain and ordinal weekdays
+(e.g. ``MO,1FR``) as an intersection instead of a union. Reported and fixed by
+@fitness-trener (gh issue #1588, gh pr #1589)
