@@ -501,6 +501,19 @@ class rrule(rrulebase):
         if self._bysetpos:
             self._original_rule['bysetpos'] = self._bysetpos
 
+        if (
+            freq == YEARLY
+            and bymonth is None
+            and bymonthday is not None
+            and byweekday is None
+            and bysetpos is None
+            and byyearday is None
+            and byweekno is None
+            and byeaster is None
+        ):
+            bymonth = dtstart.month
+            self._original_rule["bymonth"] = None
+
         if (byweekno is None and byyearday is None and bymonthday is None and
                 byweekday is None and byeaster is None):
             if freq == YEARLY:
