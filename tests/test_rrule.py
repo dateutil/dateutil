@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 import unittest
 from six import PY2
 
@@ -2664,6 +2664,28 @@ class RRuleTest(unittest.TestCase):
                    dtstart=datetime(1997, 9, 2, 9, 0))
         for x in rr: pass
         self.assertEqual(datetime(1997, 9, 3, 9, 0) in rr, True)
+
+    def testCachePostQueries(self):
+        dtstart = datetime(1997, 9, 2, 9, 0)
+        rr = rrule(DAILY, count=100, cache=True, dtstart=dtstart)
+        list(rr)
+
+        target = dtstart + timedelta(days=75)
+
+        self.assertEqual(rr.before(target),
+                         target - timedelta(days=1))
+        self.assertEqual(rr.before(target, inc=True), target)
+        self.assertEqual(rr.after(target),
+                         target + timedelta(days=1))
+        self.assertEqual(rr.after(target, inc=True), target)
+        self.assertEqual(list(rr.xafter(target, count=3)),
+                         [target + timedelta(days=1),
+                          target + timedelta(days=2),
+                          target + timedelta(days=3)])
+        self.assertEqual(rr.between(target, target + timedelta(days=4)),
+                         [target + timedelta(days=1),
+                          target + timedelta(days=2),
+                          target + timedelta(days=3)])
 
     def testStr(self):
         self.assertEqual(list(rrulestr(

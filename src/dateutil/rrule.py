@@ -6,6 +6,7 @@ the recurrence rules documented in the
 including support for caching of results.
 """
 import calendar
+import bisect
 import datetime
 import heapq
 import itertools
@@ -61,6 +62,8 @@ FREQNAMES = ['YEARLY', 'MONTHLY', 'WEEKLY', 'DAILY', 'HOURLY', 'MINUTELY', 'SECO
 # Imported on demand.
 easter = None
 parser = None
+
+_CACHE_BISECT_THRESHOLD = 32
 
 
 class weekday(weekdaybase):
@@ -192,7 +195,15 @@ class rrulebase(object):
         """ Returns the last recurrence before the given datetime instance. The
             inc keyword defines what happens if dt is an occurrence. With
             inc=True, if dt itself is an occurrence, it will be returned. """
-        if self._cache_complete:
+        if (self._cache_complete and
+                len(self._cache) > _CACHE_BISECT_THRESHOLD and
+                self._cache[_CACHE_BISECT_THRESHOLD] <= dt):
+            if inc:
+                i = bisect.bisect_right(self._cache, dt)
+            else:
+                i = bisect.bisect_left(self._cache, dt)
+            return self._cache[i - 1] if i else None
+        elif self._cache_complete:
             gen = self._cache
         else:
             gen = self
@@ -213,7 +224,17 @@ class rrulebase(object):
         """ Returns the first recurrence after the given datetime instance. The
             inc keyword defines what happens if dt is an occurrence. With
             inc=True, if dt itself is an occurrence, it will be returned.  """
-        if self._cache_complete:
+        if (self._cache_complete and
+                len(self._cache) > _CACHE_BISECT_THRESHOLD and
+                self._cache[_CACHE_BISECT_THRESHOLD] <= dt):
+            if inc:
+                i = bisect.bisect_left(self._cache, dt)
+            else:
+                i = bisect.bisect_right(self._cache, dt)
+            if i < len(self._cache):
+                return self._cache[i]
+            return None
+        elif self._cache_complete:
             gen = self._cache
         else:
             gen = self
@@ -246,7 +267,20 @@ class rrulebase(object):
         :yields: Yields a sequence of `datetime` objects.
         """
 
-        if self._cache_complete:
+        if (self._cache_complete and
+                len(self._cache) > _CACHE_BISECT_THRESHOLD and
+                self._cache[_CACHE_BISECT_THRESHOLD] <= dt):
+            if inc:
+                i = bisect.bisect_left(self._cache, dt)
+            else:
+                i = bisect.bisect_right(self._cache, dt)
+
+            stop = len(self._cache) if count is None else min(
+                len(self._cache), i + count)
+            for j in range(i, stop):
+                yield self._cache[j]
+            return
+        elif self._cache_complete:
             gen = self._cache
         else:
             gen = self
@@ -273,7 +307,17 @@ class rrulebase(object):
         The inc keyword defines what happens if after and/or before are
         themselves occurrences. With inc=True, they will be included in the
         list, if they are found in the recurrence set. """
-        if self._cache_complete:
+        if (self._cache_complete and
+                len(self._cache) > _CACHE_BISECT_THRESHOLD and
+                self._cache[_CACHE_BISECT_THRESHOLD] <= after):
+            if inc:
+                lo = bisect.bisect_left(self._cache, after)
+                hi = bisect.bisect_right(self._cache, before)
+            else:
+                lo = bisect.bisect_right(self._cache, after)
+                hi = bisect.bisect_left(self._cache, before)
+            return self._cache[lo:hi]
+        elif self._cache_complete:
             gen = self._cache
         else:
             gen = self
