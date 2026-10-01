@@ -5,8 +5,9 @@ the recurrence rules documented in the
 `iCalendar RFC <https://tools.ietf.org/html/rfc5545>`_,
 including support for caching of results.
 """
-import calendar
+
 import bisect
+import calendar
 import datetime
 import heapq
 import itertools
@@ -17,7 +18,6 @@ from functools import wraps
 from warnings import warn
 
 from six import advance_iterator, integer_types
-
 from six.moves import _thread, range
 
 from ._common import weekday as weekdaybase
@@ -192,12 +192,14 @@ class rrulebase(object):
         return self._len
 
     def before(self, dt, inc=False):
-        """ Returns the last recurrence before the given datetime instance. The
-            inc keyword defines what happens if dt is an occurrence. With
-            inc=True, if dt itself is an occurrence, it will be returned. """
-        if (self._cache_complete and
-                len(self._cache) > _CACHE_BISECT_THRESHOLD and
-                self._cache[_CACHE_BISECT_THRESHOLD] <= dt):
+        """Returns the last recurrence before the given datetime instance. The
+        inc keyword defines what happens if dt is an occurrence. With
+        inc=True, if dt itself is an occurrence, it will be returned."""
+        if (
+            self._cache_complete
+            and len(self._cache) > _CACHE_BISECT_THRESHOLD
+            and self._cache[_CACHE_BISECT_THRESHOLD] <= dt
+        ):
             if inc:
                 i = bisect.bisect_right(self._cache, dt)
             else:
@@ -221,12 +223,14 @@ class rrulebase(object):
         return last
 
     def after(self, dt, inc=False):
-        """ Returns the first recurrence after the given datetime instance. The
-            inc keyword defines what happens if dt is an occurrence. With
-            inc=True, if dt itself is an occurrence, it will be returned.  """
-        if (self._cache_complete and
-                len(self._cache) > _CACHE_BISECT_THRESHOLD and
-                self._cache[_CACHE_BISECT_THRESHOLD] <= dt):
+        """Returns the first recurrence after the given datetime instance. The
+        inc keyword defines what happens if dt is an occurrence. With
+        inc=True, if dt itself is an occurrence, it will be returned."""
+        if (
+            self._cache_complete
+            and len(self._cache) > _CACHE_BISECT_THRESHOLD
+            and self._cache[_CACHE_BISECT_THRESHOLD] <= dt
+        ):
             if inc:
                 i = bisect.bisect_left(self._cache, dt)
             else:
@@ -267,16 +271,21 @@ class rrulebase(object):
         :yields: Yields a sequence of `datetime` objects.
         """
 
-        if (self._cache_complete and
-                len(self._cache) > _CACHE_BISECT_THRESHOLD and
-                self._cache[_CACHE_BISECT_THRESHOLD] <= dt):
+        if (
+            self._cache_complete
+            and len(self._cache) > _CACHE_BISECT_THRESHOLD
+            and self._cache[_CACHE_BISECT_THRESHOLD] <= dt
+        ):
             if inc:
                 i = bisect.bisect_left(self._cache, dt)
             else:
                 i = bisect.bisect_right(self._cache, dt)
 
-            stop = len(self._cache) if count is None else min(
-                len(self._cache), i + count)
+            stop = (
+                len(self._cache)
+                if count is None
+                else min(len(self._cache), i + count)
+            )
             for j in range(i, stop):
                 yield self._cache[j]
             return
@@ -303,13 +312,15 @@ class rrulebase(object):
                 yield d
 
     def between(self, after, before, inc=False, count=1):
-        """ Returns all the occurrences of the rrule between after and before.
+        """Returns all the occurrences of the rrule between after and before.
         The inc keyword defines what happens if after and/or before are
         themselves occurrences. With inc=True, they will be included in the
-        list, if they are found in the recurrence set. """
-        if (self._cache_complete and
-                len(self._cache) > _CACHE_BISECT_THRESHOLD and
-                self._cache[_CACHE_BISECT_THRESHOLD] <= after):
+        list, if they are found in the recurrence set."""
+        if (
+            self._cache_complete
+            and len(self._cache) > _CACHE_BISECT_THRESHOLD
+            and self._cache[_CACHE_BISECT_THRESHOLD] <= after
+        ):
             if inc:
                 lo = bisect.bisect_left(self._cache, after)
                 hi = bisect.bisect_right(self._cache, before)

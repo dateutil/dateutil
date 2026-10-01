@@ -1,21 +1,33 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from datetime import datetime, date, timedelta
 import unittest
+from datetime import date, datetime, timedelta
+
+import pytest
+from freezegun import freeze_time
 from six import PY2
 
 from dateutil import tz
 from dateutil.rrule import (
-    rrule, rruleset, rrulestr,
-    YEARLY, MONTHLY, WEEKLY, DAILY,
-    HOURLY, MINUTELY, SECONDLY,
-    MO, TU, WE, TH, FR, SA, SU
+    DAILY,
+    FR,
+    HOURLY,
+    MINUTELY,
+    MO,
+    MONTHLY,
+    SA,
+    SECONDLY,
+    SU,
+    TH,
+    TU,
+    WE,
+    WEEKLY,
+    YEARLY,
+    rrule,
+    rruleset,
+    rrulestr,
 )
-
-from freezegun import freeze_time
-
-import pytest
 
 
 @pytest.mark.rrule
@@ -2672,20 +2684,26 @@ class RRuleTest(unittest.TestCase):
 
         target = dtstart + timedelta(days=75)
 
-        self.assertEqual(rr.before(target),
-                         target - timedelta(days=1))
+        self.assertEqual(rr.before(target), target - timedelta(days=1))
         self.assertEqual(rr.before(target, inc=True), target)
-        self.assertEqual(rr.after(target),
-                         target + timedelta(days=1))
+        self.assertEqual(rr.after(target), target + timedelta(days=1))
         self.assertEqual(rr.after(target, inc=True), target)
-        self.assertEqual(list(rr.xafter(target, count=3)),
-                         [target + timedelta(days=1),
-                          target + timedelta(days=2),
-                          target + timedelta(days=3)])
-        self.assertEqual(rr.between(target, target + timedelta(days=4)),
-                         [target + timedelta(days=1),
-                          target + timedelta(days=2),
-                          target + timedelta(days=3)])
+        self.assertEqual(
+            list(rr.xafter(target, count=3)),
+            [
+                target + timedelta(days=1),
+                target + timedelta(days=2),
+                target + timedelta(days=3),
+            ],
+        )
+        self.assertEqual(
+            rr.between(target, target + timedelta(days=4)),
+            [
+                target + timedelta(days=1),
+                target + timedelta(days=2),
+                target + timedelta(days=3),
+            ],
+        )
 
     def testStr(self):
         self.assertEqual(list(rrulestr(
