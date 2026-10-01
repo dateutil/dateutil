@@ -21,6 +21,9 @@ Martin Luther King Day
 
     How would you generate a :doc:`recurrence rule <../rrule>` that generates Martin Luther King Day, starting from its first observance in 1986?
 
+    **Bonus:** Make sure that the rule explicitly specifies January rather than
+    relying on the month supplied in ``dtstart``.
+
 
 **Test Script**
 
@@ -239,4 +242,3 @@ To solve this exercise, copy-paste this script into a document, change anything 
 .. raw:: html
 
     </details>
-
