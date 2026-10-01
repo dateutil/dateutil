@@ -350,6 +350,41 @@ class RelativeDeltaTest(unittest.TestCase):
         rd.weeks = 3
         self.assertEqual((rd.weeks, rd.days), (3, 3 * 7 + 6))
 
+    def testMilliseconds(self):
+        # milliseconds folds into microseconds (1 ms = 1000 µs).
+        rd = relativedelta(milliseconds=250, microseconds=500)
+        self.assertEqual(rd.microseconds, 250 * 1000 + 500)
+        self.assertEqual(rd.milliseconds, 250)
+
+        # Setter preserves residual microseconds.
+        rd.milliseconds = 100
+        self.assertEqual(rd.microseconds, 100 * 1000 + 500)
+        self.assertEqual(rd.milliseconds, 100)
+
+    def testMillisecondsArithmetic(self):
+        dt = datetime(2018, 4, 9, 13, 37, 0)
+        self.assertEqual(dt + relativedelta(milliseconds=42),
+                         datetime(2018, 4, 9, 13, 37, 0, 42000))
+
+    def testMillisecondsNegative(self):
+        dt = datetime(2018, 4, 9, 13, 37, 0, 500000)
+        self.assertEqual(dt + relativedelta(milliseconds=-250),
+                         datetime(2018, 4, 9, 13, 37, 0, 250000))
+
+    def testMillisecondsOverflow(self):
+        # 1001 ms overflows into 1 second + 1 ms.
+        rd = relativedelta(milliseconds=1001)
+        self.assertEqual(rd.seconds, 1)
+        self.assertEqual(rd.microseconds, 1000)
+
+    def testMillisecondsSetterOverflow(self):
+        # Setter overflow should cascade into seconds via _fix().
+        rd = relativedelta(microseconds=500)
+        rd.milliseconds = 1001
+        self.assertEqual(rd.seconds, 1)
+        self.assertEqual(rd.microseconds, 1500)
+        self.assertEqual(rd.milliseconds, 1)
+
     def testRelativeDeltaRepr(self):
         self.assertEqual(repr(relativedelta(years=1, months=-1, days=15)),
                          'relativedelta(years=+1, months=-1, days=+15)')
