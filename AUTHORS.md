@@ -86,6 +86,7 @@ switch, and thus all their contributions are dual-licensed.
 - Michael J. Schultz <mjschultz@MASKED>
 - Michael Käufl (gh: @michael-k)
 - Mike Gilbert <floppym@MASKED>
+- mika (gh: @mikamikasuki) **D**
 - Nicholas Herrriot <Nicholas.Herriot@gmail.com> **D**
 - Nicolas Évrard (gh: @nicoe) **D**
 - Nick Smith <nick.smith@MASKED>
