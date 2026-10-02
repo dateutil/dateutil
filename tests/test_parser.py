@@ -768,6 +768,30 @@ class TestOutOfBounds(object):
         with pytest.raises(ParserError):
             parse(dstr, fuzzy=fuzzy)
 
+    @pytest.mark.parametrize(
+        "dstr",
+        [
+            "2024-01-15T12:00:00+0060",
+            "2024-01-15T12:00:00+00:60",
+            "2024-01-15T12:00:00+0560",
+            "2024-01-15T12:00:00+0099",
+            "2024-01-15T12:00:00+2500",
+            "2024-01-15T12:00:00+25:00",
+            "2024-01-15T12:00:00+2401",
+            "2024-01-15T12:00:00+24:01",
+            "2024-01-15 12:00:00+25",
+            "2024-01-15T12:00:00-0060",
+            "2024-01-15T12:00:00-00:60",
+            "2024-01-15T12:00:00-2500",
+            "2024-01-15T12:00:00-25:00",
+            "2024-01-15T12:00:00-2401",
+            "2024-01-15T12:00:00-24:01",
+        ],
+    )
+    def test_tzoffset_sanity(self, dstr, fuzzy):
+        with pytest.raises(ParserError):
+            parse(dstr, fuzzy=fuzzy)
+
 
 class TestParseUnimplementedCases(object):
     @pytest.mark.xfail

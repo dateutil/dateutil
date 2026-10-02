@@ -1,0 +1,1 @@
+Fixed issue where ``parser.parse()`` silently accepted invalid timezone offsets with minutes >= 60, hours > 24, or total offset exceeding 24 hours. Reported by @zhangjiashuo-cs (gh issue #1508).

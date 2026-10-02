@@ -829,6 +829,13 @@ class parser(object):
                     else:
                         raise ValueError(timestr)
 
+                    if not (
+                        0 <= min_offset <= 59
+                        and 0 <= hour_offset <= 24
+                        and hour_offset * 3600 + min_offset * 60 <= 24 * 3600
+                    ):
+                        raise ValueError(timestr)
+
                     res.tzoffset = signal * (hour_offset * 3600 + min_offset * 60)
 
                     # Look for a timezone name between parenthesis
