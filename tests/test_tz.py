@@ -1983,6 +1983,42 @@ class TZICalTest(unittest.TestCase, TzFoldMixin):
         with self.assertRaises(ValueError):
             tz.tzical(StringIO(tz_str))
 
+    def testXPropertyOnVtimezone(self):
+        # RFC 5545 allows X- properties on VTIMEZONE (gh #1368)
+        tz_str = self._gettz_str("America/New_York")
+        lines = []
+        for line in tz_str.splitlines():
+            lines.append(line)
+            if line.startswith("TZID:"):
+                lines.append("X-LIC-LOCATION:America/New_York")
+        tzc = tz.tzical(StringIO("\n".join(lines))).get()
+        self.assertEqual(
+            datetime(2003, 7, 1, 12, 00, tzinfo=tzc).tzname(), "EDT"
+        )
+
+    def testXPropertyOnStandardComponent(self):
+        tz_str = self._gettz_str("America/New_York")
+        lines = []
+        for line in tz_str.splitlines():
+            lines.append(line)
+            if line.startswith("TZNAME:EST"):
+                lines.append("X-CUSTOM-PROP:ignored")
+        tzc = tz.tzical(StringIO("\n".join(lines))).get()
+        self.assertEqual(
+            datetime(2003, 12, 1, 12, 00, tzinfo=tzc).tzname(), "EST"
+        )
+
+    def testUnknownNonXPropertyStillRejected(self):
+        tz_str = self._gettz_str("America/New_York")
+        lines = []
+        for line in tz_str.splitlines():
+            lines.append(line)
+            if line.startswith("TZID:"):
+                lines.append("FOOBAR:not-an-x-property")
+        with self.assertRaises(ValueError) as ctx:
+            tz.tzical(StringIO("\n".join(lines)))
+        self.assertIn("unsupported property", str(ctx.exception))
+
     # Test Parsing
     def testGap(self):
         tzic = tz.tzical(StringIO('\n'.join((TZICAL_EST5EDT, TZICAL_PST8PDT))))
