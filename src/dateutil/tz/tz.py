@@ -1443,8 +1443,11 @@ class tzical(object):
                             raise ValueError(
                                 "unsupported TZID parm: "+parms[0])
                         tzid = value
-                    elif (name in ("TZURL", "LAST-MODIFIED", "COMMENT") or
-                            name.startswith("X-")):
+                    elif name in (
+                        "TZURL",
+                        "LAST-MODIFIED",
+                        "COMMENT",
+                    ) or name.startswith("X-"):
                         pass
                     else:
                         raise ValueError("unsupported property: "+name)

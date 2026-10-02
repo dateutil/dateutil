@@ -1985,37 +1985,39 @@ class TZICalTest(unittest.TestCase, TzFoldMixin):
 
     def testXPropertyOnVtimezone(self):
         # RFC 5545 allows X- properties on VTIMEZONE (gh #1368)
-        tz_str = self._gettz_str('America/New_York')
+        tz_str = self._gettz_str("America/New_York")
         lines = []
         for line in tz_str.splitlines():
             lines.append(line)
-            if line.startswith('TZID:'):
-                lines.append('X-LIC-LOCATION:America/New_York')
-        tzc = tz.tzical(StringIO('\n'.join(lines))).get()
+            if line.startswith("TZID:"):
+                lines.append("X-LIC-LOCATION:America/New_York")
+        tzc = tz.tzical(StringIO("\n".join(lines))).get()
         self.assertEqual(
-            datetime(2003, 7, 1, 12, 00, tzinfo=tzc).tzname(), "EDT")
+            datetime(2003, 7, 1, 12, 00, tzinfo=tzc).tzname(), "EDT"
+        )
 
     def testXPropertyOnStandardComponent(self):
-        tz_str = self._gettz_str('America/New_York')
+        tz_str = self._gettz_str("America/New_York")
         lines = []
         for line in tz_str.splitlines():
             lines.append(line)
-            if line.startswith('TZNAME:EST'):
-                lines.append('X-CUSTOM-PROP:ignored')
-        tzc = tz.tzical(StringIO('\n'.join(lines))).get()
+            if line.startswith("TZNAME:EST"):
+                lines.append("X-CUSTOM-PROP:ignored")
+        tzc = tz.tzical(StringIO("\n".join(lines))).get()
         self.assertEqual(
-            datetime(2003, 12, 1, 12, 00, tzinfo=tzc).tzname(), "EST")
+            datetime(2003, 12, 1, 12, 00, tzinfo=tzc).tzname(), "EST"
+        )
 
     def testUnknownNonXPropertyStillRejected(self):
-        tz_str = self._gettz_str('America/New_York')
+        tz_str = self._gettz_str("America/New_York")
         lines = []
         for line in tz_str.splitlines():
             lines.append(line)
-            if line.startswith('TZID:'):
-                lines.append('FOOBAR:not-an-x-property')
+            if line.startswith("TZID:"):
+                lines.append("FOOBAR:not-an-x-property")
         with self.assertRaises(ValueError) as ctx:
-            tz.tzical(StringIO('\n'.join(lines)))
-        self.assertIn('unsupported property', str(ctx.exception))
+            tz.tzical(StringIO("\n".join(lines)))
+        self.assertIn("unsupported property", str(ctx.exception))
 
     # Test Parsing
     def testGap(self):
