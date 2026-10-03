@@ -3035,6 +3035,16 @@ class RRuleTest(unittest.TestCase):
                           "BYDAY=-1OK;"         # This part is invalid
                           "WKST=SU"))
 
+    def testStrEmptyPropertyName(self):
+        with pytest.raises(ValueError, match="empty property name"):
+            rrulestr(":FREQ=YEARLY")
+
+        with pytest.raises(ValueError, match="empty property name"):
+            rrulestr(";X-PARAM=1:FREQ=YEARLY")
+
+        with pytest.raises(ValueError, match="empty property name"):
+            rrulestr("DTSTART:19970902T090000\n:FREQ=YEARLY")
+
     def testBadBySetPos(self):
         self.assertRaises(ValueError,
                           rrule, MONTHLY,
