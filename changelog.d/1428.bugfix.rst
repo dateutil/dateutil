@@ -1,0 +1,1 @@
+Fixed ``parser.parse()`` looping forever and allocating memory without bound when passed a stream-like object whose ``read()`` method never returns an empty string, such as a ``MagicMock``. It now raises a ``TypeError`` as soon as a non-``str`` value comes back from ``read()``. Reported by @pete-kirkham (gh issue #1428). Fixed by @afonsojanu (gh pr #1553).

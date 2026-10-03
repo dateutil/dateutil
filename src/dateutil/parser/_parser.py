@@ -74,6 +74,21 @@ class _timelex(object):
         self.tokenstack = []
         self.eof = False
 
+    def _read_char(self):
+        nextchar = self.instream.read(1)
+        if not isinstance(nextchar, text_type):
+            # The instream duck-type check in __init__ only looks for a
+            # `read` attribute, which passes for anything that auto-vivifies
+            # attributes (e.g. a MagicMock accidentally reaching parse()).
+            # Left unchecked, a stream like that never yields a falsy value,
+            # so the tokenizer loop below never terminates and keeps
+            # allocating tokens until memory runs out.
+            raise TypeError(
+                "invalid stream: instream.read() must return str, got "
+                "{itype} instead".format(itype=nextchar.__class__.__name__)
+            )
+        return nextchar
+
     def get_token(self):
         """
         This function breaks the time string into lexical units (tokens), which
@@ -103,9 +118,9 @@ class _timelex(object):
             if self.charstack:
                 nextchar = self.charstack.pop(0)
             else:
-                nextchar = self.instream.read(1)
+                nextchar = self._read_char()
                 while nextchar == '\x00':
-                    nextchar = self.instream.read(1)
+                    nextchar = self._read_char()
 
             if not nextchar:
                 self.eof = True
