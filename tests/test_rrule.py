@@ -3045,7 +3045,6 @@ class RRuleTest(unittest.TestCase):
         with pytest.raises(ValueError, match="empty property name"):
             rrulestr("DTSTART:19970902T090000\n:FREQ=YEARLY")
 
-
     def testBadBySetPos(self):
         self.assertRaises(ValueError,
                           rrule, MONTHLY,
