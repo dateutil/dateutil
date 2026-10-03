@@ -926,6 +926,24 @@ class parser(object):
                 if len_li > 12:
                     res.second = int(s[12:])
 
+        elif (
+            '.' in value_repr
+            and ymd.has_month
+            and not ymd.has_day
+            and not ymd.has_year
+        ):
+            first, second = value_repr.split('.', 1)
+
+            if first.isdigit() and second.isdigit():
+                if len(first) > 2:
+                    ymd.append(first, 'Y')
+                    ymd.append(second)
+                    idx += 1
+                elif len(second) > 2:
+                    ymd.append(first)
+                    ymd.append(second, 'Y')
+                    idx += 1
+
         elif self._find_hms_idx(idx, tokens, info, allow_jump=True) is not None:
             # HH[ ]h or MM[ ]m or SS[.ss][ ]s
             hms_idx = self._find_hms_idx(idx, tokens, info, allow_jump=True)
