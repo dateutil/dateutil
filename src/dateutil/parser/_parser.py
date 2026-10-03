@@ -873,6 +873,12 @@ class parser(object):
             return res, None
 
     def _parse_numeric_token(self, tokens, idx, info, ymd, res, fuzzy):
+        if fuzzy:
+            # Store unused numerical tokens in skipped_tokens
+            skipped_tokens = getattr(self, 'skipped_tokens', None)
+            if skipped_tokens is None:
+                skipped_tokens = self.skipped_tokens = []
+            skipped_tokens.append(tokens[idx])
         # Token is a number
         value_repr = tokens[idx]
         try:
