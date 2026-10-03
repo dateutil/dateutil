@@ -1,12 +1,45 @@
 from __future__ import unicode_literals
 import os
-import time
-import subprocess
-import warnings
-import tempfile
 import pickle
+import subprocess
+import tempfile
+import time
+import warnings
+from contextlib import contextmanager
+from datetime import datetime
+
+try:
+    from unittest import mock
+except ImportError:
+    import mock
 
 import pytest
+import six
+
+
+class _DatetimeMeta(type):
+    def __instancecheck__(cls, instance):
+        return isinstance(instance, datetime)
+
+
+def _fixed_datetime(now):
+    @six.add_metaclass(_DatetimeMeta)
+    class FixedDateTime(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            if tz is None:
+                return now.replace(tzinfo=None)
+            else:
+                return now.astimezone(tz)
+
+    return FixedDateTime
+
+
+@contextmanager
+def mock_datetime_now(target, now):
+    """Patch a module's ``datetime`` class to return a fixed current time."""
+    with mock.patch(target, _fixed_datetime(now)):
+        yield
 
 
 class PicklableMixin(object):
