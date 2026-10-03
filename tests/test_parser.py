@@ -167,6 +167,30 @@ def test_parser_default(parsable_text, expected_datetime, assertion_message):
     assert parse(parsable_text, default=datetime(2003, 9, 25)) == expected_datetime, assertion_message
 
 
+@pytest.mark.parametrize("parsable_text,expected_microsecond", [
+    ("2020-02-15T12:34", 999999),
+    ("2020-02-15T12:34:23", 999999),
+    ("2020-02-15T12:34:23.5", 500000),
+    ("2020-02-15T12:34:23.000001", 1),
+])
+def test_parser_default_microsecond(parsable_text, expected_microsecond):
+    """
+    Regression test for
+    https://github.com/dateutil/dateutil/issues/1032
+
+    The default datetime's microsecond must be preserved whenever the
+    parsed string doesn't itself specify one -- including when the
+    string specifies seconds but no fractional part, which previously
+    caused _parsems() to report microsecond=0 (rather than
+    "unspecified"), silently overriding a non-zero default.microsecond.
+    A string that does specify its own (fractional-second-derived)
+    microsecond must still take precedence over the default.
+    """
+    default = datetime(2020, 12, 31, 23, 59, 59, 999999)
+    result = parse(parsable_text, default=default)
+    assert result.microsecond == expected_microsecond
+
+
 @pytest.mark.parametrize('sep', ['-', '.', '/', ' '])
 def test_parse_dayfirst(sep):
     expected = datetime(2003, 9, 10)
