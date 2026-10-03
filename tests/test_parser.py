@@ -520,6 +520,12 @@ class ParserTest(unittest.TestCase):
                          (datetime(2060, 2, 21, 0, 0, 0),
                          ('http://biz.yahoo.com/ipo/p/', '.html')))
 
+        s3 = "2018-08-14 08:41:31.181 1288 ERROR"
+        self.assertEqual(
+            parse(s3, fuzzy_with_tokens=True),
+            (datetime(2018, 8, 14, 8, 41, 31, 181000), (' ', ' 1288 ERROR')),
+        )
+
     def testFuzzyAMPMProblem(self):
         # Sometimes fuzzy parsing results in AM/PM flag being set without
         # hours - if it's fuzzy it should ignore that.

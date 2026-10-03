@@ -737,7 +737,9 @@ class parser(object):
 
                 if value is not None:
                     # Numeric token
-                    i = self._parse_numeric_token(l, i, info, ymd, res, fuzzy)
+                    i = self._parse_numeric_token(
+                        l, i, info, ymd, res, fuzzy, skipped_idxs
+                    )
 
                 # Check weekday
                 elif info.weekday(l[i]) is not None:
@@ -788,6 +790,18 @@ class parser(object):
 
                     elif fuzzy:
                         skipped_idxs.append(i)
+
+                elif (
+                    fuzzy
+                    and res.hour is not None
+                    and res.tzname is None
+                    and res.tzoffset is None
+                    and (i - 1) in skipped_idxs
+                    and (i - 2) in skipped_idxs
+                    and l[i].isalpha()
+                    and l[i].upper() == l[i]
+                ):
+                    skipped_idxs.append(i)
 
                 # Check for a timezone name
                 elif self._could_be_tzname(res.hour, res.tzname, res.tzoffset, l[i]):
@@ -872,7 +886,7 @@ class parser(object):
         else:
             return res, None
 
-    def _parse_numeric_token(self, tokens, idx, info, ymd, res, fuzzy):
+    def _parse_numeric_token(self, tokens, idx, info, ymd, res, fuzzy, skipped_idxs):
         # Token is a number
         value_repr = tokens[idx]
         try:
@@ -984,6 +998,16 @@ class parser(object):
                 hour = int(value)
                 res.hour = self._adjust_ampm(hour, info.ampm(tokens[idx + 2]))
                 idx += 1
+            elif (
+                fuzzy
+                and len(ymd) == 3
+                and res.hour is not None
+                and idx + 2 < len_l
+                and info.jump(tokens[idx + 1])
+                and tokens[idx + 2].isalpha()
+                and tokens[idx + 2].upper() == tokens[idx + 2]
+            ):
+                skipped_idxs.extend([idx, idx + 1])
             else:
                 # Year, month or day
                 ymd.append(value)
