@@ -5,8 +5,6 @@ on:
     branches:
       - master
   pull_request:
-    branches:
-      - master
 
 env:
   pypi-hosts: "pypi.python.org pypi.org files.pythonhosted.org"
@@ -18,7 +16,7 @@ jobs:
     steps:
       - name: Cache tzdata
         id: cache-tzdata
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: tzdata_built
           key: tzdata-${{ env.TZDATA_VERSION }}-fat
@@ -40,7 +38,7 @@ jobs:
                         ZFLAGS="-b fat"
 
       - name: Upload tzdata artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: tzdata
           path: tzdata_built/usr/share/zoneinfo
@@ -98,20 +96,20 @@ jobs:
       TZ: ${{ !startsWith(matrix.os, 'windows-latest') && 'America/New_York' || null }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Set timezone (Windows)
         if: startsWith(matrix.os, 'windows-latest')
         run: tzutil /s "Eastern Standard Time"
       - if: ${{ !matrix.use-container }}
         name: Set up Python ${{ matrix.python-version }} on ${{ matrix.os }} (non-containers)
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
           allow-prereleases: true
         env:
           PIP_TRUSTED_HOST: ${{ contains(fromJson('["2.7", "3.5", "3.6", "3.7"]'), matrix.python-version) && env.pypi-hosts || '' }}
       - name: Download tzdata artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         if: startsWith(matrix.os, 'ubuntu')
         with:
           name: tzdata
@@ -143,14 +141,11 @@ jobs:
       - name: Generate coverage.xml
         run: python -m tox -e coverage
       - name: Report coverage to Codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v7
         with:
-          file: ./.tox/coverage.xml
+          files: ./.tox/coverage.xml
           name: ${{ matrix.os }}:${{ matrix.python-version }}
           fail_ci_if_error: false
-          # codecov/codecov-action@v3 needs v0.7.3 to work on macos-15-intel
-          # See https://github.com/codecov/codecov-action/issues/1549
-          version: ${{ endsWith(matrix.os, '-intel') && 'v0.7.3' || 'latest' }}
 
   other:
     runs-on: "ubuntu-latest"
@@ -163,18 +158,18 @@ jobs:
       TZ: ${{ !startsWith(matrix.os, 'windows-latest') && 'America/New_York' || null }}
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: Set timezone (Windows)
         if: startsWith(matrix.os, 'windows-latest')
         run: tzutil /s "Eastern Standard Time"
       - name: ${{ matrix.toxenv }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.13"
       - name: Download tzdata artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: tzdata
           path: tzdata_download
@@ -194,23 +189,30 @@ jobs:
   darker:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-      - uses: actions/setup-python@v5
-      - uses: akaihola/darker@0fb2501a3f6c1b2d64976afa57885aeec0601182
-        # pinned due to unreleased fix: https://github.com/akaihola/darker/issues/489
+      - uses: actions/setup-python@v7
         with:
-          options: "--check --diff --color --isort"
-          src: "."
-          version: "1.7.2"
+          python-version: "3.13"
+      - name: Install darker
+        run: python -m pip install "darker[black,isort]==3.0.0"
+      - name: Run darker
+        # Check only the lines changed relative to the merge base of the PR
+        # (or the commit before a push). The darker GitHub action is not used
+        # because its released versions refer to a commit-range action by a
+        # path local to the darker repo, so it fails for everyone else; see
+        # https://github.com/akaihola/darker/issues/847
+        env:
+          REVISION: ${{ github.event_name == 'pull_request' && format('{0}...', github.event.pull_request.base.sha) || format('{0}...', github.event.before) }}
+        run: darker --check --diff --color --isort --revision "$REVISION" .
 
   build-dist:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v7
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.10"
       - name: Install tox

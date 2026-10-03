@@ -1,0 +1,1 @@
+Fixed ``test_gettz_returns_local`` failing intermittently when run outside of UTC: the 32-bit ``time_t`` bounds were computed in local time, and the ambiguity check in the PEP 495 branch was done on a UTC-aware value where ``fold`` has no effect. Reported by @mercury125 (gh pr #1559) and @prownd (gh pr #1565). (gh pr #1578)

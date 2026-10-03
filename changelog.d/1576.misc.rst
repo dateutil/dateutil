@@ -1,0 +1,1 @@
+Updated the GitHub Actions, darker and pre-commit-hooks versions used in CI. (gh pr #1576)
