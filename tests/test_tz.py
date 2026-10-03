@@ -1702,6 +1702,29 @@ def test_tzstr_default_cmp(tzstr_1, tzstr_2):
 
     assert tz1 == tz2
 
+
+@pytest.mark.parametrize("newline", ["\n", "\r\n"])
+@pytest.mark.parametrize("fold", [" ", "\t"])
+@pytest.mark.parametrize("split_at", ["TZID:US-", "TZNAME:E", ";BYDAY="])
+def test_tzical_folded_content_lines(newline, fold, split_at):
+    tz_str = TZICAL_EST5EDT.replace(split_at, split_at + "\n" + fold)
+    tz_str = tz_str.replace("\n", newline)
+    tzic = tz.tzical(StringIO(tz_str))
+
+    assert tzic.keys() == ["US-Eastern"]
+    tzc = tzic.get("US-Eastern")
+    assert get_timezone_tuple(datetime(2003, 1, 1, tzinfo=tzc)) == EST_TUPLE
+    assert get_timezone_tuple(datetime(2003, 7, 1, tzinfo=tzc)) == EDT_TUPLE
+
+
+@pytest.mark.parametrize("fold", [" ", "\t"])
+def test_tzical_fold_preserves_leading_whitespace(fold):
+    tz_str = TZICAL_EST5EDT.replace("TZNAME:EST", "TZNAME:E\r\n" + fold + " ST")
+    tzc = tz.tzical(StringIO(tz_str)).get()
+
+    assert datetime(2003, 1, 1, tzinfo=tzc).tzname() == "E ST"
+
+
 class TZICalTest(unittest.TestCase, TzFoldMixin):
     def _gettz_str_tuple(self, tzname):
         TZ_EST = (
