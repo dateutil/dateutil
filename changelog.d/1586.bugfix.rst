@@ -1,0 +1,3 @@
+Fixed ``rrule`` accepting a ``bymonthday`` of ``0`` (or any value outside 1-31),
+which was silently dropped and turned the constraint into "every day of the month".
+Fixed by @januththedev (gh pr #1586).
