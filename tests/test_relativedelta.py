@@ -650,6 +650,19 @@ class RelativeDeltaTest(unittest.TestCase):
         except:
             self.fail("relativedelta() failed to hash!")
 
+    def testHashableWeekdayEquivalence(self):
+        # A weekday with n in (None, 0, 1) compares equal (e.g. MO == MO(1)),
+        # so equal relativedeltas must hash equally and work in sets/dicts.
+        base = relativedelta(weekday=MO)
+        for wd in (MO(0), MO(1)):
+            other = relativedelta(weekday=wd)
+            self.assertEqual(base, other)
+            self.assertEqual(hash(base), hash(other))
+            self.assertIn(other, {base})
+        # A different explicit count is a different object and must not collide.
+        self.assertNotEqual(base, relativedelta(weekday=MO(2)))
+        self.assertNotIn(relativedelta(weekday=MO(2)), {base})
+
     def testDayOfMonthPlus(self):
         assert [
             date(2021, 1, 28) + relativedelta(months=1),
