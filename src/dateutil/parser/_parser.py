@@ -884,7 +884,21 @@ class parser(object):
 
         len_l = len(tokens)
 
-        if (len(ymd) == 3 and len_li in (2, 4) and
+        if (
+            len(ymd) == 3
+            and idx > 0
+            and tokens[idx - 1] == 'T'
+            and idx + 4 < len_l
+            and tokens[idx + 1] == tokens[idx + 3] == '-'
+            and tokens[idx + 2].isdigit()
+            and tokens[idx + 4].isdigit()
+        ):
+            res.hour = int(value)
+            res.minute = int(tokens[idx + 2])
+            res.second = int(tokens[idx + 4])
+            idx += 4
+
+        elif (len(ymd) == 3 and len_li in (2, 4) and
             res.hour is None and
             (idx + 1 >= len_l or
              (tokens[idx + 1] != ':' and
