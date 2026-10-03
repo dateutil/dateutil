@@ -1,0 +1,2 @@
+Fixed ``tzical`` rejecting VTIMEZONE content lines folded with a horizontal tab.
+Reported and fixed by @kokotatan (gh pr #1595).

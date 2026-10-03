@@ -71,6 +71,7 @@ switch, and thus all their contributions are dual-licensed.
 - Juan Arias <jdarias3@gmail.com> (gh: @jdarias3) **D**
 - Kevin Nguyen <kvn219@MASKED> **D**
 - Kirit Thadaka <kirit.thadaka@gmail.com> (gh: @kirit93) **D**
+- kokotatan (gh: @kokotatan) **D**
 - Kubilay Kocak <koobs@MASKED>
 - Laszlo Kiss Kollar <kiss.kollar.laszlo@MASKED> (gh: @lkollar) **D**
 - Lauren Oldja <oldja@MASKED> (gh: @loldja) **D**
