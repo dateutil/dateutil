@@ -962,3 +962,14 @@ def test_parsererror_repr():
     s = repr(ParserError("Problem with string: %s", "2019-01-01"))
 
     assert s == "ParserError('Problem with string: %s', '2019-01-01')"
+
+
+def test_parse_rounds_fractional_seconds():
+    from datetime import datetime
+    from dateutil.parser import parse
+
+    assert parse("2020-01-01 00:00:00.1234567").microsecond == 123457
+    assert parse("2020-01-01 00:00:00.1234564").microsecond == 123456
+    assert parse("2020-01-01 00:00:00.123456").microsecond == 123456
+    dt = parse("2020-01-01 00:00:00.9999997")
+    assert dt == datetime(2020, 1, 1, 0, 0, 1)
