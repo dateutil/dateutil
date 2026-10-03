@@ -678,6 +678,24 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(parse(dtstr, yearfirst=True, dayfirst=True),
                          datetime(2009, 7, 1))
 
+    def testDayFirstYearFirst_day_gt_12(self):
+        # GH#1448: dayfirst with yearfirst should use YDM format
+        # even when day > 12
+        dtstr = '092507'
+        # Should be YYDDMM: year=09, day=25, month=07
+        self.assertEqual(parse(dtstr, yearfirst=True, dayfirst=True),
+                         datetime(2009, 7, 25))
+
+        # Also test with 4-digit year
+        dtstr = '2009 25 07'
+        self.assertEqual(parse(dtstr, yearfirst=True, dayfirst=True),
+                         datetime(2009, 7, 25))
+
+        # And with slashes
+        dtstr = '09/25/07'
+        self.assertEqual(parse(dtstr, yearfirst=True, dayfirst=True),
+                         datetime(2009, 7, 25))
+
     def testUnambiguousYearFirst(self):
         dtstr = '2015 09 25'
         self.assertEqual(parse(dtstr, yearfirst=True),
