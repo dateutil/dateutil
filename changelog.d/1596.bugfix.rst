@@ -1,0 +1,5 @@
+Fixed ``tzstr`` selecting the wrong weekday for DST end transitions whose
+standard-side time falls outside the specified day. Reported by @Mackxx
+(gh issue #1289). Fixed by @FanWu-ai (gh pr #1596).
+Affected ``tzstr`` instances no longer compare equal to ``tzrange`` instances
+whose matching stored deltas produce different transitions.

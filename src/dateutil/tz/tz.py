@@ -1149,6 +1149,52 @@ class tzstr(tzrange):
             kwargs["seconds"] -= delta.seconds + delta.days * 86400
         return relativedelta.relativedelta(**kwargs)
 
+    def _end_delta_needs_date_first(self):
+        end_delta = self._end_delta
+        return (
+            self.hasdst
+            and end_delta.weekday is not None
+            and (
+                end_delta.days
+                or end_delta.hours < 0
+                or end_delta.minutes < 0
+                or end_delta.seconds < 0
+            )
+        )
+
+    def transitions(self, year):
+        if not self.hasdst:
+            return None
+
+        base_year = datetime.datetime(year, 1, 1)
+        end_delta = self._end_delta
+        if self._end_delta_needs_date_first():
+            end_time = datetime.timedelta(
+                days=end_delta.days,
+                hours=end_delta.hours,
+                minutes=end_delta.minutes,
+                seconds=end_delta.seconds,
+            )
+
+            # Select the transition date before applying its standard-side time.
+            # Otherwise relativedelta applies a negative time before the weekday,
+            # which can select a different occurrence of that weekday.
+            end = base_year + (end_delta + -end_time) + end_time
+        else:
+            end = base_year + end_delta
+        return (base_year + self._start_delta, end)
+
+    def __eq__(self, other):
+        equal = super(tzstr, self).__eq__(other)
+        if equal is NotImplemented or not equal:
+            return equal
+
+        # tzrange applies relative times before weekdays. The same stored
+        # deltas can therefore describe different transitions in these classes.
+        return (
+            isinstance(other, tzstr) or not self._end_delta_needs_date_first()
+        )
+
     def __repr__(self):
         return "%s(%s)" % (self.__class__.__name__, repr(self._s))
 

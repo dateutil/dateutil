@@ -5,6 +5,7 @@ import base64
 import copy
 import gc
 import os
+import pickle
 import sys
 import unittest
 import weakref
@@ -25,7 +26,6 @@ import pytest
 from dateutil import tz as tz
 from dateutil import zoneinfo
 from dateutil.parser import parse
-
 # dateutil imports
 from dateutil.relativedelta import SU, TH, relativedelta
 
@@ -1544,6 +1544,103 @@ def test_tzstr_weakref():
 
     assert tz_t2_ref() is None
     assert tz.tzstr('EST5EDT') is not tz_t2_ref()
+
+
+@pytest.mark.tzstr
+@pytest.mark.parametrize(
+    "tz_str, year, expected",
+    [
+        # Resolve the weekday before moving a midnight transition to standard time.
+        ("PYT4PYST,M10.1.0/0,M4.2.0/0", 2024, datetime(2024, 4, 13, 23)),
+        ("PYT4PYST,M10.1.0/0,M4.2.0/0", 2023, datetime(2023, 4, 8, 23)),
+        ("PYT4PYST,M10.1.0/0,M4.2.0/0", 2025, datetime(2025, 4, 12, 23)),
+        # The first weekday may move to the preceding month or year.
+        ("EST5EDT,M3.2.0/2,M11.1.0/0", 2026, datetime(2026, 10, 31, 23)),
+        ("EST5EDT,M3.2.0/2,M1.1.0/0", 2023, datetime(2022, 12, 31, 23)),
+        # Week 5 means the last occurrence of the weekday in the month.
+        ("EST5EDT,M3.2.0/2,M11.5.0/0", 2024, datetime(2024, 11, 23, 23)),
+        # Non-hour and multi-hour DST changes also move the transition date.
+        (
+            "EST5EDT4:30,M3.2.0/2,M11.1.0/0",
+            2026,
+            datetime(2026, 10, 31, 23, 30),
+        ),
+        (
+            "EST5EDT3,M3.2.0/2,M11.1.0/1:30",
+            2026,
+            datetime(2026, 10, 31, 23, 30),
+        ),
+        # Preserve transitions at and after the end of the specified day.
+        ("EST5EDT,M3.2.0/2,M11.1.0/24", 2026, datetime(2026, 11, 1, 23)),
+        ("EST5EDT,M3.2.0/2,M11.1.0/25", 2026, datetime(2026, 11, 2)),
+        # Negative DST can move the standard-side time into the next day.
+        ("IST-1GMT0,M10.5.0/2,M3.5.0/23:30", 2024, datetime(2024, 4, 1, 0, 30)),
+        # Julian-day rules must retain their leap-year behavior.
+        ("EST5EDT,M3.2.0/2,J60/0", 2024, datetime(2024, 2, 29, 23)),
+        ("EST5EDT,M3.2.0/2,60/0", 2024, datetime(2024, 2, 29, 23)),
+        ("EST5EDT,M3.2.0/2,60/0", 2023, datetime(2023, 3, 1, 23)),
+    ],
+)
+def test_tzstr_end_transition_date(tz_str, year, expected):
+    assert tz.tzstr(tz_str).transitions(year)[1] == expected
+
+
+@pytest.mark.tzstr
+def test_tzstr_midnight_end_offsets():
+    zone = tz.tzstr("PYT4PYST,M10.1.0/0,M4.2.0/0")
+
+    assert datetime(2024, 4, 10, 12, tzinfo=zone).utcoffset() == timedelta(
+        hours=-3
+    )
+    assert datetime(2024, 4, 14, 0, tzinfo=zone).utcoffset() == timedelta(
+        hours=-4
+    )
+    assert tz.datetime_ambiguous(datetime(2024, 4, 13, 23, 30), zone)
+    assert not tz.datetime_ambiguous(datetime(2024, 4, 7, 23, 30), zone)
+
+
+@pytest.mark.tzstr
+@pytest.mark.parametrize("end_hour, adjusted_hours", [(0, -1), (25, 24)])
+def test_tzstr_end_transition_range_equality(end_hour, adjusted_hours):
+    zone = tz.tzstr("PYT4PYST,M10.1.0/0,M4.2.0/{}".format(end_hour))
+    range_zone = tz.tzrange(
+        "PYT",
+        -14400,
+        "PYST",
+        -10800,
+        start=relativedelta(month=10, day=1, weekday=SU(1)),
+        end=relativedelta(month=4, day=1, weekday=SU(2), hours=adjusted_hours),
+    )
+
+    assert zone.transitions(2024) != range_zone.transitions(2024)
+    assert not zone == range_zone
+    assert not range_zone == zone
+    assert zone != range_zone
+    assert range_zone != zone
+
+
+@pytest.mark.tzstr
+def test_tzstr_ordinary_range_equality():
+    zone = tz.tzstr("EST5EDT")
+    range_zone = tz.tzrange("EST", -18000, "EDT")
+
+    assert zone == range_zone
+    assert range_zone == zone
+    assert not zone != range_zone
+    assert not range_zone != zone
+
+
+@pytest.mark.tzstr
+@pytest.mark.parametrize("protocol", range(2, pickle.HIGHEST_PROTOCOL + 1))
+def test_tzstr_midnight_end_pickle(protocol):
+    zone = tz.tzstr("PYT4PYST,M10.1.0/0,M4.2.0/0")
+    restored = pickle.loads(pickle.dumps(zone, protocol))
+
+    assert zone == restored
+    assert restored == zone
+    assert not zone != restored
+    assert not restored != zone
+    assert restored.transitions(2024)[1] == datetime(2024, 4, 13, 23)
 
 
 @pytest.mark.tzstr
