@@ -445,6 +445,15 @@ class rrule(rrulebase):
         self._dtstart = dtstart
         self._tzinfo = dtstart.tzinfo
         self._freq = freq
+        # bool is a subclass of int; count=True/interval=True silently become 1
+        if isinstance(interval, bool):
+            raise TypeError(
+                "interval must be an integer, not bool (got %r)" % (interval,)
+            )
+        if isinstance(count, bool):
+            raise TypeError(
+                "count must be an integer, not bool (got %r)" % (count,)
+            )
         self._interval = interval
         self._count = count
 

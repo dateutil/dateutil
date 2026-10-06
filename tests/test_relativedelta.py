@@ -765,3 +765,18 @@ class RelativeDeltaWeeksPropertySetterTest(unittest.TestCase):
 
 
 # vim:ts=4:sw=4:et
+
+
+class RelativeDeltaBoolTest(unittest.TestCase):
+    def test_rejects_bool_relative_and_absolute(self):
+        for kwargs in (
+            {"years": True},
+            {"months": False},
+            {"days": True},
+            {"year": True},
+            {"month": True},
+            {"day": True},
+            {"weekday": True},
+        ):
+            with self.assertRaises(TypeError):
+                relativedelta(**kwargs)

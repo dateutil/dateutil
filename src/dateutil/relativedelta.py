@@ -173,6 +173,25 @@ class relativedelta(object):
                 raise ValueError("Non-integer years and months are "
                                  "ambiguous and not currently supported.")
 
+            # bool is a subclass of int; years=True would silently become +1
+            _rel_vals = (years, months, days, leapdays, weeks, hours, minutes,
+                         seconds, microseconds)
+            _rel_names = ("years", "months", "days", "leapdays", "weeks",
+                          "hours", "minutes", "seconds", "microseconds")
+            for _name, _val in zip(_rel_names, _rel_vals):
+                if isinstance(_val, bool):
+                    raise TypeError(
+                        "%s must be an integer, not bool (got %r)" % (_name, _val)
+                    )
+            _abs_vals = (year, month, day, hour, minute, second, microsecond)
+            _abs_names = ("year", "month", "day", "hour", "minute", "second",
+                          "microsecond")
+            for _name, _val in zip(_abs_names, _abs_vals):
+                if isinstance(_val, bool):
+                    raise TypeError(
+                        "%s must be an integer, not bool (got %r)" % (_name, _val)
+                    )
+
             # Relative information
             self.years = int(years)
             self.months = int(months)
@@ -200,6 +219,11 @@ class relativedelta(object):
                      "This is not a well-defined condition and will raise " +
                      "errors in future versions.", DeprecationWarning)
 
+            if isinstance(weekday, bool):
+                raise TypeError(
+                    "weekday must be an integer or weekday instance, not bool (got %r)"
+                    % (weekday,)
+                )
             if isinstance(weekday, integer_types):
                 self.weekday = weekdays[weekday]
             else:

@@ -2813,3 +2813,12 @@ def test_resolve_imaginary(tzi, dt, dt_exp):
     assert dt_r == dt_exp
     assert dt_r.tzname() == dt_exp.tzname()
     assert dt_r.utcoffset() == dt_exp.utcoffset()
+
+
+def test_tzoffset_rejects_bool():
+    from dateutil import tz
+    import pytest
+    with pytest.raises(TypeError):
+        tz.tzoffset("X", True)
+    with pytest.raises(TypeError):
+        tz.tzoffset("X", False)
