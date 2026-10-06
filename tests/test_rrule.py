@@ -1,22 +1,34 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from datetime import datetime, date
 import pickle
 import unittest
+from datetime import date, datetime
+
+import pytest
+from freezegun import freeze_time
 from six import PY2
 
 from dateutil import tz
 from dateutil.rrule import (
-    rrule, rruleset, rrulestr,
-    YEARLY, MONTHLY, WEEKLY, DAILY,
-    HOURLY, MINUTELY, SECONDLY,
-    MO, TU, WE, TH, FR, SA, SU
+    DAILY,
+    FR,
+    HOURLY,
+    MINUTELY,
+    MO,
+    MONTHLY,
+    SA,
+    SECONDLY,
+    SU,
+    TH,
+    TU,
+    WE,
+    WEEKLY,
+    YEARLY,
+    rrule,
+    rruleset,
+    rrulestr,
 )
-
-from freezegun import freeze_time
-
-import pytest
 
 
 @pytest.mark.rrule
@@ -2667,8 +2679,9 @@ class RRuleTest(unittest.TestCase):
         self.assertEqual(datetime(1997, 9, 3, 9, 0) in rr, True)
 
     def testCachePickle(self):
-        rr = rrule(DAILY, count=15, cache=True,
-                   dtstart=datetime(1997, 9, 2, 9, 0))
+        rr = rrule(
+            DAILY, count=15, cache=True, dtstart=datetime(1997, 9, 2, 9, 0)
+        )
         # Partially populate the cache before pickling
         self.assertEqual(rr[1], datetime(1997, 9, 3, 9, 0))
 

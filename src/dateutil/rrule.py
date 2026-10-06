@@ -126,10 +126,10 @@ class rrulebase(object):
         if self._cache is not None:
             # The lock and the cache generator cannot be pickled, so the
             # cache is rebuilt from scratch on unpickling.
-            del state['_cache_lock']
-            del state['_cache_gen']
-            state['_cache'] = []
-            state['_cache_complete'] = False
+            del state["_cache_lock"]
+            del state["_cache_gen"]
+            state["_cache"] = []
+            state["_cache_complete"] = False
         return state
 
     def __setstate__(self, state):
