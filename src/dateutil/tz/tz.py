@@ -1247,6 +1247,15 @@ class _tzicalvtz(_tzinfo):
     def __repr__(self):
         return "<tzicalvtz %s>" % repr(self._tzid)
 
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        del state['_cache_lock']
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self._cache_lock = _thread.allocate_lock()
+
     __reduce__ = object.__reduce__
 
 

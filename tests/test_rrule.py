@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 
 from datetime import datetime, date
+import pickle
 import unittest
 from six import PY2
 
@@ -2664,6 +2665,16 @@ class RRuleTest(unittest.TestCase):
                    dtstart=datetime(1997, 9, 2, 9, 0))
         for x in rr: pass
         self.assertEqual(datetime(1997, 9, 3, 9, 0) in rr, True)
+
+    def testCachePickle(self):
+        rr = rrule(DAILY, count=15, cache=True,
+                   dtstart=datetime(1997, 9, 2, 9, 0))
+        # Partially populate the cache before pickling
+        self.assertEqual(rr[1], datetime(1997, 9, 3, 9, 0))
+
+        nrr = pickle.loads(pickle.dumps(rr))
+        self.assertEqual(list(nrr), list(rr))
+        self.assertEqual(nrr.count(), 15)
 
     def testStr(self):
         self.assertEqual(list(rrulestr(
