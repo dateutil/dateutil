@@ -1,0 +1,1 @@
+Fixed sign inversion when parsing literal UTC/GMT offsets such as ``UTC-4`` or ``GMT+04:00`` (gh issue #1478).
