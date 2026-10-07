@@ -510,3 +510,118 @@ def test_isotime_raises(isostr, exception):
     iparser = isoparser()
     with pytest.raises(exception):
         iparser.parse_isotime(isostr)
+
+
+@pytest.mark.parametrize(
+    "clock,expected",
+    [
+        ("12.5", time(12, 30)),
+        ("12.125", time(12, 7, 30)),
+        ("12.1234567", time(12, 7, 24, 444120)),
+        ("12.0000000002777777777", time(12)),
+        ("12.0000000002777777778", time(12, 0, 0, 1)),
+        ("12:30.5", time(12, 30, 30)),
+        ("1230.5", time(12, 30, 30)),
+        ("12:30.1234567", time(12, 30, 7, 407402)),
+        ("12:30.00000001666666666", time(12, 30)),
+        ("12:30.00000001666666667", time(12, 30, 0, 1)),
+        ("00.0", time(0)),
+        ("24.0", time(0)),
+        ("24:00.0", time(0)),
+        ("2400.0", time(0)),
+        # Match fractional seconds: discard submicroseconds before midnight.
+        ("24.0000000000001", time(0)),
+        ("24:00.000000001", time(0)),
+        ("24:00:00.0000001", time(0)),
+        ("23.9999999999999999999", time(23, 59, 59, 999999)),
+        ("23:59.9999999999999999999", time(23, 59, 59, 999999)),
+        ("12:30:15.123456789", time(12, 30, 15, 123456)),
+    ],
+)
+@pytest.mark.parametrize("decimal_sep", [".", ","])
+@pytest.mark.parametrize(
+    "tzoffset",
+    [
+        (None, ""),
+        (UTC, "Z"),
+        (UTC, "+00:00"),
+        (tz.tzoffset(None, -19800), "-05:30"),
+        (tz.tzoffset(None, 20700), "+0545"),
+    ],
+)
+@pytest.mark.parametrize("as_bytes", [False, True])
+def test_fractional_clock_components(
+    clock, expected, decimal_sep, tzoffset, as_bytes
+):
+    tzi, offset = tzoffset
+    timestr = clock.replace(".", decimal_sep) + offset
+    dtstr = "2017-01-01T" + timestr
+    expected = expected.replace(tzinfo=tzi)
+    expected_dt = datetime.combine(date(2017, 1, 1), expected)
+    if clock.startswith("24"):
+        expected_dt += timedelta(days=1)
+
+    if as_bytes:
+        timestr = timestr.encode("ascii")
+        dtstr = dtstr.encode("ascii")
+
+    assert isoparser().parse_isotime(timestr) == expected
+    assert isoparse(dtstr) == expected_dt
+
+
+@pytest.mark.parametrize(
+    "timestr,expected",
+    [
+        ("12." + "0" * 5000 + "1", time(12)),
+        ("12." + "9" * 5000, time(12, 59, 59, 999999)),
+        ("12:30." + "9" * 5000, time(12, 30, 59, 999999)),
+        ("12.0000000002" + "7" * 5000 + "8", time(12, 0, 0, 1)),
+        ("12:30.00000001" + "6" * 5000 + "7", time(12, 30, 0, 1)),
+        ("12:30:15." + "9" * 5000, time(12, 30, 15, 999999)),
+    ],
+    ids=[
+        "tiny-hour",
+        "hour",
+        "minute",
+        "hour-boundary",
+        "minute-boundary",
+        "second-control",
+    ],
+)
+def test_fractional_clock_long_input(timestr, expected):
+    assert isoparser().parse_isotime(timestr) == expected
+    assert isoparse("2017-01-01T" + timestr) == datetime.combine(
+        date(2017, 1, 1), expected
+    )
+
+
+@pytest.mark.parametrize(
+    "timestr",
+    [
+        "12.",
+        "12,Z",
+        "12:30.",
+        "1230,+01",
+        "12.5:30",
+        "12.5.5",
+        "12.5,5",
+        "12:30.5:15",
+        "1230.5:15",
+        "12:30.5.5",
+        "12:30.5,5",
+        "12.5Zextra",
+        "24.1",
+        "24:00.1",
+        "2400.1",
+        "25.0",
+        "12:60.5",
+        "1260.5",
+        "12.5+25:00",
+        "12:30.5+01:60",
+    ],
+)
+def test_fractional_clock_invalid(timestr):
+    with pytest.raises(ValueError):
+        isoparser().parse_isotime(timestr)
+    with pytest.raises(ValueError):
+        isoparse("2017-01-01T" + timestr)
