@@ -565,7 +565,15 @@ class relativedelta(object):
         ))
 
     def __ne__(self, other):
-        return not self.__eq__(other)
+        # NB: `self.__eq__(other)` may return `NotImplemented`, which is
+        # truthy, so `not self.__eq__(other)` would evaluate to `False` for
+        # every non-relativedelta operand (GH #1157). Delegating to the `==`
+        # operator lets Python apply the reflected operation and the default
+        # identity comparison before we negate the result.
+        result = self.__eq__(other)
+        if result is NotImplemented:
+            return result
+        return not result
 
     def __div__(self, other):
         try:
