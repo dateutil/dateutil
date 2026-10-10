@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 
 import itertools
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 import unittest
 import sys
 
@@ -97,7 +97,9 @@ PARSER_TEST_CASES = [
     ('13NOV2017', datetime(2017, 11, 13), "dBY (See GH360)"),
     ('0003-03-04', datetime(3, 3, 4), "pre 12 year same month (See GH PR #293)"),
     ('December.0031.30', datetime(31, 12, 30), "BYd corner case (GH#687)"),
-
+    ('05/2016', datetime.combine(date.today().replace(2016, 5), datetime.min.time()), "MM/YYYY format"),
+    ('05.2016', datetime.combine(date.today().replace(2016, 5), datetime.min.time()), "MM.YYYY format (GH#384)"),
+    
     # Cases with legacy h/m/s format, candidates for deprecation (GH#886)
     ("2016-12-21 04.2h", datetime(2016, 12, 21, 4, 12), "Fractional Hours"),
 ]
