@@ -1,0 +1,5 @@
+Fixed ``rruleset.rdate`` and ``rruleset.exdate`` with :py:class:`datetime.date`
+values. They are now converted to a :py:class:`datetime.datetime` at midnight,
+as for a date-only ``dtstart``. Before, iteration could raise ``TypeError``.
+Reported by @pganssle (gh issue #275). Fixed by @fieldwork1f1010-rgb and
+@hark-agent (gh pr #1607)
