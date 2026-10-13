@@ -4916,7 +4916,9 @@ class WeekdayTest(unittest.TestCase):
 
 @pytest.mark.parametrize("parameter", ["BYDAY", "BYWEEKDAY"])
 @pytest.mark.parametrize(
-    "value", ["MO(+12", "MO(12", "MO(-12", "MO(+1x", "MO(-1]"]
+    "value",
+    ["MO(+12", "MO(12", "MO(-12", "MO(+1x", "MO(-1]",
+     "MO(+1)(99)", "MO(+1)(-2)", "MO(+1)()"]
 )
 def test_rrulestr_rejects_unclosed_weekday_ordinal(parameter, value):
     with pytest.raises(ValueError, match="invalid '%s'" % parameter):

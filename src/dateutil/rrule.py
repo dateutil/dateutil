@@ -1514,7 +1514,8 @@ class _rrulestr(object):
         for wday in value.split(','):
             if '(' in wday:
                 # If it's of the form TH(+1), etc.
-                if not wday.endswith(")"):
+                if (not wday.endswith(")") or
+                        wday.count("(") != 1 or wday.count(")") != 1):
                     raise ValueError(
                         "Invalid parenthesized BYDAY specification."
                     )
