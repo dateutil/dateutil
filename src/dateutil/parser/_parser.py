@@ -42,7 +42,7 @@ from io import StringIO
 import six
 from six import integer_types, text_type
 
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_EVEN
 
 from warnings import warn
 
@@ -1136,7 +1136,14 @@ class parser(object):
             return int(value), 0
         else:
             i, f = value.split(".")
-            return int(i), int(f.ljust(6, "0")[:6])
+            # Round to nearest microsecond instead of truncating (GH 1546).
+            # Use Decimal with ROUND_HALF_EVEN for correct rounding behavior.
+            frac = Decimal("0." + f)
+            rounded = frac.quantize(Decimal("0.000001"), rounding=ROUND_HALF_EVEN)
+            microseconds = int(rounded * 1000000)
+            if microseconds >= 1000000:
+                return int(i) + 1, 0
+            return int(i), microseconds
 
     def _to_decimal(self, val):
         try:

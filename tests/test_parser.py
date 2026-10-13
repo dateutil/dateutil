@@ -93,7 +93,7 @@ PARSER_TEST_CASES = [
     ("1st of May 2003", datetime(2003, 5, 1), "random format"),
     ('0099-01-01T00:00:00', datetime(99, 1, 1, 0, 0), "99 ad"),
     ('0031-01-01T00:00:00', datetime(31, 1, 1, 0, 0), "31 ad"),
-    ("20080227T21:26:01.123456789", datetime(2008, 2, 27, 21, 26, 1, 123456), "high precision seconds"),
+    ("20080227T21:26:01.123456789", datetime(2008, 2, 27, 21, 26, 1, 123457), "high precision seconds"),
     ('13NOV2017', datetime(2017, 11, 13), "dBY (See GH360)"),
     ('0003-03-04', datetime(3, 3, 4), "pre 12 year same month (See GH PR #293)"),
     ('December.0031.30', datetime(31, 12, 30), "BYd corner case (GH#687)"),
@@ -945,6 +945,35 @@ def test_parse_tzinfos_fold():
 ])
 def test_rounding_floatlike_strings(dtstr, dt):
     assert parse(dtstr, default=datetime(2003, 9, 25)) == dt
+
+
+@pytest.mark.parametrize('dtstr,expected_us', [
+    # 7th digit rounds down (truncation = 123456, correct rounding = 123456)
+    ('2020-01-01 00:00:00.1234561', 123456),
+    # 7th digit rounds up
+    ('2020-01-01 00:00:00.1234567', 123457),
+    # 7th digit rounds up (exactly .5 rounds to even)
+    ('2020-01-01 00:00:00.1234565', 123456),  # 123456 is even
+    ('2020-01-01 00:00:00.1234575', 123458),  # 123458 is even
+    # 8+ digits
+    ('2020-01-01 00:00:00.12345678', 123457),
+    # Carry: 999999.5 rounds to 1000000 us → 1 second + 0 us
+    ('2020-01-01 00:00:00.9999995', 0),  # carry into seconds
+    # No fractional part
+    ('2020-01-01 00:00:00', 0),
+    # Fewer than 6 fractional digits (existing behavior, should still work)
+    ('2020-01-01 00:00:00.1', 100000),
+    ('2020-01-01 00:00:00.12', 120000),
+    ('2020-01-01 00:00:00.123', 123000),
+    ('2020-01-01 00:00:00.1234', 123400),
+    ('2020-01-01 00:00:00.12345', 123450),
+])
+def test_fractional_seconds_rounding(dtstr, expected_us):
+    result = parse(dtstr)
+    assert result.microsecond == expected_us, (
+        "parse(%r).microsecond = %d, expected %d"
+        % (dtstr, result.microsecond, expected_us)
+    )
 
 
 @pytest.mark.parametrize('value', ['1: test', 'Nan'])
