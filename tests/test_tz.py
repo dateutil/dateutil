@@ -2418,6 +2418,36 @@ class TzPickleTest(PicklableMixin, unittest.TestCase):
         tzc = tz.tzical(StringIO(TZICAL_EST5EDT)).get()
         self.assertPicklable(tzc)
 
+    def testPickleTzICalRoundTrip(self):
+        # GH #1242
+        tzc = tz.tzical(StringIO(TZICAL_EST5EDT)).get()
+
+        def get_dts(tzi):
+            return [
+                datetime(2003, 1, 15, 12, tzinfo=tzi),
+                datetime(2003, 7, 15, 12, tzinfo=tzi),
+                tz.enfold(datetime(2003, 10, 26, 1, 30, tzinfo=tzi)),
+            ]
+
+        # Populate the timezone and rrule caches before pickling
+        expected = [
+            (dt.utcoffset(), dt.dst(), dt.tzname()) for dt in get_dts(tzc)
+        ]
+
+        get_nobj = self._get_nobj_file if self._asfile else self._get_nobj_bytes
+        ntzc = get_nobj(tzc, {}, {})
+        self.assertIsNot(tzc, ntzc)
+        self.assertEqual(repr(ntzc), repr(tzc))
+
+        actual = [
+            (dt.utcoffset(), dt.dst(), dt.tzname()) for dt in get_dts(ntzc)
+        ]
+        self.assertEqual(actual, expected)
+
+        ndt = get_nobj(datetime(2003, 7, 15, 12, tzinfo=tzc), {}, {})
+        self.assertEqual(ndt.utcoffset(), timedelta(hours=-4))
+        self.assertEqual(ndt.tzname(), "EDT")
+
     def testPickleTzGettz(self):
         self.assertPicklable(tz.gettz('America/New_York'))
 

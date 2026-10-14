@@ -121,6 +121,23 @@ class rrulebase(object):
 
         self._len = None
 
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        if self._cache is not None:
+            # The lock and the cache generator cannot be pickled, so the
+            # cache is rebuilt from scratch on unpickling.
+            del state["_cache_lock"]
+            del state["_cache_gen"]
+            state["_cache"] = []
+            state["_cache_complete"] = False
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        if self._cache is not None:
+            self._cache_lock = _thread.allocate_lock()
+            self._invalidate_cache()
+
     def _iter_cached(self):
         i = 0
         gen = self._cache_gen

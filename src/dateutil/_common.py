@@ -33,6 +33,20 @@ class weekday(object):
     def __ne__(self, other):
         return not (self == other)
 
+    def __getstate__(self):
+        # PyPy 2.7 will not pickle a slots class that has no __getstate__.
+        # This is the (instance dict, slot dict) pair CPython already produces,
+        # so existing pickles still load through pickle's default builder.
+        slotstate = {}
+        for name in self.__slots__:
+            slotstate[name] = getattr(self, name)
+        inst_dict = getattr(self, "__dict__", None)
+        if inst_dict:
+            inst_dict = inst_dict.copy()
+        else:
+            inst_dict = None
+        return (inst_dict, slotstate)
+
     def __repr__(self):
         s = ("MO", "TU", "WE", "TH", "FR", "SA", "SU")[self.weekday]
         if not self.n:
