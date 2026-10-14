@@ -1139,7 +1139,9 @@ class parser(object):
             # Round to nearest microsecond instead of truncating (GH 1546).
             # Use Decimal with ROUND_HALF_EVEN for correct rounding behavior.
             frac = Decimal("0." + f)
-            rounded = frac.quantize(Decimal("0.000001"), rounding=ROUND_HALF_EVEN)
+            rounded = frac.quantize(
+                Decimal("0.000001"), rounding=ROUND_HALF_EVEN
+            )
             microseconds = int(rounded * 1000000)
             if microseconds >= 1000000:
                 return int(i) + 1, 0
