@@ -832,8 +832,9 @@ class rrule(rrulebase):
             for i in dayset[start:end]:
                 if ((bymonth and ii.mmask[i] not in bymonth) or
                     (byweekno and not ii.wnomask[i]) or
-                    (byweekday and ii.wdaymask[i] not in byweekday) or
-                    (ii.nwdaymask and not ii.nwdaymask[i]) or
+                    ((byweekday or ii.nwdaymask) and
+                     not (byweekday and ii.wdaymask[i] in byweekday) and
+                     not (ii.nwdaymask and ii.nwdaymask[i])) or
                     (byeaster and not ii.eastermask[i]) or
                     ((bymonthday or bynmonthday) and
                      ii.mdaymask[i] not in bymonthday and

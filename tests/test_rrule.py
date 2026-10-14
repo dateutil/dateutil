@@ -4614,6 +4614,76 @@ class RRuleTest(unittest.TestCase):
         self.assertEqual(list(newrr),
                              [datetime(1997, 1, 6)])
 
+    def testByWeekdayMixedPlainAndOrdinal(self):
+        # Each BYDAY value selects days on its own (RFC 5545, section 3.3.10):
+        # mixing plain and ordinal weekdays is a union, not an intersection.
+        dtstart = datetime(2024, 1, 1)
+        rule = rrulestr("FREQ=MONTHLY;COUNT=5;BYDAY=MO,1FR",
+                        dtstart=dtstart)
+        self.assertEqual(list(rule), [
+            datetime(2024, 1, 1),   # Monday
+            datetime(2024, 1, 5),   # first Friday
+            datetime(2024, 1, 8),   # Monday
+            datetime(2024, 1, 15),  # Monday
+            datetime(2024, 1, 22),  # Monday
+        ])
+
+        # An ordinal weekday that is a subset of the plain one must not
+        # narrow the result to the first Friday only.
+        rule = rrulestr("FREQ=MONTHLY;COUNT=5;BYDAY=FR,1FR",
+                        dtstart=dtstart)
+        self.assertEqual(list(rule), [
+            datetime(2024, 1, 5),
+            datetime(2024, 1, 12),
+            datetime(2024, 1, 19),
+            datetime(2024, 1, 26),
+            datetime(2024, 2, 2),
+        ])
+
+        # YEARLY behaves the same way.
+        rule = rrulestr("FREQ=YEARLY;COUNT=4;BYDAY=MO,1FR",
+                        dtstart=dtstart)
+        self.assertEqual(list(rule), [
+            datetime(2024, 1, 1),   # Monday
+            datetime(2024, 1, 5),   # first Friday
+            datetime(2024, 1, 8),   # Monday
+            datetime(2024, 1, 15),  # Monday
+        ])
+
+    def testByWeekdayMixedPlainAndOrdinalConstructor(self):
+        rule = rrule(MONTHLY,
+                     count=5,
+                     byweekday=(MO, FR(1)),
+                     dtstart=datetime(2024, 1, 1))
+        self.assertEqual(list(rule), [
+            datetime(2024, 1, 1),
+            datetime(2024, 1, 5),
+            datetime(2024, 1, 8),
+            datetime(2024, 1, 15),
+            datetime(2024, 1, 22),
+        ])
+
+    def testByWeekdayUnmixedControls(self):
+        # Plain-only and ordinal-only lists are unaffected by the fix.
+        dtstart = datetime(2024, 1, 1)
+        rule = rrulestr("FREQ=MONTHLY;COUNT=4;BYDAY=MO,FR",
+                        dtstart=dtstart)
+        self.assertEqual(list(rule), [
+            datetime(2024, 1, 1),
+            datetime(2024, 1, 5),
+            datetime(2024, 1, 8),
+            datetime(2024, 1, 12),
+        ])
+
+        rule = rrulestr("FREQ=MONTHLY;COUNT=4;BYDAY=1MO,2TU",
+                        dtstart=dtstart)
+        self.assertEqual(list(rule), [
+            datetime(2024, 1, 1),
+            datetime(2024, 1, 9),
+            datetime(2024, 2, 5),
+            datetime(2024, 2, 13),
+        ])
+
 
 @pytest.mark.rrule
 @freeze_time(datetime(2018, 3, 6, 5, 36, tzinfo=tz.UTC))
