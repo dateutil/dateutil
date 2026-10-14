@@ -65,6 +65,7 @@ switch, and thus all their contributions are dual-licensed.
 - Jan Studený <jendas1@MASKED>
 - Jay Weisskopf <jay@jayschwa.net> (gh: @jayschwa) **D**
 - Jitesh <jitesh@MASKED>
+- John Cusack (gh: @John-Cusack) **D**
 - John Purviance <jpurviance@MASKED> (gh @jpurviance) **D**
 - Jon Dufresne <jon.dufresne@MASKED> (gh: @jdufresne) **R**
 - Jonas Neubert <jonas@MASKED> (gh: @jonemo) **R**

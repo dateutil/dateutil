@@ -64,10 +64,19 @@ class _timelex(object):
             instream = instream.decode()
 
         if isinstance(instream, text_type):
+            # Fast path: the string is tokenized by index in
+            # _get_token_str, avoiding one StringIO.read(1) call per
+            # character. self.instream is still kept as a StringIO for
+            # backwards compatibility.
+            self._str = instream
+            self._pos = 0
             instream = StringIO(instream)
         elif getattr(instream, 'read', None) is None:
             raise TypeError('Parser must be a string or character stream, not '
                             '{itype}'.format(itype=instream.__class__.__name__))
+        else:
+            self._str = None
+            self._pos = 0
 
         self.instream = instream
         self.charstack = []
@@ -88,6 +97,9 @@ class _timelex(object):
         function maintains a "token stack", for when the ambiguous context
         demands that multiple tokens be parsed at once.
         """
+        if self._str is not None:
+            return self._get_token_str()
+
         if self.tokenstack:
             return self.tokenstack.pop(0)
 
@@ -168,6 +180,129 @@ class _timelex(object):
                     state = 'a.'
                 else:
                     self.charstack.append(nextchar)
+                    break  # emit token
+
+        if (state in ('a.', '0.') and (seenletters or token.count('.') > 1 or
+                                       token[-1] in '.,')):
+            l = self._split_decimal.split(token)
+            token = l[0]
+            for tok in l[1:]:
+                if tok:
+                    self.tokenstack.append(tok)
+
+        if state == '0.' and token.count('.') == 0:
+            token = token.replace(',', '.')
+
+        return token
+
+    def _get_token_str(self):
+        # Index-based equivalent of get_token for string input: byte-for-byte
+        # identical tokens without one StringIO.read(1) call per character.
+        # Method lookups are hoisted to locals; subclass overrides of
+        # isword/isnum/isspace are still honored through self.
+        if self.tokenstack:
+            return self.tokenstack.pop(0)
+
+        s = self._str
+        n = len(s)
+        pos = self._pos
+        isword = self.isword
+        isnum = self.isnum
+        isspace = self.isspace
+        charstack = self.charstack
+
+        seenletters = False
+        token = None
+        state = None
+
+        while not self.eof:
+            # We only realize that we've reached the end of a token when we
+            # find a character that's not part of the current token - since
+            # that character may be part of the next token, it's stored in the
+            # charstack.
+            if charstack:
+                nextchar = charstack.pop(0)
+            else:
+                if pos >= n:
+                    nextchar = ''
+                else:
+                    nextchar = s[pos]
+                    pos += 1
+                    while nextchar == '\x00':
+                        if pos >= n:
+                            nextchar = ''
+                            break
+                        nextchar = s[pos]
+                        pos += 1
+
+            if not nextchar:
+                self.eof = True
+                self._pos = pos
+                break
+            elif not state:
+                # First character of the token - determines if we're starting
+                # to parse a word, a number or something else.
+                token = nextchar
+                if isword(nextchar):
+                    state = 'a'
+                elif isnum(nextchar):
+                    state = '0'
+                elif isspace(nextchar):
+                    token = ' '
+                    self._pos = pos
+                    break  # emit token
+                else:
+                    self._pos = pos
+                    break  # emit token
+            elif state == 'a':
+                # If we've already started reading a word, we keep reading
+                # letters until we find something that's not part of a word.
+                seenletters = True
+                if isword(nextchar):
+                    token += nextchar
+                elif nextchar == '.':
+                    token += nextchar
+                    state = 'a.'
+                else:
+                    charstack.append(nextchar)
+                    self._pos = pos
+                    break  # emit token
+            elif state == '0':
+                # If we've already started reading a number, we keep reading
+                # numbers until we find something that doesn't fit.
+                if isnum(nextchar):
+                    token += nextchar
+                elif nextchar == '.' or (nextchar == ',' and len(token) >= 2):
+                    token += nextchar
+                    state = '0.'
+                else:
+                    charstack.append(nextchar)
+                    self._pos = pos
+                    break  # emit token
+            elif state == 'a.':
+                # If we've seen some letters and a dot separator, continue
+                # parsing, and the tokens will be broken up later.
+                seenletters = True
+                if nextchar == '.' or isword(nextchar):
+                    token += nextchar
+                elif isnum(nextchar) and token[-1] == '.':
+                    token += nextchar
+                    state = '0.'
+                else:
+                    charstack.append(nextchar)
+                    self._pos = pos
+                    break  # emit token
+            elif state == '0.':
+                # If we've seen at least one dot separator, keep going, we'll
+                # break up the tokens later.
+                if nextchar == '.' or isnum(nextchar):
+                    token += nextchar
+                elif isword(nextchar) and token[-1] == '.':
+                    token += nextchar
+                    state = 'a.'
+                else:
+                    charstack.append(nextchar)
+                    self._pos = pos
                     break  # emit token
 
         if (state in ('a.', '0.') and (seenletters or token.count('.') > 1 or
@@ -730,9 +865,18 @@ class parser(object):
 
                 # Check if it's a number
                 value_repr = l[i]
-                try:
-                    value = float(value_repr)
-                except ValueError:
+                # float() is only attempted for tokens which can possibly
+                # be numeric: a leading digit, or one of the named
+                # non-finite values float() accepts (GH 662 relies on
+                # those taking the numeric path).  This avoids raising
+                # and catching a ValueError for every word token.
+                if (value_repr[:1].isdigit() or
+                        value_repr.lower() in ('inf', 'infinity', 'nan')):
+                    try:
+                        value = float(value_repr)
+                    except ValueError:
+                        value = None
+                else:
                     value = None
 
                 if value is not None:
