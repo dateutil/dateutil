@@ -2698,38 +2698,50 @@ class RRuleTest(unittest.TestCase):
 
     def testStrWithTZIDPrecedingValue(self):
         # RFC 5545 section 3.8.2.4 allows parameters in any order
-        rrstr = ("DTSTART;TZID=Eastern;VALUE=DATE-TIME:19970902T090000\n" +
-                 "RRULE:FREQ=YEARLY;COUNT=3")
+        rrstr = (
+            "DTSTART;TZID=Eastern;VALUE=DATE-TIME:19970902T090000\n"
+            + "RRULE:FREQ=YEARLY;COUNT=3"
+        )
 
-        NYC = tz.gettz('America/New_York')
-        rr = rrulestr(rrstr, tzids={'Eastern': NYC})
-        exp = [datetime(1997, 9, 2, 9, 0, tzinfo=NYC),
-               datetime(1998, 9, 2, 9, 0, tzinfo=NYC),
-               datetime(1999, 9, 2, 9, 0, tzinfo=NYC)]
+        NYC = tz.gettz("America/New_York")
+        rr = rrulestr(rrstr, tzids={"Eastern": NYC})
+        exp = [
+            datetime(1997, 9, 2, 9, 0, tzinfo=NYC),
+            datetime(1998, 9, 2, 9, 0, tzinfo=NYC),
+            datetime(1999, 9, 2, 9, 0, tzinfo=NYC),
+        ]
 
         self.assertEqual(list(rr), exp)
 
     def testStrWithTZIDCaseInsensitive(self):
-        rrstr = ("DTSTART;tzid=Eastern;value=DATE-TIME:19970902T090000\n" +
-                 "RRULE:FREQ=YEARLY;COUNT=3")
+        rrstr = (
+            "DTSTART;tzid=Eastern;value=DATE-TIME:19970902T090000\n"
+            + "RRULE:FREQ=YEARLY;COUNT=3"
+        )
 
-        NYC = tz.gettz('America/New_York')
-        rr = rrulestr(rrstr, tzids={'Eastern': NYC})
-        exp = [datetime(1997, 9, 2, 9, 0, tzinfo=NYC),
-               datetime(1998, 9, 2, 9, 0, tzinfo=NYC),
-               datetime(1999, 9, 2, 9, 0, tzinfo=NYC)]
+        NYC = tz.gettz("America/New_York")
+        rr = rrulestr(rrstr, tzids={"Eastern": NYC})
+        exp = [
+            datetime(1997, 9, 2, 9, 0, tzinfo=NYC),
+            datetime(1998, 9, 2, 9, 0, tzinfo=NYC),
+            datetime(1999, 9, 2, 9, 0, tzinfo=NYC),
+        ]
 
         self.assertEqual(list(rr), exp)
 
     def testStrWithEXDATETZIDPrecedingValue(self):
-        rrstr = ("DTSTART;TZID=Eastern:19970902T090000\n" +
-                 "RRULE:FREQ=YEARLY;COUNT=3\n" +
-                 "EXDATE;TZID=Eastern;VALUE=DATE-TIME:19980902T090000")
+        rrstr = (
+            "DTSTART;TZID=Eastern:19970902T090000\n"
+            + "RRULE:FREQ=YEARLY;COUNT=3\n"
+            + "EXDATE;TZID=Eastern;VALUE=DATE-TIME:19980902T090000"
+        )
 
-        NYC = tz.gettz('America/New_York')
-        rr = rrulestr(rrstr, tzids={'Eastern': NYC})
-        exp = [datetime(1997, 9, 2, 9, 0, tzinfo=NYC),
-               datetime(1999, 9, 2, 9, 0, tzinfo=NYC)]
+        NYC = tz.gettz("America/New_York")
+        rr = rrulestr(rrstr, tzids={"Eastern": NYC})
+        exp = [
+            datetime(1997, 9, 2, 9, 0, tzinfo=NYC),
+            datetime(1999, 9, 2, 9, 0, tzinfo=NYC),
+        ]
 
         self.assertEqual(list(rr), exp)
 
