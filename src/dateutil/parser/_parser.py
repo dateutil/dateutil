@@ -37,17 +37,14 @@ import time
 import warnings
 
 from calendar import monthrange
+from decimal import ROUND_HALF_EVEN, Decimal
 from io import StringIO
+from warnings import warn
 
 import six
 from six import integer_types, text_type
 
-from decimal import Decimal, ROUND_HALF_EVEN
-
-from warnings import warn
-
-from .. import relativedelta
-from .. import tz
+from .. import relativedelta, tz
 
 __all__ = ["parse", "parserinfo", "ParserError"]
 
@@ -659,10 +656,21 @@ class parser(object):
             return ret
 
     class _result(_resultbase):
-        __slots__ = ["year", "month", "day", "weekday",
-                     "hour", "minute", "second", "microsecond",
-                     "tzname", "tzoffset", "ampm", "any_unused_tokens",
-                     "second_carry"]
+        __slots__ = [
+            "year",
+            "month",
+            "day",
+            "weekday",
+            "hour",
+            "minute",
+            "second",
+            "microsecond",
+            "tzname",
+            "tzoffset",
+            "ampm",
+            "any_unused_tokens",
+            "second_carry",
+        ]
 
     def _parse(self, timestr, dayfirst=None, yearfirst=None, fuzzy=False,
                fuzzy_with_tokens=False):
@@ -911,8 +919,9 @@ class parser(object):
                 # TODO: Check if res attributes already set.
                 res.hour = int(s[:2])
                 res.minute = int(s[2:4])
-                (res.second, res.microsecond,
-                 res.second_carry) = self._parse_ms_fraction(s[4:])
+                res.second, res.microsecond, res.second_carry = (
+                    self._parse_ms_fraction(s[4:])
+                )
 
         elif len_li in (8, 12, 14):
             # YYYYMMDD
@@ -944,8 +953,9 @@ class parser(object):
             (res.minute, res.second) = self._parse_min_sec(value)
 
             if idx + 4 < len_l and tokens[idx + 3] == ':':
-                (res.second, res.microsecond,
-                 res.second_carry) = self._parse_ms_fraction(tokens[idx + 4])
+                res.second, res.microsecond, res.second_carry = (
+                    self._parse_ms_fraction(tokens[idx + 4])
+                )
 
                 idx += 2
 
@@ -1054,8 +1064,9 @@ class parser(object):
             (res.minute, res.second) = self._parse_min_sec(value)
 
         elif hms == 2:
-            (res.second, res.microsecond,
-             res.second_carry) = self._parse_ms_fraction(value_repr)
+            res.second, res.microsecond, res.second_carry = (
+                self._parse_ms_fraction(value_repr)
+            )
 
     def _could_be_tzname(self, hour, tzname, tzoffset, token):
         return (hour is not None and
@@ -1269,7 +1280,7 @@ class parser(object):
         # minute, hour, day and year boundaries.
         rounded_carry = res.second_carry or 0
         if rounded_carry:
-            repl['second'] = res.second - 60 * rounded_carry
+            repl["second"] = res.second - 60 * rounded_carry
 
         naive = default.replace(**repl)
 
