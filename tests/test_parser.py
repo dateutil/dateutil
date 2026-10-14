@@ -541,6 +541,31 @@ class ParserTest(unittest.TestCase):
             res = parse(s1, fuzzy=True)
         self.assertEqual(res, datetime(1945, 1, 29, 14, 45))
 
+    def testFuzzySkipsUnknownTokens(self):
+        # In fuzzy mode unknown tokens are skipped without consulting
+        # parserinfo.jump; the skipped words must not affect the result.
+        s1 = "Reminder dentist Tue Apr 9 14:00:00 2024 bring card"
+        self.assertEqual(parse(s1, fuzzy=True), datetime(2024, 4, 9, 14, 0))
+
+        s2 = "Posted Friday December 25th 2020 at midnight by jdoe"
+        self.assertEqual(parse(s2, fuzzy=True), datetime(2020, 12, 25, 0, 0))
+
+    def testFuzzyUppercaseTokenAsTzname(self):
+        # An all-uppercase token following a time is treated as a timezone
+        # name; an unknown one warns and leaves a naive datetime.
+        s1 = "Meet me at 3:00 PM XYZ on December 3rd 2003"
+        with pytest.warns(UnknownTimezoneWarning):
+            res = parse(s1, fuzzy=True)
+        self.assertEqual(res, datetime(2003, 12, 3, 15, 0))
+
+    def testFuzzyWithTokensSkippedRuns(self):
+        # Skipped tokens (including jump words and spaces) are recombined
+        # into runs in the order they were seen.
+        s1 = "Today is January 1, 2047 at 8:21:00AM"
+        self.assertEqual(parse(s1, fuzzy_with_tokens=True),
+                         (datetime(2047, 1, 1, 8, 21),
+                          ('Today is ', ' ', ' ', 'at ')))
+
     def testRandomFormat24(self):
         self.assertEqual(parse("0:00 PM, PST", default=self.default,
                                ignoretz=True),
