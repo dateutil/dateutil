@@ -661,7 +661,8 @@ class parser(object):
     class _result(_resultbase):
         __slots__ = ["year", "month", "day", "weekday",
                      "hour", "minute", "second", "microsecond",
-                     "tzname", "tzoffset", "ampm","any_unused_tokens"]
+                     "tzname", "tzoffset", "ampm", "any_unused_tokens",
+                     "second_carry"]
 
     def _parse(self, timestr, dayfirst=None, yearfirst=None, fuzzy=False,
                fuzzy_with_tokens=False):
@@ -910,7 +911,8 @@ class parser(object):
                 # TODO: Check if res attributes already set.
                 res.hour = int(s[:2])
                 res.minute = int(s[2:4])
-                res.second, res.microsecond = self._parsems(s[4:])
+                (res.second, res.microsecond,
+                 res.second_carry) = self._parse_ms_fraction(s[4:])
 
         elif len_li in (8, 12, 14):
             # YYYYMMDD
@@ -942,7 +944,8 @@ class parser(object):
             (res.minute, res.second) = self._parse_min_sec(value)
 
             if idx + 4 < len_l and tokens[idx + 3] == ':':
-                res.second, res.microsecond = self._parsems(tokens[idx + 4])
+                (res.second, res.microsecond,
+                 res.second_carry) = self._parse_ms_fraction(tokens[idx + 4])
 
                 idx += 2
 
@@ -1051,7 +1054,8 @@ class parser(object):
             (res.minute, res.second) = self._parse_min_sec(value)
 
         elif hms == 2:
-            (res.second, res.microsecond) = self._parsems(value_repr)
+            (res.second, res.microsecond,
+             res.second_carry) = self._parse_ms_fraction(value_repr)
 
     def _could_be_tzname(self, hour, tzname, tzoffset, token):
         return (hour is not None and
@@ -1144,8 +1148,26 @@ class parser(object):
             )
             microseconds = int(rounded * 1000000)
             if microseconds >= 1000000:
+                # The rounded value carries into the next second (GH 1546).
+                # `_build_naive` normalizes the overflow after `replace()`.
                 return int(i) + 1, 0
             return int(i), microseconds
+
+    def _parse_ms_fraction(self, value):
+        """Split a fractional-seconds token into (seconds, microseconds, carry).
+
+        The carry is 1 only when the token's integer part was itself a valid
+        seconds field and rounding the fraction pushed it to 60 (GH 1546).
+        An explicitly written out-of-range value (e.g. "60" or "60.5") keeps
+        carry 0, so it still raises when the datetime is built.
+        """
+        second, microsecond = self._parsems(value)
+        carry = 0
+        if second > 59 and "." in value:
+            integer, _ = value.split(".", 1)
+            if 0 <= int(integer) <= 59:
+                carry = 1
+        return second, microsecond, carry
 
     def _to_decimal(self, val):
         try:
@@ -1241,7 +1263,18 @@ class parser(object):
             if cday > monthrange(cyear, cmonth)[1]:
                 repl['day'] = monthrange(cyear, cmonth)[1]
 
+        # Rounding fractional seconds can produce a second of 60 (GH 1546).
+        # Shift it back into range before `replace()` and let the normalized
+        # datetime carry it forward, so the overflow propagates through the
+        # minute, hour, day and year boundaries.
+        rounded_carry = res.second_carry or 0
+        if rounded_carry:
+            repl['second'] = res.second - 60 * rounded_carry
+
         naive = default.replace(**repl)
+
+        if rounded_carry:
+            naive = naive + datetime.timedelta(minutes=rounded_carry)
 
         if res.weekday is not None and not res.day:
             naive = naive + relativedelta.relativedelta(weekday=res.weekday)

@@ -976,6 +976,33 @@ def test_fractional_seconds_rounding(dtstr, expected_us):
     )
 
 
+@pytest.mark.parametrize('dtstr,expected', [
+    # Carry propagates into the minute
+    ('2020-01-01 00:00:59.9999995', datetime(2020, 1, 1, 0, 1, 0)),
+    ('2020-01-01 00:00:59.9999996', datetime(2020, 1, 1, 0, 1, 0)),
+    # Carry propagates into the hour
+    ('2020-01-01 00:59:59.9999995', datetime(2020, 1, 1, 1, 0, 0)),
+    # Carry propagates into the day
+    ('2020-01-01 23:59:59.9999995', datetime(2020, 1, 2, 0, 0, 0)),
+    # Carry propagates into the year
+    ('2020-12-31 23:59:59.9999995', datetime(2021, 1, 1, 0, 0, 0)),
+    # Carry on a leap day
+    ('2020-02-28 23:59:59.9999995', datetime(2020, 2, 29, 0, 0, 0)),
+])
+def test_fractional_seconds_rounding_carry(dtstr, expected):
+    # GH 1546: the full datetime must be normalized, not just .microsecond
+    assert parse(dtstr) == expected
+
+
+@pytest.mark.parametrize('dtstr', ['2020-01-01 00:00:60',
+                                   '2020-01-01 00:60:00'])
+def test_explicit_out_of_range_time_still_raises(dtstr):
+    # Normalizing the rounded carry must not turn an explicitly written
+    # out-of-range field into a silently accepted value.
+    with pytest.raises(ParserError):
+        parse(dtstr)
+
+
 @pytest.mark.parametrize('value', ['1: test', 'Nan'])
 def test_decimal_error(value):
     # GH 632, GH 662 - decimal.Decimal raises some non-ParserError exception
