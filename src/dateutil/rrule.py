@@ -1628,7 +1628,7 @@ class _rrulestr(object):
 
         TZID_NAMES = dict(map(
             lambda x: (x.upper(), x),
-            re.findall('TZID=(?P<name>[^:]+):', s)
+            re.findall(r'TZID=(?P<name>[^:;]+)', s, re.IGNORECASE)
         ))
         s = s.upper()
         if not s.strip():
