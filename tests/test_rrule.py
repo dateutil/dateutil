@@ -4652,6 +4652,22 @@ class RRuleSetTest(unittest.TestCase):
                           datetime(1997, 9, 4, 9, 0),
                           datetime(1997, 9, 9, 9, 0)])
 
+    def testSetRDateDateObject(self):
+        # Regression for #275: rdate(date) behaves like a date-only dtstart
+        rrset = rruleset()
+        rrset.rdate(date(1997, 9, 4))
+        self.assertEqual(list(rrset), [datetime(1997, 9, 4, 0, 0)])
+
+    def testSetExDateDateObjectWithDateStart(self):
+        # Regression for #275: exdate(date) with a date-started rule
+        rrset = rruleset()
+        rrset.rrule(rrule(DAILY, count=3, dtstart=date(1997, 9, 2)))
+        rrset.exdate(date(1997, 9, 3))
+        self.assertEqual(
+            list(rrset),
+            [datetime(1997, 9, 2, 0, 0), datetime(1997, 9, 4, 0, 0)],
+        )
+
     def testSetDate(self):
         rrset = rruleset()
         rrset.rrule(rrule(YEARLY, count=1, byweekday=TU,
