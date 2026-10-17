@@ -973,7 +973,7 @@ class tzrange(tzrangebase):
 
         if dstoffset is not None:
             self._dst_offset = datetime.timedelta(seconds=dstoffset)
-        elif dstabbr and stdoffset is not None:
+        elif dstabbr:
             self._dst_offset = self._std_offset + datetime.timedelta(hours=+1)
         else:
             self._dst_offset = ZERO
