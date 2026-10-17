@@ -1,0 +1,2 @@
+Fixed the default daylight saving offset in ``tz.tzrange`` when the standard
+offset is omitted. Reported and fixed by @AryanRG (gh pr #1614).
