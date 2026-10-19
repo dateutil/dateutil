@@ -1512,6 +1512,13 @@ def __get_gettz():
             >>> gettz('AEST-10AEDT-11,M10.1.0/2,M4.1.0/3')
             tzstr('AEST-10AEDT-11,M10.1.0/2,M4.1.0/3')
 
+        If the time zone name cannot be resolved, ``None`` is returned:
+
+        .. code-block:: python3
+
+            >>> gettz('Fake.Region/Abcdefghijklmnop') is None
+            True
+
         :param name:
             A time zone name (IANA, or, on Windows, Windows keys), location of
             a ``tzfile(5)`` zoneinfo file or ``TZ`` variable style time zone
@@ -1520,7 +1527,7 @@ def __get_gettz():
 
         :return:
             Returns an instance of one of ``dateutil``'s :py:class:`tzinfo`
-            subclasses.
+            subclasses, or ``None`` if the time zone name cannot be resolved.
 
         .. versionchanged:: 2.7.0
 
