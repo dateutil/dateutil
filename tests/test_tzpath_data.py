@@ -128,9 +128,13 @@ def test_ambiguous_and_imaginary(tz_source):
 
 @pytest.mark.skipif(not HAS_ZONEINFO, reason="Requires zoneinfo (Python 3.9+)")
 def test_matches_zoneinfo(tz_source):
-    """utcoffset, dst, tzname and fromutc agree with the stdlib zoneinfo."""
+    """utcoffset, tzname and fromutc agree with the stdlib zoneinfo."""
     # On Python 3.9+, dateutil and zoneinfo share TZPATH, and the tz_source
     # fixture blocks (or allows) tzdata for both of them.
+    #
+    # This doesn't compare dst(), which zoneinfo infers differently, and gets
+    # wrong for some zones (e.g. gh-85102); test_dst_matches_tzdata_zi checks
+    # dst() against the source data instead.
     for key in _keys():
         zone = tz.gettz(key)
         reference = zoneinfo.ZoneInfo.no_cache(key)
@@ -152,9 +156,8 @@ def test_matches_zoneinfo(tz_source):
             for fold in (0, 1):
                 dt = tz.enfold(wall.replace(tzinfo=zone), fold=fold)
                 dt_ref = wall.replace(tzinfo=reference, fold=fold)
-                if (dt.utcoffset(), dt.dst(), dt.tzname()) != (
+                if (dt.utcoffset(), dt.tzname()) != (
                     dt_ref.utcoffset(),
-                    dt_ref.dst(),
                     dt_ref.tzname(),
                 ):
                     # As above: zoneinfo's offset has to be one that its own
@@ -178,45 +181,28 @@ def test_matches_zoneinfo(tz_source):
 # away from the boundaries between periods, utcoffset() - dst() has to be the
 # standard offset from tzdata.zi.
 #
-# The inference gets it wrong for these zones, e.g. for British Double Summer
-# Time in Europe/London (DST of 2 hours, not 1), for the half-hour DST in
-# Pacific/Rarotonga, or when the standard offset changes at the same time as
-# DST starts, as in America/Bahia_Banderas in 2010. The list covers the 2024a
-# and 2025b releases and the master branch, in the main, vanguard and
-# rearguard forms and as fat and slim files. Only new failures fail the test.
-KNOWN_DST_INFERENCE_FAILURES = frozenset(
-    [
-        "Africa/Casablanca",
-        "Africa/El_Aaiun",
-        "America/Bahia_Banderas",
-        "America/Coyhaique",
-        "America/Indiana/Tell_City",
-        "America/Inuvik",
-        "America/Montevideo",
-        "America/Punta_Arenas",
-        "America/Santiago",
-        "America/Scoresbysund",
-        "Asia/Choibalsan",
-        "Asia/Hong_Kong",
-        "Asia/Ust-Nera",
-        "Atlantic/Azores",
-        "Atlantic/Madeira",
-        "Europe/Berlin",
-        "Europe/Gibraltar",
-        "Europe/Kyiv",
-        "Europe/Lisbon",
-        "Europe/London",
-        "Europe/Madrid",
-        "Europe/Minsk",
-        "Europe/Moscow",
-        "Europe/Paris",
-        "Europe/Riga",
-        "Europe/Simferopol",
-        "Europe/Tallinn",
-        "Europe/Vilnius",
-        "Pacific/Rarotonga",
-    ]
-)
+# The inference gets this wrong in one place, in the 2024a, 2025b and 2026e
+# releases and the master branch, in the main, vanguard and rearguard forms and
+# as fat and slim files: from the liberation of Paris until September 1945,
+# France was on UTC+0 standard time with DST of 1 or 2 hours, but the TZif data
+# looks the same as the CET (UTC+1) standard time that followed, with DST of 1
+# hour. Only failures outside of these periods fail the test.
+KNOWN_DST_INFERENCE_FAILURES = {
+    "Europe/Paris": [
+        (
+            datetime(1944, 8, 25, tzinfo=UTC),
+            datetime(1945, 9, 16, tzinfo=UTC),
+        ),
+    ],
+}
+
+
+def _is_known_dst_inference_failure(name, dt):
+    return any(
+        start <= dt < end
+        for start, end in KNOWN_DST_INFERENCE_FAILURES.get(name, ())
+    )
+
 
 _ZI_MONTHS = (
     "Jan",
@@ -381,9 +367,11 @@ def test_dst_matches_tzdata_zi(tz_source):
             if std.days * 86400 + std.seconds != stdoff:
                 failures.setdefault(name, []).append(dt)
 
-    unexpected = {
-        name: dts[:3]
-        for name, dts in failures.items()
-        if name not in KNOWN_DST_INFERENCE_FAILURES
-    }
+    unexpected = {}
+    for name, dts in failures.items():
+        dts = [
+            dt for dt in dts if not _is_known_dst_inference_failure(name, dt)
+        ]
+        if dts:
+            unexpected[name] = dts[:3]
     assert not unexpected

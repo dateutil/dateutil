@@ -393,7 +393,9 @@ class tzfile(_tzinfo):
         [
             "_filename",
             "_fixed_offset",
+            "_isdst",
             "_key",
+            "_trans_idx",
             "_trans_local",
             "_trans_utc",
             "_tti_before",
@@ -409,20 +411,16 @@ class tzfile(_tzinfo):
         return self.__reduce_ex__(None)
 
     def __reduce_ex__(self, protocol):
-        utcoff = []
-        isdst = []
-        abbr = []
-        ttinfo_indices = {}
-
-        for i, ttinfo in enumerate(self._ttinfo_list):
-            ttinfo_indices[id(ttinfo)] = i
-            utcoff.append(int(ttinfo.utcoff.total_seconds()))
-            isdst.append(bool(ttinfo.dstoff))
-            abbr.append(ttinfo.tzname)
-
+        utcoff = [
+            int(ttinfo.utcoff.total_seconds()) for ttinfo in self._ttinfo_list
+        ]
         utcoff = getattr(self, "_utcoff_raw", utcoff)
+        abbr = [ttinfo.tzname for ttinfo in self._ttinfo_list]
 
-        trans_idx = [ttinfo_indices[id(ttinfo)] for ttinfo in self._ttinfos]
+        # dst() is inferred per transition, so the transitions don't map back
+        # to the local time types, and these are kept as they were in the file
+        trans_idx = self._trans_idx
+        isdst = self._isdst
 
         trans_utc = self._trans_utc
         tz_str = self._tz_str
@@ -454,8 +452,14 @@ class tzfile(_tzinfo):
     def _load_from_data(self, data):
         trans_idx, trans_utc, utcoff, isdst, abbr, tz_str = data
 
-        # Infer the DST offsets (needed for .dst()) from the data
-        dstoff = self._utcoff_to_dstoff(trans_idx, utcoff, isdst)
+        # Infer the DST offsets (needed for .dst()) from the data, for each
+        # transition and for each local time type
+        trans_dstoff = self._utcoff_to_dstoff(
+            trans_idx, trans_utc, utcoff, isdst
+        )
+        dstoff = [3600 if dst else 0 for dst in isdst]
+        for idx, trans_off in zip(trans_idx, trans_dstoff):
+            dstoff[idx] = trans_off
 
         if sys.version_info < (3, 6):
             # For python pre-3.6, round to full-minutes if that's not the case.
@@ -464,6 +468,7 @@ class tzfile(_tzinfo):
             # for some information.
             utcoff_adjusted = [60 * ((s + 30) // 60) for s in utcoff]
             dstoff = [60 * ((s + 30) // 60) for s in dstoff]
+            trans_dstoff = [60 * ((s + 30) // 60) for s in trans_dstoff]
             self._utcoff_raw = utcoff
         else:
             utcoff_adjusted = utcoff
@@ -483,9 +488,25 @@ class tzfile(_tzinfo):
 
         self._ttinfo_list = _ttinfo_list
 
+        self._trans_idx = trans_idx
+        self._isdst = isdst
         self._trans_utc = trans_utc
         self._trans_local = trans_local
-        self._ttinfos = [_ttinfo_list[idx] for idx in trans_idx]
+
+        # Transitions to the same local time type usually have the same DST
+        # offset, so share the _ttinfo objects between them where possible.
+        ttinfos = {}
+        self._ttinfos = []
+        for idx, trans_off in zip(trans_idx, trans_dstoff):
+            tti = _ttinfo_list[idx]
+            if tti.dstoff.total_seconds() != trans_off:
+                key = (idx, trans_off)
+                if key not in ttinfos:
+                    ttinfos[key] = _ttinfo(
+                        tti.utcoff, _load_timedelta(trans_off), tti.tzname
+                    )
+                tti = ttinfos[key]
+            self._ttinfos.append(tti)
 
         # Find the first non-DST transition
         for i in range(len(isdst)):
@@ -540,65 +561,84 @@ class tzfile(_tzinfo):
             self._fixed_offset = _ttinfo_list[0] == self._tz_after
 
     @staticmethod
-    def _utcoff_to_dstoff(trans_idx, utcoffsets, isdsts):
-        # Now we must transform our ttis and abbrs into `_ttinfo` objects,
-        # but there is an issue: .dst() must return a timedelta with the
-        # difference between utcoffset() and the "standard" offset, but
-        # the "base offset" and "DST offset" are not encoded in the file;
-        # we can infer what they are from the isdst flag, but it is not
-        # sufficient to to just look at the last standard offset, because
-        # occasionally countries will shift both DST offset and base offset.
+    def _utcoff_to_dstoff(trans_idx, trans_utc, utcoffsets, isdsts):
+        """Infer the DST offset (the value of dst()) for each transition.
 
-        typecnt = len(isdsts)
-        dstoffs = [0] * typecnt  # Provisionally assign all to 0.
-        dst_cnt = sum(isdsts)
-        dst_found = 0
+        TZif files give the total UTC offset of each local time type and
+        whether it is DST, but not how much of the offset is DST, so this has
+        to be worked out from the standard time on either side of each DST
+        period. That is done for each transition rather than for each local
+        time type, because zic reuses a local time type for periods with
+        different standard offsets (e.g. UTC+0 DST in the Azores was double
+        summer time in the 1940s and summer time later).
+        """
+        n = len(trans_idx)
 
-        for i in range(1, len(trans_idx)):
-            if dst_cnt == dst_found:
-                break
+        # The DST offset implied by the last standard time before and the
+        # first standard time after each transition. Before the first
+        # transition, it's the first standard time type, as for _tti_before.
+        first_std_utcoff = next(
+            (utcoff for utcoff, dst in zip(utcoffsets, isdsts) if not dst),
+            None,
+        )
+        before = [None] * n
+        after = [None] * n
+        for indices, implied, std_utcoff in (
+            (range(n), before, first_std_utcoff),
+            (range(n - 1, -1, -1), after, None),
+        ):
+            for i in indices:
+                idx = trans_idx[i]
+                if not isdsts[idx]:
+                    std_utcoff = utcoffsets[idx]
+                elif std_utcoff is not None:
+                    implied[i] = utcoffsets[idx] - std_utcoff
 
-            idx = trans_idx[i]
+        # DST offsets where the standard time is the same on both sides
+        clear_cut = [
+            (trans_utc[i], before[i])
+            for i in range(n)
+            if before[i] and before[i] == after[i]
+        ]
 
-            dst = isdsts[idx]
-
-            # We're only going to look at daylight saving time
-            if not dst:
+        dstoffs = [0] * n
+        for i in range(n):
+            if not isdsts[trans_idx[i]]:
                 continue
 
-            # Skip any offsets that have already been assigned
-            if dstoffs[idx] != 0:
-                continue
+            candidates = {c for c in (before[i], after[i]) if c}
+            if len(candidates) > 1:
+                # The standard offset changed during the DST period. A change
+                # from local mean time can give something like 0:34:39, which
+                # is not a plausible amount of DST.
+                plausible = {c for c in candidates if c % 300 == 0}
+                candidates = plausible or candidates
 
-            dstoff = 0
-            utcoff = utcoffsets[idx]
+            if len(candidates) > 1:
+                # Prefer the amount of DST the zone used around the same
+                # time, e.g. Tehran used 1:00 and Rarotonga 0:30, though the
+                # TZif data for Tehran in 1977 and for Rarotonga in 1978 look
+                # the same. This has to be local in time, because some zones
+                # used different amounts in different eras (e.g. Montevideo
+                # used 0:30 in the 1920s and 1:00 later).
+                nearby = {
+                    dstoff
+                    for ts, dstoff in clear_cut
+                    if abs(ts - trans_utc[i]) <= _DST_CONSENSUS_WINDOW
+                }
+                consensus = candidates & nearby
+                if len(consensus) == 1:
+                    candidates = consensus
 
-            comp_idx = trans_idx[i - 1]
-
-            if not isdsts[comp_idx]:
-                dstoff = utcoff - utcoffsets[comp_idx]
-
-            if not dstoff and idx < (typecnt - 1) and i + 1 < len(trans_idx):
-                comp_idx = trans_idx[i + 1]
-
-                # If the following transition is also DST and we couldn't
-                # find the DST offset by this point, we're going ot have to
-                # skip it and hope this transition gets assigned later
-                if isdsts[comp_idx]:
-                    continue
-
-                dstoff = utcoff - utcoffsets[comp_idx]
-
-            if dstoff:
-                dst_found += 1
-                dstoffs[idx] = dstoff
-        else:
-            # If we didn't find a valid value for a given index, we'll end up
-            # with dstoff = 0 for something where `isdst=1`. This is obviously
-            # wrong - one hour will be a much better guess than 0
-            for idx in range(typecnt):
-                if not dstoffs[idx] and isdsts[idx]:
-                    dstoffs[idx] = 3600
+            if candidates:
+                # Otherwise, prefer positive DST, then the smaller amount. In
+                # the 1942 occupation zones, e.g. Europe/Kyiv, the standard
+                # time before gives -1:00 and the one after +1:00.
+                dstoffs[i] = min(candidates, key=lambda c: (c < 0, abs(c)))
+            else:
+                # Without any standard time to compare to, one hour is a much
+                # better guess than 0
+                dstoffs[i] = 3600
 
         return dstoffs
 
@@ -812,6 +852,11 @@ def _load_data(fobj):
         tz_str = None
 
     return trans_idx, trans_list_utc, utcoff, isdst, abbr, tz_str
+
+
+# How close in time (in seconds) the DST periods that _utcoff_to_dstoff uses
+# to choose between two possible DST offsets have to be
+_DST_CONSENSUS_WINDOW = 10 * 365 * 86400
 
 
 class _TZifHeader(object):
