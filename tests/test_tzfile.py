@@ -2906,6 +2906,150 @@ def test_pickle_no_extra_state(key):
 
 
 ####
+# dst() inference
+#
+# TZif files only say whether each local time type is DST, so the amounts of
+# DST in these ZoneOffsets don't make it into the files; the expected dst()
+# values are given separately.
+@as_list
+def _dst_inference_cases():
+    def hm(hours, minutes=0, seconds=0):
+        sign = -1 if hours < 0 else 1
+        return sign * timedelta(
+            hours=abs(hours), minutes=minutes, seconds=seconds
+        )
+
+    # The same local time type used for double summer time in one era and
+    # for summer time in another, as with UTC+0 DST in Atlantic/Azores.
+    STD_2 = ZoneOffset("-02", hm(-2))
+    SUMMER = ZoneOffset("-01", hm(-1), ONE_H)
+    DOUBLE = ZoneOffset("+00", ZERO, 2 * ONE_H)
+    STD_1 = ZoneOffset("-01", hm(-1))
+    yield pytest.param(
+        [
+            ZoneTransition(datetime(1942, 4, 25), STD_2, SUMMER),
+            ZoneTransition(datetime(1942, 8, 15), SUMMER, DOUBLE),
+            ZoneTransition(datetime(1942, 9, 1), DOUBLE, SUMMER),
+            ZoneTransition(datetime(1942, 10, 25), SUMMER, STD_2),
+            ZoneTransition(datetime(1983, 9, 25), STD_2, STD_1),
+            ZoneTransition(datetime(1984, 3, 25), STD_1, DOUBLE),
+            ZoneTransition(datetime(1984, 9, 30), DOUBLE, STD_1),
+        ],
+        [
+            (datetime(1942, 7, 1), ONE_H),
+            (datetime(1942, 8, 20), 2 * ONE_H),
+            (datetime(1984, 7, 1), ONE_H),
+        ],
+        id="local_time_type_reused",
+    )
+
+    # The standard offset changes when DST starts, as in
+    # America/Bahia_Banderas in 2010.
+    MST = ZoneOffset("MST", hm(-7))
+    MDT = ZoneOffset("MDT", hm(-6), ONE_H)
+    CST = ZoneOffset("CST", hm(-6))
+    CDT = ZoneOffset("CDT", hm(-5), ONE_H)
+    yield pytest.param(
+        [
+            ZoneTransition(datetime(2009, 4, 5, 2), MST, MDT),
+            ZoneTransition(datetime(2009, 10, 25, 2), MDT, MST),
+            ZoneTransition(datetime(2010, 4, 4, 2), MST, CDT),
+            ZoneTransition(datetime(2010, 10, 31, 2), CDT, CST),
+            ZoneTransition(datetime(2011, 4, 3, 2), CST, CDT),
+            ZoneTransition(datetime(2011, 10, 30, 2), CDT, CST),
+        ],
+        [
+            (datetime(2009, 7, 1), ONE_H),
+            (datetime(2010, 7, 1), ONE_H),
+            (datetime(2011, 7, 1), ONE_H),
+        ],
+        id="standard_offset_changes_with_dst",
+    )
+
+    # The standard offset changes when DST ends, so the amounts implied by
+    # the standard time before and after differ. Only the DST used nearby
+    # tells Asia/Tehran in 1977 (1 hour) and Pacific/Rarotonga in 1978 (30
+    # minutes) apart.
+    STD_A = ZoneOffset("STDA", hm(3, 30))
+    DST_A = ZoneOffset("DSTA", hm(4, 30), ONE_H)
+    STD_B = ZoneOffset("STDB", hm(4))
+    DST_B = ZoneOffset("DSTB", hm(5), ONE_H)
+    yield pytest.param(
+        [
+            ZoneTransition(datetime(1976, 3, 21), STD_A, DST_A),
+            ZoneTransition(datetime(1976, 10, 21), DST_A, STD_A),
+            ZoneTransition(datetime(1977, 3, 21), STD_A, DST_A),
+            ZoneTransition(datetime(1977, 10, 21), DST_A, STD_B),
+            ZoneTransition(datetime(1978, 3, 21), STD_B, DST_B),
+            ZoneTransition(datetime(1978, 10, 21), DST_B, STD_B),
+        ],
+        [(datetime(1977, 7, 1), ONE_H)],
+        id="nearby_dst_one_hour",
+    )
+
+    STD_A = ZoneOffset("-1030", hm(-10, 30))
+    DST_A = ZoneOffset("-0930", hm(-9, 30), timedelta(minutes=30))
+    STD_B = ZoneOffset("-10", hm(-10))
+    yield pytest.param(
+        [
+            ZoneTransition(datetime(1978, 11, 12), STD_A, DST_A),
+            ZoneTransition(datetime(1979, 3, 4), DST_A, STD_B),
+            ZoneTransition(datetime(1979, 10, 28), STD_B, DST_A),
+            ZoneTransition(datetime(1980, 3, 2), DST_A, STD_B),
+        ],
+        [
+            (datetime(1979, 1, 1), timedelta(minutes=30)),
+            (datetime(1980, 1, 1), timedelta(minutes=30)),
+        ],
+        id="nearby_dst_half_hour",
+    )
+
+    # When nothing else decides, prefer positive DST: in the 1942 occupation
+    # zones, e.g. Europe/Kyiv, the standard time before gives -1:00 and the
+    # one after gives +1:00.
+    MSK = ZoneOffset("MSK", hm(3))
+    CEST = ZoneOffset("CEST", hm(2), ONE_H)
+    CET = ZoneOffset("CET", hm(1))
+    yield pytest.param(
+        [
+            ZoneTransition(datetime(1941, 9, 20), MSK, CEST),
+            ZoneTransition(datetime(1942, 11, 2, 3), CEST, CET),
+        ],
+        [(datetime(1942, 7, 1), ONE_H)],
+        id="prefer_positive",
+    )
+
+    # A change from a mean time when DST ends, as in America/La_Paz in
+    # 1932, implies an implausible amount of DST (0:27:24 here).
+    CMT = ZoneOffset("CMT", hm(-4, 32, 36))
+    BST = ZoneOffset("BST", hm(-3, 32, 36), ONE_H)
+    BOT = ZoneOffset("-04", hm(-4))
+    yield pytest.param(
+        [
+            ZoneTransition(datetime(1931, 10, 15), CMT, BST),
+            ZoneTransition(datetime(1932, 3, 21), BST, BOT),
+        ],
+        [(datetime(1932, 1, 1), ONE_H)],
+        id="implausible_dst",
+    )
+
+
+@pytest.mark.parametrize("transitions, expected", _dst_inference_cases())
+def test_dst_inference(transitions, expected):
+    """dst() is inferred from the standard time around each DST period."""
+    zone = tz.tzfile(construct_zone(transitions))
+
+    for dt_utc, dst in expected:
+        dt = dt_utc.replace(tzinfo=tz.UTC).astimezone(zone)
+        assert dt.dst() == dst, dt_utc
+        assert dt.replace(tzinfo=None).replace(tzinfo=zone).dst() == dst
+
+    # The pickled data is the data from the file, so the inference gives the
+    # same answers after a round trip
+    assert pickle.loads(pickle.dumps(zone)) == zone
+
+
+####
 # Thread safety
 def test_gettz_thread_safety():
     """Concurrent gettz calls, with the cache being cleared underneath them."""
