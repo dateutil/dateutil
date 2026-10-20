@@ -41,7 +41,9 @@ def test_parse_ignoretz_default(
     if fuzzy_with_tokens:
         result, tokens = result
         expected_tokens = ("Today is ",) + (
-            (" ", " ") if dstr.endswith("+0400") else (" ",) if dstr != "14:30" else ()
+            (" ", " ")
+            if dstr.endswith("+0400")
+            else (" ",) if dstr != "14:30" else ()
         )
         assert tokens == expected_tokens
     assert result == expected
@@ -56,7 +58,9 @@ def test_parse_ignoretz_default(
 @pytest.mark.parametrize(
     "parse_func", [parse, parser().parse], ids=["function", "instance"]
 )
-@pytest.mark.parametrize("dstr", ["2018-12-20 14:30:00 +0400", "2018-12-20 14:30:00"])
+@pytest.mark.parametrize(
+    "dstr", ["2018-12-20 14:30:00 +0400", "2018-12-20 14:30:00"]
+)
 def test_parse_ignoretz_default_ignores_tzinfos(parse_func, dstr):
     def tzinfos(*args):
         pytest.fail("tzinfos must not be called when ignoretz=True")
