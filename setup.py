@@ -1,31 +1,7 @@
 #!/usr/bin/python
-from os.path import isfile
-import os
-
-import setuptools
-from setuptools import setup, find_packages
-from setuptools.command.test import test as TestCommand
-
-from distutils.version import LooseVersion
-import warnings
-
 import io
-import sys
 
-if isfile("MANIFEST"):
-    os.unlink("MANIFEST")
-
-if LooseVersion(setuptools.__version__) <= LooseVersion("24.3"):
-    warnings.warn("python_requires requires setuptools version > 24.3",
-                  UserWarning)
-
-
-class Unsupported(TestCommand):
-    def run(self):
-        sys.stderr.write("Running 'test' with setup.py is not supported. "
-                         "Use 'pytest' or 'tox' to run the tests.\n")
-        sys.exit(1)
-
+from setuptools import setup
 
 ###
 # Load metadata
@@ -52,7 +28,4 @@ setup(
       },
       ## Needed since doctest not supported by PyPA.
       long_description = README,
-      cmdclass={
-          "test": Unsupported
-      }
       )
