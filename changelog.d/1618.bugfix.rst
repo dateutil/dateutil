@@ -1,0 +1,3 @@
+Fixed ``parser.parse`` retaining an aware default's timezone when
+``ignoretz=True``. Reported by @LincolnPuzey (gh issue #846).
+Fixed by @srijan2607 (gh pr #1618).
