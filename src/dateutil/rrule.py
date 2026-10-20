@@ -832,17 +832,37 @@ class rrule(rrulebase):
             for i in dayset[start:end]:
                 if ((bymonth and ii.mmask[i] not in bymonth) or
                     (byweekno and not ii.wnomask[i]) or
-                    (byweekday and ii.wdaymask[i] not in byweekday) or
-                    (ii.nwdaymask and not ii.nwdaymask[i]) or
-                    (byeaster and not ii.eastermask[i]) or
-                    ((bymonthday or bynmonthday) and
-                     ii.mdaymask[i] not in bymonthday and
-                     ii.nmdaymask[i] not in bynmonthday) or
-                    (byyearday and
-                     ((i < ii.yearlen and i+1 not in byyearday and
-                       -ii.yearlen+i not in byyearday) or
-                      (i >= ii.yearlen and i+1-ii.yearlen not in byyearday and
-                       -ii.nextyearlen+i-ii.yearlen not in byyearday)))):
+                    # BYDAY is a list: a day matches when it matches any
+                    # entry, plain (MO) or with an ordinal (1MO). RFC 5545
+                    # section 3.3.10.
+                    (
+                        (byweekday or ii.nwdaymask)
+                        and not (byweekday and ii.wdaymask[i] in byweekday)
+                        and not (ii.nwdaymask and ii.nwdaymask[i])
+                    )
+                    or (byeaster and not ii.eastermask[i])
+                    or (
+                        (bymonthday or bynmonthday)
+                        and ii.mdaymask[i] not in bymonthday
+                        and ii.nmdaymask[i] not in bynmonthday
+                    )
+                    or (
+                        byyearday
+                        and (
+                            (
+                                i < ii.yearlen
+                                and i + 1 not in byyearday
+                                and -ii.yearlen + i not in byyearday
+                            )
+                            or (
+                                i >= ii.yearlen
+                                and i + 1 - ii.yearlen not in byyearday
+                                and -ii.nextyearlen + i - ii.yearlen
+                                not in byyearday
+                            )
+                        )
+                    )
+                ):
                     dayset[i] = None
                     filtered = True
 

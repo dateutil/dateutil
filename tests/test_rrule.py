@@ -470,6 +470,79 @@ class RRuleTest(unittest.TestCase):
                           datetime(1997, 9, 16, 9, 0),
                           datetime(1997, 10, 16, 9, 0)])
 
+    def testMonthlyByWeekDayAndNWeekDay(self):
+        # BYDAY=MO,1FR: every Monday, and the first Friday (RFC 5545 3.3.10:
+        # BYDAY is a list, and each entry selects days on its own)
+        self.assertEqual(
+            list(
+                rrule(
+                    MONTHLY,
+                    count=6,
+                    byweekday=(MO, FR(1)),
+                    dtstart=datetime(2024, 1, 1),
+                )
+            ),
+            [
+                datetime(2024, 1, 1),
+                datetime(2024, 1, 5),
+                datetime(2024, 1, 8),
+                datetime(2024, 1, 15),
+                datetime(2024, 1, 22),
+                datetime(2024, 1, 29),
+            ],
+        )
+
+    def testMonthlyByWeekDayAndSameNWeekDay(self):
+        # BYDAY=FR,1FR is every Friday: the plain FR already includes the first
+        self.assertEqual(
+            list(
+                rrule(
+                    MONTHLY,
+                    count=5,
+                    byweekday=(FR, FR(1)),
+                    dtstart=datetime(2024, 1, 1),
+                )
+            ),
+            [
+                datetime(2024, 1, 5),
+                datetime(2024, 1, 12),
+                datetime(2024, 1, 19),
+                datetime(2024, 1, 26),
+                datetime(2024, 2, 2),
+            ],
+        )
+
+    def testYearlyByMonthAndWeekDayAndNWeekDay(self):
+        self.assertEqual(
+            list(
+                rrule(
+                    YEARLY,
+                    count=5,
+                    bymonth=1,
+                    byweekday=(SU, MO(1)),
+                    dtstart=datetime(2024, 1, 1),
+                )
+            ),
+            [
+                datetime(2024, 1, 1),
+                datetime(2024, 1, 7),
+                datetime(2024, 1, 14),
+                datetime(2024, 1, 21),
+                datetime(2024, 1, 28),
+            ],
+        )
+
+    def testStrMonthlyByWeekDayAndNWeekDay(self):
+        self.assertEqual(
+            list(
+                rrulestr(
+                    "FREQ=MONTHLY;COUNT=3;BYDAY=MO,1FR",
+                    dtstart=datetime(2024, 1, 1),
+                )
+            ),
+            [datetime(2024, 1, 1), datetime(2024, 1, 5), datetime(2024, 1, 8)],
+        )
+
     def testMonthlyByMonthAndWeekDay(self):
         self.assertEqual(list(rrule(MONTHLY,
                               count=3,
