@@ -650,7 +650,9 @@ class parser(object):
         except ValueError as e:
             six.raise_from(ParserError(str(e) + ": %s", timestr), e)
 
-        if not ignoretz:
+        if ignoretz:
+            ret = ret.replace(tzinfo=None)
+        else:
             ret = self._build_tzaware(ret, res, tzinfos)
 
         if kwargs.get('fuzzy_with_tokens', False):
