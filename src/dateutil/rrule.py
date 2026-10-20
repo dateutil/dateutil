@@ -1657,6 +1657,7 @@ class _rrulestr(object):
             rdatevals = []
             exrulevals = []
             exdatevals = []
+            pending_dtstart = dtstart
             for line in lines:
                 if not line:
                     continue
@@ -1673,7 +1674,7 @@ class _rrulestr(object):
                 if name == "RRULE":
                     for parm in parms:
                         raise ValueError("unsupported RRULE parm: "+parm)
-                    rrulevals.append(value)
+                    rrulevals.append((pending_dtstart, value))
                 elif name == "RDATE":
                     for parm in parms:
                         if parm != "VALUE=DATE-TIME":
@@ -1682,7 +1683,7 @@ class _rrulestr(object):
                 elif name == "EXRULE":
                     for parm in parms:
                         raise ValueError("unsupported EXRULE parm: "+parm)
-                    exrulevals.append(value)
+                    exrulevals.append((pending_dtstart, value))
                 elif name == "EXDATE":
                     exdatevals.extend(
                         self._parse_date_value(value, parms,
@@ -1695,7 +1696,7 @@ class _rrulestr(object):
                     if len(dtvals) != 1:
                         raise ValueError("Multiple DTSTART values specified:" +
                                          value)
-                    dtstart = dtvals[0]
+                    dtstart = pending_dtstart = dtvals[0]
                 else:
                     raise ValueError("unsupported property: "+name)
             if (forceset or len(rrulevals) > 1 or rdatevals
@@ -1703,8 +1704,8 @@ class _rrulestr(object):
                 if not parser and (rdatevals or exdatevals):
                     from dateutil import parser
                 rset = rruleset(cache=cache)
-                for value in rrulevals:
-                    rset.rrule(self._parse_rfc_rrule(value, dtstart=dtstart,
+                for dts, value in rrulevals:
+                    rset.rrule(self._parse_rfc_rrule(value, dtstart=dts,
                                                      ignoretz=ignoretz,
                                                      tzinfos=tzinfos))
                 for value in rdatevals:
@@ -1712,8 +1713,8 @@ class _rrulestr(object):
                         rset.rdate(parser.parse(datestr,
                                                 ignoretz=ignoretz,
                                                 tzinfos=tzinfos))
-                for value in exrulevals:
-                    rset.exrule(self._parse_rfc_rrule(value, dtstart=dtstart,
+                for dts, value in exrulevals:
+                    rset.exrule(self._parse_rfc_rrule(value, dtstart=dts,
                                                       ignoretz=ignoretz,
                                                       tzinfos=tzinfos))
                 for value in exdatevals:
@@ -1722,7 +1723,7 @@ class _rrulestr(object):
                     rset.rdate(dtstart)
                 return rset
             else:
-                return self._parse_rfc_rrule(rrulevals[0],
+                return self._parse_rfc_rrule(rrulevals[0][1],
                                              dtstart=dtstart,
                                              cache=cache,
                                              ignoretz=ignoretz,
