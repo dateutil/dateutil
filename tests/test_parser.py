@@ -926,6 +926,7 @@ class TestTZVar(object):
 
 def test_parse_tzinfos_fold():
     NYC = tz.gettz('America/New_York')
+    assert NYC is not None
     tzinfos = {'EST': NYC, 'EDT': NYC}
 
     dt_exp = tz.enfold(datetime(2011, 11, 6, 1, 30, tzinfo=NYC), fold=1)
