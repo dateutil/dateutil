@@ -709,6 +709,35 @@ class tzfile(_tzinfo):
 
         return out
 
+    def _get_gap_transitions(self):
+        try:
+            return self._gap_transitions
+        except AttributeError:
+            starts = []
+            ends = []
+            days = set()
+            for i, transition in enumerate(self._trans_list_utc):
+                previous = self._get_ttinfo(i - 1)
+                current = self._get_ttinfo(i)
+                if current.offset > previous.offset:
+                    gap_start = transition + previous.offset
+                    gap_end = transition + current.offset
+                    starts.append(gap_start)
+                    ends.append(gap_end)
+                    days.update(
+                        range(
+                            EPOCHORDINAL + gap_start // 86400,
+                            EPOCHORDINAL + (gap_end - 1) // 86400 + 1,
+                        )
+                    )
+
+            self._gap_transitions = (
+                tuple(starts),
+                tuple(ends),
+                frozenset(days),
+            )
+            return self._gap_transitions
+
     def _find_last_transition(self, dt, in_utc=False):
         # If there's no list, there are no transitions to find
         if not self._trans_list:
@@ -1703,6 +1732,30 @@ def datetime_exists(dt, tz=None):
         if dt.tzinfo is None:
             raise ValueError('Datetime is naive and no time zone provided.')
         tz = dt.tzinfo
+
+    if isinstance(tz, tzfile):
+        # Avoid the two UTC round trips below when the exact transition data is
+        # already available. Most dates cannot contain a gap at all, so check a
+        # cached set of gap dates before doing a timestamp conversion and binary
+        # search through the gap intervals.
+        gap_starts, gap_ends, gap_days = tz._get_gap_transitions()
+        if dt.toordinal() not in gap_days:
+            return True
+
+        timestamp = _datetime_to_timestamp(dt)
+        idx = bisect.bisect_right(gap_starts, timestamp) - 1
+        return idx < 0 or timestamp >= gap_ends[idx]
+
+    if isinstance(tz, tzlocal):
+        if not tz._hasdst:
+            return True
+
+        if tz._dst_saved > ZERO:
+            dt = dt.replace(tzinfo=None)
+            is_dst = tz._naive_is_dst(dt)
+            return not (
+                is_dst and is_dst != tz._naive_is_dst(dt - tz._dst_saved)
+            )
 
     dt = dt.replace(tzinfo=None)
 

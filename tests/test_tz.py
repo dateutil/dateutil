@@ -2644,6 +2644,34 @@ class DatetimeExistsTest(unittest.TestCase):
 
         self.assertFalse(tz.datetime_exists(dt))
 
+    def testFullDayGap(self):
+        tzi = tz.gettz("Pacific/Apia")
+
+        dt = datetime(2011, 12, 30, 12, 0)
+
+        self.assertFalse(tz.datetime_exists(dt, tz=tzi))
+
+    def testExistsAfterLargeBackwardTransition(self):
+        tzi = tz.gettz("America/Argentina/Catamarca")
+
+        dt = datetime(1991, 3, 3, 0, 30)
+
+        self.assertTrue(tz.datetime_exists(dt, tz=tzi))
+
+    @mark_tzlocal_nix
+    def testTzLocalGap(self):
+        with TZEnvContext("America/New_York"):
+            tzi = tz.tzlocal()
+            gap = datetime(2026, 3, 8, 2, 30)
+
+            self.assertTrue(
+                tz.datetime_exists(gap - timedelta(hours=1), tz=tzi)
+            )
+            self.assertFalse(tz.datetime_exists(gap, tz=tzi))
+            self.assertTrue(
+                tz.datetime_exists(gap + timedelta(hours=1), tz=tzi)
+            )
+
     def testExistsNaive(self):
         tzi = tz.gettz('Australia/Sydney')
 
