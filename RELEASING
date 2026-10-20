@@ -35,10 +35,16 @@ for more details.
 Building and Releasing
 ----------------------
 Releasing is automated via the `publish.yml` GitHub Actions workflow. When a
-new tag is pushed to the repository, the project is automatically built and
-uploaded to Test PyPI. When the publish action is triggered manually (see
+new tag is pushed to the repository, or the publish action is triggered
+manually (see
 https://docs.github.com/en/actions/managing-workflow-runs/manually-running-a-workflow
-for more details), the result is uploaded to PyPI.
+for more details), the project is automatically built and uploaded to Test
+PyPI. When a GitHub release is created, the result is uploaded to PyPI.
+
+Uploads use PyPI's trusted publishing, so no API tokens are needed. The
+trusted publisher for both PyPI and Test PyPI is configured with the workflow
+name `publish.yml` and the environment name `release`, which is the GitHub
+environment the upload job runs in.
 
 To make a release:
 
