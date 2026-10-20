@@ -4917,3 +4917,41 @@ class WeekdayTest(unittest.TestCase):
 
         for repstr, wday in zip(with_n_reprs, with_n_wdays):
             self.assertEqual(repr(wday), repstr)
+
+
+@pytest.mark.parametrize("parameter", ["BYDAY", "BYWEEKDAY"])
+@pytest.mark.parametrize(
+    "value",
+    [
+        "MO(+12",
+        "MO(12",
+        "MO(-12",
+        "MO(+1x",
+        "MO(-1]",
+        "MO(+1)(99)",
+        "MO(+1)(-2)",
+        "MO(+1)()",
+    ],
+)
+def test_rrulestr_rejects_unclosed_weekday_ordinal(parameter, value):
+    with pytest.raises(ValueError, match="invalid '%s'" % parameter):
+        rrulestr(
+            "FREQ=YEARLY;COUNT=1;%s=%s" % (parameter, value),
+            dtstart=datetime(2026, 1, 1),
+        )
+
+
+@pytest.mark.parametrize(
+    "value, expected",
+    [
+        ("MO(+12)", datetime(2026, 3, 23)),
+        ("+12MO", datetime(2026, 3, 23)),
+        ("MO(-12)", datetime(2026, 10, 12)),
+        ("-12MO", datetime(2026, 10, 12)),
+    ],
+)
+def test_rrulestr_preserves_valid_weekday_ordinals(value, expected):
+    rule = rrulestr(
+        "FREQ=YEARLY;COUNT=1;BYDAY=%s" % value, dtstart=datetime(2026, 1, 1)
+    )
+    assert list(rule) == [expected]

@@ -1,0 +1,4 @@
+Fixed ``rrulestr`` silently changing the weekday ordinal when a
+parenthesized ``BYDAY`` or ``BYWEEKDAY`` value lacked its closing
+parenthesis. Malformed values now raise ``ValueError``.
+Reported and fixed by @widechaos (gh pr #1597).
