@@ -89,7 +89,7 @@ class _timelex(object):
         demands that multiple tokens be parsed at once.
         """
         if self.tokenstack:
-            return self.tokenstack.pop(0)
+            return self.tokenstack.pop()
 
         seenletters = False
         token = None
@@ -174,7 +174,9 @@ class _timelex(object):
                                        token[-1] in '.,')):
             l = self._split_decimal.split(token)
             token = l[0]
-            for tok in l[1:]:
+            # The stack is popped from the end, which is O(1) unlike pop(0),
+            # so push the remaining tokens in reverse order.
+            for tok in reversed(l[1:]):
                 if tok:
                     self.tokenstack.append(tok)
 
