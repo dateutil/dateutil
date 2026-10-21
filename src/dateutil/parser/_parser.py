@@ -214,7 +214,7 @@ class _timelex(object):
         Equivalent to ``list(_timelex(s))``, but runs the ``get_token`` state
         machine directly over the string instead of one ``read(1)`` at a time.
         """
-        s = s.replace('\x00', '')   # get_token() skips NULs as it reads
+        s = s.replace("\x00", "")  # get_token() skips NULs as it reads
         n = len(s)
         tokens = []
         i = 0
@@ -223,51 +223,52 @@ class _timelex(object):
             c = s[i]
             i += 1
             if c.isalpha():
-                state = 'a'
+                state = "a"
             elif c.isdigit():
-                state = '0'
+                state = "0"
             else:
-                tokens.append(' ' if c.isspace() else c)
+                tokens.append(" " if c.isspace() else c)
                 continue
 
             seenletters = False
             while i < n:
                 c = s[i]
-                if state == 'a':
+                if state == "a":
                     seenletters = True
-                    if c == '.':
-                        state = 'a.'
+                    if c == ".":
+                        state = "a."
                     elif not c.isalpha():
                         break
-                elif state == '0':
-                    if c == '.' or (c == ',' and i - start >= 2):
-                        state = '0.'
+                elif state == "0":
+                    if c == "." or (c == "," and i - start >= 2):
+                        state = "0."
                     elif not c.isdigit():
                         break
-                elif state == 'a.':
+                elif state == "a.":
                     seenletters = True
-                    if c.isdigit() and s[i - 1] == '.':
-                        state = '0.'
-                    elif not (c == '.' or c.isalpha()):
+                    if c.isdigit() and s[i - 1] == ".":
+                        state = "0."
+                    elif not (c == "." or c.isalpha()):
                         break
                 else:  # state == '0.'
-                    if c.isalpha() and s[i - 1] == '.':
-                        state = 'a.'
-                    elif not (c == '.' or c.isdigit()):
+                    if c.isalpha() and s[i - 1] == ".":
+                        state = "a."
+                    elif not (c == "." or c.isdigit()):
                         break
                 i += 1
 
             token = s[start:i]
-            if (state in ('a.', '0.') and (seenletters or token.count('.') > 1 or
-                                           token[-1] in '.,')):
+            if state in ("a.", "0.") and (
+                seenletters or token.count(".") > 1 or token[-1] in ".,"
+            ):
                 parts = cls._split_decimal.split(token)
                 token = parts[0]
                 rest = [part for part in parts[1:] if part]
             else:
                 rest = ()
 
-            if state == '0.' and token.count('.') == 0:
-                token = token.replace(',', '.')
+            if state == "0." and token.count(".") == 0:
+                token = token.replace(",", ".")
 
             tokens.append(token)
             tokens.extend(rest)
@@ -718,7 +719,8 @@ class parser(object):
         if default is None:
             if None in (res.year, res.month, res.day):
                 default = datetime.datetime.now().replace(
-                    hour=0, minute=0, second=0, microsecond=0)
+                    hour=0, minute=0, second=0, microsecond=0
+                )
             else:
                 # Today's date would be fully overwritten; only the zeroed
                 # time fields of the default can show through.
@@ -797,8 +799,11 @@ class parser(object):
         # Strict ISO-8601 strings are by far the most common input; skip the
         # tokenizer for them. Anything that could be read differently (custom
         # parserinfo, dayfirst, fuzzy) takes the general path below.
-        if (not (dayfirst or fuzzy) and type(info) is parserinfo and
-                isinstance(timestr, text_type)):
+        if (
+            not (dayfirst or fuzzy)
+            and type(info) is parserinfo
+            and isinstance(timestr, text_type)
+        ):
             res = self._try_parse_iso(timestr)
             if res is not None and info.validate(res):
                 return res, None
@@ -964,7 +969,8 @@ class parser(object):
         r"([0-9]{4})-([0-9]{2})-([0-9]{2})"
         r"(?:[T ]([0-9]{2}):([0-9]{2})"
         r"(?::([0-9]{2})(?:\.([0-9]{1,6}))?)?"
-        r"(?:(Z)|([+-])([0-9]{2})(?::?([0-9]{2}))?)?)?\Z")
+        r"(?:(Z)|([+-])([0-9]{2})(?::?([0-9]{2}))?)?)?\Z"
+    )
 
     def _try_parse_iso(self, timestr):
         """
@@ -979,8 +985,19 @@ class parser(object):
         if m is None:
             return None
 
-        (year, month, day, hour, minute, second, frac,
-         zulu, sign, tz_hour, tz_minute) = m.groups()
+        (
+            year,
+            month,
+            day,
+            hour,
+            minute,
+            second,
+            frac,
+            zulu,
+            sign,
+            tz_hour,
+            tz_minute,
+        ) = m.groups()
 
         res = self._result()
         res.year, res.month, res.day = int(year), int(month), int(day)
@@ -999,7 +1016,8 @@ class parser(object):
             res.tzname = zulu
         elif sign:
             res.tzoffset = (int(tz_hour) * 3600 + int(tz_minute or 0) * 60) * (
-                -1 if sign == "-" else 1)
+                -1 if sign == "-" else 1
+            )
 
         return res
 
