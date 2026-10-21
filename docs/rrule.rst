@@ -17,11 +17,6 @@ Classes
    :undoc-members:
    :inherited-members:
 
-Cached ``rrule`` and ``rruleset`` instances support pickling and
-``copy.deepcopy``. The cache setting is preserved, but cached results are
-discarded in the restored object and regenerated on demand; the original
-object and its active iterators are not changed.
-
 Functions
 ---------
 
