@@ -1,0 +1,3 @@
+Fixed weekly rules with ``BYSETPOS`` selecting from a partial first week,
+which could skip or move an occurrence that matches ``DTSTART``. Reported
+by @zero88 (gh issue #1398). Fixed by @x0Lazarus (gh pr #1575).
