@@ -1,0 +1,4 @@
+Enabled pickling and deepcopy of cached ``rrule`` and ``rruleset`` instances.
+The cache setting is preserved, and cached results are regenerated on demand
+without copying locks or generators. Reported by @niccokunzmann (gh issue #1369).
+Fixed by @Jay1023CN (gh pr #1600).

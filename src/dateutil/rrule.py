@@ -102,6 +102,30 @@ class rrulebase(object):
             self._cache_complete = False
             self._len = None
 
+    def __reduce_ex__(self, protocol):
+        rv = super(rrulebase, self).__reduce_ex__(protocol)
+        state, slots = rv[2], None
+        if isinstance(state, tuple):
+            state, slots = state
+        if self._cache is not None:
+            state = dict(state)
+            state.pop("_cache_lock", None)
+            state.pop("_cache_gen", None)
+            state["_cache"] = []
+        if slots is not None:
+            state = (state, slots)
+        return rv[:2] + (state,) + rv[3:]
+
+    def __setstate__(self, state):
+        if isinstance(state, tuple):
+            state, slots = state
+            for name, value in slots.items():
+                setattr(self, name, value)
+        self.__dict__.update(state)
+        if self._cache is not None:
+            self._cache_lock = _thread.allocate_lock()
+            self._invalidate_cache()
+
     def __iter__(self):
         if self._cache_complete:
             return iter(self._cache)
