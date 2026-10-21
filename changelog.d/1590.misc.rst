@@ -1,0 +1,1 @@
+Improved the performance of deep queries against completed ``rrule`` and ``rruleset`` caches by using their existing chronological ordering. (gh pr #1590)
