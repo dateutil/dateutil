@@ -1,3 +1,0 @@
-Fixed ``relativedelta.__ne__`` raising ``TypeError`` when comparing against an
-unsupported type such as ``None``; it now returns ``True``. Reported and fixed
-by @kevinkt1 (gh issue #1157, gh pr #1158)
