@@ -198,7 +198,81 @@ class _timelex(object):
 
     @classmethod
     def split(cls, s):
+        if isinstance(s, (bytes, bytearray)):
+            s = s.decode()
+
+        # Subclasses may override isword/isnum/isspace, which the string
+        # tokenizer inlines; they and streams go through get_token().
+        if cls is _timelex and isinstance(s, text_type):
+            return cls._split_text(s)
+
         return list(cls(s))
+
+    @classmethod
+    def _split_text(cls, s):
+        """
+        Equivalent to ``list(_timelex(s))``, but runs the ``get_token`` state
+        machine directly over the string instead of one ``read(1)`` at a time.
+        """
+        s = s.replace('\x00', '')   # get_token() skips NULs as it reads
+        n = len(s)
+        tokens = []
+        i = 0
+        while i < n:
+            start = i
+            c = s[i]
+            i += 1
+            if c.isalpha():
+                state = 'a'
+            elif c.isdigit():
+                state = '0'
+            else:
+                tokens.append(' ' if c.isspace() else c)
+                continue
+
+            seenletters = False
+            while i < n:
+                c = s[i]
+                if state == 'a':
+                    seenletters = True
+                    if c == '.':
+                        state = 'a.'
+                    elif not c.isalpha():
+                        break
+                elif state == '0':
+                    if c == '.' or (c == ',' and i - start >= 2):
+                        state = '0.'
+                    elif not c.isdigit():
+                        break
+                elif state == 'a.':
+                    seenletters = True
+                    if c.isdigit() and s[i - 1] == '.':
+                        state = '0.'
+                    elif not (c == '.' or c.isalpha()):
+                        break
+                else:  # state == '0.'
+                    if c.isalpha() and s[i - 1] == '.':
+                        state = 'a.'
+                    elif not (c == '.' or c.isdigit()):
+                        break
+                i += 1
+
+            token = s[start:i]
+            if (state in ('a.', '0.') and (seenletters or token.count('.') > 1 or
+                                           token[-1] in '.,')):
+                parts = cls._split_decimal.split(token)
+                token = parts[0]
+                rest = [part for part in parts[1:] if part]
+            else:
+                rest = ()
+
+            if state == '0.' and token.count('.') == 0:
+                token = token.replace(',', '.')
+
+            tokens.append(token)
+            tokens.extend(rest)
+
+        return tokens
 
     @classmethod
     def isword(cls, nextchar):
@@ -231,8 +305,8 @@ class _resultbase(object):
         return "%s(%s)" % (classname, ", ".join(l))
 
     def __len__(self):
-        return (sum(getattr(self, attr) is not None
-                    for attr in self.__slots__))
+        values = [getattr(self, attr) for attr in self.__slots__]
+        return len(values) - values.count(None)
 
     def __repr__(self):
         return self._repr(self.__class__.__name__)
@@ -633,10 +707,6 @@ class parser(object):
             your system.
         """
 
-        if default is None:
-            default = datetime.datetime.now().replace(hour=0, minute=0,
-                                                      second=0, microsecond=0)
-
         res, skipped_tokens = self._parse(timestr, **kwargs)
 
         if res is None:
@@ -645,6 +715,14 @@ class parser(object):
         if len(res) == 0:
             raise ParserError("String does not contain a date: %s", timestr)
 
+        if default is None:
+            if None in (res.year, res.month, res.day):
+                default = datetime.datetime.now().replace(
+                    hour=0, minute=0, second=0, microsecond=0)
+            else:
+                # Today's date would be fully overwritten; only the zeroed
+                # time fields of the default can show through.
+                default = datetime.datetime(2000, 1, 1)
 
         try:
             ret = self._build_naive(res, default)
