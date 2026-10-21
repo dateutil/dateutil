@@ -17,7 +17,7 @@ from warnings import warn
 
 from six import advance_iterator, integer_types
 
-from six.moves import _thread, copyreg, range
+from six.moves import _thread, range
 
 from ._common import weekday as weekdaybase
 
@@ -102,20 +102,19 @@ class rrulebase(object):
             self._cache_complete = False
             self._len = None
 
-    def __getstate__(self):
-        state = self.__dict__.copy()
-        state.pop("_cache_lock", None)
-        state.pop("_cache_gen", None)
-        # The cache belongs to this object and can be regenerated on demand.
+    def __reduce_ex__(self, protocol):
+        rv = super(rrulebase, self).__reduce_ex__(protocol)
+        state, slots = rv[2], None
+        if isinstance(state, tuple):
+            state, slots = state
         if self._cache is not None:
+            state = dict(state)
+            state.pop("_cache_lock", None)
+            state.pop("_cache_gen", None)
             state["_cache"] = []
-            state["_len"] = None
-            state["_cache_complete"] = False
-        slots = {}
-        for name in copyreg._slotnames(type(self)):
-            if hasattr(self, name):
-                slots[name] = getattr(self, name)
-        return (state, slots) if slots else state
+        if slots is not None:
+            state = (state, slots)
+        return rv[:2] + (state,) + rv[3:]
 
     def __setstate__(self, state):
         if isinstance(state, tuple):
@@ -125,7 +124,7 @@ class rrulebase(object):
         self.__dict__.update(state)
         if self._cache is not None:
             self._cache_lock = _thread.allocate_lock()
-            self._cache_gen = None if self._cache_complete else self._iter()
+            self._invalidate_cache()
 
     def __iter__(self):
         if self._cache_complete:

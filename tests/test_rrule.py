@@ -5022,9 +5022,8 @@ def test_unbounded_cached_rule_roundtrip(roundtrip, kind):
     assert list(itertools.islice(restored, 15)) == expected
 
 
-@pytest.mark.parametrize(
-    "roundtrip_options",
-    [copy.deepcopy]
+@pytest.fixture(
+    params=[copy.deepcopy]
     + [
         partial(_pickle_roundtrip, protocol=p)
         for p in range(2, pickle.HIGHEST_PROTOCOL + 1)
@@ -5032,7 +5031,12 @@ def test_unbounded_cached_rule_roundtrip(roundtrip, kind):
     ids=["deepcopy"]
     + ["pickle-{}".format(p) for p in range(2, pickle.HIGHEST_PROTOCOL + 1)],
 )
-def test_cached_rule_preserves_options_and_timezone(roundtrip_options):
+def roundtrip_modern(request):
+    # Slotted subclasses and weekday objects require protocol 2 or later.
+    return request.param
+
+
+def test_cached_rule_preserves_options_and_timezone(roundtrip_modern):
     original = rrule(
         MONTHLY,
         dtstart=datetime(2024, 1, 1, tzinfo=tz.UTC),
@@ -5048,19 +5052,19 @@ def test_cached_rule_preserves_options_and_timezone(roundtrip_options):
     next(iter(original))
     # Weekday objects already require protocol 2 or later; their legacy
     # protocol support is independent of the recurrence cache.
-    restored = roundtrip_options(original)
+    restored = roundtrip_modern(original)
     assert list(restored) == expected
     assert str(restored) == str(original)
 
 
 @pytest.mark.parametrize("cache", [False, True])
-def test_rrule_subclass_state_roundtrip(roundtrip, cache):
+def test_rrule_subclass_state_roundtrip(roundtrip_modern, cache):
     original = TaggedRule(
         DAILY, dtstart=datetime(2024, 1, 1), count=2, cache=cache
     )
     original.tag = ["slot value"]
     original.extra = {"attribute": "value"}
-    restored = roundtrip(original)
+    restored = roundtrip_modern(original)
     assert type(restored) is TaggedRule
     assert restored.tag == original.tag
     assert restored.extra == original.extra
