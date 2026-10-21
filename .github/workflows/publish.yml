@@ -9,6 +9,9 @@
 # It is done this way until PyPI has draft reviews, to allow for a two-stage
 # upload with a chance for manual intervention before the final publication.
 #
+# Nothing is uploaded unless the validate workflow passes first, including
+# installing the built sdist and wheel on every supported version of Python.
+#
 # Uploads use PyPI trusted publishing (OIDC), so no API tokens are stored as
 # secrets. The trusted publisher on both PyPI and Test PyPI must be configured
 # with workflow "publish.yml" and environment "release".
@@ -23,36 +26,16 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v7
-    - name: Set up Python
-      uses: actions/setup-python@v7
-      with:
-        python-version: '3.9'
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -U tox
-    - name: Create tox environments
-      run: |
-        tox -p -e py,build --notest
-    - name: Run tests
-      run: |
-        tox -e py
-    - name: Build package
-      run: |
-        tox -e build
-    - name: Upload distributions
-      uses: actions/upload-artifact@v7
-      with:
-        name: dist
-        path: dist/
-        if-no-files-found: error
+  # Run the full validation suite, including installing the sdist on every
+  # supported Python. This builds the distributions that are uploaded below,
+  # so the files that get published are exactly the files that were tested.
+  validate:
+    uses: ./.github/workflows/validate.yml
+    with:
+      release: true
 
   publish:
-    needs: build
+    needs: validate
     runs-on: ubuntu-latest
     environment: release
     permissions:

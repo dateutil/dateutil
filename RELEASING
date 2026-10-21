@@ -41,6 +41,11 @@ https://docs.github.com/en/actions/managing-workflow-runs/manually-running-a-wor
 for more details), the project is automatically built and uploaded to Test
 PyPI. When a GitHub release is created, the result is uploaded to PyPI.
 
+Before publication, the full test suite is run on all platforms against the
+official release artifacts (both sdist and wheel). If this fails the artifacts
+will not be uploaded. In the event of a transient failure, rerunning all failed
+jobs should trigger the publication without needing to make a release.
+
 Uploads use PyPI's trusted publishing, so no API tokens are needed. The
 trusted publisher for both PyPI and Test PyPI is configured with the workflow
 name `publish.yml` and the environment name `release`, which is the GitHub
