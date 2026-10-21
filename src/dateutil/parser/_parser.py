@@ -17,6 +17,17 @@ If any other elements are missing, they are taken from the
 results in a day number exceeding the valid number of days per month, the
 value falls back to the end of the month.
 
+.. caution::
+
+    ``dateutil.parser.parse`` is designed to parse strings that represent
+    dates and/or times. Passing strings that do not represent valid
+    date/time values has **undefined behavior**: the parser may interpret
+    them as partial dates by filling in missing elements from the
+    ``default`` parameter, or it may raise a :class:`ParserError`. In
+    other words, if you pass a non-date string, the parser may return an
+    unexpected :class:`datetime.datetime` object rather than raising an
+    error.
+
 Additional resources about date/time string formats can be found below:
 
 - `A summary of the international standard date and time notation
@@ -1272,6 +1283,14 @@ def parse(timestr, parserinfo=None, **kwargs):
 
     Parse a string in one of the supported formats, using the
     ``parserinfo`` parameters.
+
+    .. caution::
+
+        This function is intended to parse strings representing dates and/or
+        times. Passing non-date strings has **undefined behavior** — the
+        parser may return an unexpected :class:`datetime.datetime` object
+        rather than raising an error, as it attempts to be forgiving with
+        input formats.
 
     :param timestr:
         A string containing a date/time stamp.
