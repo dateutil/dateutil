@@ -1,0 +1,11 @@
+Rewrote ``tz.tzfile`` based on a backport of the ``zoneinfo`` module's pure-Python
+implementation. This adds support for Version 2 and Version 3 ``tzfile(5)`` binaries,
+resolving issues with timestamps beyond 2038 and "slim" format binaries. Also
+added ``dateutil.tz.TZPATH`` and ``dateutil.tz.reset_tzpath`` to allow for
+runtime configuration of the IANA time zone data search path; these replace the
+mutable ``dateutil.tz.TZPATHS`` list, which has been removed. ``dateutil`` now
+depends on the ``tzdata`` package, which ``gettz`` consults after the search
+path and before the Windows registry; on Windows this means that names that are
+both IANA keys and Windows time zone names, such as ``"UTC"``, now return a
+``tzfile`` rather than a ``tzwin``.
+(gh issues #462, #1059, gh pr #1130)
