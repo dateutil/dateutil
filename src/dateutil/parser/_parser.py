@@ -645,6 +645,7 @@ class parser(object):
         if len(res) == 0:
             raise ParserError("String does not contain a date: %s", timestr)
 
+
         try:
             ret = self._build_naive(res, default)
         except ValueError as e:
@@ -714,6 +715,15 @@ class parser(object):
 
         if yearfirst is None:
             yearfirst = info.yearfirst
+
+        # Strict ISO-8601 strings are by far the most common input; skip the
+        # tokenizer for them. Anything that could be read differently (custom
+        # parserinfo, dayfirst, fuzzy) takes the general path below.
+        if (not (dayfirst or fuzzy) and type(info) is parserinfo and
+                isinstance(timestr, text_type)):
+            res = self._try_parse_iso(timestr)
+            if res is not None and info.validate(res):
+                return res, None
 
         res = self._result()
         l = _timelex.split(timestr)         # Splits the timestr into tokens
@@ -871,6 +881,49 @@ class parser(object):
             return res, tuple(skipped_tokens)
         else:
             return res, None
+
+    _ISO_FAST_RE = re.compile(
+        r"([0-9]{4})-([0-9]{2})-([0-9]{2})"
+        r"(?:[T ]([0-9]{2}):([0-9]{2})"
+        r"(?::([0-9]{2})(?:\.([0-9]{1,6}))?)?"
+        r"(?:(Z)|([+-])([0-9]{2})(?::?([0-9]{2}))?)?)?\Z")
+
+    def _try_parse_iso(self, timestr):
+        """
+        Fast path for ``YYYY-MM-DD[( |T)HH:MM[:SS[.ffffff]][Z|+HH[[:]MM]]]``.
+
+        Returns the ``_result`` the tokenizing parser would have produced for
+        ``timestr``, or ``None`` if the string is not in this exact form.
+        Out-of-range values are not checked here: like the general path, they
+        are left for ``datetime`` to reject in ``_build_naive``.
+        """
+        m = self._ISO_FAST_RE.match(timestr)
+        if m is None:
+            return None
+
+        (year, month, day, hour, minute, second, frac,
+         zulu, sign, tz_hour, tz_minute) = m.groups()
+
+        res = self._result()
+        res.year, res.month, res.day = int(year), int(month), int(day)
+        res.century_specified = True
+
+        if hour is not None:
+            res.hour, res.minute = int(hour), int(minute)
+
+        # Like the general path, seconds and microseconds are only set when
+        # seconds are present, so "HH:MM" keeps the default's seconds.
+        if second is not None:
+            res.second = int(second)
+            res.microsecond = int(frac.ljust(6, "0")) if frac else 0
+
+        if zulu:
+            res.tzname = zulu
+        elif sign:
+            res.tzoffset = (int(tz_hour) * 3600 + int(tz_minute or 0) * 60) * (
+                -1 if sign == "-" else 1)
+
+        return res
 
     def _parse_numeric_token(self, tokens, idx, info, ymd, res, fuzzy):
         # Token is a number
