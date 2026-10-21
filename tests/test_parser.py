@@ -321,6 +321,17 @@ class TestInputTypes(object):
         expected = datetime(2014, 1, 19)
         assert res == expected
 
+    def test_read_not_returning_string_invalid(self):
+        # GH #1428: A Mock passes the duck typing check, but its read() never
+        # returns an empty string, so this used to loop forever
+        try:
+            from unittest import mock
+        except ImportError:
+            import mock
+
+        with pytest.raises(TypeError):
+            parse(mock.MagicMock())
+
     def test_parse_stream(self):
         dstr = StringIO('2014 January 19')
 
