@@ -1,0 +1,5 @@
+Sped up the parser hot path (~1.17x on a mixed strict/fuzzy workload):
+``_timelex`` tokenizes strings by index instead of one ``StringIO.read(1)``
+call per character, and ``float()`` is only attempted on tokens which can
+possibly be numeric. No behavior change. Reported and fixed by @John-Cusack
+(gh pr #1609).

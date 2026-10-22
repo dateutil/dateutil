@@ -348,6 +348,38 @@ class TestInputTypes(object):
         expected = datetime(2014, 1, 19)
         assert res == expected
 
+    @pytest.mark.parametrize('dstr', [
+        '2014-03-03',
+        'Sep.20.2009',
+        '4:30:21.447',
+        '1,024',
+        'Mon, 15 Jan 2024 10:30:00 GMT',
+        '2012-11-07T12:12:13.123456',
+        'February 4, 2012 at 10h36m28.5s',
+        '10:36:28.5',
+        '   ',
+        'abc def 2014 junk 10:00',
+        '2014\x00-03-03',
+    ])
+    def test_str_stream_token_parity(self, dstr):
+        # The string fast path in _timelex must yield exactly the tokens
+        # the character-stream path yields.
+        from dateutil.parser._parser import _timelex
+
+        assert _timelex.split(dstr) == _timelex.split(StringIO(dstr))
+
+    def test_nul_bytes_ignored(self):
+        # NUL bytes are skipped by the tokenizer.
+        assert parse('2014\x00-01-19') == datetime(2014, 1, 19)
+
+    @pytest.mark.parametrize('dstr', [
+        '2014-03-03',
+        'Sep.20.2009',
+        '2014 January 19',
+        '10:36:28.5',
+    ])
+    def test_str_stream_parse_parity(self, dstr):
+        assert parse(dstr) == parse(StringIO(dstr))
 
 class TestTzinfoInputTypes(object):
     def assert_equal_same_tz(self, dt1, dt2):
