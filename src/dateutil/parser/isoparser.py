@@ -77,7 +77,7 @@ class isoparser(object):
 
         Uncommon:
 
-        - ``YYYY-Www`` or ``YYYYWww`` - ISO week (day defaults to 0)
+        - ``YYYY-Www`` or ``YYYYWww`` - ISO week (day defaults to 1, Monday)
         - ``YYYY-Www-D`` or ``YYYYWwwD`` - ISO week and day
 
         The ISO week and day numbering follows the same logic as
