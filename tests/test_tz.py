@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import base64
 import copy
 import gc
@@ -1502,13 +1500,16 @@ class TZStrTest(unittest.TestCase, TzFoldMixin):
 
         return tz.tzstr(tzname_map[tzname])
 
-    def testStrStr(self):
-        # Test that tz.tzstr() won't throw an error if given a str instead
-        # of a unicode literal.
-        self.assertEqual(datetime(2003, 4, 6, 1, 59,
-                                  tzinfo=tz.tzstr(str("EST5EDT"))).tzname(), "EST")
-        self.assertEqual(datetime(2003, 4, 6, 2, 00,
-                                  tzinfo=tz.tzstr(str("EST5EDT"))).tzname(), "EDT")
+    def testStrTransition(self):
+        # Check the abbreviation on either side of the DST transition.
+        self.assertEqual(
+            datetime(2003, 4, 6, 1, 59, tzinfo=tz.tzstr("EST5EDT")).tzname(),
+            "EST",
+        )
+        self.assertEqual(
+            datetime(2003, 4, 6, 2, 00, tzinfo=tz.tzstr("EST5EDT")).tzname(),
+            "EDT",
+        )
 
     def testStrInequality(self):
         TZS1 = tz.tzstr('EST5EDT4')

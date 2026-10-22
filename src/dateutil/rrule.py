@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 The rrule module offers a small, complete, and very fast, implementation of
 the recurrence rules documented in the

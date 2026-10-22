@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 This module offers a parser for ISO-8601 strings
 

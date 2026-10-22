@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 This module provides an interface to the native time zone data on Windows,
 including :py:class:`datetime.tzinfo` implementations.

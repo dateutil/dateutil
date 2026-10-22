@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Tests for implementation details, not necessarily part of the user-facing
 API.

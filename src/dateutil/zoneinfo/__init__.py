@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 The ``dateutil.zoneinfo`` module was originally designed to work with a tarball
 shipped with ``dateutil``. Since ``dateutil`` now uses data from the same

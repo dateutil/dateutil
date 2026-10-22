@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from ._parser import (
     DEFAULTPARSER,
     DEFAULTTZPARSER,
