@@ -88,17 +88,16 @@ class isoparser(object):
         - ``hh``
         - ``hh:mm`` or ``hhmm``
         - ``hh:mm:ss`` or ``hhmmss``
-        - ``hh:mm:ss.ssssss`` (Up to 6 sub-second digits)
+        - A decimal fraction on the lowest specified time component, such as
+          ``hh.h``, ``hh:mm.m`` or ``hh:mm:ss.s`` (also in compact forms).
+
+        Fractions of hours and minutes are converted to the corresponding
+        smaller time components. Precision beyond microseconds is truncated
+        before midnight normalization.
 
         Midnight is a special case for `hh`, as the standard supports both
         00:00 and 24:00 as a representation. The decimal separator can be
         either a dot or a comma.
-
-
-        .. caution::
-
-            Support for fractional components other than seconds is part of the
-            ISO-8601 standard, but is not currently implemented in this parser.
 
         Supported time zone offset formats are:
 
@@ -359,6 +358,30 @@ class isoparser(object):
                 # Hour, minute, second
                 components[comp] = int(timestr[pos:pos + 2])
                 pos += 2
+
+            if comp < 2 and timestr[pos : pos + 1] in (b".", b","):
+                frac = self._FRACTION_REGEX.match(timestr, pos)
+                if frac:
+                    # Multiply the fraction by the number of microseconds in
+                    # this unit, carrying from right to left. The integers stay
+                    # bounded even for long fractions, without rounding away
+                    # digits that can affect the final microsecond.
+                    unit_us = (3600, 60)[comp] * 1000000
+                    fraction_us = 0
+                    for digit in reversed(bytearray(frac.group(1))):
+                        fraction_us = (
+                            fraction_us + (digit - 48) * unit_us
+                        ) // 10
+
+                    if comp == 0:
+                        components[1], fraction_us = divmod(
+                            fraction_us, 60000000
+                        )
+                    components[2], components[3] = divmod(fraction_us, 1000000)
+                    pos = frac.end()
+                    # Only a time zone may follow a fractional component.
+                    comp = 3
+                    continue
 
             if comp == 3:
                 # Fraction of a second

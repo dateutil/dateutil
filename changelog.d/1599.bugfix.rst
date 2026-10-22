@@ -1,0 +1,3 @@
+Added support for fractional hours and minutes in ISO 8601 clock times
+parsed by ``isoparse`` and ``parse_isotime``. Reported by @pganssle
+(gh issue #571). Fixed by @vhinayindia (gh pr #1599).
