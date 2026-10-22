@@ -808,7 +808,7 @@ class parser(object):
                             res.tzname = None
 
                 # Check for a numbered timezone
-                elif res.hour is not None and l[i] in ('+', '-'):
+                elif res.hour is not None and l[i] in ('+', '-') and len(l) > i + 1:
                     signal = (-1, 1)[l[i] == '+']
                     len_li = len(l[i + 1])
 
