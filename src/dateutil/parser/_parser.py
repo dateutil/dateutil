@@ -986,7 +986,13 @@ class parser(object):
                 idx += 1
             else:
                 # Year, month or day
-                ymd.append(value)
+                if len(ymd) >= 3:
+                    # ymd is already full; in fuzzy mode, skip extra
+                    # numeric tokens rather than raising an error
+                    if not fuzzy:
+                        raise ValueError()
+                else:
+                    ymd.append(value)
             idx += 1
 
         elif info.ampm(tokens[idx + 1]) is not None and (0 <= value < 24):
