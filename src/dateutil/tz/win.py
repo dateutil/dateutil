@@ -30,7 +30,7 @@ def _settzkeyname():
     try:
         winreg.OpenKey(handle, TZKEYNAMENT).Close()
         TZKEYNAME = TZKEYNAMENT
-    except WindowsError:
+    except OSError:
         TZKEYNAME = TZKEYNAME9X
     handle.Close()
     return TZKEYNAME
