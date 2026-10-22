@@ -439,7 +439,9 @@ class TzFoldMixin(object):
         self._test_imaginary_time(datetime(2012, 4, 1, 3, 30),
                                   'Australia/Sydney', True)
 
-    @unittest.skip("Known failure in Python 3.6.")
+    @unittest.skip(
+        "PEP 495 inter-zone comparisons are false for ambiguous times."
+    )
     def testEqualAmbiguousComparison(self):
         tzname = self._get_tzname('Australia/Sydney')
 
@@ -2550,7 +2552,7 @@ class DatetimeAmbiguousTest(TzSourceMixin, unittest.TestCase):
                 if not dst_only:
                     dt_n = dt.replace(tzinfo=None)
 
-                    if dt_start <= dt_n < dt_end and getattr(dt_n, 'fold', 0):
+                    if dt_start <= dt_n < dt_end and dt_n.fold:
                         return timedelta(hours=-1)
 
                 return timedelta(hours=0)
@@ -2558,7 +2560,7 @@ class DatetimeAmbiguousTest(TzSourceMixin, unittest.TestCase):
             def dst(self, dt):
                 dt_n = dt.replace(tzinfo=None)
 
-                if dt_start <= dt_n < dt_end and getattr(dt_n, 'fold', 0):
+                if dt_start <= dt_n < dt_end and dt_n.fold:
                     return timedelta(hours=1)
                 else:
                     return timedelta(0)
@@ -2790,31 +2792,14 @@ class TestEnfold:
     def test_exit_fold(self):
         dt = tz.enfold(datetime(2020, 1, 19, 3, 32), fold=0)
 
-        # Before Python 3.6, dt.fold won't exist if fold is 0.
-        assert getattr(dt, 'fold', 0) == 0
+        assert dt.fold == 0
 
     def test_defold(self):
         dt = tz.enfold(datetime(2020, 1, 19, 3, 32), fold=1)
 
         dt2 = tz.enfold(dt, fold=0)
 
-        assert getattr(dt2, 'fold', 0) == 0
-
-    def test_fold_replace_args(self):
-        # This test can be dropped when Python < 3.6 is dropped, since it
-        # is mainly to cover the `replace` method on _DatetimeWithFold
-        dt = tz.enfold(datetime(1950, 1, 2, 12, 30, 15, 8), fold=1)
-
-        dt2 = dt.replace(1952, 2, 3, 13, 31, 16, 9)
-        assert dt2 == tz.enfold(datetime(1952, 2, 3, 13, 31, 16, 9), fold=1)
-        assert dt2.fold == 1
-
-    def test_fold_replace_exception_duplicate_args(self):
-        dt = tz.enfold(datetime(1999, 1, 3), fold=1)
-
-        with pytest.raises(TypeError):
-            dt.replace(1950, year=2000)
-
+        assert dt2.fold == 0
 
 @pytest.mark.tz_resolve_imaginary
 class ImaginaryDateTest(TzSourceMixin, unittest.TestCase):
@@ -2851,7 +2836,6 @@ def _gettz(key):
     assert zone is not None, key
     return zone
 
-
 @pytest.mark.tz_resolve_imaginary
 @pytest.mark.parametrize(
     "key, dt",
@@ -2869,7 +2853,6 @@ def test_resolve_imaginary_ambiguous(tz_source, key, dt):
     assert dt is not dt_f
     assert tz.resolve_imaginary(dt_f) is dt_f
 
-
 @pytest.mark.tz_resolve_imaginary
 @pytest.mark.parametrize(
     "key, dt",
@@ -2885,7 +2868,6 @@ def test_resolve_imaginary_ambiguous(tz_source, key, dt):
 def test_resolve_imaginary_existing(tz_source, key, dt):
     dt = dt.replace(tzinfo=_gettz(key))
     assert tz.resolve_imaginary(dt) is dt
-
 
 @pytest.mark.tz_resolve_imaginary
 @pytest.mark.parametrize('dt', [

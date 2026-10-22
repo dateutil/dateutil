@@ -344,7 +344,7 @@ class tzfile(_tzinfo):
             ts = timestamp
 
         if fold is None:
-            fold = getattr(dt, "fold", 0)
+            fold = dt.fold
 
         lt = self._trans_local[fold]
 

@@ -131,7 +131,7 @@ def test_matches_zoneinfo(tz_source):
         for dt_utc in _probe_instants(zone):
             dt = dt_utc.astimezone(zone)
             dt_ref = dt_utc.astimezone(reference)
-            if (dt.replace(tzinfo=None), getattr(dt, "fold", 0)) != (
+            if (dt.replace(tzinfo=None), dt.fold) != (
                 dt_ref.replace(tzinfo=None),
                 dt_ref.fold,
             ):
