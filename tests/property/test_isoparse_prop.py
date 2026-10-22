@@ -1,4 +1,3 @@
-import sys
 from datetime import datetime, timedelta
 
 import pytest
@@ -38,7 +37,6 @@ def test_timespec_auto(dt, sep):
         # Assume offset has no sub-second components
         assume(dt.utcoffset().total_seconds() % 60 == 0)
 
-    sep = str(sep)          # Python 2.7 requires bytes
     dtstr = dt.isoformat(sep=sep)
     dt_rt = isoparse(dtstr)
 
@@ -49,11 +47,9 @@ def test_timespec_auto(dt, sep):
     # According to PEP 495, if the value of fold would change the return value
     # of utcoffset(), comparisons with the datetime always return false, so we
     # must handle the case of ambiguous and imaginary datetimes here for the
-    # property to remain valid. Before Python 3.6 there is no fold support in
-    # datetime itself, so the comparison is always by instant.
+    # property to remain valid.
     if (
-        sys.version_info < (3, 6)
-        or dt.tzinfo is None
+        dt.tzinfo is None
         or tz.enfold(dt, fold=0).utcoffset()
         == tz.enfold(dt, fold=1).utcoffset()
     ):

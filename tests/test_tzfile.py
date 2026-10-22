@@ -806,7 +806,7 @@ def test_folds_from_utc(transition):
     tzi = tz.gettz(transition.key)
     dt = transition.dt.astimezone(tzi)
 
-    assert getattr(dt, "fold", 0) == transition.fold
+    assert dt.fold == transition.fold
 
 
 def test_time_fixed_offset():
@@ -1555,7 +1555,7 @@ def test_weirdzone_utc(dt, dt_utc):
     assert dt_act == dt
     assert dt_act.astimezone(tz.UTC) == dt_utc
     if tz.datetime_ambiguous(dt):
-        assert getattr(dt_act, "fold", 0) == getattr(dt, "fold", 0)
+        assert dt_act.fold == dt.fold
 
 
 @pytest.mark.parametrize("zone", weirdzone_test_cases()["varying_zones"])
@@ -1782,7 +1782,7 @@ def test_leap_seconds_and_indicators(version, leap_seconds, indicators):
         dt = dt_utc.astimezone(zone)
         dt_expected = dt_utc.astimezone(expected)
         assert dt.replace(tzinfo=None) == dt_expected.replace(tzinfo=None)
-        assert getattr(dt, "fold", 0) == getattr(dt_expected, "fold", 0)
+        assert dt.fold == dt_expected.fold
         assert dt.tzname() == dt_expected.tzname()
         assert dt.utcoffset() == dt_expected.utcoffset()
 

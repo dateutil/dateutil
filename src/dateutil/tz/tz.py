@@ -291,13 +291,9 @@ class tzlocal(_tzinfo):
 
         # Check for ambiguous times:
         dstval = self._naive_is_dst(dt)
-        fold = getattr(dt, 'fold', None)
 
         if self.is_ambiguous(dt):
-            if fold is not None:
-                return not self._fold(dt)
-            else:
-                return True
+            return not dt.fold
 
         return dstval
 
@@ -635,8 +631,7 @@ class _tzicalvtz(_tzinfo):
 
         try:
             with self._cache_lock:
-                return self._cachecomp[self._cachedate.index(
-                    (dt, self._fold(dt)))]
+                return self._cachecomp[self._cachedate.index((dt, dt.fold))]
         except ValueError:
             pass
 
@@ -663,7 +658,7 @@ class _tzicalvtz(_tzinfo):
                 lastcomp = comp[0]
 
         with self._cache_lock:
-            self._cachedate.insert(0, (dt, self._fold(dt)))
+            self._cachedate.insert(0, (dt, dt.fold))
             self._cachecomp.insert(0, lastcomp)
 
             if len(self._cachedate) > 10:
@@ -673,7 +668,7 @@ class _tzicalvtz(_tzinfo):
         return lastcomp
 
     def _find_compdt(self, comp, dt):
-        if comp.tzoffsetdiff < ZERO and self._fold(dt):
+        if comp.tzoffsetdiff < ZERO and dt.fold:
             dt -= comp.tzoffsetdiff
 
         compdt = comp.rrule.before(dt, inc=True)
