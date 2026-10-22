@@ -164,9 +164,6 @@ class tzfile(_tzinfo):
        >>> print(datetime(1883, 11, 18, tzinfo=NYC))    # LMT
        1883-11-18 00:00:00-04:56:02
 
-    Python versions before 3.6 do not support sub-minute offsets, so there the
-    offset is rounded to ``-04:56``.
-
     And during World War II, New York was on "Eastern War Time", which was a
     state of permanent daylight saving time:
 
@@ -403,7 +400,6 @@ class tzfile(_tzinfo):
             "_ttinfos",
             "_tz_after",
             "_tz_str",
-            "_utcoff_raw",
         ]
     )
 
@@ -414,7 +410,6 @@ class tzfile(_tzinfo):
         utcoff = [
             int(ttinfo.utcoff.total_seconds()) for ttinfo in self._ttinfo_list
         ]
-        utcoff = getattr(self, "_utcoff_raw", utcoff)
         abbr = [ttinfo.tzname for ttinfo in self._ttinfo_list]
 
         # dst() is inferred per transition, so the transitions don't map back
@@ -461,29 +456,16 @@ class tzfile(_tzinfo):
         for idx, trans_off in zip(trans_idx, trans_dstoff):
             dstoff[idx] = trans_off
 
-        if sys.version_info < (3, 6):
-            # For python pre-3.6, round to full-minutes if that's not the case.
-            # Python's datetime doesn't accept sub-minute timezones. Check
-            # http://python.org/sf/1447945 or https://bugs.python.org/issue5288
-            # for some information.
-            utcoff_adjusted = [60 * ((s + 30) // 60) for s in utcoff]
-            dstoff = [60 * ((s + 30) // 60) for s in dstoff]
-            trans_dstoff = [60 * ((s + 30) // 60) for s in trans_dstoff]
-            self._utcoff_raw = utcoff
-        else:
-            utcoff_adjusted = utcoff
 
         # Convert all the transition times (UTC) into "seconds since 1970-01-01 local time"
-        trans_local = self._ts_to_local(trans_idx, trans_utc, utcoff_adjusted)
+        trans_local = self._ts_to_local(trans_idx, trans_utc, utcoff)
 
         # Construct `_ttinfo` objects for each transition in the file
         _ttinfo_list = [
             _ttinfo(
                 _load_timedelta(utcoffset), _load_timedelta(dstoffset), tzname
             )
-            for utcoffset, dstoffset, tzname in zip(
-                utcoff_adjusted, dstoff, abbr
-            )
+            for utcoffset, dstoffset, tzname in zip(utcoff, dstoff, abbr)
         ]
 
         self._ttinfo_list = _ttinfo_list
@@ -940,14 +922,6 @@ def _fullmatch(pattern, string, flags=0):
     return re.match(r"(?:%s)\Z" % pattern, string, flags)
 
 
-def _round_offset(seconds):
-    # Python < 3.6 does not support sub-minute offsets, see the comment in
-    # tzfile._load_from_data.
-    if sys.version_info < (3, 6):
-        return 60 * ((seconds + 30) // 60)
-    return seconds
-
-
 def _parse_tz_str(tz_str):
     # The tz string has the format:
     #
@@ -991,7 +965,7 @@ def _parse_tz_str(tz_str):
     std_offset = m.group("stdoff")
     if std_offset:
         try:
-            std_offset = _round_offset(_parse_tz_delta(std_offset))
+            std_offset = _parse_tz_delta(std_offset)
         except ValueError as e:
             raise ValueError("Invalid STD offset in %s" % tz_str)
     else:
@@ -1002,7 +976,7 @@ def _parse_tz_str(tz_str):
         dst_offset = m.group("dstoff")
         if dst_offset:
             try:
-                dst_offset = _round_offset(_parse_tz_delta(dst_offset))
+                dst_offset = _parse_tz_delta(dst_offset)
             except ValueError as e:
                 raise ValueError("Invalid DST offset in %s" % tz_str)
         else:

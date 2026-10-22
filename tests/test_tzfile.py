@@ -384,36 +384,18 @@ def as_list(f):
     return inner_func
 
 
-SUPPORTS_SUB_MINUTE_OFFSETS = not sys.version_info < (3, 6)
-
-
 ####
 # Classes representing test data
 ZERO = timedelta(0)
 ONE_H = timedelta(hours=1)
 SECOND = timedelta(seconds=1)
 
-if SUPPORTS_SUB_MINUTE_OFFSETS:
-
-    def offset_converter(td):
-        return td
-
-else:
-
-    def offset_converter(td):
-        minutes = round(td.total_seconds() / 60.0)
-        return timedelta(minutes=minutes)
-
 
 @attr.s
 class ZoneOffset(object):
     tzname = attr.ib()
     utcoffset = attr.ib()
-    dst = attr.ib(default=ZERO, converter=offset_converter)
-
-    def __attrs_post_init__(self):
-        self.raw_utcoffset = self.utcoffset
-        self.utcoffset = offset_converter(self.utcoffset)
+    dst = attr.ib(default=ZERO)
 
 
 @attr.s
@@ -425,7 +407,7 @@ class ZoneTransition(object):
 
     @property
     def transition_utc(self):
-        return (self.transition - self.offset_before.raw_utcoffset).replace(
+        return (self.transition - self.offset_before.utcoffset).replace(
             tzinfo=tz.UTC
         )
 
@@ -872,11 +854,7 @@ def weirdzone_test_cases():
         dts = [
             (
                 datetime(1883, 6, 9, 1),
-                (
-                    datetime(1883, 6, 9, 7, 31, 2, tzinfo=tz.UTC)
-                    if SUPPORTS_SUB_MINUTE_OFFSETS
-                    else datetime(1883, 6, 9, 7, 31, tzinfo=tz.UTC)
-                ),
+                datetime(1883, 6, 9, 7, 31, 2, tzinfo=tz.UTC),
             ),
             (
                 datetime(2010, 4, 1, 12),
@@ -1159,36 +1137,20 @@ def weirdzone_test_cases():
             dt = dt_naive.replace(tzinfo=zi)
             cases["offset"].append((dt, offset))
 
-        if SUPPORTS_SUB_MINUTE_OFFSETS:
-            utc_cases = [
-                (datetime.min, datetime.min + timedelta(seconds=968)),
-                (datetime(1898, 12, 31, 23, 43, 52), datetime(1899, 1, 1)),
-                (
-                    datetime(1911, 12, 31, 23, 59, 59, 999999),
-                    datetime(1912, 1, 1, 0, 16, 7, 999999),
-                ),
-                (
-                    datetime(1912, 1, 1, 0, 16, 8),
-                    (datetime(1912, 1, 1, 0, 16, 8)),
-                ),
-                (datetime(1970, 1, 1), datetime(1970, 1, 1)),
-                (datetime.max, datetime.max),
-            ]
-        else:
-            utc_cases = [
-                (datetime.min, datetime.min + timedelta(seconds=960)),
-                (datetime(1898, 12, 31, 23, 44), datetime(1899, 1, 1)),
-                (
-                    datetime(1911, 12, 31, 23, 59, 59, 999999),
-                    datetime(1912, 1, 1, 0, 15, 59, 999999),
-                ),
-                (
-                    datetime(1912, 1, 1, 0, 16, 8),
-                    (datetime(1912, 1, 1, 0, 16, 8)),
-                ),
-                (datetime(1970, 1, 1), datetime(1970, 1, 1)),
-                (datetime.max, datetime.max),
-            ]
+        utc_cases = [
+            (datetime.min, datetime.min + timedelta(seconds=968)),
+            (datetime(1898, 12, 31, 23, 43, 52), datetime(1899, 1, 1)),
+            (
+                datetime(1911, 12, 31, 23, 59, 59, 999999),
+                datetime(1912, 1, 1, 0, 16, 7, 999999),
+            ),
+            (
+                datetime(1912, 1, 1, 0, 16, 8),
+                (datetime(1912, 1, 1, 0, 16, 8)),
+            ),
+            (datetime(1970, 1, 1), datetime(1970, 1, 1)),
+            (datetime.max, datetime.max),
+        ]
 
         for naive_dt, naive_dt_utc in utc_cases:
             dt = naive_dt.replace(tzinfo=zi)
@@ -1224,7 +1186,7 @@ def weirdzone_test_cases():
             if dt_type == GAP:
                 continue
 
-            dt_utc = (dt_naive - offset.raw_utcoffset).replace(tzinfo=tz.UTC)
+            dt_utc = (dt_naive - offset.utcoffset).replace(tzinfo=tz.UTC)
             cases["utc"].append((dt, dt_utc))
 
     @add_cases
@@ -2378,16 +2340,13 @@ def test_invalid_tzstr_non_ascii(tzstr):
     ],
 )
 def test_sub_minute_offset_tz_str(tz_str, dt, expected_seconds):
-    """Sub-minute offsets in the TZ string are rounded like those in the file."""
-    GMT = _RawZoneOffset("GMT", ZERO)
+    """Sub-minute offsets in the TZ string are kept exact, like those in the file."""
+    GMT = ZoneOffset("GMT", ZERO)
     zone = tz.tzfile(
         construct_zone([ZoneTransition(datetime(1900, 1, 1), GMT, GMT)], tz_str)
     )
 
-    if SUPPORTS_SUB_MINUTE_OFFSETS:
-        expected = timedelta(seconds=expected_seconds)
-    else:
-        expected = timedelta(minutes=(expected_seconds + 30) // 60)
+    expected = timedelta(seconds=expected_seconds)
 
     assert dt.replace(tzinfo=zone).utcoffset() == expected
 
@@ -2643,35 +2602,22 @@ def test_invalid_tzpath_warning_is_zoneinfos():
 
 ####
 # Sub-minute offsets
-class _RawZoneOffset(object):
-    """Like ZoneOffset, but without rounding the offset on Python < 3.6."""
-
-    def __init__(self, tzname, utcoffset, dst=ZERO):
-        self.tzname = tzname
-        self.utcoffset = utcoffset
-        self.raw_utcoffset = utcoffset
-        self.dst = dst
-
-
 def _sub_minute_zone():
     # Africa/Abidjan's LMT offset is -0:16:08; the file must contain the
-    # exact value even where the tzinfo will round it.
-    LMT = _RawZoneOffset("LMT", timedelta(seconds=-968))
-    GMT = _RawZoneOffset("GMT", ZERO)
+    # exact value.
+    LMT = ZoneOffset("LMT", timedelta(seconds=-968))
+    GMT = ZoneOffset("GMT", ZERO)
     return construct_zone(
         [ZoneTransition(datetime(1912, 1, 1), LMT, GMT)], "GMT0"
     )
 
 
 def test_sub_minute_offset():
-    """Sub-minute offsets are exact on 3.6+ and rounded to a minute before."""
+    """Sub-minute offsets retain their exact value."""
     zone = tz.tzfile(_sub_minute_zone())
     dt = datetime(1900, 1, 1, tzinfo=zone)
 
-    if SUPPORTS_SUB_MINUTE_OFFSETS:
-        assert dt.utcoffset() == timedelta(seconds=-968)
-    else:
-        assert dt.utcoffset() == timedelta(minutes=-16)
+    assert dt.utcoffset() == timedelta(seconds=-968)
 
     assert dt.tzname() == "LMT"
     assert datetime(2000, 1, 1, tzinfo=zone).utcoffset() == ZERO
@@ -2681,8 +2627,8 @@ def test_sub_minute_offset_round_trip():
     """Converting to and from UTC near a sub-minute transition round trips."""
     # America/New_York's LMT offset is -4:56:02, so the switch to EST in 1883
     # creates a fold whose boundaries move when the offset is rounded.
-    LMT = _RawZoneOffset("LMT", timedelta(seconds=-17762))
-    EST = _RawZoneOffset("EST", timedelta(hours=-5))
+    LMT = ZoneOffset("LMT", timedelta(seconds=-17762))
+    EST = ZoneOffset("EST", timedelta(hours=-5))
     zone = tz.tzfile(
         construct_zone(
             [ZoneTransition(datetime(1883, 11, 18, 12, 3, 58), LMT, EST)],
@@ -2698,7 +2644,7 @@ def test_sub_minute_offset_round_trip():
 
 @pytest.mark.parametrize("protocol", range(0, pickle.HIGHEST_PROTOCOL + 1))
 def test_sub_minute_offset_pickle(protocol):
-    """Pickling preserves the raw offset, even where it has been rounded."""
+    """Pickling preserves sub-minute offsets."""
     zone = tz.tzfile(_sub_minute_zone(), key="Africa/Abidjan")
     data = pickle.dumps(zone, protocol=protocol)
 
