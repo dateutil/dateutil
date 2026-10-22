@@ -9,10 +9,10 @@ timezone.
 """
 
 import bisect
+import contextlib
 import datetime
 import os
 import struct
-import sys
 import time
 import warnings
 import weakref
@@ -719,7 +719,7 @@ class tzical(object):
             fileobj = open(fileobj, 'r')
         else:
             self._s = getattr(fileobj, 'name', repr(fileobj))
-            fileobj = _nullcontext(fileobj)
+            fileobj = contextlib.nullcontext(fileobj)
 
         self._vtz = {}
 
@@ -1050,15 +1050,15 @@ def __get_gettz():
                         filename = filepath
                         for path in _tzpath.TZPATH:
                             filepath = os.path.join(path, filename)
-                            if _isfile(filepath):
+                            if os.path.isfile(filepath):
                                 break
                         else:
                             continue
-                    if _isfile(filepath):
+                    if os.path.isfile(filepath):
                         try:
                             tz = tzfile(filepath)
                             break
-                        except (IOError, OSError, ValueError):
+                        except (OSError, ValueError):
                             pass
                 else:
                     tz = tzlocal()
@@ -1081,7 +1081,7 @@ def __get_gettz():
                     return None
 
                 if os.path.isabs(name):
-                    if _isfile(name):
+                    if os.path.isfile(name):
                         tz = tzfile(name)
                     else:
                         tz = None
@@ -1091,14 +1091,14 @@ def __get_gettz():
 
                     for path in _tzpath.TZPATH:
                         filepath = os.path.join(path, name)
-                        if not _isfile(filepath):
+                        if not os.path.isfile(filepath):
                             filepath = filepath.replace(' ', '_')
-                            if not _isfile(filepath):
+                            if not os.path.isfile(filepath):
                                 continue
                         try:
                             tz = tzfile(filepath, key=name)
                             break
-                        except (IOError, OSError, ValueError):
+                        except (OSError, ValueError):
                             # TODO: A file that exists but can't be read or
                             # isn't a valid TZif file is silently skipped,
                             # and the key is looked up in the next TZPATH
@@ -1408,37 +1408,5 @@ def _datetime_to_timestamp(dt):
     """
     return (dt.replace(tzinfo=None) - EPOCH).total_seconds()
 
-
-if sys.version_info < (3, 8):
-
-    def _isfile(path):
-        # bpo-33721: In Python 3.8 non-UTF8 paths return False rather than
-        # raising an error. See https://bugs.python.org/issue33721
-        try:
-            return os.path.isfile(path)
-        except ValueError:
-            return False
-
-else:
-    _isfile = os.path.isfile
-
-
-try:
-    # Python 3.7 feature
-    from contextlib import nullcontext as _nullcontext
-except ImportError:
-    class _nullcontext(object):
-        """
-        Class for wrapping contexts so that they are passed through in a
-        with statement.
-        """
-        def __init__(self, context):
-            self.context = context
-
-        def __enter__(self):
-            return self.context
-
-        def __exit__(*args, **kwargs):
-            pass
 
 # vim:ts=4:sw=4:et

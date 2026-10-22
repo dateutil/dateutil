@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import bisect
 import calendar
+import contextlib
 import functools
 import io
 import os
@@ -16,17 +17,6 @@ from ._common import _tzinfo, enfold, tzname_in_python2
 
 EPOCH = datetime(1970, 1, 1)
 EPOCHORDINAL = EPOCH.toordinal()
-
-# TODO: Move this to _common.py
-try:
-    # Python 3.7 feature
-    from contextlib import nullcontext as _nullcontext
-except ImportError:
-    import contextlib
-
-    @contextlib.contextmanager
-    def _nullcontext(context):
-        yield context
 
 
 # It is relatively expensive to construct new timedelta objects, and in most
@@ -193,7 +183,7 @@ class tzfile(_tzinfo):
 
         if fileobj is not None:
             if not file_opened_here:
-                fileobj = _nullcontext(fileobj)
+                fileobj = contextlib.nullcontext(fileobj)
 
             with fileobj as file_stream:
                 self._load_file(file_stream)
@@ -695,7 +685,7 @@ def _is_seekable(fobj):
         return False
 
     seekable = getattr(fobj, "seekable", None)
-    # Python 2 file objects can seek but have no seekable() method
+    # File-like objects need not implement seekable().
     if seekable is not None and not seekable():
         return False
 
