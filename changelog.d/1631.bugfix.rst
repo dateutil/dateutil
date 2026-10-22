@@ -1,0 +1,7 @@
+Serialize timezone-aware rrule UNTIL values in UTC with the Z suffix,
+preserving their instant and leaving naive UNTIL values unchanged.
+Full aware rule strings can now raise ValueError when passed to rrulestr,
+because DTSTART's timezone is not serialized. Parse the RRULE property with
+the original aware dtstart supplied explicitly; DTSTART serialization is unchanged.
+Reported by @jonocodes (gh issue #806).
+Fixed by @blrain3 (gh pr #1631).

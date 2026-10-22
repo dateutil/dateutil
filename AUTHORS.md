@@ -29,6 +29,7 @@ switch, and thus all their contributions are dual-licensed.
 - Arclight <arclight@MASKED> (gh: @arclightslavik)
 - Aritro Nandi <gurgenz221@gmail.com> (gh: @gurgenz221) **D**
 - Bernat Gabor <bgabor8@bloomberg.net> (gh: @gaborbernat) **D**
+- blrain3 (gh: @blrain3) **D**
 - Bradlee Speice <bradlee@speice.io> (gh: @bspeice) **D**
 - Brandon W Maister <quodlibetor@MASKED>
 - Brock Mendel <jbrockmendel@MASKED> (gh: @jbrockmendel) **R**
