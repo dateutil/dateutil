@@ -30,9 +30,6 @@ class weekday(object):
           self.n,
         ))
 
-    def __ne__(self, other):
-        return not (self == other)
-
     def __repr__(self):
         s = ("MO", "TU", "WE", "TH", "FR", "SA", "SU")[self.weekday]
         if not self.n:

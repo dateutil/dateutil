@@ -698,8 +698,6 @@ class tzfile(_tzinfo):
 
     __hash__ = None
 
-    def __ne__(self, other):
-        return not (self == other)
 
     def __repr__(self):
         return "%s(%s)" % (self.__class__.__name__, repr(self._filename))
@@ -914,12 +912,6 @@ class _ttinfo(object):
             and self.tzname == other.tzname
         )
 
-    def __ne__(self, other):
-        # Python 2 does not derive __ne__ from __eq__
-        eq = self.__eq__(other)
-        if eq is NotImplemented:
-            return eq
-        return not eq
 
     def __repr__(self):  # pragma: nocover
         return "%s(%s, %s, %s)" % (
