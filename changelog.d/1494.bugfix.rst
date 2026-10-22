@@ -1,0 +1,2 @@
+Fixed parsing of EXIF-style ``YYYY:MM:DD HH:MM:SS`` date/time strings.
+Reported by @fizbin (gh issue #1446). Fixed by @Mirochill (gh pr #1494).
