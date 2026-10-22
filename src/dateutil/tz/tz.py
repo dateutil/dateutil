@@ -8,6 +8,7 @@ from relative deltas), local machine timezone, fixed offset timezone, and UTC
 timezone.
 """
 
+import _thread
 import bisect
 import contextlib
 import datetime
@@ -18,19 +19,9 @@ import warnings
 import weakref
 from collections import OrderedDict
 
-import six
-from six import string_types
-from six.moves import _thread
-
 from .. import _tzdata_impl
 from . import _tzpath
-from ._common import (
-    _tzinfo,
-    _validate_fromutc_inputs,
-    enfold,
-    tzname_in_python2,
-    tzrangebase,
-)
+from ._common import _tzinfo, _validate_fromutc_inputs, enfold, tzrangebase
 from ._factories import _TzOffsetFactory, _TzSingleton, _TzStrFactory
 from ._tzfile import tzfile
 
@@ -46,8 +37,7 @@ ZERO = datetime.timedelta(0)
 EPOCH = datetime.datetime(1970, 1, 1, 0, 0)
 
 
-@six.add_metaclass(_TzSingleton)
-class tzutc(datetime.tzinfo):
+class tzutc(datetime.tzinfo, metaclass=_TzSingleton):
     """
     This is a tzinfo object that represents the UTC time zone.
 
@@ -85,7 +75,6 @@ class tzutc(datetime.tzinfo):
     def dst(self, dt):
         return ZERO
 
-    @tzname_in_python2
     def tzname(self, dt):
         return "UTC"
 
@@ -134,8 +123,7 @@ class tzutc(datetime.tzinfo):
 UTC = tzutc()
 
 
-@six.add_metaclass(_TzOffsetFactory)
-class tzoffset(datetime.tzinfo):
+class tzoffset(datetime.tzinfo, metaclass=_TzOffsetFactory):
     """
     A simple class for representing a fixed offset from UTC.
 
@@ -162,7 +150,6 @@ class tzoffset(datetime.tzinfo):
     def dst(self, dt):
         return ZERO
 
-    @tzname_in_python2
     def tzname(self, dt):
         return self._name
 
@@ -235,7 +222,6 @@ class tzlocal(_tzinfo):
         else:
             return ZERO
 
-    @tzname_in_python2
     def tzname(self, dt):
         return self._tznames[self._isdst(dt)]
 
@@ -482,8 +468,7 @@ class tzrange(tzrangebase):
         return self._dst_base_offset_
 
 
-@six.add_metaclass(_TzStrFactory)
-class tzstr(tzrange):
+class tzstr(tzrange, metaclass=_TzStrFactory):
     """
     ``tzstr`` objects are time zone objects specified by a time-zone string as
     it would be passed to a ``TZ`` variable on POSIX-style systems (see
@@ -501,8 +486,7 @@ class tzstr(tzrange):
 
     :param s:
         A time zone string in ``TZ`` variable format. This can be a
-        :class:`bytes` (2.x: :class:`str`), :class:`str` (2.x:
-        :class:`unicode`) or a stream emitting unicode characters
+        :class:`bytes`, :class:`str` or a stream emitting Unicode characters
         (e.g. :class:`StringIO`).
 
     :param posix_offset:
@@ -688,7 +672,6 @@ class _tzicalvtz(_tzinfo):
         else:
             return ZERO
 
-    @tzname_in_python2
     def tzname(self, dt):
         return self._find_comp(dt).tzname
 
@@ -713,7 +696,7 @@ class tzical(object):
         global rrule
         from dateutil import rrule
 
-        if isinstance(fileobj, string_types):
+        if isinstance(fileobj, str):
             self._s = fileobj
             # ical should be encoded in UTF-8 with CRLF
             fileobj = open(fileobj, 'r')
@@ -1069,7 +1052,7 @@ def __get_gettz():
                 except TypeError as e:
                     if isinstance(name, bytes):
                         new_msg = "gettz argument should be str, not bytes"
-                        six.raise_from(TypeError(new_msg), e)
+                        raise TypeError(new_msg) from e
                     else:
                         raise
 
@@ -1128,8 +1111,7 @@ def __get_gettz():
                         if tzwin is not None:
                             try:
                                 tz = tzwin(name)
-                            except (WindowsError, UnicodeEncodeError):
-                                # UnicodeEncodeError is for Python 2.7 compat
+                            except OSError:
                                 tz = None
 
                         if not tz:

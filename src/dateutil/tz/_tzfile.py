@@ -11,9 +11,7 @@ import struct
 import sys
 from datetime import MAXYEAR, MINYEAR, datetime, timedelta
 
-import six
-
-from ._common import _tzinfo, enfold, tzname_in_python2
+from ._common import _tzinfo, enfold
 
 EPOCH = datetime(1970, 1, 1)
 EPOCHORDINAL = EPOCH.toordinal()
@@ -138,7 +136,7 @@ class tzfile(_tzinfo):
         super(tzfile, self).__init__()
 
         file_opened_here = False
-        if isinstance(fileobj, six.string_types):
+        if isinstance(fileobj, str):
             self._filename = fileobj
             fileobj = open(fileobj, "rb")
             file_opened_here = True
@@ -211,7 +209,6 @@ class tzfile(_tzinfo):
     def dst(self, dt):
         return self._find_trans(dt).dstoff
 
-    @tzname_in_python2
     def tzname(self, dt):
         return self._find_trans(dt).tzname
 
@@ -680,9 +677,7 @@ def load_data(fobj):
         return _load_data(fobj)
     except struct.error as e:
         # struct.unpack fails when a read comes up short
-        six.raise_from(
-            ValueError("Invalid TZif file: unexpected end of file"), e
-        )
+        raise ValueError("Invalid TZif file: unexpected end of file") from e
 
 
 def _load_data(fobj):
