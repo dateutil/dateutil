@@ -154,7 +154,7 @@ class tzoffset(datetime.tzinfo):
         except (TypeError, AttributeError):
             pass
 
-        self._offset = datetime.timedelta(seconds=_get_supported_offset(offset))
+        self._offset = datetime.timedelta(seconds=offset)
 
     def utcoffset(self, dt):
         return self._offset
@@ -1407,20 +1407,6 @@ def _datetime_to_timestamp(dt):
     seconds since January 1, 1970, ignoring the time zone.
     """
     return (dt.replace(tzinfo=None) - EPOCH).total_seconds()
-
-
-if sys.version_info >= (3, 6):
-    def _get_supported_offset(second_offset):
-        return second_offset
-else:
-    def _get_supported_offset(second_offset):
-        # For python pre-3.6, round to full-minutes if that's not the case.
-        # Python's datetime doesn't accept sub-minute timezones. Check
-        # http://python.org/sf/1447945 or https://bugs.python.org/issue5288
-        # for some information.
-        old_offset = second_offset
-        calculated_offset = 60 * ((second_offset + 30) // 60)
-        return calculated_offset
 
 
 if sys.version_info < (3, 8):

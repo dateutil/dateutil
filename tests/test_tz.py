@@ -179,8 +179,6 @@ END:VTIMEZONE
 EST_TUPLE = ('EST', timedelta(hours=-5), timedelta(hours=0))
 EDT_TUPLE = ('EDT', timedelta(hours=-4), timedelta(hours=1))
 
-SUPPORTS_SUB_MINUTE_OFFSETS = sys.version_info >= (3, 6)
-
 
 ###
 # Helper functions
@@ -797,21 +795,10 @@ def test_tzoffset_singleton(args):
 
 
 @pytest.mark.tzoffset
-@pytest.mark.skipif(not SUPPORTS_SUB_MINUTE_OFFSETS,
-                    reason='Sub-minute offsets not supported')
 def test_tzoffset_sub_minute():
     delta = timedelta(hours=12, seconds=30)
     test_datetime = datetime(2000, 1, 1, tzinfo=tz.tzoffset(None, delta))
     assert test_datetime.utcoffset() == delta
-
-
-@pytest.mark.tzoffset
-@pytest.mark.skipif(SUPPORTS_SUB_MINUTE_OFFSETS,
-                    reason='Sub-minute offsets supported')
-def test_tzoffset_sub_minute_rounding():
-    delta = timedelta(hours=12, seconds=30)
-    test_date = datetime(2000, 1, 1, tzinfo=tz.tzoffset(None, delta))
-    assert test_date.utcoffset() == timedelta(hours=12, minutes=1)
 
 
 @pytest.mark.tzlocal
@@ -2176,23 +2163,9 @@ class TZTest(unittest.TestCase):
 
 
 @pytest.mark.tzfile
-@pytest.mark.skipif(not SUPPORTS_SUB_MINUTE_OFFSETS,
-                    reason='Sub-minute offsets not supported')
 def test_tzfile_sub_minute_offset():
-    # If user running python 3.6 or newer, exact offset is used
     tzc = tz.tzfile(BytesIO(base64.b64decode(EUROPE_HELSINKI)))
     offset = timedelta(hours=1, minutes=39, seconds=52)
-    assert datetime(1900, 1, 1, 0, 0, tzinfo=tzc).utcoffset() == offset
-
-
-@pytest.mark.tzfile
-@pytest.mark.skipif(SUPPORTS_SUB_MINUTE_OFFSETS,
-                    reason='Sub-minute offsets supported.')
-def test_sub_minute_rounding_tzfile():
-    # This timezone has an offset of 5992 seconds in 1900-01-01.
-    # For python version pre-3.6, this will be rounded
-    tzc = tz.tzfile(BytesIO(base64.b64decode(EUROPE_HELSINKI)))
-    offset = timedelta(hours=1, minutes=40)
     assert datetime(1900, 1, 1, 0, 0, tzinfo=tzc).utcoffset() == offset
 
 
@@ -2905,15 +2878,13 @@ resolve_imaginary_tests = [
 ]
 
 
-if SUPPORTS_SUB_MINUTE_OFFSETS:
-    resolve_imaginary_tests.append(
-        (
-            "Africa/Monrovia",
-            datetime(1972, 1, 7, 0, 30),
-            datetime(1972, 1, 7, 1, 14, 30),
-        )
+resolve_imaginary_tests.append(
+    (
+        "Africa/Monrovia",
+        datetime(1972, 1, 7, 0, 30),
+        datetime(1972, 1, 7, 1, 14, 30),
     )
-
+)
 
 @pytest.mark.tz_resolve_imaginary
 @pytest.mark.parametrize("key, dt, dt_exp", resolve_imaginary_tests)
