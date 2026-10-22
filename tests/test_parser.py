@@ -718,6 +718,10 @@ class ParserTest(unittest.TestCase):
         with pytest.raises(ParserError):
             parse(invalid)
 
+    def test_validate_bogus_year_with_ampm_suffix(self):
+        with pytest.raises(ParserError):
+            parse("000A-01-01T00:00:00")
+
     def test_era_trailing_year(self):
         dstr = 'AD2001'
         res = parse(dstr)
