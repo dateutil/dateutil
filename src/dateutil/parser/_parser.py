@@ -986,7 +986,13 @@ class parser(object):
                 idx += 1
             else:
                 # Year, month or day
-                ymd.append(value)
+                dot_idx = value_repr.find('.')
+                if dot_idx != -1 and dot_idx != len_li - 1:
+                    ymd.append(value_repr[:dot_idx])
+                    ymd.append(value_repr[dot_idx+1:])
+                else:
+                    ymd.append(value)
+
             idx += 1
 
         elif info.ampm(tokens[idx + 1]) is not None and (0 <= value < 24):

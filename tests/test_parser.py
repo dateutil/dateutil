@@ -38,7 +38,7 @@ def fuzzy(request):
 
 # Parser test cases using no keyword arguments. Format: (parsable_text, expected_datetime, assertion_message)
 PARSER_TEST_CASES = [
-    ("Thu Sep 25 10:36:28 2003", datetime(2003, 9, 25, 10, 36, 28), "date command format strip"),
+    ("Thu Sep 25 10:36:28 2003", datetime(2003, 9, 25, 10, 36, 28), "date command format strip"),    
     ("Thu Sep 25 2003", datetime(2003, 9, 25), "date command format strip"),
     ("2003-09-25T10:49:41", datetime(2003, 9, 25, 10, 49, 41), "iso format strip"),
     ("2003-09-25T10:49", datetime(2003, 9, 25, 10, 49), "iso format strip"),
@@ -100,6 +100,9 @@ PARSER_TEST_CASES = [
 
     # Cases with legacy h/m/s format, candidates for deprecation (GH#886)
     ("2016-12-21 04.2h", datetime(2016, 12, 21, 4, 12), "Fractional Hours"),
+    
+    # Case with no space after comma (GH#1191)
+    ("may15,2021", datetime(2021, 5, 15, 0, 0), "random format"),
 ]
 # Check that we don't have any duplicates
 assert len(set([x[0] for x in PARSER_TEST_CASES])) == len(PARSER_TEST_CASES)
