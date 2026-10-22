@@ -1,0 +1,4 @@
+Fixed ``dateutil.parser.parse`` raising ``ValueError`` when a time of day
+precedes the date separated by a dash, e.g. ``"11:20 PM - 4 Aug 2015"``
+(issue #270). The ``-`` was misread as the start of a numbered timezone
+offset and crashed on the following non-numeric token.

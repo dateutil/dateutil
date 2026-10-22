@@ -462,6 +462,12 @@ class ParserTest(unittest.TestCase):
                          datetime(2003, 9, 25, 10, 36, 28,
                                   tzinfo=self.brsttz))
 
+    def testTimeFirstThenDate(self):
+        # A time of day first, separated from the date by a dash,
+        # must not be treated as a numbered timezone (issue #270).
+        self.assertEqual(parse("11:20 PM - 4 Aug 2015"),
+                         datetime(2015, 8, 4, 23, 20))
+
     def testDateCommandFormatWithLong(self):
         if PY2:
             self.assertEqual(parse("Thu Sep 25 10:36:28 BRST 2003",
