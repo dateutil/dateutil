@@ -1545,7 +1545,7 @@ def test_tzfile_from_pipe():
     os.close(write_fd)
 
     # On Windows, pipes claim to be seekable even though they aren't.
-    with io.open(read_fd, "rb") as f:
+    with open(read_fd, "rb") as f:
         zone = tz.tzfile(f, filename="pipe")
 
     assert zone == expected
