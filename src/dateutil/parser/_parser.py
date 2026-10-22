@@ -352,7 +352,7 @@ class parserinfo(object):
         return name.lower() in self._utczone
 
     def tzoffset(self, name):
-        if name in self._utczone:
+        if self.utczone(name):
             return 0
 
         return self.TZOFFSET.get(name)
@@ -1059,7 +1059,8 @@ class parser(object):
                 tzoffset is None and
                 len(token) <= 5 and
                 (all(x in string.ascii_uppercase for x in token)
-                 or token in self.info.UTCZONE))
+                 or token in self.info.UTCZONE
+                 or self.info.utczone(token)))
 
     def _ampm_valid(self, hour, ampm, fuzzy):
         """

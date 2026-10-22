@@ -223,6 +223,30 @@ def test_parse_with_tzoffset(dstr, expected):
     assert result == expected
 
 
+@pytest.mark.parametrize('tzname', [
+    "UTC", "GMT", "utc", "gmt", "Utc", "Gmt", "uTc", "gMt",
+])
+def test_parse_utczone_case_insensitive(tzname):
+    # UTC zone designations should be recognized regardless of case,
+    # consistent with how months, weekdays and AM/PM are handled.
+    # See GH #1117.
+    result = parse("2021-04-19 09:00:42 " + tzname)
+    assert result == datetime(2021, 4, 19, 9, 0, 42, tzinfo=tz.UTC)
+
+
+@pytest.mark.parametrize('dstr,expected_offset', [
+    ("2021-04-19 09:00:42 UTC+3", -3 * 3600),
+    ("2021-04-19 09:00:42 utc+3", -3 * 3600),
+    ("2021-04-19 09:00:42 gmt-5", 5 * 3600),
+    ("2021-04-19 09:00:42 GMT-5", 5 * 3600),
+])
+def test_parse_utczone_with_offset_case_insensitive(dstr, expected_offset):
+    # A signed offset after a UTC zone designation behaves the same
+    # regardless of the designation's case.
+    result = parse(dstr)
+    assert result.utcoffset() == timedelta(seconds=expected_offset)
+
+
 class TestFormat(object):
 
     def test_ybd(self):

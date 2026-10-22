@@ -106,6 +106,7 @@ switch, and thus all their contributions are dual-licensed.
 - Rowan Walsh (gh: @rowan-walsh) **D**
 - Roy Williams <rwilliams@MASKED>
 - Rustem Saiargaliev (gh: @amureki) **D**
+- Saad Abdullah (gh: @saadkhantareen) **D**
 - Satyabrat Bhol <satyabrat35@MASKED> (gh: @Satyabrat35) **D**
 - Savraj <savraj@MASKED>
 - Sergey Vishnikin <armicron@MASKED>

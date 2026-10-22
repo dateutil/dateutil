@@ -1,0 +1,5 @@
+Fixed ``parser.parse()`` failing on lowercase or mixed-case UTC zone
+designations such as "utc" and "gmt". These are now recognized
+case-insensitively, consistent with the handling of month and weekday
+names. Reported by @c3101 (gh issue #1117). Fixed by @saadkhantareen
+(gh pr #1615)
