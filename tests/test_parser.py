@@ -1,23 +1,23 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
 
 import itertools
-from datetime import datetime, timedelta
-import unittest
 import sys
-
-from dateutil import tz
-from dateutil.tz import tzoffset
-from dateutil.parser import parse, parserinfo
-from dateutil.parser import ParserError
-from dateutil.parser import UnknownTimezoneWarning
-
-from ._common import TZEnvContext
-
-from six import assertRaisesRegex, PY2
+import unittest
+from datetime import datetime, timedelta
 from io import StringIO
 
 import pytest
+
+from dateutil import tz
+from dateutil.parser import (
+    ParserError,
+    UnknownTimezoneWarning,
+    parse,
+    parserinfo,
+)
+from dateutil.tz import tzoffset
+
+from ._common import TZEnvContext
 
 # Platform info
 IS_WIN = sys.platform.startswith('win')
@@ -443,9 +443,6 @@ class ParserTest(unittest.TestCase):
         assert res  == expected
 
     def testParseWithNulls(self):
-        # This relies on the from __future__ import unicode_literals, because
-        # explicitly specifying a unicode literal is a syntax error in Py 3.2
-        # May want to switch to u'...' if we ever drop Python 3.2 support.
         pstring = '\x00\x00August 29, 1924'
 
         assert parse(pstring) == datetime(1924, 8, 29)
@@ -461,13 +458,6 @@ class ParserTest(unittest.TestCase):
                                tzinfos=self.tzinfos),
                          datetime(2003, 9, 25, 10, 36, 28,
                                   tzinfo=self.brsttz))
-
-    def testDateCommandFormatWithLong(self):
-        if PY2:
-            self.assertEqual(parse("Thu Sep 25 10:36:28 BRST 2003",
-                                   tzinfos={"BRST": long(-10800)}),
-                             datetime(2003, 9, 25, 10, 36, 28,
-                                      tzinfo=self.brsttz))
 
     def testISOFormatStrip2(self):
         self.assertEqual(parse("2003-09-25T10:49:41+03:00"),
@@ -570,12 +560,27 @@ class ParserTest(unittest.TestCase):
             parse('shouldfail')
 
     def testCorrectErrorOnFuzzyWithTokens(self):
-        assertRaisesRegex(self, ParserError, 'Unknown string format',
-                          parse, '04/04/32/423', fuzzy_with_tokens=True)
-        assertRaisesRegex(self, ParserError, 'Unknown string format',
-                          parse, '04/04/04 +32423', fuzzy_with_tokens=True)
-        assertRaisesRegex(self, ParserError, 'Unknown string format',
-                          parse, '04/04/0d4', fuzzy_with_tokens=True)
+        self.assertRaisesRegex(
+            ParserError,
+            "Unknown string format",
+            parse,
+            "04/04/32/423",
+            fuzzy_with_tokens=True,
+        )
+        self.assertRaisesRegex(
+            ParserError,
+            "Unknown string format",
+            parse,
+            "04/04/04 +32423",
+            fuzzy_with_tokens=True,
+        )
+        self.assertRaisesRegex(
+            ParserError,
+            "Unknown string format",
+            parse,
+            "04/04/0d4",
+            fuzzy_with_tokens=True,
+        )
 
     def testIncreasingCTime(self):
         # This test will check 200 different years, every month, every day,
@@ -614,7 +619,7 @@ class ParserTest(unittest.TestCase):
 
     def testCustomParserInfo(self):
         # Custom parser info wasn't working, as Michael Elsdörfer discovered.
-        from dateutil.parser import parserinfo, parser
+        from dateutil.parser import parser, parserinfo
 
         class myparserinfo(parserinfo):
             MONTHS = parserinfo.MONTHS[:]
@@ -627,7 +632,7 @@ class ParserTest(unittest.TestCase):
         # Horacio Hoyos discovered that day names shorter than 3 characters,
         # for example two letter German day name abbreviations, don't work:
         # https://github.com/dateutil/dateutil/issues/343
-        from dateutil.parser import parserinfo, parser
+        from dateutil.parser import parser, parserinfo
 
         class GermanParserInfo(parserinfo):
             WEEKDAYS = [("Mo", "Montag"),
