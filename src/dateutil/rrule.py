@@ -155,6 +155,7 @@ class rrulebase(object):
             if i == len(cache):
                 acquire()
                 if self._cache_complete:
+                    release()
                     break
                 try:
                     for j in range(10):
@@ -162,6 +163,7 @@ class rrulebase(object):
                 except StopIteration:
                     self._cache_gen = gen = None
                     self._cache_complete = True
+                    release()
                     break
                 release()
             yield cache[i]
