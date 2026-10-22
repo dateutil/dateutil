@@ -40,4 +40,17 @@ class weekday(object):
         else:
             return "%s(%+d)" % (s, self.n)
 
+    # A class using `__slots__` without a `__dict__` cannot be pickled with
+    # protocol 0 or 1 unless it spells out its state, and protocol 0 is still
+    # the default on Python 2.  Without this, neither the `MO`..`SU`
+    # constants nor any `relativedelta` carrying a weekday could be pickled
+    # at those protocols.
+    def __getstate__(self):
+        return {name: getattr(self, name, None) for name in self.__slots__}
+
+    def __setstate__(self, state):
+        for name in self.__slots__:
+            if name in state:
+                setattr(self, name, state[name])
+
 # vim:ts=4:sw=4:et
