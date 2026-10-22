@@ -185,6 +185,15 @@ def test_parse_yearfirst(sep):
     assert result == expected
 
 
+@pytest.mark.parametrize(
+    "dstr",
+    ["February 29,2016", "February 2016,29"],
+)
+def test_parse_leap_year_with_year_last(dstr):
+    default = datetime(2017, 2, 1)
+    assert parse(dstr, default=default) == datetime(2016, 2, 29)
+
+
 @pytest.mark.parametrize('dstr,expected', [
     ("Thu Sep 25 10:36:28 BRST 2003", datetime(2003, 9, 25, 10, 36, 28)),
     ("1996.07.10 AD at 15:08:56 PDT", datetime(1996, 7, 10, 15, 8, 56)),
