@@ -2,22 +2,25 @@
 from __future__ import unicode_literals
 
 import itertools
-from datetime import datetime, timedelta
-import unittest
 import sys
-
-from dateutil import tz
-from dateutil.tz import tzoffset
-from dateutil.parser import parse, parserinfo
-from dateutil.parser import ParserError
-from dateutil.parser import UnknownTimezoneWarning
-
-from ._common import TZEnvContext
-
-from six import assertRaisesRegex, PY2
+import unittest
+from datetime import datetime, timedelta
 from io import StringIO
 
 import pytest
+from freezegun import freeze_time
+from six import PY2, assertRaisesRegex
+
+from dateutil import tz
+from dateutil.parser import (
+    ParserError,
+    UnknownTimezoneWarning,
+    parse,
+    parserinfo,
+)
+from dateutil.tz import tzoffset
+
+from ._common import TZEnvContext
 
 # Platform info
 IS_WIN = sys.platform.startswith('win')
@@ -37,6 +40,7 @@ def fuzzy(request):
 
 
 # Parser test cases using no keyword arguments. Format: (parsable_text, expected_datetime, assertion_message)
+# parsable_text may be a tuple of (parsable_text, frozen_time) to parse the given text at the given time.
 PARSER_TEST_CASES = [
     ("Thu Sep 25 10:36:28 2003", datetime(2003, 9, 25, 10, 36, 28), "date command format strip"),
     ("Thu Sep 25 2003", datetime(2003, 9, 25), "date command format strip"),
@@ -54,40 +58,97 @@ PARSER_TEST_CASES = [
     ("09-25-2003", datetime(2003, 9, 25), "date with dash"),
     ("25-09-2003", datetime(2003, 9, 25), "date with dash"),
     ("10-09-2003", datetime(2003, 10, 9), "date with dash"),
-    ("10-09-03", datetime(2003, 10, 9), "date with dash"),
+    (
+        ("10-09-03", datetime(2025, 1, 1)),
+        datetime(2003, 10, 9),
+        "date with dash",
+    ),
     ("2003.09.25", datetime(2003, 9, 25), "date with dot"),
     ("09.25.2003", datetime(2003, 9, 25), "date with dot"),
     ("25.09.2003", datetime(2003, 9, 25), "date with dot"),
     ("10.09.2003", datetime(2003, 10, 9), "date with dot"),
-    ("10.09.03", datetime(2003, 10, 9), "date with dot"),
+    (
+        ("10.09.03", datetime(2025, 1, 1)),
+        datetime(2003, 10, 9),
+        "date with dot",
+    ),
     ("2003/09/25", datetime(2003, 9, 25), "date with slash"),
     ("09/25/2003", datetime(2003, 9, 25), "date with slash"),
     ("25/09/2003", datetime(2003, 9, 25), "date with slash"),
     ("10/09/2003", datetime(2003, 10, 9), "date with slash"),
-    ("10/09/03", datetime(2003, 10, 9), "date with slash"),
+    (
+        ("10/09/03", datetime(2025, 1, 1)),
+        datetime(2003, 10, 9),
+        "date with slash",
+    ),
     ("2003 09 25", datetime(2003, 9, 25), "date with space"),
     ("09 25 2003", datetime(2003, 9, 25), "date with space"),
     ("25 09 2003", datetime(2003, 9, 25), "date with space"),
     ("10 09 2003", datetime(2003, 10, 9), "date with space"),
-    ("10 09 03", datetime(2003, 10, 9), "date with space"),
-    ("25 09 03", datetime(2003, 9, 25), "date with space"),
-    ("03 25 Sep", datetime(2003, 9, 25), "strangely ordered date"),
-    ("25 03 Sep", datetime(2025, 9, 3), "strangely ordered date"),
-    ("  July   4 ,  1976   12:01:02   am  ", datetime(1976, 7, 4, 0, 1, 2), "extra space"),
-    ("Wed, July 10, '96", datetime(1996, 7, 10, 0, 0), "random format"),
+    (
+        ("10 09 03", datetime(2025, 1, 1)),
+        datetime(2003, 10, 9),
+        "date with space",
+    ),
+    (
+        ("25 09 03", datetime(2025, 1, 1)),
+        datetime(2003, 9, 25),
+        "date with space",
+    ),
+    (
+        ("03 25 Sep", datetime(2025, 1, 1)),
+        datetime(2003, 9, 25),
+        "strangely ordered date",
+    ),
+    (
+        ("25 03 Sep", datetime(2025, 1, 1)),
+        datetime(2025, 9, 3),
+        "strangely ordered date",
+    ),
+    (
+        "  July   4 ,  1976   12:01:02   am  ",
+        datetime(1976, 7, 4, 0, 1, 2),
+        "extra space",
+    ),
+    (
+        ("Wed, July 10, '96", datetime(2025, 1, 1)),
+        datetime(1996, 7, 10, 0, 0),
+        "random format",
+    ),
     ("1996.July.10 AD 12:08 PM", datetime(1996, 7, 10, 12, 8), "random format"),
     ("July 4, 1976", datetime(1976, 7, 4), "random format"),
     ("7 4 1976", datetime(1976, 7, 4), "random format"),
     ("4 jul 1976", datetime(1976, 7, 4), "random format"),
     ("4 Jul 1976", datetime(1976, 7, 4), "'%-d %b %Y' format"),
-    ("7-4-76", datetime(1976, 7, 4), "random format"),
+    (("7-4-76", datetime(2026, 12, 31)), datetime(1976, 7, 4), "random format"),
+    (("7-4-76", datetime(2027, 1, 1)), datetime(2076, 7, 4), "random format"),
     ("19760704", datetime(1976, 7, 4), "random format"),
     ("0:01:02 on July 4, 1976", datetime(1976, 7, 4, 0, 1, 2), "random format"),
-    ("July 4, 1976 12:01:02 am", datetime(1976, 7, 4, 0, 1, 2), "random format"),
-    ("Mon Jan  2 04:24:27 1995", datetime(1995, 1, 2, 4, 24, 27), "random format"),
-    ("04.04.95 00:22", datetime(1995, 4, 4, 0, 22), "random format"),
-    ("Jan 1 1999 11:23:34.578", datetime(1999, 1, 1, 11, 23, 34, 578000), "random format"),
-    ("950404 122212", datetime(1995, 4, 4, 12, 22, 12), "random format"),
+    (
+        "July 4, 1976 12:01:02 am",
+        datetime(1976, 7, 4, 0, 1, 2),
+        "random format",
+    ),
+    (
+        "Mon Jan  2 04:24:27 1995",
+        datetime(1995, 1, 2, 4, 24, 27),
+        "random format",
+    ),
+    (
+        ("04.04.95 00:22", datetime(2025, 1, 1)),
+        datetime(1995, 4, 4, 0, 22),
+        "random format",
+    ),
+    (
+        "Jan 1 1999 11:23:34.578",
+        datetime(1999, 1, 1, 11, 23, 34, 578000),
+        "random format",
+    ),
+    (
+        ("950404 122212", datetime(2025, 1, 1)),
+        datetime(1995, 4, 4, 12, 22, 12),
+        "random format",
+    ),
     ("3rd of May 2001", datetime(2001, 5, 3), "random format"),
     ("5th of March 2001", datetime(2001, 3, 5), "random format"),
     ("1st of May 2003", datetime(2003, 5, 1), "random format"),
@@ -107,7 +168,15 @@ assert len(set([x[0] for x in PARSER_TEST_CASES])) == len(PARSER_TEST_CASES)
 
 @pytest.mark.parametrize("parsable_text,expected_datetime,assertion_message", PARSER_TEST_CASES)
 def test_parser(parsable_text, expected_datetime, assertion_message):
-    assert parse(parsable_text) == expected_datetime, assertion_message
+    if isinstance(parsable_text, tuple):
+        parsable_text, frozen_time = parsable_text
+        with freeze_time(frozen_time):
+            assert (
+                parse(parsable_text, parserinfo=parserinfo())
+                == expected_datetime
+            ), assertion_message
+    else:
+        assert parse(parsable_text) == expected_datetime, assertion_message
 
 
 # Parser test cases using datetime(2003, 9, 25) as a default.
@@ -614,7 +683,7 @@ class ParserTest(unittest.TestCase):
 
     def testCustomParserInfo(self):
         # Custom parser info wasn't working, as Michael Elsdörfer discovered.
-        from dateutil.parser import parserinfo, parser
+        from dateutil.parser import parser, parserinfo
 
         class myparserinfo(parserinfo):
             MONTHS = parserinfo.MONTHS[:]
@@ -627,7 +696,7 @@ class ParserTest(unittest.TestCase):
         # Horacio Hoyos discovered that day names shorter than 3 characters,
         # for example two letter German day name abbreviations, don't work:
         # https://github.com/dateutil/dateutil/issues/343
-        from dateutil.parser import parserinfo, parser
+        from dateutil.parser import parser, parserinfo
 
         class GermanParserInfo(parserinfo):
             WEEKDAYS = [("Mo", "Montag"),
