@@ -1,7 +1,4 @@
-from __future__ import unicode_literals
-
 import contextlib
-import functools
 import os
 import pickle
 import subprocess
@@ -25,37 +22,7 @@ from dateutil import tz
 TZPATH_LOCK = threading.RLock()
 
 
-if sys.version_info < (3, 4):
-
-    def contextdecorator(wrapped):
-        @functools.wraps(wrapped)
-        def wrapper(*args, **kwargs):
-            class ContextDecorator:
-                def __init__(self):
-                    self.cm = contextlib.contextmanager(wrapped)(
-                        *args, **kwargs
-                    )
-
-                def __enter__(self):
-                    return self.cm.__enter__()
-
-                def __exit__(self, *args, **kwargs):
-                    return self.cm.__exit__(*args, **kwargs)
-
-                def __call__(self, f):
-                    @functools.wraps(f)
-                    def inner(*iargs, **ikwargs):
-                        with self:
-                            return f(*iargs, **ikwargs)
-
-                    return inner
-
-            return ContextDecorator()
-
-        return wrapper
-
-else:
-    contextdecorator = contextlib.contextmanager
+contextdecorator = contextlib.contextmanager
 
 
 def pop_tzdata_modules():
@@ -329,7 +296,6 @@ class NotAValueClass(object):
     __add__ = __radd__ = _op
     __sub__ = __rsub__ = _op
     __mul__ = __rmul__ = _op
-    __div__ = __rdiv__ = _op
     __truediv__ = __rtruediv__ = _op
     __floordiv__ = __rfloordiv__ = _op
 

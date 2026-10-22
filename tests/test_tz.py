@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
 
 import base64
 import copy
@@ -18,7 +17,6 @@ from datetime import timedelta, tzinfo
 from functools import partial
 from io import BytesIO, StringIO
 
-from six import PY2
 
 from ._common import (
     ComparesEqual,
@@ -1172,11 +1170,6 @@ def test_gettz_badzone_unicode():
             b"America/New_York",
             ".*should be str, not bytes.*",
             id="bytes on Python 3",
-            marks=[
-                pytest.mark.skipif(
-                    PY2, reason="bytes arguments accepted in Python 2"
-                )
-            ],
         ),
         pytest.param(
             object(),

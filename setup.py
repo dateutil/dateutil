@@ -1,13 +1,11 @@
 #!/usr/bin/python
-import io
-
 from setuptools import setup
 
 ###
 # Load metadata
 
 def README():
-    with io.open('README.rst', encoding='utf-8') as f:
+    with open("README.rst", encoding="utf-8") as f:
         readme_lines = f.readlines()
 
     # The .. doctest directive is not supported by PyPA
