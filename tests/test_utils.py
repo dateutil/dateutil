@@ -1,15 +1,21 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-from datetime import timedelta, datetime
 
-from dateutil import tz
-from dateutil import utils
+from datetime import datetime, timedelta
+
+import pytest
+from freezegun import freeze_time
+
+from dateutil import tz, utils
 from dateutil.tz import UTC
 from dateutil.utils import within_delta
 
-from freezegun import freeze_time
 
-NYC = tz.gettz("America/New_York")
+@pytest.fixture
+def NYC():
+    zone = tz.gettz("America/New_York")
+    assert zone is not None
+    return zone
 
 
 @freeze_time(datetime(2014, 12, 15, 1, 21, 33, 4003))
@@ -18,7 +24,7 @@ def test_utils_today():
 
 
 @freeze_time(datetime(2014, 12, 15, 12), tz_offset=5)
-def test_utils_today_tz_info():
+def test_utils_today_tz_info(NYC):
     assert utils.today(NYC) == datetime(2014, 12, 15, 0, 0, 0, tzinfo=NYC)
 
 
@@ -27,12 +33,12 @@ def test_utils_today_tz_info_different_day():
     assert utils.today(UTC) == datetime(2014, 12, 16, 0, 0, 0, tzinfo=UTC)
 
 
-def test_utils_default_tz_info_naive():
+def test_utils_default_tz_info_naive(NYC):
     dt = datetime(2014, 9, 14, 9, 30)
     assert utils.default_tzinfo(dt, NYC).tzinfo is NYC
 
 
-def test_utils_default_tz_info_aware():
+def test_utils_default_tz_info_aware(NYC):
     dt = datetime(2014, 9, 14, 9, 30, tzinfo=UTC)
     assert utils.default_tzinfo(dt, NYC).tzinfo is UTC
 

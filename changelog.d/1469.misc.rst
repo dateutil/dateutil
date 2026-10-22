@@ -1,1 +1,0 @@
-Update ``darker`` to 1.7.2. (gh pr #1469)
