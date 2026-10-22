@@ -1,0 +1,4 @@
+Fixed ``dateutil.parser.parse`` failing on ISO 8601 dot-separated times of
+day, e.g. ``"2016-04-14T2.06.51 PM+07:00"`` or ``"2016-04-14T14.06.51"``
+(issue #252). ``HH.MM.SS`` is now recognized once the date part is
+complete.

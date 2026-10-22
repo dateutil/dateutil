@@ -462,6 +462,15 @@ class ParserTest(unittest.TestCase):
                          datetime(2003, 9, 25, 10, 36, 28,
                                   tzinfo=self.brsttz))
 
+    def testDotSeparatedTime(self):
+        # ISO 8601 allows '.' as a time separator (issue #252).
+        self.assertEqual(parse("2016-04-14T14.06.51"),
+                         datetime(2016, 4, 14, 14, 6, 51))
+        res = parse("2016-04-14T2.06.51 PM+07:00")
+        self.assertEqual(res.replace(tzinfo=None),
+                         datetime(2016, 4, 14, 14, 6, 51))
+        self.assertEqual(res.tzinfo.utcoffset(res), timedelta(hours=7))
+
     def testDateCommandFormatWithLong(self):
         if PY2:
             self.assertEqual(parse("Thu Sep 25 10:36:28 BRST 2003",

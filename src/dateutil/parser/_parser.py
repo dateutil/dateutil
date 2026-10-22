@@ -884,7 +884,23 @@ class parser(object):
 
         len_l = len(tokens)
 
-        if (len(ymd) == 3 and len_li in (2, 4) and
+        if (idx + 4 < len_l and tokens[idx + 1] == '.' and
+                tokens[idx + 3] == '.' and
+                len(ymd) == 3 and res.hour is None and
+                len(value_repr) <= 2 and
+                len(tokens[idx + 2]) == 2 and tokens[idx + 2].isdigit() and
+                1 <= len(tokens[idx + 4]) <= 2 and
+                tokens[idx + 4].isdigit()):
+            # HH.MM.SS (ISO 8601 dot-separated time, issue #252); the
+            # date must already be complete so this can't shadow
+            # N.N.N date strings. Checked before the T23[59] branch,
+            # which would otherwise grab the hour only.
+            res.hour = int(value_repr)
+            res.minute = int(tokens[idx + 2])
+            res.second = int(tokens[idx + 4])
+            idx += 4
+
+        elif (len(ymd) == 3 and len_li in (2, 4) and
             res.hour is None and
             (idx + 1 >= len_l or
              (tokens[idx + 1] != ':' and
