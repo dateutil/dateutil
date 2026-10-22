@@ -296,6 +296,14 @@ class TestInputTypes(object):
         with pytest.raises(ParserError):
             parse('')
 
+    def test_whitespace_string_invalid(self):
+        with pytest.raises(ParserError):
+            parse('  ')
+
+    def test_no_time_in_string_invalid(self):
+        with pytest.raises(ParserError):
+            parse('  x   y')
+
     def test_none_invalid(self):
         with pytest.raises(TypeError):
             parse(None)
