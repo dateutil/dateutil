@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from . import _tzpath
 from ._tzpath import reset_tzpath
 from .tz import *

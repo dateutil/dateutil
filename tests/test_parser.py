@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import itertools
 import sys
 import unittest
@@ -382,7 +380,7 @@ class TestTzinfoInputTypes:
 
     def test_valid_tzinfo_unicode_input(self):
         dstr = "2014 January 19 09:00 UTC"
-        tzinfos = {u"UTC": u"UTC+0"}
+        tzinfos = {"UTC": "UTC+0"}
         expected = datetime(2014, 1, 19, 9, tzinfo=tz.tzstr("UTC+0"))
         res = parse(dstr, tzinfos=tzinfos)
         self.assert_equal_same_tz(res, expected)
@@ -391,7 +389,7 @@ class TestTzinfoInputTypes:
         dstr = "2014 January 19 09:00 UTC"
 
         def tzinfos(*args, **kwargs):
-            return u"UTC+0"
+            return "UTC+0"
 
         expected = datetime(2014, 1, 19, 9, tzinfo=tz.tzstr("UTC+0"))
         res = parse(dstr, tzinfos=tzinfos)
@@ -399,8 +397,8 @@ class TestTzinfoInputTypes:
 
     def test_valid_tzinfo_int_input(self):
         dstr = "2014 January 19 09:00 UTC"
-        tzinfos = {u"UTC": -28800}
-        expected = datetime(2014, 1, 19, 9, tzinfo=tz.tzoffset(u"UTC", -28800))
+        tzinfos = {"UTC": -28800}
+        expected = datetime(2014, 1, 19, 9, tzinfo=tz.tzoffset("UTC", -28800))
         res = parse(dstr, tzinfos=tzinfos)
         self.assert_equal_same_tz(res, expected)
 

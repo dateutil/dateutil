@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from ._common import NotAValue
 
 import calendar
@@ -229,21 +228,27 @@ class RelativeDeltaTest(unittest.TestCase):
                          datetime(2001, 1, 1))
 
     def testAdditionFloatFractionals(self):
-        self.assertEqual(datetime(2000, 1, 1, 0) +
-                         relativedelta(days=float(0.5)),
-                         datetime(2000, 1, 1, 12))
-        self.assertEqual(datetime(2000, 1, 1, 0, 0) +
-                         relativedelta(hours=float(0.5)),
-                         datetime(2000, 1, 1, 0, 30))
-        self.assertEqual(datetime(2000, 1, 1, 0, 0, 0) +
-                         relativedelta(minutes=float(0.5)),
-                         datetime(2000, 1, 1, 0, 0, 30))
-        self.assertEqual(datetime(2000, 1, 1, 0, 0, 0, 0) +
-                         relativedelta(seconds=float(0.5)),
-                         datetime(2000, 1, 1, 0, 0, 0, 500000))
-        self.assertEqual(datetime(2000, 1, 1, 0, 0, 0, 0) +
-                         relativedelta(microseconds=float(500000.25)),
-                         datetime(2000, 1, 1, 0, 0, 0, 500000))
+        self.assertEqual(
+            datetime(2000, 1, 1, 0) + relativedelta(days=0.5),
+            datetime(2000, 1, 1, 12),
+        )
+        self.assertEqual(
+            datetime(2000, 1, 1, 0, 0) + relativedelta(hours=0.5),
+            datetime(2000, 1, 1, 0, 30),
+        )
+        self.assertEqual(
+            datetime(2000, 1, 1, 0, 0, 0) + relativedelta(minutes=0.5),
+            datetime(2000, 1, 1, 0, 0, 30),
+        )
+        self.assertEqual(
+            datetime(2000, 1, 1, 0, 0, 0, 0) + relativedelta(seconds=0.5),
+            datetime(2000, 1, 1, 0, 0, 0, 500000),
+        )
+        self.assertEqual(
+            datetime(2000, 1, 1, 0, 0, 0, 0)
+            + relativedelta(microseconds=500000.25),
+            datetime(2000, 1, 1, 0, 0, 0, 500000),
+        )
 
     def testSubtraction(self):
         self.assertEqual(relativedelta(days=10) -

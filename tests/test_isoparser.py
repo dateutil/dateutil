@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from datetime import datetime, timedelta, date, time
 import itertools as it
 
@@ -302,7 +300,7 @@ def test_isoparser_invalid_sep(sep):
 )
 def test_isoparser_byte_sep():
     dt = datetime(2017, 12, 6, 12, 30, 45)
-    dt_str = dt.isoformat(sep=str('T'))
+    dt_str = dt.isoformat(sep="T")
 
     dt_rt = isoparser(sep=b'T').isoparse(dt_str)
 
