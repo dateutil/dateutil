@@ -1,0 +1,3 @@
+Honour dayfirst when parsing DDMMYYY strings.
+
+Reported by @jmartens (gh issue #1163). Fixed by @nicoe (gh pr #1296)

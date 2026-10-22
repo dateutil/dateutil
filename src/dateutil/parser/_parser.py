@@ -913,11 +913,25 @@ class parser(object):
                 res.second, res.microsecond = self._parsems(s[4:])
 
         elif len_li in (8, 12, 14):
-            # YYYYMMDD
+            # YYYYMMDD or DDMMYYYY
             s = tokens[idx]
-            ymd.append(s[:4], 'Y')
-            ymd.append(s[4:6])
-            ymd.append(s[6:8])
+
+            if info.dayfirst:
+                year_slice = slice(4, 8)
+                month_slice = slice(2, 4)
+                day_slice = slice(0, 2)
+            elif info.yearfirst:
+                year_slice = slice(0, 4)
+                month_slice = slice(4, 6)
+                day_slice = slice(6, 8)
+            else:
+                # For backward compatibility no info means YYYYMMDD
+                year_slice = slice(0, 4)
+                month_slice = slice(4, 6)
+                day_slice = slice(6, 8)
+            ymd.append(s[year_slice])
+            ymd.append(s[month_slice])
+            ymd.append(s[day_slice])
 
             if len_li > 8:
                 res.hour = int(s[8:10])
