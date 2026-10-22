@@ -97,11 +97,10 @@ date out of the "date" unix system command. Here is the code:
 
 .. doctest:: readmeexample
 
-    >>> from dateutil.relativedelta import *
-    >>> from dateutil.easter import *
-    >>> from dateutil.rrule import *
-    >>> from dateutil.parser import *
-    >>> from datetime import *
+    >>> from dateutil.relativedelta import relativedelta
+    >>> from dateutil.easter import easter
+    >>> from dateutil.rrule import rrule, YEARLY, FR
+    >>> from dateutil.parser import parse
     >>> now = parse("Sat Oct 11 17:13:46 UTC 2003")
     >>> today = now.date()
     >>> year = rrule(YEARLY,dtstart=now,bymonth=8,bymonthday=13,byweekday=FR)[0].year
