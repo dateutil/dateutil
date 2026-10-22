@@ -305,7 +305,8 @@ class isoparser(object):
             The year in the ISO calendar
 
         :param week:
-            The week in the ISO calendar - range is [1, 53]
+            The week in the ISO calendar - range is [1, 53]. Week 53 is only
+            valid for years that actually have a 53rd ISO week.
 
         :param day:
             The day in the ISO calendar - range is [1 (MON), 7 (SUN)]
@@ -322,6 +323,12 @@ class isoparser(object):
         # Get week 1 for the specific year:
         jan_4 = date(year, 1, 4)   # Week 1 always has January 4th in it
         week_1 = jan_4 - timedelta(days=jan_4.isocalendar()[2] - 1)
+
+        # Not every year has a week 53: December 28th is always in the last
+        # ISO week of the year, so its ISO week number is the number of weeks
+        # in the year.
+        if week > date(year, 12, 28).isocalendar()[1]:
+            raise ValueError("Invalid week {} for year {}".format(week, year))
 
         # Now add the specific number of weeks and days to get what we want
         week_offset = (week - 1) * 7 + (day - 1)

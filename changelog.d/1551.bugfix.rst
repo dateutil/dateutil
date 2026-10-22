@@ -1,0 +1,1 @@
+Fixed ``isoparse`` accepting ISO week dates with a week number that does not exist in the given year (e.g. ``2021-W53``), which silently rolled over into a date in the following year instead of raising ``ValueError``. Reported by @Ev2geny (gh issue #1236). Fixed by @abhijeet117 (gh pr #1551).
