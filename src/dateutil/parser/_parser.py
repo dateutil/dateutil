@@ -935,6 +935,25 @@ class parser(object):
                 # already set?
                 self._assign_hms(res, value_repr, hms)
 
+        elif (
+            len_li == 4
+            and value > 23
+            and value_repr.isdigit()
+            and idx + 4 < len_l
+            and tokens[idx + 1] == ":"
+            and tokens[idx + 3] == ":"
+            and len(tokens[idx + 2]) == len(tokens[idx + 4]) == 2
+            and tokens[idx + 2].isdigit()
+            and tokens[idx + 4].isdigit()
+        ):
+            # EXIF YYYY:MM:DD. Label the month explicitly so dayfirst does
+            # not change the fixed field order. Keep valid padded hours
+            # (e.g. 0009:03:29) on the time parsing path below.
+            ymd.append(value_repr, "Y")
+            ymd.append(tokens[idx + 2], "M")
+            ymd.append(tokens[idx + 4], "D")
+            idx += 4
+
         elif idx + 2 < len_l and tokens[idx + 1] == ':':
             # HH:MM[:SS[.ss]]
             res.hour = int(value)
