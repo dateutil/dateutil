@@ -867,21 +867,6 @@ class _ttinfo(object):
 _NO_TTINFO = _ttinfo(None, None, None)
 
 
-def _unpack(t):
-    # Python 2-specific backport for x, *y = t
-    return t[0], t[1:]
-
-
-# re.ASCII does not exist on Python 2, where str patterns are ASCII-only
-# anyway (and unicode patterns are too unless re.UNICODE is passed).
-_RE_ASCII = getattr(re, "ASCII", 0)
-
-
-def _fullmatch(pattern, string, flags=0):
-    # Python 2-specific backport of re.fullmatch
-    return re.match(r"(?:%s)\Z" % pattern, string, flags)
-
-
 def _parse_tz_str(tz_str):
     # The tz string has the format:
     #
@@ -894,8 +879,7 @@ def _parse_tz_str(tz_str):
     #
     # The format of the offset is ``[+|-]hh[:mm[:ss]]``
 
-    # TODO: When we drop Python 2, this should be offset_str, *start_end_str = ...
-    offset_str, start_end_str = _unpack(tz_str.split(",", 1))
+    offset_str, *start_end_str = tz_str.split(",", 1)
 
     parser_re = (
         r"(?P<std>[a-zA-Z]+|<[a-zA-Z0-9+-]+>)"
@@ -908,7 +892,7 @@ def _parse_tz_str(tz_str):
         r")?"  # stdoff
     )
 
-    m = _fullmatch(parser_re, offset_str, _RE_ASCII)
+    m = re.fullmatch(parser_re, offset_str, re.ASCII)
 
     if m is None:
         raise ValueError("%s is not a valid TZ string" % tz_str)
@@ -962,11 +946,11 @@ def _parse_tz_str(tz_str):
 
 
 def _parse_dst_start_end(dststr):
-    date, time = _unpack(dststr.split("/", 1))
+    date, *time = dststr.split("/", 1)
     date_type = date[:1]
     if date_type == "M":
         n_is_julian = False
-        m = _fullmatch(r"M(\d{1,2})\.(\d)\.(\d)", date, _RE_ASCII)
+        m = re.fullmatch(r"M(\d{1,2})\.(\d)\.(\d)", date, re.ASCII)
         if m is None:
             raise ValueError("Invalid dst start/end date: %s" % dststr)
         date_offset = tuple(map(int, m.groups()))
@@ -978,7 +962,7 @@ def _parse_dst_start_end(dststr):
         else:
             n_is_julian = False
 
-        if _fullmatch(r"\d{1,3}", date, _RE_ASCII) is None:
+        if re.fullmatch(r"\d{1,3}", date, re.ASCII) is None:
             raise ValueError("Invalid dst start/end date: %s" % dststr)
         doy = int(date)
         offset = _DayOffset(doy, n_is_julian)
@@ -992,10 +976,10 @@ def _parse_dst_start_end(dststr):
 
 
 def _parse_transition_time(time_str):
-    match = _fullmatch(
+    match = re.fullmatch(
         r"(?P<sign>[+-])?(?P<h>\d{1,3})(:(?P<m>\d{2})(:(?P<s>\d{2}))?)?",
         time_str,
-        _RE_ASCII,
+        re.ASCII,
     )
     if match is None:
         raise ValueError("Invalid time: %s" % time_str)
@@ -1012,10 +996,10 @@ def _parse_transition_time(time_str):
 
 
 def _parse_tz_delta(tz_delta):
-    match = _fullmatch(
+    match = re.fullmatch(
         r"(?P<sign>[+-])?(?P<h>\d{1,3})(:(?P<m>\d{2})(:(?P<s>\d{2}))?)?",
         tz_delta,
-        _RE_ASCII,
+        re.ASCII,
     )
     # Anything passed to this function should already have hit an equivalent
     # regular expression to find the section to parse.
