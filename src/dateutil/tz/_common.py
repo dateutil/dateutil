@@ -410,9 +410,6 @@ class tzrangebase(_tzinfo):
 
     __hash__ = None
 
-    def __ne__(self, other):
-        return not (self == other)
-
     def __repr__(self):
         return "%s(...)" % self.__class__.__name__
 

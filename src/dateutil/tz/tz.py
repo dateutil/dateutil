@@ -122,9 +122,6 @@ class tzutc(datetime.tzinfo):
 
     __hash__ = None
 
-    def __ne__(self, other):
-        return not (self == other)
-
     def __repr__(self):
         return "%s()" % self.__class__.__name__
 
@@ -194,9 +191,6 @@ class tzoffset(datetime.tzinfo):
         return self._offset == other._offset
 
     __hash__ = None
-
-    def __ne__(self, other):
-        return not (self == other)
 
     def __repr__(self):
         return "%s(%s, %s)" % (self.__class__.__name__,
@@ -323,9 +317,6 @@ class tzlocal(_tzinfo):
             return NotImplemented
 
     __hash__ = None
-
-    def __ne__(self, other):
-        return not (self == other)
 
     def __repr__(self):
         return "%s()" % self.__class__.__name__
