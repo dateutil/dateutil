@@ -253,6 +253,34 @@ class RelativeDeltaTest(unittest.TestCase):
                          relativedelta(years=-1, months=-2, days=7, hours=-4,
                                        minutes=-5, microseconds=-6))
 
+    def testLeapdaysArithmetic(self):
+        # leapdays is a relative field: it must follow the same
+        # arithmetic as days/hours/etc, so that addition has an
+        # additive inverse and subtraction cancels out.
+        r = relativedelta(days=1, leapdays=1)
+        self.assertEqual(-r, relativedelta(days=-1, leapdays=-1))
+        self.assertEqual(r + (-r), relativedelta())
+        self.assertEqual(r - r, relativedelta())
+        self.assertEqual(
+            relativedelta(leapdays=0) - relativedelta(leapdays=1),
+            relativedelta(leapdays=-1),
+        )
+        self.assertEqual(
+            relativedelta(leapdays=2) + relativedelta(leapdays=1),
+            relativedelta(leapdays=3),
+        )
+        self.assertEqual(
+            abs(relativedelta(leapdays=-1)), relativedelta(leapdays=1)
+        )
+        # The arithmetic must also hold when applied to a date:
+        # (d + r) - r == d in a leap year, where leapdays actually
+        # shifts the result.
+        d = date(2000, 3, 1)
+        self.assertEqual((d + r) - r, d)
+        # and in a common year, where leapdays has no effect.
+        d2 = date(2001, 3, 1)
+        self.assertEqual((d2 + r) - r, d2)
+
     def testRightSubtractionFromDatetime(self):
         self.assertEqual(datetime(2000, 1, 2) - relativedelta(days=1),
                          datetime(2000, 1, 1))
