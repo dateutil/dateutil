@@ -15,7 +15,6 @@ on:
         default: false
 
 env:
-  pypi-hosts: "pypi.python.org pypi.org files.pythonhosted.org"
   TZDATA_VERSION: "2024a"
 
 jobs:
@@ -53,9 +52,6 @@ jobs:
     strategy:
       matrix:
         python-version: [
-          "3.8",
-          "3.9",
-          "3.10",
           "3.11",
           "3.12",
           "3.13",
@@ -63,45 +59,12 @@ jobs:
           "3.14t",
           "3.15",
           "3.15t",
-          "pypy-2.7",
-          "pypy-3.8",
         ]
         os: [ubuntu-latest, windows-latest, macos-latest]
-        include:
-          # Older versions (<=3.7) are included separately since they need
-          # special handling (using an older os or a container)
-          - os: "macos-15-intel"
-            python-version: "3.5"
-          - os: "macos-15-intel"
-            python-version: "3.6"
-          - os: "macos-15-intel"
-            python-version: "3.7"
-          - os: "windows-latest"
-            python-version: "3.5"
-          - os: "windows-latest"
-            python-version: "3.6"
-          - os: "windows-latest"
-            python-version: "3.7"
-          - os: "ubuntu-latest"
-            python-version: "2.7"
-            use-container: true
-          - os: "ubuntu-latest"
-            python-version: "3.5"
-            use-container: true
-          - os: "ubuntu-latest"
-            python-version: "3.6"
-            use-container: true
-          - os: "ubuntu-latest"
-            python-version: "3.7"
-            use-container: true
     runs-on: ${{ matrix.os }}
     needs: [build-tzdata, build-dist]
-    container:
-      image: ${{ matrix.use-container && format('python:{0}', matrix.python-version) || '' }}
     env:
       TOXENV: py
-      PIP_TRUSTED_HOST: pypi.python.org
-      SUDO: ${{ !matrix.use-container && 'sudo' || '' }}
       TZ: ${{ !startsWith(matrix.os, 'windows-latest') && 'America/New_York' || null }}
     steps:
       - name: Checkout code
@@ -109,14 +72,11 @@ jobs:
       - name: Set timezone (Windows)
         if: startsWith(matrix.os, 'windows-latest')
         run: tzutil /s "Eastern Standard Time"
-      - if: ${{ !matrix.use-container }}
-        name: Set up Python ${{ matrix.python-version }} on ${{ matrix.os }} (non-containers)
+      - name: Set up Python ${{ matrix.python-version }} on ${{ matrix.os }}
         uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
           allow-prereleases: true
-        env:
-          PIP_TRUSTED_HOST: ${{ contains(fromJson('["2.7", "3.5", "3.6", "3.7"]'), matrix.python-version) && env.pypi-hosts || '' }}
       - name: Download distributions
         uses: actions/download-artifact@v8
         with:
@@ -130,8 +90,8 @@ jobs:
           path: tzdata_download
       - name: Install specific tzdata version
         run: |
-          $SUDO rm -rf /usr/share/zoneinfo
-          $SUDO mv tzdata_download /usr/share/zoneinfo
+          sudo rm -rf /usr/share/zoneinfo
+          sudo mv tzdata_download /usr/share/zoneinfo
 
           head -n 1 /usr/share/zoneinfo/tzdata.zi
         if: startsWith(matrix.os, 'ubuntu')
@@ -159,9 +119,6 @@ jobs:
     strategy:
       matrix:
         python-version: [
-          "3.8",
-          "3.9",
-          "3.10",
           "3.11",
           "3.12",
           "3.13",
@@ -169,38 +126,20 @@ jobs:
           "3.14t",
           "3.15",
           "3.15t",
-          "pypy-2.7",
-          "pypy-3.8",
         ]
-        include:
-          - python-version: "2.7"
-            use-container: true
-          - python-version: "3.5"
-            use-container: true
-          - python-version: "3.6"
-            use-container: true
-          - python-version: "3.7"
-            use-container: true
     runs-on: ubuntu-latest
     needs: [build-tzdata, build-dist]
-    container:
-      image: ${{ matrix.use-container && format('python:{0}', matrix.python-version) || '' }}
     env:
       TOXENV: py
-      PIP_TRUSTED_HOST: pypi.python.org
-      SUDO: ${{ !matrix.use-container && 'sudo' || '' }}
       TZ: America/New_York
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
-      - if: ${{ !matrix.use-container }}
-        name: Set up Python ${{ matrix.python-version }} (non-containers)
+      - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
           allow-prereleases: true
-        env:
-          PIP_TRUSTED_HOST: ${{ contains(fromJson('["2.7", "3.5", "3.6", "3.7"]'), matrix.python-version) && env.pypi-hosts || '' }}
       - name: Download distributions
         uses: actions/download-artifact@v8
         with:
@@ -213,17 +152,12 @@ jobs:
           path: tzdata_download
       - name: Install specific tzdata version
         run: |
-          $SUDO rm -rf /usr/share/zoneinfo
-          $SUDO mv tzdata_download /usr/share/zoneinfo
+          sudo rm -rf /usr/share/zoneinfo
+          sudo mv tzdata_download /usr/share/zoneinfo
 
           head -n 1 /usr/share/zoneinfo/tzdata.zi
       - name: Install dependencies
-        env:
-          # tox 4.8, the newest tox that supports Python 3.7, deadlocks on exit
-          # when it is given an sdist: its build backend process is waiting for
-          # a command while tox is waiting for that process to exit.
-          TOX_SPEC: ${{ matrix.python-version == '3.7' && 'tox<4' || 'tox' }}
-        run: python -m pip install -U "$TOX_SPEC"
+        run: python -m pip install -U tox
       # tox installs the sdist with pip, as a user would with --no-binary.
       - name: Run tox on the sdist
         run: python -m tox --installpkg "$(ls dist/*.tar.gz)"
