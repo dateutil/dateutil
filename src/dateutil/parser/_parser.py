@@ -935,6 +935,22 @@ class parser(object):
                 # already set?
                 self._assign_hms(res, value_repr, hms)
 
+        elif (idx + 4 < len_l and tokens[idx + 1] == ':'
+              and tokens[idx + 3] == ':'
+              and value_repr.isdigit() and int(value) > 23
+              and tokens[idx + 2].isdigit()
+              and tokens[idx + 4].isdigit()
+              and not ymd):
+            # YYYY:MM:DD - a colon-separated date whose first component
+            # is too large to be an hour.  Without this, the string is
+            # misread as HH:MM:SS and the date is lost (or rejected
+            # because the "hour" is out of range).
+            ymd.append(value_repr)
+            ymd.append(tokens[idx + 2])
+            ymd.append(tokens[idx + 4])
+
+            idx += 4
+
         elif idx + 2 < len_l and tokens[idx + 1] == ':':
             # HH:MM[:SS[.ss]]
             res.hour = int(value)
