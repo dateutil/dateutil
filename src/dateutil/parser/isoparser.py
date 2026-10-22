@@ -10,6 +10,7 @@ ISO-8601 specification.
 from datetime import datetime, timedelta, time, date
 import calendar
 from dateutil import tz
+from dateutil.parser._parser import _round_fraction_to_us
 
 from functools import wraps
 
@@ -366,8 +367,12 @@ class isoparser(object):
                 if not frac:
                     continue
 
-                us_str = frac.group(1)[:6]  # Truncate to microseconds
-                components[comp] = int(us_str) * 10**(6 - len(us_str))
+                us_raw = frac.group(1)
+                if isinstance(us_raw, bytes):
+                    us_raw = us_raw.decode('ascii')
+                seconds, microseconds = _round_fraction_to_us(components[2], us_raw)
+                components[2] = seconds
+                components[comp] = microseconds
                 pos += len(frac.group())
 
         if pos < len_str:
