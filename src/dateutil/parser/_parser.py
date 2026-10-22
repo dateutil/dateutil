@@ -52,7 +52,7 @@ __all__ = ["parse", "parserinfo", "ParserError"]
 # TODO: pandas.core.tools.datetimes imports this explicitly.  Might be worth
 # making public and/or figuring out if there is something we can
 # take off their plate.
-class _timelex(object):
+class _timelex:
     # Fractional seconds are sometimes split by a comma
     _split_decimal = re.compile("([.,])")
 
@@ -211,7 +211,7 @@ class _timelex(object):
         return nextchar.isspace()
 
 
-class _resultbase(object):
+class _resultbase:
 
     def __init__(self):
         for attr in self.__slots__:
@@ -233,7 +233,7 @@ class _resultbase(object):
         return self._repr(self.__class__.__name__)
 
 
-class parserinfo(object):
+class parserinfo:
     """
     Class which handles what inputs are accepted. Subclass this to customize
     the language and acceptable values for each parameter.
@@ -560,7 +560,7 @@ class _ymd(list):
         return year, month, day
 
 
-class parser(object):
+class parser:
     def __init__(self, info=None):
         self.info = info or parserinfo()
 
@@ -1363,7 +1363,7 @@ def parse(timestr, parserinfo=None, **kwargs):
         return DEFAULTPARSER.parse(timestr, **kwargs)
 
 
-class _tzparser(object):
+class _tzparser:
 
     class _result(_resultbase):
 

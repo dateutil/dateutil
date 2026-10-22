@@ -186,7 +186,7 @@ def get_timezone_tuple(dt):
 
 ###
 # Mix-ins
-class context_passthrough(object):
+class context_passthrough:
     def __init__(*args, **kwargs):
         pass
 
@@ -197,7 +197,7 @@ class context_passthrough(object):
         pass
 
 
-class TzFoldMixin(object):
+class TzFoldMixin:
     """ Mix-in class for testing ambiguous times """
     def gettz(self, tzname):
         raise NotImplementedError
@@ -454,11 +454,11 @@ class TzFoldMixin(object):
             self.assertEqual(t0_syd0, t0_syd1)
 
 
-class TzWinFoldMixin(object):
+class TzWinFoldMixin:
     def get_args(self, tzname):
         return (tzname, )
 
-    class context(object):
+    class context:
         def __init__(*args, **kwargs):
             pass
 

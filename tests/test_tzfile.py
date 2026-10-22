@@ -323,14 +323,14 @@ SECOND = timedelta(seconds=1)
 
 
 @attr.s
-class ZoneOffset(object):
+class ZoneOffset:
     tzname = attr.ib()
     utcoffset = attr.ib()
     dst = attr.ib(default=ZERO)
 
 
 @attr.s
-class ZoneTransition(object):
+class ZoneTransition:
     transition = attr.ib()
     offset_before = attr.ib()
     offset_after = attr.ib()
@@ -383,7 +383,7 @@ class ZoneTransition(object):
 
 
 @attr.frozen
-class ExpectedTransition(object):
+class ExpectedTransition:
     key = attr.ib()
     dt = attr.ib()
     fold = attr.ib()
@@ -1555,7 +1555,7 @@ def test_tzfile_from_pipe():
 def test_tzfile_from_read_only_object():
     """A zone can be read from an object that only has a read() method."""
 
-    class ReadOnly(object):
+    class ReadOnly:
         def __init__(self, data):
             self._stream = io.BytesIO(data)
 

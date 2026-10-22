@@ -38,7 +38,7 @@ def _takes_ascii(f):
     return func
 
 
-class isoparser(object):
+class isoparser:
     def __init__(self, sep=None):
         """
         :param sep:

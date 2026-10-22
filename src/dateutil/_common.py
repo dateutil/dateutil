@@ -3,7 +3,7 @@ Common code used in multiple modules.
 """
 
 
-class weekday(object):
+class weekday:
     __slots__ = ["weekday", "n"]
 
     def __init__(self, weekday, n=None):

@@ -4869,7 +4869,7 @@ class WeekdayTest(unittest.TestCase):
     def testWeekdayEqualitySubclass(self):
         # Two weekday objects equal if their "weekday" and "n" attributes are
         # available and the same
-        class BasicWeekday(object):
+        class BasicWeekday:
             def __init__(self, weekday):
                 self.weekday = weekday
 

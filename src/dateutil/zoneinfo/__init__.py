@@ -62,7 +62,7 @@ warnings.warn(
 
 tzfile = _tzfile
 
-class ZoneInfoFile(object):
+class ZoneInfoFile:
     def __init__(self, zonefile_stream=None):
         if zonefile_stream is not None:
             self._load_legacy_zonefile_stream(zonefile_stream)

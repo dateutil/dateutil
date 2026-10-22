@@ -85,7 +85,7 @@ def _invalidates_cache(f):
     return inner_func
 
 
-class rrulebase(object):
+class rrulebase:
     def __init__(self, cache=False):
         if cache:
             self._cache = []
@@ -1127,7 +1127,7 @@ class rrule(rrulebase):
                 return (accumulator, value)
 
 
-class _iterinfo(object):
+class _iterinfo:
     __slots__ = ["rrule", "lastyear", "lastmonth",
                  "yearlen", "nextyearlen", "yearordinal", "yearweekday",
                  "mmask", "mrange", "mdaymask", "nmdaymask",
@@ -1330,7 +1330,7 @@ class rruleset(rrulebase):
     :param cache: If True, caching of results will be enabled, improving
                   performance of multiple queries considerably. """
 
-    class _genitem(object):
+    class _genitem:
         def __init__(self, genlist, gen):
             try:
                 self.dt = next(gen)
@@ -1430,7 +1430,7 @@ class rruleset(rrulebase):
         self._len = total
 
 
-class _rrulestr(object):
+class _rrulestr:
     """ Parses a string representation of a recurrence rule or set of
     recurrence rules.
 
