@@ -6,7 +6,6 @@
 
 from __future__ import annotations
 
-import argparse
 import asyncio
 import base64
 import gzip
@@ -19,7 +18,6 @@ import struct
 import subprocess
 import tempfile
 import urllib.parse
-from collections.abc import Mapping
 from typing import Final
 
 IANA_LATEST_LOCATION: Final[str] = (

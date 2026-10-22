@@ -9,11 +9,9 @@ timezone.
 """
 
 import _thread
-import bisect
 import contextlib
 import datetime
 import os
-import struct
 import time
 import warnings
 import weakref
@@ -29,9 +27,6 @@ try:
     from .win import tzwin, tzwinlocal
 except ImportError:
     tzwin = tzwinlocal = None
-
-# For warning about rounding tzinfo
-from warnings import warn
 
 ZERO = datetime.timedelta(0)
 EPOCH = datetime.datetime(1970, 1, 1, 0, 0)

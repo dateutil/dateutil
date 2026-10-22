@@ -21,7 +21,7 @@ import pytest
 
 from dateutil import tz
 
-from ._common import TZPATH_LOCK, pop_tzdata_modules, set_tzpath
+from ._common import set_tzpath
 
 IS_WIN = sys.platform.startswith("win")
 
