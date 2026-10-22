@@ -31,39 +31,9 @@ EPOCHORDINAL = EPOCH.toordinal()
 # hits, but specifically crafted ZoneInfo objects don't leak arbitrary amounts
 # of memory.
 _TIMEDELTA_CACHE_SIZE = 512
-if six.PY2:
-
-    def _cache_load_timedelta(f):
-        from collections import OrderedDict
-
-        from six.moves import _thread
-
-        CACHE_LOCK = _thread.allocate_lock()
-        TIMEDELTA_CACHE = OrderedDict()
-
-        @functools.wraps(f)
-        def cached_load_timedelta(seconds):
-            # OrderedDict is implemented in Python on Python 2, so every
-            # access has to hold the lock to keep its linked list intact.
-            with CACHE_LOCK:
-                rv = TIMEDELTA_CACHE.pop(seconds, None)
-                if rv is None:
-                    rv = f(seconds)
-
-                TIMEDELTA_CACHE[seconds] = rv
-
-                if len(TIMEDELTA_CACHE) > _TIMEDELTA_CACHE_SIZE:
-                    TIMEDELTA_CACHE.popitem(last=False)
-
-            return rv
-
-        return cached_load_timedelta
-
-else:
-    _cache_load_timedelta = functools.lru_cache(maxsize=512)
 
 
-@_cache_load_timedelta
+@functools.lru_cache(maxsize=_TIMEDELTA_CACHE_SIZE)
 def _load_timedelta(seconds):
     return timedelta(seconds=seconds)
 
