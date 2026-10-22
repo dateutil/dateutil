@@ -3,21 +3,8 @@ import sys
 import unittest
 
 import pytest
-import six
 
 MODULE_TYPE = type(sys)
-
-
-# Tests live in datetutil/test which cause a RuntimeWarning for Python2 builds.
-# But since we expect lazy imports tests to fail for Python < 3.7  we'll ignore those
-# warnings with this filter.
-
-if six.PY2:
-    filter_import_warning = pytest.mark.filterwarnings("ignore::RuntimeWarning")
-else:
-
-    def filter_import_warning(f):
-        return f
 
 
 @pytest.fixture(scope="function")
@@ -48,20 +35,17 @@ def clean_import():
         sys.modules[mod_name] = mod
 
 
-@filter_import_warning
 @pytest.mark.parametrize(
     "module",
     ["easter", "parser", "relativedelta", "rrule", "tz", "utils"],
 )
 def test_lazy_import(clean_import, module):
-    """Test that dateutil.[submodule] works for py version > 3.7"""
+    """Test that dateutil.[submodule] loads lazily"""
 
     import importlib
 
     import dateutil
 
-    if sys.version_info < (3, 7):
-        pytest.xfail("Lazy loading does not work for Python < 3.7")
 
     mod_obj = getattr(dateutil, module, None)
     assert isinstance(mod_obj, MODULE_TYPE)
@@ -82,8 +66,6 @@ def assert_warned_from_this_file(record):
 
 def test_lazy_import_zoneinfo(clean_import):
     """Test that zoneinfo raises a DeprecationWarning when imported lazily."""
-    if sys.version_info < (3, 7):
-        pytest.xfail("Lazy loading does not work for Python < 3.7")
 
     import dateutil
 
