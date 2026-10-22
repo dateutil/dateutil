@@ -95,7 +95,7 @@ years/months/days/etc, before the next easter happening on a
 year with a Friday 13th in August, and you want to get today's
 date out of the "date" unix system command. Here is the code:
 
-.. doctest:: readmeexample
+.. code-block:: python
 
     >>> from dateutil.relativedelta import *
     >>> from dateutil.easter import *
