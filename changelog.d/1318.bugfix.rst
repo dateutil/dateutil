@@ -1,0 +1,4 @@
+``relativedelta`` multiplication no longer truncates the fractional part of the
+``days``, ``hours``, ``minutes``, ``seconds`` and ``microseconds`` fields, so for
+example ``relativedelta(days=1.5) * 1`` correctly stays ``days=1.5`` instead of
+becoming ``days=1``. ``years`` and ``months`` remain integral, as before.
