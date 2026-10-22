@@ -794,7 +794,7 @@ def _load_data(fobj):
 _DST_CONSENSUS_WINDOW = 10 * 365 * 86400
 
 
-class _TZifHeader(object):
+class _TZifHeader:
     __slots__ = [
         "version",
         "isutcnt",
@@ -831,7 +831,7 @@ class _TZifHeader(object):
         return cls(*args)
 
 
-class _ttinfo(object):
+class _ttinfo:
     __slots__ = ["utcoff", "dstoff", "tzname"]
 
     def __init__(self, utcoff, dstoff, tzname):
@@ -1014,7 +1014,7 @@ def _parse_tz_delta(tz_delta):
     return total
 
 
-class _TZStr(object):
+class _TZStr:
     __slots__ = (
         "std",
         "dst",
@@ -1209,7 +1209,7 @@ def _post_epoch_days_before_year(year):
     return y * 365 + y // 4 - y // 100 + y // 400 + 1 - EPOCHORDINAL
 
 
-class _DayOffset(object):
+class _DayOffset:
     __slots__ = ["d", "julian", "hour", "minute", "second"]
 
     def __init__(self, d, julian, hour=2, minute=0, second=0):
@@ -1241,7 +1241,7 @@ class _DayOffset(object):
         return epoch
 
 
-class _CalendarOffset(object):
+class _CalendarOffset:
     __slots__ = ["m", "w", "d", "hour", "minute", "second"]
 
     _DAYS_BEFORE_MONTH = (

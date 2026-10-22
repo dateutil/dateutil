@@ -581,7 +581,7 @@ class tzstr(tzrange, metaclass=_TzStrFactory):
         return "%s(%s)" % (self.__class__.__name__, repr(self._s))
 
 
-class _tzicalvtzcomp(object):
+class _tzicalvtzcomp:
     def __init__(self, tzoffsetfrom, tzoffsetto, isdst,
                  tzname=None, rrule=None):
         self.tzoffsetfrom = datetime.timedelta(seconds=tzoffsetfrom)
@@ -676,7 +676,7 @@ class _tzicalvtz(_tzinfo):
     __reduce__ = object.__reduce__
 
 
-class tzical(object):
+class tzical:
     """
     This object is designed to parse an iCalendar-style ``VTIMEZONE`` structure
     as set out in `RFC 5545`_ Section 4.6.5 into one or more `tzinfo` objects.
@@ -889,7 +889,7 @@ def __get_gettz():
     if tzwinlocal is not None:
         tzlocal_classes += (tzwinlocal,)
 
-    class GettzFunc(object):
+    class GettzFunc:
         """
         Retrieve a time zone object from a string representation
 

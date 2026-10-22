@@ -40,7 +40,7 @@ def _settzkeyname():
 TZKEYNAME = _settzkeyname()
 
 
-class tzres(object):
+class tzres:
     """
     Class for accessing ``tzres.dll``, which contains timezone name related
     resources.

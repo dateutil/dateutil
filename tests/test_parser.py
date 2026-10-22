@@ -223,7 +223,7 @@ def test_parse_with_tzoffset(dstr, expected):
     assert result == expected
 
 
-class TestFormat(object):
+class TestFormat:
 
     def test_ybd(self):
         # If we have a 4-digit year, a non-numeric month (abbreviated or not),
@@ -291,7 +291,7 @@ class TestFormat(object):
         assert res == expected
 
 
-class TestInputTypes(object):
+class TestInputTypes:
     def test_empty_string_invalid(self):
         with pytest.raises(ParserError):
             parse('')
@@ -308,7 +308,7 @@ class TestInputTypes(object):
         # We want to support arbitrary classes that implement the stream
         # interface.
 
-        class StringPassThrough(object):
+        class StringPassThrough:
             def __init__(self, stream):
                 self.stream = stream
 
@@ -349,7 +349,7 @@ class TestInputTypes(object):
         assert res == expected
 
 
-class TestTzinfoInputTypes(object):
+class TestTzinfoInputTypes:
     def assert_equal_same_tz(self, dt1, dt2):
         assert dt1 == dt2
         assert dt1.tzinfo is dt2.tzinfo
@@ -739,7 +739,7 @@ class ParserTest(unittest.TestCase):
             pytest.fail("Failed to raise ParserError")
 
 
-class TestOutOfBounds(object):
+class TestOutOfBounds:
 
     def test_no_year_zero(self):
         with pytest.raises(ParserError):
@@ -774,7 +774,7 @@ class TestOutOfBounds(object):
             parse(dstr, fuzzy=fuzzy)
 
 
-class TestParseUnimplementedCases(object):
+class TestParseUnimplementedCases:
     @pytest.mark.xfail
     def test_somewhat_ambiguous_string(self):
         # Ref: github issue #487
@@ -892,7 +892,7 @@ class TestParseUnimplementedCases(object):
 
 
 @pytest.mark.skipif(IS_WIN, reason="Windows does not use TZ var")
-class TestTZVar(object):
+class TestTZVar:
     def test_parse_unambiguous_nonexistent_local(self):
         # When dates are specified "EST" even when they should be "EDT" in the
         # local time zone, we should still assign the local time zone
