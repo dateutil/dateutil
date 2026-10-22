@@ -520,6 +520,16 @@ class ParserTest(unittest.TestCase):
                          (datetime(2060, 2, 21, 0, 0, 0),
                          ('http://biz.yahoo.com/ipo/p/', '.html')))
 
+    def testFuzzyWithTokensSkipsLaterTime(self):
+        self.assertEqual(
+            parse(
+                "from 13:45 to 17:15",
+                fuzzy_with_tokens=True,
+                default=self.default,
+            ),
+            (datetime(2003, 9, 25, 13, 45), ('from ', ' to 17:15')),
+        )
+
     def testFuzzyAMPMProblem(self):
         # Sometimes fuzzy parsing results in AM/PM flag being set without
         # hours - if it's fuzzy it should ignore that.
