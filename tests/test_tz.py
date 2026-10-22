@@ -7,7 +7,6 @@ import os
 import pickle
 import sys
 import tempfile
-import threading
 import unittest
 import warnings
 import weakref

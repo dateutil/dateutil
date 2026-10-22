@@ -6,7 +6,6 @@ import sys
 import tempfile
 import threading
 import time
-import warnings
 
 import pytest
 
