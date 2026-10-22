@@ -55,7 +55,6 @@ known_first_party = ["dateutil"]
 known_third_party=[
     "pytest",
     "hypothesis",
-    "six",
     "freezegun",
 ]
 multi_line_output=3

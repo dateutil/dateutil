@@ -1,4 +1,5 @@
 import os
+import subprocess
 import sys
 import unittest
 
@@ -264,3 +265,19 @@ def test_import_zone_info_star(clean_import):
 
     for var in zi_all:
         assert var is not None
+
+
+def test_import_without_six() -> None:
+    """Imports the public modules with six unavailable."""
+    code = """
+import sys
+import warnings
+sys.modules["six"] = None
+from dateutil import easter, parser, relativedelta, rrule, tz, utils
+if sys.platform == "win32":
+    from dateutil import tzwin
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore", DeprecationWarning)
+    from dateutil import zoneinfo
+"""
+    subprocess.run([sys.executable, "-c", code], check=True)

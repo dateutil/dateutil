@@ -6,20 +6,14 @@ including :py:class:`datetime.tzinfo` implementations.
 Attempting to import this module on a non-Windows platform will raise an
 :py:obj:`ImportError`.
 """
+
 # This code was originally contributed by Jeffrey Harris.
+import ctypes
 import datetime
 import os
 import struct
-
-from six import text_type
-from six.moves import winreg
-
-try:
-    import ctypes
-    from ctypes import wintypes
-except ValueError:
-    # ValueError is raised on non-Windows systems for some horrible reason.
-    raise ImportError("Running tzwin on non-Windows system")
+import winreg
+from ctypes import wintypes
 
 from ._common import tzrangebase
 
@@ -224,7 +218,7 @@ class tzwin(tzwinbase):
         self._name = name
 
         with winreg.ConnectRegistry(None, winreg.HKEY_LOCAL_MACHINE) as handle:
-            tzkeyname = text_type("{kn}\\{name}").format(kn=TZKEYNAME, name=name)
+            tzkeyname = "{kn}\\{name}".format(kn=TZKEYNAME, name=name)
             with winreg.OpenKey(handle, tzkeyname) as tzkey:
                 keydict = valuestodict(tzkey)
 
@@ -290,8 +284,7 @@ class tzwinlocal(tzwinbase):
             self._dst_abbr = keydict["DaylightName"]
 
             try:
-                tzkeyname = text_type('{kn}\\{sn}').format(kn=TZKEYNAME,
-                                                          sn=self._std_abbr)
+                tzkeyname = "{kn}\\{sn}".format(kn=TZKEYNAME, sn=self._std_abbr)
                 with winreg.OpenKey(handle, tzkeyname) as tzkey:
                     _keydict = valuestodict(tzkey)
                     self._display = _keydict["Display"]
