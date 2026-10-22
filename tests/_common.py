@@ -114,7 +114,7 @@ class TzSourceMixin:
     tz_source = "tzpath"
 
     def setUp(self):
-        super(TzSourceMixin, self).setUp()
+        super().setUp()
         if self.tz_source is None:
             return
 

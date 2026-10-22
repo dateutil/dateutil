@@ -2592,7 +2592,7 @@ def test_sub_minute_offset_pickle(protocol):
 
 class _DescribedTzfile(tz.tzfile):
     def __init__(self, fileobj, description, **kwargs):
-        super(_DescribedTzfile, self).__init__(fileobj, **kwargs)
+        super().__init__(fileobj, **kwargs)
         self.description = description
 
 

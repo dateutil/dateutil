@@ -187,7 +187,7 @@ class tzlocal(_tzinfo):
     A :class:`tzinfo` subclass built around the ``time`` timezone functions.
     """
     def __init__(self):
-        super(tzlocal, self).__init__()
+        super().__init__()
 
         self._std_offset = datetime.timedelta(seconds=-time.timezone)
         if time.daylight:
@@ -594,7 +594,7 @@ class _tzicalvtzcomp:
 
 class _tzicalvtz(_tzinfo):
     def __init__(self, tzid, comps=[]):
-        super(_tzicalvtz, self).__init__()
+        super().__init__()
 
         self._tzid = tzid
         self._comps = comps

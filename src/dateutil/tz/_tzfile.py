@@ -133,7 +133,7 @@ class tzfile(_tzinfo):
     """
 
     def __init__(self, fileobj, filename=None, key=None):
-        super(tzfile, self).__init__()
+        super().__init__()
 
         file_opened_here = False
         if isinstance(fileobj, str):

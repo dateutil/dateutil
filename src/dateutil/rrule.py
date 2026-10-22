@@ -65,7 +65,7 @@ class weekday(weekdaybase):
         if n == 0:
             raise ValueError("Can't create weekday with n==0")
 
-        super(weekday, self).__init__(wkday, n)
+        super().__init__(wkday, n)
 
 
 MO, TU, WE, TH, FR, SA, SU = weekdays = tuple(weekday(x) for x in range(7))
@@ -97,7 +97,7 @@ class rrulebase:
             self._len = None
 
     def __reduce_ex__(self, protocol):
-        rv = super(rrulebase, self).__reduce_ex__(protocol)
+        rv = super().__reduce_ex__(protocol)
         state, slots = rv[2], None
         if isinstance(state, tuple):
             state, slots = state
@@ -449,7 +449,7 @@ class rrule(rrulebase):
                  byweekno=None, byweekday=None,
                  byhour=None, byminute=None, bysecond=None,
                  cache=False):
-        super(rrule, self).__init__(cache)
+        super().__init__(cache)
         global easter
         if not dtstart:
             if until and until.tzinfo:
@@ -1364,7 +1364,7 @@ class rruleset(rrulebase):
             return self.dt != other.dt
 
     def __init__(self, cache=False):
-        super(rruleset, self).__init__(cache)
+        super().__init__(cache)
         self._rrule = []
         self._rdate = []
         self._exrule = []
