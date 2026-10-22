@@ -388,7 +388,7 @@ class parserinfo:
 
 class _ymd(list):
     def __init__(self, *args, **kwargs):
-        super(self.__class__, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.century_specified = False
         self.dstridx = None
         self.mstridx = None
@@ -433,7 +433,7 @@ class _ymd(list):
                 raise ValueError(label)
             label = 'Y'
 
-        super(self.__class__, self).append(int(val))
+        super().append(int(val))
 
         if label == 'M':
             if self.has_month:
@@ -1593,7 +1593,7 @@ class ParserError(ValueError):
         try:
             return self.args[0] % self.args[1:]
         except (TypeError, IndexError):
-            return super(ParserError, self).__str__()
+            return super().__str__()
 
     def __repr__(self):
         args = ", ".join("'%s'" % arg for arg in self.args)
