@@ -2479,6 +2479,27 @@ class RRuleTest(unittest.TestCase):
                          [datetime(1997, 9, 4, 9, 0),
                           datetime(1997, 9, 2, 9, 0)])
 
+    def testGetItemSliceNegativeBounds(self):
+        # Negative start/stop must behave like list slicing, whether or not
+        # the cache has been filled.
+        def make():
+            return rrule(DAILY, count=3, dtstart=datetime(1997, 9, 2, 9, 0))
+
+        expected = list(make())
+        for item in (
+            slice(-2, None),
+            slice(None, -1),
+            slice(-5, None),
+            slice(-2, -1),
+            slice(None, -5),
+            slice(-3, 2, 2),
+        ):
+            self.assertEqual(make()[item], expected[item], item)
+
+            rr = make()
+            list(rr)
+            self.assertEqual(rr[item], expected[item], item)
+
     def testCount(self):
         self.assertEqual(rrule(DAILY,
                                count=3,
