@@ -33,7 +33,8 @@ To keep users abreast of the changes to the module and to give proper credit, `d
 - `feature`: A new feature, (e.g. a new function, method, attribute, etc)
 - `bugfix`: A fix to a bug
 - `doc`: A change to the documentation
-- `deprecation`: Used if deprecating a feature or dropping support for a Python version.
+- `deprecations`: Used if deprecating a feature or dropping support for a Python version.
+- `data`: An update to the bundled time zone data.
 - `misc`: A change that has no interesting effect for end users, such as fixes to the test suite or CI.
 
 PRs that include a feature or bugfix *and* a deprecation should create a separate entry for the deprecation.
