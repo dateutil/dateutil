@@ -6,11 +6,13 @@ The motivating case for these tests is #483, where we want to smoke-test
 code that may be difficult to reach through the standard API calls.
 """
 
-import pytest
+import sys
 import warnings
 
-from dateutil.parser._parser import _ymd
+import pytest
+
 from dateutil import tz
+from dateutil.parser._parser import _ymd
 
 
 @pytest.mark.smoke
@@ -43,8 +45,7 @@ def test_YMD_could_be_day():
 ###
 # Test that private interfaces in _parser are deprecated properly
 def test_parser_private_warns():
-    from dateutil.parser import _timelex, _tzparser
-    from dateutil.parser import _parsetz
+    from dateutil.parser import _parsetz, _timelex, _tzparser
 
     with pytest.warns(DeprecationWarning):
         _tzparser()
@@ -57,8 +58,7 @@ def test_parser_private_warns():
 
 
 def test_parser_parser_private_not_warns():
-    from dateutil.parser._parser import _timelex, _tzparser
-    from dateutil.parser._parser import _parsetz
+    from dateutil.parser._parser import _parsetz, _timelex, _tzparser
 
     with warnings.catch_warnings():
         warnings.simplefilter("error")
@@ -83,3 +83,16 @@ def test_tzstr_internal_timedeltas():
 
     assert tz1._start_delta != tz2._start_delta
     assert tz1._end_delta != tz2._end_delta
+
+
+@pytest.mark.smoke
+def test_parser_hhmmss_milliseconds():
+    # A 9-digit time token is HHMMSSmmm (no decimal point), e.g. the
+    # "040506789" in "20010203 040506789" (gh-1442).
+    from datetime import datetime
+
+    from dateutil.parser import parse
+
+    expected = datetime(2001, 2, 3, 4, 5, 6, 789000)
+    assert parse("20010203 040506789") == expected
+    assert parse("20010203T040506789") == expected
