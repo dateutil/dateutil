@@ -1,0 +1,1 @@
+``rrulestr`` no longer passes a ``TZID`` that names a file outside of ``TZPATH`` (an absolute path, or a relative path that starts with ``..``) to ``tz.gettz``. Such a ``TZID`` is now treated as an unknown time zone, like any other ``TZID`` that is not found, rather than loading that file. Fixed by @varun3257.
