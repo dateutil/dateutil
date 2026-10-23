@@ -1723,8 +1723,18 @@ class _rrulestr(object):
                         raise ValueError("Multiple DTSTART values specified:" +
                                          value)
                     dtstart = dtvals[0]
-                else:
+                elif re.match(r"[A-Z0-9-]+$", name):
                     raise ValueError("unsupported property: "+name)
+                else:
+                    # Not a valid property name, most likely because the line
+                    # was split on a colon inside a value (gh issue #960).
+                    raise ValueError(
+                        "RRULE contains invalid property or stray colon:\n" +
+                        line + "\n\n" +
+                        "This commonly occurs when specifying a datetime "
+                        "using delimiters, e.g. 2025-06-07T12:34:56; "
+                        "RFC 5545 requires datetimes specified with no "
+                        "delimiters, e.g. 20250607T123456")
             if (forceset or len(rrulevals) > 1 or rdatevals
                     or exrulevals or exdatevals):
                 if not parser and (rdatevals or exdatevals):
