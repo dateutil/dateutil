@@ -461,24 +461,25 @@ class ParserTest(unittest.TestCase):
         # is too large to be an hour must not be misread as a time of
         # day, which used to drop the date entirely (or fail with
         # "hour must be in 0..23").
-        self.assertEqual(parse("2025:12:05"),
-                         datetime(2025, 12, 5))
+        self.assertEqual(parse("2025:12:05"), datetime(2025, 12, 5))
 
     def testParseColonSeparatedDateTime(self):
-        self.assertEqual(parse("2025:12:05 19:09:37"),
-                         datetime(2025, 12, 5, 19, 9, 37))
+        self.assertEqual(
+            parse("2025:12:05 19:09:37"), datetime(2025, 12, 5, 19, 9, 37)
+        )
 
     def testParseColonSeparatedDateTimeNoSeconds(self):
-        self.assertEqual(parse("2025:12:05 19:09"),
-                         datetime(2025, 12, 5, 19, 9))
+        self.assertEqual(
+            parse("2025:12:05 19:09"), datetime(2025, 12, 5, 19, 9)
+        )
 
     def testParseTimeBeforeColonSeparatedDate(self):
-        self.assertEqual(parse("19:09:37 2025:12:05"),
-                         datetime(2025, 12, 5, 19, 9, 37))
+        self.assertEqual(
+            parse("19:09:37 2025:12:05"), datetime(2025, 12, 5, 19, 9, 37)
+        )
 
     def testParseColonSeparatedDateSingleDigits(self):
-        self.assertEqual(parse("2025:1:5"),
-                         datetime(2025, 1, 5))
+        self.assertEqual(parse("2025:1:5"), datetime(2025, 1, 5))
 
     def testParseColonSeparatedDateInvalidMonth(self):
         with pytest.raises(ParserError):
