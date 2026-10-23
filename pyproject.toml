@@ -1,6 +1,6 @@
 [build-system]
-requires = ["setuptools>=77", "setuptools_scm<8.0"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling>=1.27", "hatch-vcs>=0.4", "hatch-fancy-pypi-readme>=24.1"]
+build-backend = "hatchling.build"
 
 [project]
 name = "python-dateutil"
@@ -94,12 +94,6 @@ known_third_party=[
 multi_line_output=3
 use_parentheses=true
 
-[tool.setuptools.packages.find]
-where = ["src"]
-
-[tool.setuptools_scm]
-write_to = "src/dateutil/_version.py"
-
 [tool.pytest.ini_options]
 python_files = [
     "test_*.py",
@@ -128,3 +122,34 @@ markers = [
     "tzoffset",
     "tzstr",
 ]
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.build.hooks.vcs]
+version-file = "src/dateutil/_version.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/dateutil"]
+
+[tool.hatch.build.targets.sdist]
+exclude = [
+    "/AGENTS.md",
+    "/RELEASING",
+    "/.github",
+    "/.gitattributes",
+    "**/.gitignore",
+    "/.readthedocs.yml",
+    "/.pre-commit-config.yaml",
+    "/codecov.yml",
+]
+
+[tool.hatch.metadata.hooks.fancy-pypi-readme]
+content-type = "text/x-rst"
+
+[[tool.hatch.metadata.hooks.fancy-pypi-readme.fragments]]
+path = "README.rst"
+
+[[tool.hatch.metadata.hooks.fancy-pypi-readme.substitutions]]
+pattern = "(?m)^\\.\\. doctest[^\\n]*"
+replacement = ".. code-block:: python3"

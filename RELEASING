@@ -22,8 +22,8 @@ Optional:
 Versioning
 ----------
 Try and keep to a semantic versioning scheme (http://semver.org/). The versions
-are managed with `setuptools_scm`, so to update the version, simply tag the
-relevant commit with the new version number.
+are managed with `hatch-vcs` (using `setuptools-scm`), so to update the
+version, simply tag the relevant commit with the new version number.
 
 
 Instructions
