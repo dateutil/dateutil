@@ -100,6 +100,15 @@ The best way to test `dateutil` is to run `tox`. By default, `tox` will test aga
 tox -e py311,py313
 ```
 
+For faster environment creation and dependency installation, you can install
+`tox` with the `tox-uv` plugin using [uv](https://docs.astral.sh/uv/):
+
+```bash
+uv tool install tox --with tox-uv
+```
+
+The same `tox` commands work with either the uv plugin or the default installer.
+
 You can also pass arguments to `pytest` through `tox` by placing them after `--`:
 
 ```bash
