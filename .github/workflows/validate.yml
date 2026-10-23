@@ -15,6 +15,8 @@ on:
         default: false
 
 env:
+  TOX_UV_PATH: uv
+  UV_PYTHON_DOWNLOADS: never
   TZDATA_VERSION: "2024a"
 
 # TODO: Enable Dependabot or Renovate to keep action commit pins updated.
@@ -75,6 +77,7 @@ jobs:
         if: startsWith(matrix.os, 'windows-latest')
         run: tzutil /s "Eastern Standard Time"
       - name: Set up Python ${{ matrix.python-version }} on ${{ matrix.os }}
+        id: python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: ${{ matrix.python-version }}
@@ -97,16 +100,28 @@ jobs:
 
           head -n 1 /usr/share/zoneinfo/tzdata.zi
         if: startsWith(matrix.os, 'ubuntu')
-      - name: Install dependencies
-        run: python -m pip install -U tox
+      - name: Set up uv
+        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+        with:
+          enable-cache: true
+          cache-suffix: ${{ github.job }}-${{ matrix.python-version || matrix.toxenv || 'tools' }}
+          cache-dependency-glob: |
+            **/*requirements*.txt
+            pyproject.toml
+            setup.cfg
+            setup.py
+            tox.ini
+            .github/workflows/*.yml
+      - name: Install tox
+        run: uv tool install --python "${{ steps.python.outputs.python-path }}" --with tox-uv tox
       # Test the wheel that was built once, on a recent Python, rather than
       # building a package from source on each interpreter. Run locally,
       # `tox` still builds and installs an sdist itself.
       - name: Run tox on the wheel
         shell: bash
-        run: python -m tox --installpkg "$(ls dist/*.whl)"
+        run: tox -x "testenv:py.base_python=${{ steps.python.outputs.python-path }}" --installpkg "$(ls dist/*.whl)"
       - name: Generate coverage.xml
-        run: python -m tox -e coverage
+        run: tox -e coverage
       - name: Report coverage to Codecov
         uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7
         with:
@@ -139,6 +154,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Set up Python ${{ matrix.python-version }}
+        id: python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: ${{ matrix.python-version }}
@@ -159,11 +175,23 @@ jobs:
           sudo mv tzdata_download /usr/share/zoneinfo
 
           head -n 1 /usr/share/zoneinfo/tzdata.zi
-      - name: Install dependencies
-        run: python -m pip install -U tox
-      # tox installs the sdist with pip, as a user would with --no-binary.
+      - name: Set up uv
+        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+        with:
+          enable-cache: true
+          cache-suffix: ${{ github.job }}-${{ matrix.python-version || matrix.toxenv || 'tools' }}
+          cache-dependency-glob: |
+            **/*requirements*.txt
+            pyproject.toml
+            setup.cfg
+            setup.py
+            tox.ini
+            .github/workflows/*.yml
+      - name: Install tox
+        run: uv tool install --python "${{ steps.python.outputs.python-path }}" --with tox-uv tox
+      # Install the sdist to exercise a build without a Git checkout.
       - name: Run tox on the sdist
-        run: python -m tox --installpkg "$(ls dist/*.tar.gz)"
+        run: tox -x "testenv:py.base_python=${{ steps.python.outputs.python-path }}" --installpkg "$(ls dist/*.tar.gz)"
 
   other:
     runs-on: "ubuntu-latest"
@@ -183,6 +211,7 @@ jobs:
         if: startsWith(matrix.os, 'windows-latest')
         run: tzutil /s "Eastern Standard Time"
       - name: ${{ matrix.toxenv }}
+        id: python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: "3.13"
@@ -197,10 +226,20 @@ jobs:
           sudo mv tzdata_download /usr/share/zoneinfo
 
           cat /usr/share/zoneinfo/tzdata.zi | head -n 1
+      - name: Set up uv
+        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+        with:
+          enable-cache: true
+          cache-suffix: ${{ github.job }}-${{ matrix.python-version || matrix.toxenv || 'tools' }}
+          cache-dependency-glob: |
+            **/*requirements*.txt
+            pyproject.toml
+            setup.cfg
+            setup.py
+            tox.ini
+            .github/workflows/*.yml
       - name: Install tox
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install -U tox
+        run: uv tool install --python "${{ steps.python.outputs.python-path }}" --with tox-uv tox
       - name: Run action
         run: tox
 
@@ -213,11 +252,24 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
-      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+      - id: python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: "3.13"
+      - name: Set up uv
+        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+        with:
+          enable-cache: true
+          cache-suffix: ${{ github.job }}-${{ matrix.python-version || matrix.toxenv || 'tools' }}
+          cache-dependency-glob: |
+            **/*requirements*.txt
+            pyproject.toml
+            setup.cfg
+            setup.py
+            tox.ini
+            .github/workflows/*.yml
       - name: Install darker
-        run: python -m pip install "darker[black,isort]==3.0.0"
+        run: uv tool install --python "${{ steps.python.outputs.python-path }}" "darker[black,isort]==3.0.0"
       - name: Run darker
         # Check only the lines changed relative to the merge base of the PR
         # (or the commit before a push). The darker GitHub action is not used
@@ -236,13 +288,26 @@ jobs:
           # The version comes from git tags, so we need the history.
           fetch-depth: 0
       - name: Set up Python
+        id: python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: "3.14"
+      - name: Set up uv
+        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+        with:
+          enable-cache: true
+          cache-suffix: ${{ github.job }}-${{ matrix.python-version || matrix.toxenv || 'tools' }}
+          cache-dependency-glob: |
+            **/*requirements*.txt
+            pyproject.toml
+            setup.cfg
+            setup.py
+            tox.ini
+            .github/workflows/*.yml
       - name: Install tox
-        run: python -m pip install -U tox
+        run: uv tool install --python "${{ steps.python.outputs.python-path }}" --with tox-uv tox
       - name: Run tox
-        run: python -m tox -e build
+        run: tox -e build
       - name: Check generation
         run: |
           exactly_one() {
