@@ -192,7 +192,82 @@ class _timelex:
 
     @classmethod
     def split(cls, s):
+        if isinstance(s, (bytes, bytearray)):
+            s = s.decode()
+
+        # Subclasses may override isword/isnum/isspace, which the string
+        # tokenizer inlines; they and streams go through get_token().
+        if cls is _timelex and isinstance(s, text_type):
+            return cls._split_text(s)
+
         return list(cls(s))
+
+    @classmethod
+    def _split_text(cls, s):
+        """
+        Equivalent to ``list(_timelex(s))``, but runs the ``get_token`` state
+        machine directly over the string instead of one ``read(1)`` at a time.
+        """
+        s = s.replace("\x00", "")  # get_token() skips NULs as it reads
+        n = len(s)
+        tokens = []
+        i = 0
+        while i < n:
+            start = i
+            c = s[i]
+            i += 1
+            if c.isalpha():
+                state = "a"
+            elif c.isdigit():
+                state = "0"
+            else:
+                tokens.append(" " if c.isspace() else c)
+                continue
+
+            seenletters = False
+            while i < n:
+                c = s[i]
+                if state == "a":
+                    seenletters = True
+                    if c == ".":
+                        state = "a."
+                    elif not c.isalpha():
+                        break
+                elif state == "0":
+                    if c == "." or (c == "," and i - start >= 2):
+                        state = "0."
+                    elif not c.isdigit():
+                        break
+                elif state == "a.":
+                    seenletters = True
+                    if c.isdigit() and s[i - 1] == ".":
+                        state = "0."
+                    elif not (c == "." or c.isalpha()):
+                        break
+                else:  # state == '0.'
+                    if c.isalpha() and s[i - 1] == ".":
+                        state = "a."
+                    elif not (c == "." or c.isdigit()):
+                        break
+                i += 1
+
+            token = s[start:i]
+            if state in ("a.", "0.") and (
+                seenletters or token.count(".") > 1 or token[-1] in ".,"
+            ):
+                parts = cls._split_decimal.split(token)
+                token = parts[0]
+                rest = [part for part in parts[1:] if part]
+            else:
+                rest = ()
+
+            if state == "0." and token.count(".") == 0:
+                token = token.replace(",", ".")
+
+            tokens.append(token)
+            tokens.extend(rest)
+
+        return tokens
 
     @classmethod
     def isword(cls, nextchar):
@@ -225,8 +300,8 @@ class _resultbase:
         return "%s(%s)" % (classname, ", ".join(l))
 
     def __len__(self):
-        return (sum(getattr(self, attr) is not None
-                    for attr in self.__slots__))
+        values = [getattr(self, attr) for attr in self.__slots__]
+        return len(values) - values.count(None)
 
     def __repr__(self):
         return self._repr(self.__class__.__name__)
@@ -627,10 +702,6 @@ class parser:
             your system.
         """
 
-        if default is None:
-            default = datetime.datetime.now().replace(hour=0, minute=0,
-                                                      second=0, microsecond=0)
-
         res, skipped_tokens = self._parse(timestr, **kwargs)
 
         if res is None:
@@ -638,6 +709,16 @@ class parser:
 
         if len(res) == 0:
             raise ParserError("String does not contain a date: %s", timestr)
+
+        if default is None:
+            if None in (res.year, res.month, res.day):
+                default = datetime.datetime.now().replace(
+                    hour=0, minute=0, second=0, microsecond=0
+                )
+            else:
+                # Today's date would be fully overwritten; only the zeroed
+                # time fields of the default can show through.
+                default = datetime.datetime(2000, 1, 1)
 
         try:
             ret = self._build_naive(res, default)
@@ -708,6 +789,18 @@ class parser:
 
         if yearfirst is None:
             yearfirst = info.yearfirst
+
+        # Strict ISO-8601 strings are by far the most common input; skip the
+        # tokenizer for them. Anything that could be read differently (custom
+        # parserinfo, dayfirst, fuzzy) takes the general path below.
+        if (
+            not (dayfirst or fuzzy)
+            and type(info) is parserinfo
+            and isinstance(timestr, text_type)
+        ):
+            res = self._try_parse_iso(timestr)
+            if res is not None and info.validate(res):
+                return res, None
 
         res = self._result()
         l = _timelex.split(timestr)         # Splits the timestr into tokens
@@ -865,6 +958,62 @@ class parser:
             return res, tuple(skipped_tokens)
         else:
             return res, None
+
+    _ISO_FAST_RE = re.compile(
+        r"([0-9]{4})-([0-9]{2})-([0-9]{2})"
+        r"(?:[T ]([0-9]{2}):([0-9]{2})"
+        r"(?::([0-9]{2})(?:\.([0-9]{1,6}))?)?"
+        r"(?:(Z)|([+-])([0-9]{2})(?::?([0-9]{2}))?)?)?\Z"
+    )
+
+    def _try_parse_iso(self, timestr):
+        """
+        Fast path for ``YYYY-MM-DD[( |T)HH:MM[:SS[.ffffff]][Z|+HH[[:]MM]]]``.
+
+        Returns the ``_result`` the tokenizing parser would have produced for
+        ``timestr``, or ``None`` if the string is not in this exact form.
+        Out-of-range values are not checked here: like the general path, they
+        are left for ``datetime`` to reject in ``_build_naive``.
+        """
+        m = self._ISO_FAST_RE.match(timestr)
+        if m is None:
+            return None
+
+        (
+            year,
+            month,
+            day,
+            hour,
+            minute,
+            second,
+            frac,
+            zulu,
+            sign,
+            tz_hour,
+            tz_minute,
+        ) = m.groups()
+
+        res = self._result()
+        res.year, res.month, res.day = int(year), int(month), int(day)
+        res.century_specified = True
+
+        if hour is not None:
+            res.hour, res.minute = int(hour), int(minute)
+
+        # Like the general path, seconds and microseconds are only set when
+        # seconds are present, so "HH:MM" keeps the default's seconds.
+        if second is not None:
+            res.second = int(second)
+            res.microsecond = int(frac.ljust(6, "0")) if frac else 0
+
+        if zulu:
+            res.tzname = zulu
+        elif sign:
+            res.tzoffset = (int(tz_hour) * 3600 + int(tz_minute or 0) * 60) * (
+                -1 if sign == "-" else 1
+            )
+
+        return res
 
     def _parse_numeric_token(self, tokens, idx, info, ymd, res, fuzzy):
         # Token is a number
