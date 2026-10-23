@@ -3,7 +3,7 @@ Common code used in multiple modules.
 """
 
 
-class weekday(object):
+class weekday:
     __slots__ = ["weekday", "n"]
 
     def __init__(self, weekday, n=None):
@@ -29,9 +29,6 @@ class weekday(object):
           self.weekday,
           self.n,
         ))
-
-    def __ne__(self, other):
-        return not (self == other)
 
     def __repr__(self):
         s = ("MO", "TU", "WE", "TH", "FR", "SA", "SU")[self.weekday]

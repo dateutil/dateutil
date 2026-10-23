@@ -1,15 +1,133 @@
-from __future__ import unicode_literals
+import contextlib
 import os
-import time
-import subprocess
-import warnings
-import tempfile
 import pickle
+import subprocess
+import sys
+import tempfile
+import threading
+import time
 
 import pytest
 
+from dateutil import tz
 
-class PicklableMixin(object):
+####
+# Selecting the source of time zone data
+#
+# TZPATH, the gettz cache and whether the tzdata package can be imported are
+# all process-wide, so tests that change them take this lock. It is reentrant
+# so that a test running under a fixture that holds it can still use
+# set_tzpath itself.
+TZPATH_LOCK = threading.RLock()
+
+
+contextdecorator = contextlib.contextmanager
+
+
+def pop_tzdata_modules():
+    tzdata_modules = {}
+    for modname in list(sys.modules):
+        if modname.split(".", 1)[0] != "tzdata":  # pragma: nocover
+            continue
+
+        tzdata_modules[modname] = sys.modules.pop(modname)
+
+    return tzdata_modules
+
+
+@contextdecorator
+def set_tzpath(tzpath, block_tzdata=False, clear_cache=True):
+    tzdata_modules = {}
+    with TZPATH_LOCK:
+        if block_tzdata:
+            tzdata_modules = pop_tzdata_modules()
+            sys.modules["tzdata"] = None
+
+        old_tzpath = tuple(tz.TZPATH)
+        try:
+            tz._tzpath.reset_tzpath(to=tzpath)
+            # Zones already in the cache may have come from somewhere else
+            # (another TZPATH, or tzdata when it is now blocked), and zones
+            # cached in here must not leak out, so clear it on both ends.
+            if clear_cache:
+                tz.gettz.cache_clear()
+            yield
+        finally:
+            if block_tzdata:
+                sys.modules.pop("tzdata", None)
+                sys.modules.update(tzdata_modules)
+
+            tz._tzpath.reset_tzpath(to=old_tzpath)
+            if clear_cache:
+                tz.gettz.cache_clear()
+
+
+TZ_SOURCES = ("tzpath", "tzdata")
+
+
+def tz_source_skip_reason(source):
+    """Why tests can't run against ``source`` here, or None if they can.
+
+    ``"tzpath"`` is the time zone data on TZPATH (the system data, or whatever
+    PYTHONTZPATH points at) with the tzdata package blocked, so that a key
+    that is missing or broken there fails rather than being answered by
+    tzdata. ``"tzdata"`` is the tzdata package, with an empty TZPATH.
+    """
+    if source == "tzpath":
+        # Any real installation of the data has one of these (depending on
+        # whether the "backward" links were installed); anything else, like
+        # an empty directory, is treated as no data at all.
+        if not any(
+            os.path.isfile(os.path.join(path, *key.split("/")))
+            for path in tz.TZPATH
+            for key in ("Etc/UTC", "UTC")
+        ):
+            return "No time zone data on TZPATH"
+    elif source == "tzdata":
+        try:
+            import tzdata  # noqa: F401
+        except ImportError:
+            return "tzdata is not installed"
+    else:  # pragma: nocover
+        raise ValueError("Unknown time zone data source: %r" % (source,))
+
+    return None
+
+
+def tz_source_context(source):
+    """A context manager that makes ``source`` the only time zone data."""
+    if source == "tzpath":
+        return set_tzpath(tuple(tz.TZPATH), block_tzdata=True)
+    else:
+        return set_tzpath((), block_tzdata=False)
+
+
+class TzSourceMixin:
+    """Runs the tests in a TestCase against a single source of time zone data.
+
+    unittest.TestCase subclasses can't use parametrized pytest fixtures, so to
+    run a set of tests against more than one source, subclass the test case
+    and override ``tz_source``. A ``tz_source`` of None leaves everything as
+    it is.
+    """
+
+    tz_source = "tzpath"
+
+    def setUp(self):
+        super().setUp()
+        if self.tz_source is None:
+            return
+
+        reason = tz_source_skip_reason(self.tz_source)
+        if reason is not None:
+            self.skipTest(reason)
+
+        context = tz_source_context(self.tz_source)
+        context.__enter__()
+        self.addCleanup(context.__exit__, None, None, None)
+
+
+class PicklableMixin:
     def _get_nobj_bytes(self, obj, dump_kwargs, load_kwargs):
         """
         Pickle and unpickle an object using ``pickle.dumps`` / ``pickle.loads``
@@ -46,7 +164,7 @@ class PicklableMixin(object):
         self.assertEqual(obj, nobj)
 
 
-class TZContextBase(object):
+class TZContextBase:
     """
     Base class for a context manager which allows changing of time zones.
 
@@ -164,7 +282,7 @@ class TZWinContext(TZContextBase):
 
 ###
 # Utility classes
-class NotAValueClass(object):
+class NotAValueClass:
     """
     A class analogous to NaN that has operations defined for any type.
     """
@@ -177,7 +295,6 @@ class NotAValueClass(object):
     __add__ = __radd__ = _op
     __sub__ = __rsub__ = _op
     __mul__ = __rmul__ = _op
-    __div__ = __rdiv__ = _op
     __truediv__ = __rtruediv__ = _op
     __floordiv__ = __rfloordiv__ = _op
 
@@ -191,7 +308,7 @@ class NotAValueClass(object):
 NotAValue = NotAValueClass()
 
 
-class ComparesEqualClass(object):
+class ComparesEqualClass:
     """
     A class that is always equal to whatever you compare it to.
     """
@@ -225,7 +342,7 @@ class ComparesEqualClass(object):
 ComparesEqual = ComparesEqualClass()
 
 
-class UnsetTzClass(object):
+class UnsetTzClass:
     """ Sentinel class for unset time zone variable """
     pass
 

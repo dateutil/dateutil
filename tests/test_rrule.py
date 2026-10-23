@@ -1,21 +1,33 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
-from datetime import datetime, date
+import copy
+import itertools
+import pickle
 import unittest
-from six import PY2
+from datetime import date, datetime, timedelta
+from functools import partial
+
+import pytest
+from freezegun import freeze_time
 
 from dateutil import tz
 from dateutil.rrule import (
-    rrule, rruleset, rrulestr,
-    YEARLY, MONTHLY, WEEKLY, DAILY,
-    HOURLY, MINUTELY, SECONDLY,
-    MO, TU, WE, TH, FR, SA, SU
+    DAILY,
+    FR,
+    HOURLY,
+    MINUTELY,
+    MO,
+    MONTHLY,
+    SA,
+    SECONDLY,
+    SU,
+    TH,
+    TU,
+    WE,
+    WEEKLY,
+    YEARLY,
+    rrule,
+    rruleset,
+    rrulestr,
 )
-
-from freezegun import freeze_time
-
-import pytest
 
 
 @pytest.mark.rrule
@@ -2282,27 +2294,6 @@ class RRuleTest(unittest.TestCase):
                           datetime(2010, 3, 22, 13, 1),
                           datetime(2010, 3, 22, 14, 1)])
 
-    def testLongIntegers(self):
-        if PY2:  # There are no longs in python3
-            self.assertEqual(list(rrule(MINUTELY,
-                                  count=long(2),
-                                  interval=long(2),
-                                  bymonth=long(2),
-                                  byweekday=long(3),
-                                  byhour=long(6),
-                                  byminute=long(6),
-                                  bysecond=long(6),
-                                  dtstart=datetime(1997, 9, 2, 9, 0))),
-                             [datetime(1998, 2, 5, 6, 6, 6),
-                              datetime(1998, 2, 12, 6, 6, 6)])
-            self.assertEqual(list(rrule(YEARLY,
-                                  count=long(2),
-                                  bymonthday=long(5),
-                                  byweekno=long(2),
-                                  dtstart=datetime(1997, 9, 2, 9, 0))),
-                             [datetime(1998, 1, 5, 9, 0),
-                              datetime(2004, 1, 5, 9, 0)])
-
     def testHourlyBadRRule(self):
         """
         When `byhour` is specified with `freq=HOURLY`, there are certain
@@ -2342,7 +2333,6 @@ class RRuleTest(unittest.TestCase):
         raise a :exception:`ValueError`.
         """
 
-        # In Python 2.7 you can use a context manager for this.
         def make_bad_rrule():
             list(rrule(MINUTELY, interval=120, byhour=(10, 12, 14, 16),
                  count=2, dtstart=datetime(1997, 9, 2, 9, 0)))
@@ -2354,7 +2344,6 @@ class RRuleTest(unittest.TestCase):
         See :func:`testMinutelyBadComboRRule' for details.
         """
 
-        # In Python 2.7 you can use a context manager for this.
         def make_bad_minute_rrule():
             list(rrule(SECONDLY, interval=360, byminute=(10, 28, 49),
                  count=4, dtstart=datetime(1997, 9, 2, 9, 0)))
@@ -2674,8 +2663,24 @@ class RRuleTest(unittest.TestCase):
                           datetime(1998, 9, 2, 9, 0),
                           datetime(1999, 9, 2, 9, 0)])
 
+    def testXNamed(self):
+        self.assertEqual(
+            list(
+                rrulestr(
+                    "DTSTART:20240122T124500\n"
+                    "RRULE;X-EVOLUTION-ENDDATE=20240205T124500:FREQ=WEEKLY;COUNT=3;BYDAY=MO\n"
+                )
+            ),
+            [
+                datetime(2024, 1, 22, 12, 45),
+                datetime(2024, 1, 29, 12, 45),
+                datetime(2024, 2, 5, 12, 45),
+            ],
+        )
+
     def testStrWithTZID(self):
         NYC = tz.gettz('America/New_York')
+        self.assertIsNotNone(NYC)
         self.assertEqual(list(rrulestr(
                               "DTSTART;TZID=America/New_York:19970902T090000\n"
                               "RRULE:FREQ=YEARLY;COUNT=3\n"
@@ -2689,6 +2694,7 @@ class RRuleTest(unittest.TestCase):
                  "RRULE:FREQ=YEARLY;COUNT=3")
 
         NYC = tz.gettz('America/New_York')
+        self.assertIsNotNone(NYC)
         rr = rrulestr(rrstr, tzids={'Eastern': NYC})
         exp = [datetime(1997, 9, 2, 9, 0, tzinfo=NYC),
                datetime(1998, 9, 2, 9, 0, tzinfo=NYC),
@@ -2864,6 +2870,7 @@ class RRuleTest(unittest.TestCase):
 
     def testStrSetExDateWithTZID(self):
         BXL = tz.gettz('Europe/Brussels')
+        self.assertIsNotNone(BXL)
         rr = rrulestr("DTSTART;TZID=Europe/Brussels:19970902T090000\n"
                       "RRULE:FREQ=YEARLY;COUNT=6;BYDAY=TU,TH\n"
                       "EXDATE;TZID=Europe/Brussels:19970904T090000\n"
@@ -2898,6 +2905,7 @@ class RRuleTest(unittest.TestCase):
 
     def testStrSetExDateValueDateTimeWithTZID(self):
         BXL = tz.gettz('Europe/Brussels')
+        self.assertIsNotNone(BXL)
         rrstr = '\n'.join([
             "DTSTART;VALUE=DATE-TIME;TZID=Europe/Brussels:19970902T090000",
             "RRULE:FREQ=YEARLY;COUNT=4;BYDAY=TU,TH",
@@ -3015,6 +3023,7 @@ class RRuleTest(unittest.TestCase):
 
     def testStrUntilWithTZ(self):
         NYC = tz.gettz('America/New_York')
+        self.assertIsNotNone(NYC)
         rr = list(rrulestr("DTSTART;TZID=America/New_York:19970101T000000\n"
                           "RRULE:FREQ=YEARLY;"
                           "UNTIL=19990101T000000Z\n"))
@@ -4577,24 +4586,6 @@ class RRuleTest(unittest.TestCase):
                               wkst=SU,
                               dtstart=datetime(1997, 9, 2, 9, 0)))
 
-    def testToStrLongIntegers(self):
-        if PY2:  # There are no longs in python3
-            self._rrulestr_reverse_test(rrule(MINUTELY,
-                                  count=long(2),
-                                  interval=long(2),
-                                  bymonth=long(2),
-                                  byweekday=long(3),
-                                  byhour=long(6),
-                                  byminute=long(6),
-                                  bysecond=long(6),
-                                  dtstart=datetime(1997, 9, 2, 9, 0)))
-
-            self._rrulestr_reverse_test(rrule(YEARLY,
-                                  count=long(2),
-                                  bymonthday=long(5),
-                                  byweekno=long(2),
-                                  dtstart=datetime(1997, 9, 2, 9, 0)))
-
     def testReplaceIfSet(self):
         rr = rrule(YEARLY,
                    count=1,
@@ -4876,13 +4867,13 @@ class WeekdayTest(unittest.TestCase):
     def testWeekdayEqualitySubclass(self):
         # Two weekday objects equal if their "weekday" and "n" attributes are
         # available and the same
-        class BasicWeekday(object):
+        class BasicWeekday:
             def __init__(self, weekday):
                 self.weekday = weekday
 
         class BasicNWeekday(BasicWeekday):
             def __init__(self, weekday, n=None):
-                super(BasicNWeekday, self).__init__(weekday)
+                super().__init__(weekday)
                 self.n = n
 
         MO_Basic = BasicWeekday(0)
@@ -4912,3 +4903,191 @@ class WeekdayTest(unittest.TestCase):
 
         for repstr, wday in zip(with_n_reprs, with_n_wdays):
             self.assertEqual(repr(wday), repstr)
+
+
+class TaggedRule(rrule):
+    __slots__ = ("tag",)
+
+
+def _pickle_roundtrip(value, protocol=pickle.HIGHEST_PROTOCOL):
+    serialized = pickle.dumps(value, protocol)
+    return pickle.loads(serialized)
+
+
+@pytest.fixture(params=["deepcopy"] + list(range(pickle.HIGHEST_PROTOCOL + 1)))
+def roundtrip(request):
+    if request.param == "deepcopy":
+        return copy.deepcopy
+    return partial(_pickle_roundtrip, protocol=request.param)
+
+
+@pytest.mark.parametrize("kind", ["rule", "set"])
+@pytest.mark.parametrize("state", ["disabled", "empty", "partial", "complete"])
+def test_rrule_roundtrip(roundtrip, kind, state):
+    start = datetime(2024, 1, 1)
+    expected = [start + timedelta(days=i) for i in range(25)]
+    cache = state != "disabled"
+    original = rrule(DAILY, dtstart=start, count=25, cache=cache)
+    if kind == "set":
+        result = rruleset(cache=cache)
+        result.rrule(original)
+        result.exrule(
+            rrule(DAILY, dtstart=start, interval=3, count=9, cache=cache)
+        )
+        result.exdate(expected[1])
+        extra = start + timedelta(days=35)
+        result.rdate(extra)
+        expected = [
+            value for i, value in enumerate(expected) if i % 3 and i != 1
+        ]
+        expected.append(extra)
+        original = result
+    iterator = None
+    if state == "partial":
+        iterator = iter(original)
+        assert next(iterator) == expected[0]
+    elif state == "complete":
+        assert list(original) == expected
+
+    restored = roundtrip(original)
+    assert list(restored) == expected
+    assert restored.count() == len(expected)
+    assert restored.before(expected[-1]) == expected[-2]
+    assert restored.after(expected[0]) == expected[1]
+    assert restored[2:5] == expected[2:5]
+    assert expected[1] in restored
+    if iterator is not None:
+        assert list(iterator) == expected[1:]
+    assert list(original) == expected
+
+
+@pytest.mark.parametrize("state", ["empty", "partial", "complete"])
+def test_restored_rruleset_can_invalidate_cache(roundtrip, state):
+    """Changing a restored set must invalidate its populated cache only."""
+    start = datetime(2024, 1, 1)
+    expected = [start + timedelta(days=i) for i in range(25)]
+    original = rruleset(cache=True)
+    original.rrule(rrule(DAILY, dtstart=start, count=25, cache=True))
+    if state == "partial":
+        next(iter(original))
+    elif state == "complete":
+        list(original)
+
+    restored = roundtrip(original)
+    # Populate the restored cache before changing the set's recurrence dates.
+    assert list(restored) == expected
+    # Both mutators invalidate the cache; the next iteration must reflect them.
+    restored.exdate(expected[0])
+    extra = datetime(2024, 3, 1)
+    restored.rdate(extra)
+    assert list(restored) == expected[1:] + [extra]
+    assert list(original) == expected
+
+
+@pytest.mark.parametrize("kind", ["rule", "set"])
+def test_unbounded_cached_rule_roundtrip(roundtrip, kind):
+    original = rrule(DAILY, dtstart=datetime(2024, 1, 1), cache=True)
+    if kind == "set":
+        result = rruleset(cache=True)
+        result.rrule(original)
+        original = result
+    expected = [datetime(2024, 1, 1) + timedelta(days=i) for i in range(15)]
+    assert list(itertools.islice(original, 12)) == expected[:12]
+    restored = roundtrip(original)
+    assert list(itertools.islice(restored, 15)) == expected
+
+
+@pytest.fixture(
+    params=[copy.deepcopy]
+    + [
+        partial(_pickle_roundtrip, protocol=p)
+        for p in range(2, pickle.HIGHEST_PROTOCOL + 1)
+    ],
+    ids=["deepcopy"]
+    + ["pickle-{}".format(p) for p in range(2, pickle.HIGHEST_PROTOCOL + 1)],
+)
+def roundtrip_modern(request):
+    # Slotted subclasses and weekday objects require protocol 2 or later.
+    return request.param
+
+
+def test_cached_rule_preserves_options_and_timezone(roundtrip_modern):
+    original = rrule(
+        MONTHLY,
+        dtstart=datetime(2024, 1, 1, tzinfo=tz.UTC),
+        count=4,
+        byweekday=MO(1),
+        byhour=9,
+        cache=True,
+    )
+    expected = [
+        datetime(2024, month, day, 9, tzinfo=tz.UTC)
+        for month, day in [(1, 1), (2, 5), (3, 4), (4, 1)]
+    ]
+    next(iter(original))
+    # Weekday objects already require protocol 2 or later; their legacy
+    # protocol support is independent of the recurrence cache.
+    restored = roundtrip_modern(original)
+    assert list(restored) == expected
+    assert str(restored) == str(original)
+
+
+@pytest.mark.parametrize("cache", [False, True])
+def test_rrule_subclass_state_roundtrip(roundtrip_modern, cache):
+    original = TaggedRule(
+        DAILY, dtstart=datetime(2024, 1, 1), count=2, cache=cache
+    )
+    original.tag = ["slot value"]
+    original.extra = {"attribute": "value"}
+    restored = roundtrip_modern(original)
+    assert type(restored) is TaggedRule
+    assert restored.tag == original.tag
+    assert restored.extra == original.extra
+    restored.tag.append("new value")
+    assert original.tag == ["slot value"]
+    assert list(restored) == list(original)
+
+
+@pytest.mark.parametrize("kind", ["rule", "set"])
+def test_completed_empty_cache_roundtrip(roundtrip, kind):
+    if kind == "rule":
+        original = rrule(
+            DAILY, dtstart=datetime(2024, 1, 1), count=0, cache=True
+        )
+    else:
+        original = rruleset(cache=True)
+    assert list(original) == []
+    restored = roundtrip(original)
+    assert list(restored) == []
+    assert restored.count() == 0
+
+
+@pytest.mark.smoke
+@pytest.mark.parametrize("kind", ["rule", "set"])
+@pytest.mark.parametrize("state", ["disabled", "empty", "partial", "complete"])
+def test_roundtrip_cache_setting_smoke(roundtrip, kind, state):
+    """Smoke test: keep caching enabled without copying cached results."""
+    # TODO: Use a public interface for the cache setting when one is available.
+    cache = state != "disabled"
+    original = rrule(DAILY, dtstart=datetime(2024, 1, 1), count=25, cache=cache)
+    if kind == "set":
+        result = rruleset(cache=cache)
+        result.rrule(original)
+        original = result
+    if state == "partial":
+        next(iter(original))
+    elif state == "complete":
+        list(original)
+    original_cache = None if not cache else list(original._cache)
+
+    restored = roundtrip(original)
+    if cache:
+        assert restored._cache == []
+        assert restored._len is None
+        assert not restored._cache_complete
+        assert restored._cache_lock is not original._cache_lock
+        assert restored._cache_gen is not original._cache_gen
+    else:
+        assert restored._cache is None
+    assert original._cache == original_cache
+    assert list(restored) == list(original)

@@ -1,3 +1,112 @@
+Version 3.0.0 (2026-10-21)
+==========================
+
+**This is the last major version of** ``dateutil`` **that will support any
+version of Python older than 3.11.** The next release will be the 4.x series,
+which will support Python 3.11 and later. We may release fixes for serious bugs
+in the 3.0.x series, but there are no plans for new features there.
+
+The biggest change in this release is a rewrite of ``tz.tzfile``, which affects
+nearly every user of ``dateutil.tz`` and changes the UTC offset of
+nonexistent times (see below). ``dateutil`` also now depends on the ``tzdata``
+package, and no longer ships its own time zone database.
+
+
+Data updates
+------------
+
+- ``dateutil`` no longer bundles a copy of the IANA time zone database. Time
+  zone data now comes from the system (see ``dateutil.tz.TZPATH``) or, failing
+  that, from the new ``tzdata`` dependency, so the data version is whatever
+  version of ``tzdata`` is installed. (gh pr #1130)
+
+
+Features
+--------
+
+- Rewrote ``tz.tzfile`` based on a backport of the ``zoneinfo`` module's pure-Python
+  implementation. This adds support for Version 2 and Version 3 ``tzfile(5)`` binaries,
+  resolving issues with timestamps beyond 2038 and "slim" format binaries. (gh issues #462, #1059, gh pr #1130)
+- Added ``dateutil.tz.TZPATH`` and ``dateutil.tz.reset_tzpath`` to allow for
+  runtime configuration of the IANA time zone data search path. These replace the
+  mutable ``dateutil.tz.TZPATHS`` list, which has been removed. (gh pr #1130)
+- ``dateutil`` now depends on the ``tzdata`` package, which ``gettz`` consults after the search
+  path and before the Windows registry. On Windows this means that names that are
+  both IANA keys and Windows time zone names, such as ``"UTC"``, now return a
+  ``tzfile`` rather than a ``tzwin``. (gh pr #1130)
+
+
+Bugfixes
+--------
+
+- ``tz.tzfile`` now follows PEP 495 for times that fall in a gap: with ``fold=0``
+  it uses the offset from before the transition, and with ``fold=1`` the offset
+  from after it. Previously it always used the offset from after the transition,
+  so for example ``datetime(2003, 4, 6, 2, 30, tzinfo=tz.gettz("America/New_York"))``
+  had a UTC offset of -04:00, where it now has -05:00, the same as with
+  ``zoneinfo``. (gh pr #1130)
+- ``tz.tzfile`` objects for fixed-offset zones, such as ``tz.gettz("UTC")``, now
+  return their offset, DST offset and abbreviation when ``utcoffset``, ``dst``
+  and ``tzname`` are called with ``None``, as ``tz.tzutc``, ``tz.tzoffset`` and
+  ``zoneinfo.ZoneInfo`` do. This means that ``datetime.time`` objects with such
+  a zone attached are now aware: ``time(12, tzinfo=tz.gettz("UTC")).isoformat()``
+  is now ``"12:00:00+00:00"`` rather than ``"12:00:00"``. (gh pr #1130)
+- ``tz.tzfile`` now infers ``dst()`` from the standard time on both sides of
+  each DST period, rather than only the one before it, and does so for each
+  transition rather than for each local time type. This fixes ``dst()`` for
+  double summer time (e.g. in ``Europe/London`` in the 1940s), for half-hour DST
+  (e.g. in ``Pacific/Rarotonga``) and where the standard offset changed at the
+  same time as a DST transition (e.g. in ``America/Bahia_Banderas`` in 2010).
+  Against the standard offsets in the tz database source, the only remaining
+  errors are in ``Europe/Paris`` in 1944 and 1945. (gh pr #1130)
+- Fixed ``rrulestr`` raising ``ValueError`` on experimental ``X-`` parameters in
+  an ``RRULE`` line (such as GNOME Evolution's ``X-EVOLUTION-ENDDATE``); these are
+  now ignored as RFC 5545 permits. Fixed by @yajo (gh pr #1374)
+- Enabled pickling and deepcopy of cached ``rrule`` and ``rruleset`` instances.
+  The cache setting is preserved, and cached results are regenerated on demand
+  without copying locks or generators. Reported by @niccokunzmann (gh issue #1369).
+  Fixed by @Jay1023CN (gh pr #1600).
+- Fixed ``relativedelta.__ne__`` raising ``TypeError`` when comparing against an
+  unsupported type such as ``None``; it now returns ``True``. Reported and fixed
+  by @kevinkt1 (gh issue #1157, gh pr #1158)
+- Raised the minimum version of ``six`` to 1.6, fixing ``No module named
+  'six.moves'`` errors with older versions. Reported by @skytreader (gh issue #1415),
+  fixed by @jdarias3 (gh pr #1424).
+
+
+Deprecations
+------------
+
+- Deprecated the ``dateutil.zoneinfo`` module. The module now acts as a wrapper
+  around the ``tzdata`` package and will be removed in a future version. Users are
+  encouraged to migrate to ``dateutil.tz.gettz`` or the standard library's
+  ``zoneinfo`` module. ``dateutil.zoneinfo.rebuild.rebuild`` no longer does
+  anything, and by default raises ``RebuildDeprecationWarning`` as an error;
+  filter the warning to call it as a no-op. (gh pr #1130)
+- Deprecated passing ``gettz`` a relative key that refers to a file outside of
+  every directory on ``TZPATH``, such as ``"../../etc/localtime"``. By default
+  this now raises ``dateutil.tz.DeprecatedTzKeyWarning`` as an error; filter the
+  warning to keep the old behavior for now, or pass an absolute path instead.
+  (gh pr #1130)
+
+
+Documentation changes
+---------------------
+
+- Added intersphinx to the docs build and cleaned up some broken links. (gh pr #1463)
+
+
+Misc
+----
+
+- Releases are now uploaded to PyPI using trusted publishing, and the built
+  sdist and wheel are tested on all supported platforms before upload.
+  (gh pr #1619, #1622)
+- Changes to CI, tests and release tooling that do not affect users of the
+  package: gh pr #1417, #1462, #1464, #1465, #1466, #1467, #1468, #1469, #1470,
+  #1499, #1501, #1504, #1576, #1577, #1578, #1581, #1585.
+
+
 Version 2.9.0.post0 (2024-03-01)
 ================================
 

@@ -33,7 +33,8 @@ To keep users abreast of the changes to the module and to give proper credit, `d
 - `feature`: A new feature, (e.g. a new function, method, attribute, etc)
 - `bugfix`: A fix to a bug
 - `doc`: A change to the documentation
-- `deprecation`: Used if deprecating a feature or dropping support for a Python version.
+- `deprecations`: Used if deprecating a feature or dropping support for a Python version.
+- `data`: An update to the bundled time zone data.
 - `misc`: A change that has no interesting effect for end users, such as fixes to the test suite or CI.
 
 PRs that include a feature or bugfix *and* a deprecation should create a separate entry for the deprecation.
@@ -93,20 +94,20 @@ pip install -r requirements-dev.txt
 
 ## Testing
 
-The best way to test `dateutil` is to run `tox`. By default, `tox` will test against all supported versions of Python installed on your system. To limit the number of tests, run a specific subset of environments. For example, to run only on Python 2.7 and Python 3.6:
+The best way to test `dateutil` is to run `tox`. By default, `tox` will test against all supported versions of Python installed on your system. To limit the number of tests, run a specific subset of environments. For example, to run only on Python 3.11 and Python 3.13:
 
 ```bash
-tox -e py27,py36
+tox -e py311,py313
 ```
 
 You can also pass arguments to `pytest` through `tox` by placing them after `--`:
 
 ```bash
-tox -e py36 -- -m tzstr
+tox -e py311 -- -m tzstr
 ```
 
 This will pass the `-m tzstr` parameter to `pytest`, running only the tests with the `tzstr` mark.
 
 The tests can also be run directly by running `pytest` or `python -m pytest` in the root directory. This will be likely be less thorough but is often faster and is a good first pass to check your changes.
 
-All GitHub pull requests are automatically tested using [GitHub Actions](https://github.com/dateutil/dateutil/actions/) and [Appveyor](https://ci.appveyor.com/project/dateutil/dateutil).
+All GitHub pull requests are automatically tested using [GitHub Actions](https://github.com/dateutil/dateutil/actions/).

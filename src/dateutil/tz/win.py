@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 This module provides an interface to the native time zone data on Windows,
 including :py:class:`datetime.tzinfo` implementations.
@@ -6,19 +5,14 @@ including :py:class:`datetime.tzinfo` implementations.
 Attempting to import this module on a non-Windows platform will raise an
 :py:obj:`ImportError`.
 """
+
 # This code was originally contributed by Jeffrey Harris.
+import ctypes
 import datetime
+import os
 import struct
-
-from six.moves import winreg
-from six import text_type
-
-try:
-    import ctypes
-    from ctypes import wintypes
-except ValueError:
-    # ValueError is raised on non-Windows systems for some horrible reason.
-    raise ImportError("Running tzwin on non-Windows system")
+import winreg
+from ctypes import wintypes
 
 from ._common import tzrangebase
 
@@ -36,7 +30,7 @@ def _settzkeyname():
     try:
         winreg.OpenKey(handle, TZKEYNAMENT).Close()
         TZKEYNAME = TZKEYNAMENT
-    except WindowsError:
+    except OSError:
         TZKEYNAME = TZKEYNAME9X
     handle.Close()
     return TZKEYNAME
@@ -45,7 +39,7 @@ def _settzkeyname():
 TZKEYNAME = _settzkeyname()
 
 
-class tzres(object):
+class tzres:
     """
     Class for accessing ``tzres.dll``, which contains timezone name related
     resources.
@@ -66,6 +60,13 @@ class tzres(object):
 
         self.LoadStringW = user32.LoadStringW
         self._tzres = ctypes.WinDLL(tzres_loc)
+        # PyPy's WinDLL._handle is not a native HMODULE. Keep the DLL loaded
+        # above and ask Windows for its handle instead.
+        kernel32 = ctypes.WinDLL("kernel32")
+        get_module_handle = kernel32.GetModuleHandleW
+        get_module_handle.argtypes = (wintypes.LPCWSTR,)
+        get_module_handle.restype = wintypes.HMODULE
+        self._tzres_handle = get_module_handle(os.path.normpath(tzres_loc))
         self.tzres_loc = tzres_loc
 
     def load_name(self, offset):
@@ -88,7 +89,7 @@ class tzres(object):
         """
         resource = self.p_wchar()
         lpBuffer = ctypes.cast(ctypes.byref(resource), wintypes.LPWSTR)
-        nchar = self.LoadStringW(self._tzres._handle, offset, lpBuffer, 0)
+        nchar = self.LoadStringW(self._tzres_handle, offset, lpBuffer, 0)
         return resource[:nchar]
 
     def name_from_string(self, tzname_str):
@@ -216,7 +217,7 @@ class tzwin(tzwinbase):
         self._name = name
 
         with winreg.ConnectRegistry(None, winreg.HKEY_LOCAL_MACHINE) as handle:
-            tzkeyname = text_type("{kn}\\{name}").format(kn=TZKEYNAME, name=name)
+            tzkeyname = "{kn}\\{name}".format(kn=TZKEYNAME, name=name)
             with winreg.OpenKey(handle, tzkeyname) as tzkey:
                 keydict = valuestodict(tzkey)
 
@@ -282,8 +283,7 @@ class tzwinlocal(tzwinbase):
             self._dst_abbr = keydict["DaylightName"]
 
             try:
-                tzkeyname = text_type('{kn}\\{sn}').format(kn=TZKEYNAME,
-                                                          sn=self._std_abbr)
+                tzkeyname = "{kn}\\{sn}".format(kn=TZKEYNAME, sn=self._std_abbr)
                 with winreg.OpenKey(handle, tzkeyname) as tzkey:
                     _keydict = valuestodict(tzkey)
                     self._display = _keydict["Display"]
