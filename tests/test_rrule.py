@@ -9,7 +9,6 @@ from datetime import date, datetime, timedelta
 from functools import partial
 
 import pytest
-from freezegun import freeze_time
 from six import PY2
 
 from dateutil import tz
@@ -32,6 +31,8 @@ from dateutil.rrule import (
     rruleset,
     rrulestr,
 )
+
+from ._common import freeze_time
 
 
 @pytest.mark.rrule
