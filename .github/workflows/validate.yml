@@ -108,8 +108,6 @@ jobs:
           cache-dependency-glob: |
             **/*requirements*.txt
             pyproject.toml
-            setup.cfg
-            setup.py
             tox.ini
             .github/workflows/*.yml
       - name: Install tox
@@ -183,8 +181,6 @@ jobs:
           cache-dependency-glob: |
             **/*requirements*.txt
             pyproject.toml
-            setup.cfg
-            setup.py
             tox.ini
             .github/workflows/*.yml
       - name: Install tox
@@ -234,8 +230,6 @@ jobs:
           cache-dependency-glob: |
             **/*requirements*.txt
             pyproject.toml
-            setup.cfg
-            setup.py
             tox.ini
             .github/workflows/*.yml
       - name: Install tox
@@ -264,8 +258,6 @@ jobs:
           cache-dependency-glob: |
             **/*requirements*.txt
             pyproject.toml
-            setup.cfg
-            setup.py
             tox.ini
             .github/workflows/*.yml
       - name: Install darker
@@ -300,8 +292,6 @@ jobs:
           cache-dependency-glob: |
             **/*requirements*.txt
             pyproject.toml
-            setup.cfg
-            setup.py
             tox.ini
             .github/workflows/*.yml
       - name: Install tox
