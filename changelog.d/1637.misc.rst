@@ -1,0 +1,2 @@
+Moved package metadata and pytest configuration to pyproject.toml.
+Fixed by @pganssle (gh pr #1637).
