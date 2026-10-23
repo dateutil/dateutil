@@ -1,0 +1,2 @@
+Switched the build backend to Hatchling while retaining Git-derived versions
+and the public version attribute. Fixed by @pganssle (gh pr #1638).

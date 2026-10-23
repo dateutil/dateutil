@@ -1,3 +1,4 @@
+import importlib.metadata
 import os
 import subprocess
 import sys
@@ -86,6 +87,12 @@ def test_import_version_str():
 def test_import_version_root():
     import dateutil
     assert hasattr(dateutil, '__version__')
+
+
+def test_version_matches_distribution_metadata() -> None:
+    import dateutil
+
+    assert dateutil.__version__ == importlib.metadata.version("python-dateutil")
 
 
 # Test that dateutil.easter-related imports work properly
