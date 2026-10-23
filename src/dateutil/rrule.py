@@ -11,6 +11,7 @@ import datetime
 import heapq
 import itertools
 import math
+import os
 import re
 import sys
 from functools import wraps
@@ -1427,8 +1428,26 @@ class rruleset(rrulebase):
         self._len = total
 
 
+def _gettz_key(key):
+    """Look up a ``TZID`` from a rule string with :func:`tz.gettz`.
+
+    A ``TZID`` is a time zone identifier such as ``"America/New_York"``, not
+    a file name. ``gettz`` also accepts absolute paths and relative keys
+    that lead outside of ``TZPATH``, which is fine for keys chosen by the
+    caller, but a rule string may come from anywhere, so those are treated
+    as time zones that are not found.
+    """
+    from . import tz
+    from .tz.tz import _escapes_tzpath
+
+    if os.path.isabs(key) or _escapes_tzpath(key):
+        return None
+
+    return tz.gettz(key)
+
+
 class _rrulestr:
-    """ Parses a string representation of a recurrence rule or set of
+    """Parses a string representation of a recurrence rule or set of
     recurrence rules.
 
     :param s:
@@ -1460,7 +1479,9 @@ class _rrulestr:
     :param tzids:
         If given, a callable or mapping used to retrieve a
         :class:`datetime.tzinfo` from a string representation.
-        Defaults to :func:`dateutil.tz.gettz`.
+        Defaults to :func:`dateutil.tz.gettz`, except that a ``TZID`` naming
+        a file outside of :data:`dateutil.tz.TZPATH` (an absolute path, or a
+        relative path that leads out of the search path) is not looked up.
 
     :param tzinfos:
         Additional time zone names / aliases which may be present in a string
@@ -1589,8 +1610,7 @@ class _rrulestr:
                 except KeyError:
                     continue
                 if tzids is None:
-                    from . import tz
-                    tzlookup = tz.gettz
+                    tzlookup = _gettz_key
                 elif callable(tzids):
                     tzlookup = tzids
                 else:
