@@ -94,6 +94,15 @@ pip install -r requirements-dev.txt
 
 ## Testing
 
+For faster environment creation and dependency installation, you can install
+`tox` with the `tox-uv` plugin using [uv](https://docs.astral.sh/uv/):
+
+```bash
+uv tool install tox --with tox-uv
+```
+
+The same `tox` commands work with either the uv plugin or the default installer.
+
 The best way to test `dateutil` is to run `tox`. By default, `tox` will test against all supported versions of Python installed on your system. To limit the number of tests, run a specific subset of environments. For example, to run only on Python 3.11 and Python 3.13:
 
 ```bash
