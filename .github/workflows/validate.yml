@@ -103,8 +103,6 @@ jobs:
           cache-dependency-glob: |
             **/*requirements*.txt
             pyproject.toml
-            setup.cfg
-            setup.py
             tox.ini
       - name: Install tox
         run: uv tool install --python 3.13 --with tox-uv tox
