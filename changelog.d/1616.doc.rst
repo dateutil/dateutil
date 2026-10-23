@@ -1,0 +1,3 @@
+Documented that ``tz.gettz`` returns ``None`` when a time zone name cannot be
+resolved, with an example. Reported by @dseomn (gh issue #1237).
+Fixed by @hafizahmedzia (gh pr #1616), with OpenAI Codex assistance.
