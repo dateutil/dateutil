@@ -20,10 +20,4 @@ def README():
 README = README()  # NOQA
 
 
-setup(
-      use_scm_version={
-          'write_to': 'src/dateutil/_version.py',
-      },
-      ## Needed since doctest not supported by PyPA.
-      long_description = README,
-      )
+setup(long_description=README, long_description_content_type="text/x-rst")
