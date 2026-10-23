@@ -3,8 +3,11 @@ from __future__ import unicode_literals
 
 import copy
 import itertools
+import os
 import pickle
+import sys
 import unittest
+import warnings
 from datetime import date, datetime, timedelta
 from functools import partial
 
@@ -12,7 +15,7 @@ import pytest
 from freezegun import freeze_time
 from six import PY2
 
-from dateutil import tz
+from dateutil import _tzdata_impl, tz
 from dateutil.rrule import (
     DAILY,
     FR,
@@ -32,6 +35,8 @@ from dateutil.rrule import (
     rruleset,
     rrulestr,
 )
+
+from ._common import set_tzpath
 
 
 @pytest.mark.rrule
@@ -4673,6 +4678,66 @@ def test_generated_aware_dtstart_rrulestr():
     rrule_r = rrulestr(str(rrule_without_dtstart))
 
     assert list(rrule_r) == list(rrule_without_dtstart)
+
+
+@pytest.fixture
+def tzpath_and_outside_zone(tmp_path):
+    """A TZPATH entry, and a TZif file in a sibling directory outside of it."""
+    with _tzdata_impl._load_tzdata("UTC") as f:
+        data = f.read()
+
+    tzpath = tmp_path / "zoneinfo"
+    outside = tmp_path / "outside"
+    for directory in (tzpath, outside):
+        os.makedirs(str(directory))
+
+    (tzpath / "Inside").write_bytes(data)
+    (outside / "Outside").write_bytes(data)
+
+    with set_tzpath((str(tzpath),), block_tzdata=True):
+        yield tmp_path
+
+
+@pytest.mark.rrulestr
+def test_rrulestr_tzid_inside_tzpath(tzpath_and_outside_zone):
+    rr = rrulestr(
+        "DTSTART;TZID=Inside:19970902T090000\nRRULE:FREQ=DAILY;COUNT=1"
+    )
+
+    assert list(rr) == [datetime(1997, 9, 2, 9, 0, tzinfo=tz.gettz("Inside"))]
+
+
+@pytest.mark.rrulestr
+@pytest.mark.skipif(
+    sys.platform.startswith("win"),
+    reason="a TZID cannot contain ':', so it cannot hold a drive path",
+)
+def test_rrulestr_tzid_absolute_path_is_not_a_zone(tzpath_and_outside_zone):
+    path = str(tzpath_and_outside_zone / "outside" / "Outside")
+    # gettz accepts a path, but a TZID in the rule string is not one
+    assert isinstance(tz.gettz(path), tz.tzfile)
+
+    rr = rrulestr(
+        "DTSTART;TZID=%s:19970902T090000\nRRULE:FREQ=DAILY;COUNT=1" % path
+    )
+
+    assert list(rr) == [datetime(1997, 9, 2, 9, 0)]
+
+
+@pytest.mark.rrulestr
+def test_rrulestr_tzid_outside_tzpath_is_not_a_zone(tzpath_and_outside_zone):
+    # gettz still loads this key (with a DeprecatedTzKeyWarning), but a TZID
+    # in the rule string must stay inside TZPATH
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=tz.DeprecatedTzKeyWarning)
+        assert isinstance(tz.gettz("../outside/Outside"), tz.tzfile)
+
+    rr = rrulestr(
+        "DTSTART;TZID=../outside/Outside:19970902T090000\n"
+        "RRULE:FREQ=DAILY;COUNT=1"
+    )
+
+    assert list(rr) == [datetime(1997, 9, 2, 9, 0)]
 
 
 @pytest.mark.rruleset
