@@ -133,24 +133,12 @@ version-file = "src/dateutil/_version.py"
 packages = ["src/dateutil"]
 
 [tool.hatch.build.targets.sdist]
-include = [
-    "/src/dateutil",
-    "/tests",
-    "/docs",
+exclude = [
     "/ci_tools",
-    "/changelog.d",
-    "/AUTHORS.md",
-    "/CONTRIBUTING.md",
-    "/LICENSE",
-    "/NEWS",
-    "/README.rst",
     "/RELEASING",
-    "/pyproject.toml",
-    "/requirements-dev.txt",
-    "/tox.ini",
     "/.github",
     "/.gitattributes",
-    "/.gitignore",
+    "**/.gitignore",
     "/.readthedocs.yml",
     "/.pre-commit-config.yaml",
     "/codecov.yml",
