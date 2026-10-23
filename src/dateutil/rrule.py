@@ -1586,6 +1586,8 @@ class _rrulestr:
 
         for parm in parms:
             if parm.startswith("TZID="):
+                if ignoretz:
+                    continue
                 try:
                     tzkey = rule_tzids[parm.split('TZID=')[-1]]
                 except KeyError:
