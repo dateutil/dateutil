@@ -21,9 +21,6 @@ README = README()  # NOQA
 
 
 setup(
-      use_scm_version={
-          'write_to': 'src/dateutil/_version.py',
-      },
       ## Needed since doctest not supported by PyPA.
       long_description = README,
       )
