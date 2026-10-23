@@ -1,30 +1,23 @@
-# -*- coding: utf-8 -*-
 """
 The rrule module offers a small, complete, and very fast, implementation of
 the recurrence rules documented in the
 `iCalendar RFC <https://tools.ietf.org/html/rfc5545>`_,
 including support for caching of results.
 """
+
+import _thread
 import calendar
 import datetime
 import heapq
 import itertools
+import math
 import re
 import sys
 from functools import wraps
 # For warning about deprecation of until and count
 from warnings import warn
 
-from six import advance_iterator, integer_types
-
-from six.moves import _thread, range
-
 from ._common import weekday as weekdaybase
-
-try:
-    from math import gcd
-except ImportError:
-    from fractions import gcd
 
 __all__ = ["rrule", "rruleset", "rrulestr",
            "YEARLY", "MONTHLY", "WEEKLY", "DAILY",
@@ -71,7 +64,7 @@ class weekday(weekdaybase):
         if n == 0:
             raise ValueError("Can't create weekday with n==0")
 
-        super(weekday, self).__init__(wkday, n)
+        super().__init__(wkday, n)
 
 
 MO, TU, WE, TH, FR, SA, SU = weekdays = tuple(weekday(x) for x in range(7))
@@ -91,7 +84,7 @@ def _invalidates_cache(f):
     return inner_func
 
 
-class rrulebase(object):
+class rrulebase:
     def __init__(self, cache=False):
         if cache:
             self._cache = []
@@ -103,7 +96,7 @@ class rrulebase(object):
             self._len = None
 
     def __reduce_ex__(self, protocol):
-        rv = super(rrulebase, self).__reduce_ex__(protocol)
+        rv = super().__reduce_ex__(protocol)
         state, slots = rv[2], None
         if isinstance(state, tuple):
             state, slots = state
@@ -158,7 +151,7 @@ class rrulebase(object):
                     break
                 try:
                     for j in range(10):
-                        cache.append(advance_iterator(gen))
+                        cache.append(next(gen))
                 except StopIteration:
                     self._cache_gen = gen = None
                     self._cache_complete = True
@@ -185,7 +178,7 @@ class rrulebase(object):
             gen = iter(self)
             try:
                 for i in range(item+1):
-                    res = advance_iterator(gen)
+                    res = next(gen)
             except StopIteration:
                 raise IndexError
             return res
@@ -455,7 +448,7 @@ class rrule(rrulebase):
                  byweekno=None, byweekday=None,
                  byhour=None, byminute=None, bysecond=None,
                  cache=False):
-        super(rrule, self).__init__(cache)
+        super().__init__(cache)
         global easter
         if not dtstart:
             if until and until.tzinfo:
@@ -503,14 +496,14 @@ class rrule(rrulebase):
 
         if wkst is None:
             self._wkst = calendar.firstweekday()
-        elif isinstance(wkst, integer_types):
+        elif isinstance(wkst, int):
             self._wkst = wkst
         else:
             self._wkst = wkst.weekday
 
         if bysetpos is None:
             self._bysetpos = None
-        elif isinstance(bysetpos, integer_types):
+        elif isinstance(bysetpos, int):
             if bysetpos == 0 or not (-366 <= bysetpos <= 366):
                 raise ValueError("bysetpos must be between 1 and 366, "
                                  "or between -366 and -1")
@@ -544,7 +537,7 @@ class rrule(rrulebase):
         if bymonth is None:
             self._bymonth = None
         else:
-            if isinstance(bymonth, integer_types):
+            if isinstance(bymonth, int):
                 bymonth = (bymonth,)
 
             self._bymonth = tuple(sorted(set(bymonth)))
@@ -556,7 +549,7 @@ class rrule(rrulebase):
         if byyearday is None:
             self._byyearday = None
         else:
-            if isinstance(byyearday, integer_types):
+            if isinstance(byyearday, int):
                 byyearday = (byyearday,)
 
             self._byyearday = tuple(sorted(set(byyearday)))
@@ -566,7 +559,7 @@ class rrule(rrulebase):
         if byeaster is not None:
             if not easter:
                 from dateutil import easter
-            if isinstance(byeaster, integer_types):
+            if isinstance(byeaster, int):
                 self._byeaster = (byeaster,)
             else:
                 self._byeaster = tuple(sorted(byeaster))
@@ -580,7 +573,7 @@ class rrule(rrulebase):
             self._bymonthday = ()
             self._bynmonthday = ()
         else:
-            if isinstance(bymonthday, integer_types):
+            if isinstance(bymonthday, int):
                 bymonthday = (bymonthday,)
 
             bymonthday = set(bymonthday)            # Ensure it's unique
@@ -597,7 +590,7 @@ class rrule(rrulebase):
         if byweekno is None:
             self._byweekno = None
         else:
-            if isinstance(byweekno, integer_types):
+            if isinstance(byweekno, int):
                 byweekno = (byweekno,)
 
             self._byweekno = tuple(sorted(set(byweekno)))
@@ -612,13 +605,13 @@ class rrule(rrulebase):
             # If it's one of the valid non-sequence types, convert to a
             # single-element sequence before the iterator that builds the
             # byweekday set.
-            if isinstance(byweekday, integer_types) or hasattr(byweekday, "n"):
+            if isinstance(byweekday, int) or hasattr(byweekday, "n"):
                 byweekday = (byweekday,)
 
             self._byweekday = set()
             self._bynweekday = set()
             for wday in byweekday:
-                if isinstance(wday, integer_types):
+                if isinstance(wday, int):
                     self._byweekday.add(wday)
                 elif not wday.n or freq > MONTHLY:
                     self._byweekday.add(wday.weekday)
@@ -653,7 +646,7 @@ class rrule(rrulebase):
             else:
                 self._byhour = None
         else:
-            if isinstance(byhour, integer_types):
+            if isinstance(byhour, int):
                 byhour = (byhour,)
 
             if freq == HOURLY:
@@ -673,7 +666,7 @@ class rrule(rrulebase):
             else:
                 self._byminute = None
         else:
-            if isinstance(byminute, integer_types):
+            if isinstance(byminute, int):
                 byminute = (byminute,)
 
             if freq == MINUTELY:
@@ -693,7 +686,7 @@ class rrule(rrulebase):
             else:
                 self._bysecond = None
         else:
-            if isinstance(bysecond, integer_types):
+            if isinstance(bysecond, int):
                 bysecond = (bysecond,)
 
             self._bysecond = set(bysecond)
@@ -976,7 +969,7 @@ class rrule(rrulebase):
 
                 valid = False
                 rep_rate = (24*60)
-                for j in range(rep_rate // gcd(interval, rep_rate)):
+                for j in range(rep_rate // math.gcd(interval, rep_rate)):
                     if byminute:
                         nhours, minute = \
                             self.__mod_distance(value=minute,
@@ -1008,7 +1001,7 @@ class rrule(rrulebase):
 
                 rep_rate = (24 * 3600)
                 valid = False
-                for j in range(0, rep_rate // gcd(interval, rep_rate)):
+                for j in range(0, rep_rate // math.gcd(interval, rep_rate)):
                     if bysecond:
                         nminutes, second = \
                             self.__mod_distance(value=second,
@@ -1086,11 +1079,11 @@ class rrule(rrulebase):
         cset = set()
 
         # Support a single byxxx value.
-        if isinstance(byxxx, integer_types):
+        if isinstance(byxxx, int):
             byxxx = (byxxx, )
 
         for num in byxxx:
-            i_gcd = gcd(self._interval, base)
+            i_gcd = math.gcd(self._interval, base)
             # Use divmod rather than % because we need to wrap negative nums.
             if i_gcd == 1 or divmod(num - start, i_gcd)[1] == 0:
                 cset.add(num)
@@ -1133,7 +1126,7 @@ class rrule(rrulebase):
                 return (accumulator, value)
 
 
-class _iterinfo(object):
+class _iterinfo:
     __slots__ = ["rrule", "lastyear", "lastmonth",
                  "yearlen", "nextyearlen", "yearordinal", "yearweekday",
                  "mmask", "mrange", "mdaymask", "nmdaymask",
@@ -1336,10 +1329,10 @@ class rruleset(rrulebase):
     :param cache: If True, caching of results will be enabled, improving
                   performance of multiple queries considerably. """
 
-    class _genitem(object):
+    class _genitem:
         def __init__(self, genlist, gen):
             try:
-                self.dt = advance_iterator(gen)
+                self.dt = next(gen)
                 genlist.append(self)
             except StopIteration:
                 pass
@@ -1348,7 +1341,7 @@ class rruleset(rrulebase):
 
         def __next__(self):
             try:
-                self.dt = advance_iterator(self.gen)
+                self.dt = next(self.gen)
             except StopIteration:
                 if self.genlist[0] is self:
                     heapq.heappop(self.genlist)
@@ -1356,7 +1349,6 @@ class rruleset(rrulebase):
                     self.genlist.remove(self)
                     heapq.heapify(self.genlist)
 
-        next = __next__
 
         def __lt__(self, other):
             return self.dt < other.dt
@@ -1371,7 +1363,7 @@ class rruleset(rrulebase):
             return self.dt != other.dt
 
     def __init__(self, cache=False):
-        super(rruleset, self).__init__(cache)
+        super().__init__(cache)
         self._rrule = []
         self._rdate = []
         self._exrule = []
@@ -1424,22 +1416,20 @@ class rruleset(rrulebase):
             if not lastdt or lastdt != ritem.dt:
                 while exlist and exlist[0] < ritem:
                     exitem = exlist[0]
-                    advance_iterator(exitem)
+                    next(exitem)
                     if exlist and exlist[0] is exitem:
                         heapq.heapreplace(exlist, exitem)
                 if not exlist or ritem != exlist[0]:
                     total += 1
                     yield ritem.dt
                 lastdt = ritem.dt
-            advance_iterator(ritem)
+            next(ritem)
             if rlist and rlist[0] is ritem:
                 heapq.heapreplace(rlist, ritem)
         self._len = total
 
 
-
-
-class _rrulestr(object):
+class _rrulestr:
     """ Parses a string representation of a recurrence rule or set of
     recurrence rules.
 

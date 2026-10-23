@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 This module offers timezone implementations subclassing the abstract
 :py:class:`datetime.tzinfo` type. There are classes to handle tzfile format
@@ -8,29 +7,18 @@ from relative deltas), local machine timezone, fixed offset timezone, and UTC
 timezone.
 """
 
-import bisect
+import _thread
+import contextlib
 import datetime
 import os
-import struct
-import sys
 import time
 import warnings
 import weakref
 from collections import OrderedDict
 
-import six
-from six import string_types
-from six.moves import _thread
-
 from .. import _tzdata_impl
 from . import _tzpath
-from ._common import (
-    _tzinfo,
-    _validate_fromutc_inputs,
-    enfold,
-    tzname_in_python2,
-    tzrangebase,
-)
+from ._common import _tzinfo, _validate_fromutc_inputs, enfold, tzrangebase
 from ._factories import _TzOffsetFactory, _TzSingleton, _TzStrFactory
 from ._tzfile import tzfile
 
@@ -39,15 +27,11 @@ try:
 except ImportError:
     tzwin = tzwinlocal = None
 
-# For warning about rounding tzinfo
-from warnings import warn
-
 ZERO = datetime.timedelta(0)
 EPOCH = datetime.datetime(1970, 1, 1, 0, 0)
 
 
-@six.add_metaclass(_TzSingleton)
-class tzutc(datetime.tzinfo):
+class tzutc(datetime.tzinfo, metaclass=_TzSingleton):
     """
     This is a tzinfo object that represents the UTC time zone.
 
@@ -85,7 +69,6 @@ class tzutc(datetime.tzinfo):
     def dst(self, dt):
         return ZERO
 
-    @tzname_in_python2
     def tzname(self, dt):
         return "UTC"
 
@@ -122,9 +105,6 @@ class tzutc(datetime.tzinfo):
 
     __hash__ = None
 
-    def __ne__(self, other):
-        return not (self == other)
-
     def __repr__(self):
         return "%s()" % self.__class__.__name__
 
@@ -137,8 +117,7 @@ class tzutc(datetime.tzinfo):
 UTC = tzutc()
 
 
-@six.add_metaclass(_TzOffsetFactory)
-class tzoffset(datetime.tzinfo):
+class tzoffset(datetime.tzinfo, metaclass=_TzOffsetFactory):
     """
     A simple class for representing a fixed offset from UTC.
 
@@ -157,7 +136,7 @@ class tzoffset(datetime.tzinfo):
         except (TypeError, AttributeError):
             pass
 
-        self._offset = datetime.timedelta(seconds=_get_supported_offset(offset))
+        self._offset = datetime.timedelta(seconds=offset)
 
     def utcoffset(self, dt):
         return self._offset
@@ -165,7 +144,6 @@ class tzoffset(datetime.tzinfo):
     def dst(self, dt):
         return ZERO
 
-    @tzname_in_python2
     def tzname(self, dt):
         return self._name
 
@@ -195,9 +173,6 @@ class tzoffset(datetime.tzinfo):
 
     __hash__ = None
 
-    def __ne__(self, other):
-        return not (self == other)
-
     def __repr__(self):
         return "%s(%s, %s)" % (self.__class__.__name__,
                                repr(self._name),
@@ -211,7 +186,7 @@ class tzlocal(_tzinfo):
     A :class:`tzinfo` subclass built around the ``time`` timezone functions.
     """
     def __init__(self):
-        super(tzlocal, self).__init__()
+        super().__init__()
 
         self._std_offset = datetime.timedelta(seconds=-time.timezone)
         if time.daylight:
@@ -241,7 +216,6 @@ class tzlocal(_tzinfo):
         else:
             return ZERO
 
-    @tzname_in_python2
     def tzname(self, dt):
         return self._tznames[self._isdst(dt)]
 
@@ -297,13 +271,9 @@ class tzlocal(_tzinfo):
 
         # Check for ambiguous times:
         dstval = self._naive_is_dst(dt)
-        fold = getattr(dt, 'fold', None)
 
         if self.is_ambiguous(dt):
-            if fold is not None:
-                return not self._fold(dt)
-            else:
-                return True
+            return not dt.fold
 
         return dstval
 
@@ -323,9 +293,6 @@ class tzlocal(_tzinfo):
             return NotImplemented
 
     __hash__ = None
-
-    def __ne__(self, other):
-        return not (self == other)
 
     def __repr__(self):
         return "%s()" % self.__class__.__name__
@@ -495,8 +462,7 @@ class tzrange(tzrangebase):
         return self._dst_base_offset_
 
 
-@six.add_metaclass(_TzStrFactory)
-class tzstr(tzrange):
+class tzstr(tzrange, metaclass=_TzStrFactory):
     """
     ``tzstr`` objects are time zone objects specified by a time-zone string as
     it would be passed to a ``TZ`` variable on POSIX-style systems (see
@@ -514,8 +480,7 @@ class tzstr(tzrange):
 
     :param s:
         A time zone string in ``TZ`` variable format. This can be a
-        :class:`bytes` (2.x: :class:`str`), :class:`str` (2.x:
-        :class:`unicode`) or a stream emitting unicode characters
+        :class:`bytes`, :class:`str` or a stream emitting Unicode characters
         (e.g. :class:`StringIO`).
 
     :param posix_offset:
@@ -615,7 +580,7 @@ class tzstr(tzrange):
         return "%s(%s)" % (self.__class__.__name__, repr(self._s))
 
 
-class _tzicalvtzcomp(object):
+class _tzicalvtzcomp:
     def __init__(self, tzoffsetfrom, tzoffsetto, isdst,
                  tzname=None, rrule=None):
         self.tzoffsetfrom = datetime.timedelta(seconds=tzoffsetfrom)
@@ -628,7 +593,7 @@ class _tzicalvtzcomp(object):
 
 class _tzicalvtz(_tzinfo):
     def __init__(self, tzid, comps=[]):
-        super(_tzicalvtz, self).__init__()
+        super().__init__()
 
         self._tzid = tzid
         self._comps = comps
@@ -644,8 +609,7 @@ class _tzicalvtz(_tzinfo):
 
         try:
             with self._cache_lock:
-                return self._cachecomp[self._cachedate.index(
-                    (dt, self._fold(dt)))]
+                return self._cachecomp[self._cachedate.index((dt, dt.fold))]
         except ValueError:
             pass
 
@@ -672,7 +636,7 @@ class _tzicalvtz(_tzinfo):
                 lastcomp = comp[0]
 
         with self._cache_lock:
-            self._cachedate.insert(0, (dt, self._fold(dt)))
+            self._cachedate.insert(0, (dt, dt.fold))
             self._cachecomp.insert(0, lastcomp)
 
             if len(self._cachedate) > 10:
@@ -682,7 +646,7 @@ class _tzicalvtz(_tzinfo):
         return lastcomp
 
     def _find_compdt(self, comp, dt):
-        if comp.tzoffsetdiff < ZERO and self._fold(dt):
+        if comp.tzoffsetdiff < ZERO and dt.fold:
             dt -= comp.tzoffsetdiff
 
         compdt = comp.rrule.before(dt, inc=True)
@@ -702,7 +666,6 @@ class _tzicalvtz(_tzinfo):
         else:
             return ZERO
 
-    @tzname_in_python2
     def tzname(self, dt):
         return self._find_comp(dt).tzname
 
@@ -712,7 +675,7 @@ class _tzicalvtz(_tzinfo):
     __reduce__ = object.__reduce__
 
 
-class tzical(object):
+class tzical:
     """
     This object is designed to parse an iCalendar-style ``VTIMEZONE`` structure
     as set out in `RFC 5545`_ Section 4.6.5 into one or more `tzinfo` objects.
@@ -727,13 +690,13 @@ class tzical(object):
         global rrule
         from dateutil import rrule
 
-        if isinstance(fileobj, string_types):
+        if isinstance(fileobj, str):
             self._s = fileobj
             # ical should be encoded in UTF-8 with CRLF
             fileobj = open(fileobj, 'r')
         else:
             self._s = getattr(fileobj, 'name', repr(fileobj))
-            fileobj = _nullcontext(fileobj)
+            fileobj = contextlib.nullcontext(fileobj)
 
         self._vtz = {}
 
@@ -925,7 +888,7 @@ def __get_gettz():
     if tzwinlocal is not None:
         tzlocal_classes += (tzwinlocal,)
 
-    class GettzFunc(object):
+    class GettzFunc:
         """
         Retrieve a time zone object from a string representation
 
@@ -1064,15 +1027,15 @@ def __get_gettz():
                         filename = filepath
                         for path in _tzpath.TZPATH:
                             filepath = os.path.join(path, filename)
-                            if _isfile(filepath):
+                            if os.path.isfile(filepath):
                                 break
                         else:
                             continue
-                    if _isfile(filepath):
+                    if os.path.isfile(filepath):
                         try:
                             tz = tzfile(filepath)
                             break
-                        except (IOError, OSError, ValueError):
+                        except (OSError, ValueError):
                             pass
                 else:
                     tz = tzlocal()
@@ -1083,7 +1046,7 @@ def __get_gettz():
                 except TypeError as e:
                     if isinstance(name, bytes):
                         new_msg = "gettz argument should be str, not bytes"
-                        six.raise_from(TypeError(new_msg), e)
+                        raise TypeError(new_msg) from e
                     else:
                         raise
 
@@ -1095,7 +1058,7 @@ def __get_gettz():
                     return None
 
                 if os.path.isabs(name):
-                    if _isfile(name):
+                    if os.path.isfile(name):
                         tz = tzfile(name)
                     else:
                         tz = None
@@ -1105,14 +1068,14 @@ def __get_gettz():
 
                     for path in _tzpath.TZPATH:
                         filepath = os.path.join(path, name)
-                        if not _isfile(filepath):
+                        if not os.path.isfile(filepath):
                             filepath = filepath.replace(' ', '_')
-                            if not _isfile(filepath):
+                            if not os.path.isfile(filepath):
                                 continue
                         try:
                             tz = tzfile(filepath, key=name)
                             break
-                        except (IOError, OSError, ValueError):
+                        except (OSError, ValueError):
                             # TODO: A file that exists but can't be read or
                             # isn't a valid TZif file is silently skipped,
                             # and the key is looked up in the next TZPATH
@@ -1142,8 +1105,7 @@ def __get_gettz():
                         if tzwin is not None:
                             try:
                                 tz = tzwin(name)
-                            except (WindowsError, UnicodeEncodeError):
-                                # UnicodeEncodeError is for Python 2.7 compat
+                            except OSError:
                                 tz = None
 
                         if not tz:
@@ -1422,51 +1384,5 @@ def _datetime_to_timestamp(dt):
     """
     return (dt.replace(tzinfo=None) - EPOCH).total_seconds()
 
-
-if sys.version_info >= (3, 6):
-    def _get_supported_offset(second_offset):
-        return second_offset
-else:
-    def _get_supported_offset(second_offset):
-        # For python pre-3.6, round to full-minutes if that's not the case.
-        # Python's datetime doesn't accept sub-minute timezones. Check
-        # http://python.org/sf/1447945 or https://bugs.python.org/issue5288
-        # for some information.
-        old_offset = second_offset
-        calculated_offset = 60 * ((second_offset + 30) // 60)
-        return calculated_offset
-
-
-if sys.version_info < (3, 8):
-
-    def _isfile(path):
-        # bpo-33721: In Python 3.8 non-UTF8 paths return False rather than
-        # raising an error. See https://bugs.python.org/issue33721
-        try:
-            return os.path.isfile(path)
-        except ValueError:
-            return False
-
-else:
-    _isfile = os.path.isfile
-
-
-try:
-    # Python 3.7 feature
-    from contextlib import nullcontext as _nullcontext
-except ImportError:
-    class _nullcontext(object):
-        """
-        Class for wrapping contexts so that they are passed through in a
-        with statement.
-        """
-        def __init__(self, context):
-            self.context = context
-
-        def __enter__(self):
-            return self.context
-
-        def __exit__(*args, **kwargs):
-            pass
 
 # vim:ts=4:sw=4:et

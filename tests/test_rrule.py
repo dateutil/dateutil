@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
 import copy
 import itertools
 import pickle
@@ -9,7 +6,6 @@ from datetime import date, datetime, timedelta
 from functools import partial
 
 import pytest
-from six import PY2
 
 from dateutil import tz
 from dateutil.rrule import (
@@ -2299,27 +2295,6 @@ class RRuleTest(unittest.TestCase):
                           datetime(2010, 3, 22, 13, 1),
                           datetime(2010, 3, 22, 14, 1)])
 
-    def testLongIntegers(self):
-        if PY2:  # There are no longs in python3
-            self.assertEqual(list(rrule(MINUTELY,
-                                  count=long(2),
-                                  interval=long(2),
-                                  bymonth=long(2),
-                                  byweekday=long(3),
-                                  byhour=long(6),
-                                  byminute=long(6),
-                                  bysecond=long(6),
-                                  dtstart=datetime(1997, 9, 2, 9, 0))),
-                             [datetime(1998, 2, 5, 6, 6, 6),
-                              datetime(1998, 2, 12, 6, 6, 6)])
-            self.assertEqual(list(rrule(YEARLY,
-                                  count=long(2),
-                                  bymonthday=long(5),
-                                  byweekno=long(2),
-                                  dtstart=datetime(1997, 9, 2, 9, 0))),
-                             [datetime(1998, 1, 5, 9, 0),
-                              datetime(2004, 1, 5, 9, 0)])
-
     def testHourlyBadRRule(self):
         """
         When `byhour` is specified with `freq=HOURLY`, there are certain
@@ -2359,7 +2334,6 @@ class RRuleTest(unittest.TestCase):
         raise a :exception:`ValueError`.
         """
 
-        # In Python 2.7 you can use a context manager for this.
         def make_bad_rrule():
             list(rrule(MINUTELY, interval=120, byhour=(10, 12, 14, 16),
                  count=2, dtstart=datetime(1997, 9, 2, 9, 0)))
@@ -2371,7 +2345,6 @@ class RRuleTest(unittest.TestCase):
         See :func:`testMinutelyBadComboRRule' for details.
         """
 
-        # In Python 2.7 you can use a context manager for this.
         def make_bad_minute_rrule():
             list(rrule(SECONDLY, interval=360, byminute=(10, 28, 49),
                  count=4, dtstart=datetime(1997, 9, 2, 9, 0)))
@@ -4614,24 +4587,6 @@ class RRuleTest(unittest.TestCase):
                               wkst=SU,
                               dtstart=datetime(1997, 9, 2, 9, 0)))
 
-    def testToStrLongIntegers(self):
-        if PY2:  # There are no longs in python3
-            self._rrulestr_reverse_test(rrule(MINUTELY,
-                                  count=long(2),
-                                  interval=long(2),
-                                  bymonth=long(2),
-                                  byweekday=long(3),
-                                  byhour=long(6),
-                                  byminute=long(6),
-                                  bysecond=long(6),
-                                  dtstart=datetime(1997, 9, 2, 9, 0)))
-
-            self._rrulestr_reverse_test(rrule(YEARLY,
-                                  count=long(2),
-                                  bymonthday=long(5),
-                                  byweekno=long(2),
-                                  dtstart=datetime(1997, 9, 2, 9, 0)))
-
     def testReplaceIfSet(self):
         rr = rrule(YEARLY,
                    count=1,
@@ -4913,13 +4868,13 @@ class WeekdayTest(unittest.TestCase):
     def testWeekdayEqualitySubclass(self):
         # Two weekday objects equal if their "weekday" and "n" attributes are
         # available and the same
-        class BasicWeekday(object):
+        class BasicWeekday:
             def __init__(self, weekday):
                 self.weekday = weekday
 
         class BasicNWeekday(BasicWeekday):
             def __init__(self, weekday, n=None):
-                super(BasicNWeekday, self).__init__(weekday)
+                super().__init__(weekday)
                 self.n = n
 
         MO_Basic = BasicWeekday(0)

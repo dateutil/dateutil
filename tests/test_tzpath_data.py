@@ -10,7 +10,7 @@ catch the parser mishandling something new in the data.
 
 import calendar
 import os
-import sys
+import zoneinfo
 from datetime import datetime, timedelta
 
 import pytest
@@ -18,19 +18,13 @@ import pytest
 from dateutil import tz
 from dateutil.tz._tzfile import _TZStr
 
-try:
-    import zoneinfo
-except ImportError:
-    zoneinfo = None
-
 pytestmark = pytest.mark.tzdata_properties
 
 UTC = tz.UTC
 EPOCH = datetime(1970, 1, 1, tzinfo=UTC)
 
 # The standard library's C implementation of zoneinfo is an independent
-# implementation of the same thing, so on Python 3.9+ it's the reference.
-HAS_ZONEINFO = zoneinfo is not None and sys.version_info >= (3, 9)
+# implementation of the same thing, so it is the reference.
 
 PAST_YEARS = (1850, 1900, 1945, 1970, 1990, 2000, 2020)
 FUTURE_YEARS = (2037, 2038, 2050, 2100, 2400, 9000)
@@ -79,10 +73,6 @@ def _keys():
     return keys
 
 
-def _fold(dt):
-    return getattr(dt, "fold", 0)
-
-
 def test_every_key_loads(tz_source):
     """Every available key loads, from the source it was found in."""
     tzpath = [os.path.join(path, "") for path in tz.TZPATH]
@@ -126,10 +116,9 @@ def test_ambiguous_and_imaginary(tz_source):
                 assert tz.datetime_exists(dt) == (offset_0 >= offset_1), case
 
 
-@pytest.mark.skipif(not HAS_ZONEINFO, reason="Requires zoneinfo (Python 3.9+)")
 def test_matches_zoneinfo(tz_source):
     """utcoffset, tzname and fromutc agree with the stdlib zoneinfo."""
-    # On Python 3.9+, dateutil and zoneinfo share TZPATH, and the tz_source
+    # dateutil and zoneinfo share TZPATH, and the tz_source
     # fixture blocks (or allows) tzdata for both of them.
     #
     # This doesn't compare dst(), which zoneinfo infers differently, and gets
@@ -142,7 +131,7 @@ def test_matches_zoneinfo(tz_source):
         for dt_utc in _probe_instants(zone):
             dt = dt_utc.astimezone(zone)
             dt_ref = dt_utc.astimezone(reference)
-            if (dt.replace(tzinfo=None), _fold(dt)) != (
+            if (dt.replace(tzinfo=None), dt.fold) != (
                 dt_ref.replace(tzinfo=None),
                 dt_ref.fold,
             ):
@@ -315,10 +304,6 @@ def _find_tzdata_zi(tz_source):
     return None
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 6),
-    reason="Sub-minute offsets are rounded before Python 3.6",
-)
 def test_dst_matches_tzdata_zi(tz_source):
     """utcoffset() - dst() is the standard offset given in tzdata.zi."""
     path = _find_tzdata_zi(tz_source)

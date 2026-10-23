@@ -18,47 +18,10 @@ from datetime import date, datetime, time, timedelta
 
 import attr
 import pytest
-import six
 
 from dateutil import tz
 
-from ._common import TZPATH_LOCK, pop_tzdata_modules, set_tzpath
-
-# Backwards compatibility shims
-try:
-    from attr import frozen
-except ImportError:
-    # "Backport" to older versions by not bothering with frozen
-    frozen = attr.s
-
-if sys.version_info < (3, 5):
-    JSONDecodeError = ValueError
-else:
-    from json import JSONDecodeError
-
-
-def makedirs(path, exist_ok=False):
-    if exist_ok:
-        try:
-            os.makedirs(path)
-        except OSError:
-            if not os.path.isdir(path):
-                raise
-    else:
-        os.makedirs(path)
-
-
-if not hasattr(gzip, "decompress"):
-
-    def gzip_decompress(data):
-        import io
-
-        with gzip.GzipFile(fileobj=io.BytesIO(data)) as f:
-            return f.read()
-
-else:
-    gzip_decompress = gzip.decompress
-
+from ._common import set_tzpath
 
 IS_WIN = sys.platform.startswith("win")
 
@@ -66,46 +29,14 @@ MIN_DT_V1 = datetime(1970, 1, 1) - timedelta(seconds=2**31)
 MAX_DT_V1 = datetime(1970, 1, 1) + timedelta(seconds=2**31)
 
 ####
-# Backports
-functools_cache = getattr(functools, "cache", None)
-if functools_cache is None:
-
-    def functools_cache(f):
-        _cache = {}
-
-        @functools.wraps(f)
-        def inner_func():
-            if "value" not in _cache:
-                _cache["value"] = f()
-            return _cache["value"]
-
-        return inner_func
-
-
-if six.PY2:
-
-    def timestamp(dt):
-        if dt.tzinfo is None:
-            dt_utc = dt.replace(tzinfo=tz.tzlocal()).astimezone(tz.UTC)
-        else:
-            dt_utc = dt.astimezone(tz.UTC)
-
-        return (dt_utc - datetime(1970, 1, 1, tzinfo=tz.UTC)).total_seconds()
-
-else:
-    timestamp = datetime.timestamp
-
-
-####
 # Test utilities
 def _copy_resource_to(resource, path):
     """Copies a test resource to a path on disk."""
     from dateutil._tzdata_impl import _open_binary
 
-    # Python 2.7 compat
     parent_dir = os.path.dirname(path)
     if not os.path.exists(parent_dir):
-        makedirs(parent_dir)
+        os.makedirs(parent_dir)
 
     with _open_binary("tests.resources", resource) as f:
         with open(path, "wb") as out_f:
@@ -169,16 +100,16 @@ def extract_tzif_files(input_file, cache_dir):
         for timezone_name, encoded_data in timezone_data.items():
             # Create the directory structure for the timezone
             timezone_path = os.path.join(cache_dir, timezone_name)
-            makedirs(os.path.dirname(timezone_path), exist_ok=True)
+            os.makedirs(os.path.dirname(timezone_path), exist_ok=True)
 
             # Decode and decompress the TZif data
             compressed_data = base64.b64decode(encoded_data)
-            tzif_data = gzip_decompress(compressed_data)
+            tzif_data = gzip.decompress(compressed_data)
 
             # Write the TZif file
             with open(timezone_path, "wb") as f:
                 f.write(tzif_data)
-    except (JSONDecodeError, OSError) as e:
+    except (json.JSONDecodeError, OSError) as e:
         raise RuntimeError(
             "Failed to extract TZif files from {input_file}: {e}".format(
                 input_file=input_file, e=e
@@ -213,7 +144,7 @@ def construct_zone(
             return zt
 
         if zt.transition:
-            trans_time = int(timestamp(zt.transition_utc))
+            trans_time = int(datetime.timestamp(zt.transition_utc))
         else:
             trans_time = None
 
@@ -242,7 +173,7 @@ def construct_zone(
                 trans_times.append(trans_time)
                 trans_idx.append(offsets.index(offset_after))
 
-    zonefile = six.BytesIO()
+    zonefile = io.BytesIO()
 
     time_types = ("l", "q")
     for v in range(min((version, 2))):
@@ -286,7 +217,7 @@ def construct_zone(
         if version == 1:
             zonefile.write(b"\x00")
         else:
-            zonefile.write(six.ensure_binary("%d" % version))
+            zonefile.write(("%d" % version).encode("ascii"))
         zonefile.write(b"\x00" * 15)  # Reserved
         zonefile.write(
             struct.pack(
@@ -336,7 +267,7 @@ def construct_zone(
     return zonefile
 
 
-@functools_cache
+@functools.cache
 def _tzstr_header():
     out = bytearray()
     # The TZif format always starts with a Version 1 file followed by
@@ -356,7 +287,7 @@ def _tzstr_header():
 
 def zone_from_tzstr(tzstr, encoding="ascii"):
     """Creates a zoneinfo file following a POSIX rule."""
-    zonefile = six.BytesIO(_tzstr_header())
+    zonefile = io.BytesIO(_tzstr_header())
     zonefile.seek(0, 2)
 
     # Write the footer
@@ -384,40 +315,22 @@ def as_list(f):
     return inner_func
 
 
-SUPPORTS_SUB_MINUTE_OFFSETS = not sys.version_info < (3, 6)
-
-
 ####
 # Classes representing test data
 ZERO = timedelta(0)
 ONE_H = timedelta(hours=1)
 SECOND = timedelta(seconds=1)
 
-if SUPPORTS_SUB_MINUTE_OFFSETS:
-
-    def offset_converter(td):
-        return td
-
-else:
-
-    def offset_converter(td):
-        minutes = round(td.total_seconds() / 60.0)
-        return timedelta(minutes=minutes)
-
 
 @attr.s
-class ZoneOffset(object):
+class ZoneOffset:
     tzname = attr.ib()
     utcoffset = attr.ib()
-    dst = attr.ib(default=ZERO, converter=offset_converter)
-
-    def __attrs_post_init__(self):
-        self.raw_utcoffset = self.utcoffset
-        self.utcoffset = offset_converter(self.utcoffset)
+    dst = attr.ib(default=ZERO)
 
 
 @attr.s
-class ZoneTransition(object):
+class ZoneTransition:
     transition = attr.ib()
     offset_before = attr.ib()
     offset_after = attr.ib()
@@ -425,7 +338,7 @@ class ZoneTransition(object):
 
     @property
     def transition_utc(self):
-        return (self.transition - self.offset_before.raw_utcoffset).replace(
+        return (self.transition - self.offset_before.utcoffset).replace(
             tzinfo=tz.UTC
         )
 
@@ -469,8 +382,8 @@ class ZoneTransition(object):
             return self.wall_transition
 
 
-@frozen
-class ExpectedTransition(object):
+@attr.frozen
+class ExpectedTransition:
     key = attr.ib()
     dt = attr.ib()
     fold = attr.ib()
@@ -479,7 +392,7 @@ class ExpectedTransition(object):
 
 ####
 # Test data
-@functools_cache
+@functools.cache
 def get_zonedump_data():
     def _zone_dump_data():
         def _Africa_Abidjan():
@@ -655,7 +568,7 @@ def get_zonedump_data():
     return _zone_dump_data()
 
 
-@functools_cache
+@functools.cache
 def transition_examples():
     zonedump_data = get_zonedump_data()
     return tuple(zonedump_data.items())
@@ -675,8 +588,6 @@ def test_no_tz_data():
 
 def test_tzpath_setting(tmp_path):
     """Ensure that setting tz.TZPATH changes where `tz.gettz` searches."""
-    if six.PY2:
-        tmp_path = str(tmp_path)
 
     with set_tzpath([tmp_path]):
         _copy_resource_to(
@@ -806,7 +717,7 @@ def test_folds_from_utc(transition):
     tzi = tz.gettz(transition.key)
     dt = transition.dt.astimezone(tzi)
 
-    assert getattr(dt, "fold", 0) == transition.fold
+    assert dt.fold == transition.fold
 
 
 def test_time_fixed_offset():
@@ -826,7 +737,7 @@ def test_time_varying_offset():
     assert t.dst() is None
 
 
-@functools_cache
+@functools.cache
 def weirdzone_test_cases():
     _real_cases = {"offset": [], "utc": [], "varying_zones": []}
     cases = {}
@@ -872,11 +783,7 @@ def weirdzone_test_cases():
         dts = [
             (
                 datetime(1883, 6, 9, 1),
-                (
-                    datetime(1883, 6, 9, 7, 31, 2, tzinfo=tz.UTC)
-                    if SUPPORTS_SUB_MINUTE_OFFSETS
-                    else datetime(1883, 6, 9, 7, 31, tzinfo=tz.UTC)
-                ),
+                datetime(1883, 6, 9, 7, 31, 2, tzinfo=tz.UTC),
             ),
             (
                 datetime(2010, 4, 1, 12),
@@ -1159,36 +1066,20 @@ def weirdzone_test_cases():
             dt = dt_naive.replace(tzinfo=zi)
             cases["offset"].append((dt, offset))
 
-        if SUPPORTS_SUB_MINUTE_OFFSETS:
-            utc_cases = [
-                (datetime.min, datetime.min + timedelta(seconds=968)),
-                (datetime(1898, 12, 31, 23, 43, 52), datetime(1899, 1, 1)),
-                (
-                    datetime(1911, 12, 31, 23, 59, 59, 999999),
-                    datetime(1912, 1, 1, 0, 16, 7, 999999),
-                ),
-                (
-                    datetime(1912, 1, 1, 0, 16, 8),
-                    (datetime(1912, 1, 1, 0, 16, 8)),
-                ),
-                (datetime(1970, 1, 1), datetime(1970, 1, 1)),
-                (datetime.max, datetime.max),
-            ]
-        else:
-            utc_cases = [
-                (datetime.min, datetime.min + timedelta(seconds=960)),
-                (datetime(1898, 12, 31, 23, 44), datetime(1899, 1, 1)),
-                (
-                    datetime(1911, 12, 31, 23, 59, 59, 999999),
-                    datetime(1912, 1, 1, 0, 15, 59, 999999),
-                ),
-                (
-                    datetime(1912, 1, 1, 0, 16, 8),
-                    (datetime(1912, 1, 1, 0, 16, 8)),
-                ),
-                (datetime(1970, 1, 1), datetime(1970, 1, 1)),
-                (datetime.max, datetime.max),
-            ]
+        utc_cases = [
+            (datetime.min, datetime.min + timedelta(seconds=968)),
+            (datetime(1898, 12, 31, 23, 43, 52), datetime(1899, 1, 1)),
+            (
+                datetime(1911, 12, 31, 23, 59, 59, 999999),
+                datetime(1912, 1, 1, 0, 16, 7, 999999),
+            ),
+            (
+                datetime(1912, 1, 1, 0, 16, 8),
+                (datetime(1912, 1, 1, 0, 16, 8)),
+            ),
+            (datetime(1970, 1, 1), datetime(1970, 1, 1)),
+            (datetime.max, datetime.max),
+        ]
 
         for naive_dt, naive_dt_utc in utc_cases:
             dt = naive_dt.replace(tzinfo=zi)
@@ -1224,7 +1115,7 @@ def weirdzone_test_cases():
             if dt_type == GAP:
                 continue
 
-            dt_utc = (dt_naive - offset.raw_utcoffset).replace(tzinfo=tz.UTC)
+            dt_utc = (dt_naive - offset.utcoffset).replace(tzinfo=tz.UTC)
             cases["utc"].append((dt, dt_utc))
 
     @add_cases
@@ -1555,7 +1446,7 @@ def test_weirdzone_utc(dt, dt_utc):
     assert dt_act == dt
     assert dt_act.astimezone(tz.UTC) == dt_utc
     if tz.datetime_ambiguous(dt):
-        assert getattr(dt_act, "fold", 0) == getattr(dt, "fold", 0)
+        assert dt_act.fold == dt.fold
 
 
 @pytest.mark.parametrize("zone", weirdzone_test_cases()["varying_zones"])
@@ -1629,7 +1520,7 @@ def test_truncated_footer(strip):
     assert data.endswith(b"\n")
 
     with pytest.raises(ValueError):
-        tz.tzfile(six.BytesIO(data[:-strip]))
+        tz.tzfile(io.BytesIO(data[:-strip]))
 
 
 def _zone_for_stream_tests():
@@ -1647,14 +1538,14 @@ def _zone_for_stream_tests():
 def test_tzfile_from_pipe():
     """A zone can be read from a stream that cannot seek."""
     data = _zone_for_stream_tests()
-    expected = tz.tzfile(six.BytesIO(data))
+    expected = tz.tzfile(io.BytesIO(data))
 
     read_fd, write_fd = os.pipe()
     os.write(write_fd, data)
     os.close(write_fd)
 
     # On Windows, pipes claim to be seekable even though they aren't.
-    with io.open(read_fd, "rb") as f:
+    with open(read_fd, "rb") as f:
         zone = tz.tzfile(f, filename="pipe")
 
     assert zone == expected
@@ -1664,9 +1555,9 @@ def test_tzfile_from_pipe():
 def test_tzfile_from_read_only_object():
     """A zone can be read from an object that only has a read() method."""
 
-    class ReadOnly(object):
+    class ReadOnly:
         def __init__(self, data):
-            self._stream = six.BytesIO(data)
+            self._stream = io.BytesIO(data)
 
         def read(self, *args):
             return self._stream.read(*args)
@@ -1674,7 +1565,7 @@ def test_tzfile_from_read_only_object():
     data = _zone_for_stream_tests()
     zone = tz.tzfile(ReadOnly(data), filename="read-only")
 
-    assert zone == tz.tzfile(six.BytesIO(data))
+    assert zone == tz.tzfile(io.BytesIO(data))
 
 
 @pytest.fixture
@@ -1688,7 +1579,7 @@ def tzpath_and_outside_zone(tmp_path):
     tzpath = tmp_path / "zoneinfo"
     outside = tmp_path / "outside"
     for directory in (tzpath / "Fictional", outside):
-        makedirs(str(directory))
+        os.makedirs(str(directory))
 
     (tzpath / "Fictional" / "Inside").write_bytes(data)
     (outside / "Outside").write_bytes(data)
@@ -1782,7 +1673,7 @@ def test_leap_seconds_and_indicators(version, leap_seconds, indicators):
         dt = dt_utc.astimezone(zone)
         dt_expected = dt_utc.astimezone(expected)
         assert dt.replace(tzinfo=None) == dt_expected.replace(tzinfo=None)
-        assert getattr(dt, "fold", 0) == getattr(dt_expected, "fold", 0)
+        assert dt.fold == dt_expected.fold
         assert dt.tzname() == dt_expected.tzname()
         assert dt.utcoffset() == dt_expected.utcoffset()
 
@@ -1806,15 +1697,12 @@ def test_stream_position_after_leap_seconds(version, indicators):
     )
 
     trailer = b"Data after the TZif file"
-    stream = six.BytesIO(zonefile.getvalue() + trailer)
+    stream = io.BytesIO(zonefile.getvalue() + trailer)
     tz.tzfile(stream)
 
     assert stream.read() == trailer
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 9), reason="update_tzif requires Python 3.9+"
-)
 @pytest.mark.parametrize("version", [1, 2, 3, 4])
 def test_update_tzif_file_to_v1(tmp_path, version):
     """update_tzif converts TZif files of any version to Version 1."""
@@ -1992,7 +1880,7 @@ def test_truncated_file(version):
 
     for length in range(len(data)):
         try:
-            tz.tzfile(six.BytesIO(data[:length]))
+            tz.tzfile(io.BytesIO(data[:length]))
         except ValueError:
             pass
 
@@ -2050,7 +1938,7 @@ def test_gettz_skips_invalid_file_on_tzpath(tmp_path, make_invalid):
     first = tmp_path / "first" / "Fictional"
     second = tmp_path / "second" / "Fictional"
     for directory in (first, second):
-        makedirs(str(directory))
+        os.makedirs(str(directory))
 
     make_invalid(first / "Zone")
     (second / "Zone").write_bytes(_valid_tzif_data())
@@ -2073,7 +1961,7 @@ def test_gettz_invalid_file_on_tzpath_falls_back_to_tzdata(
     with set_tzpath((), block_tzdata=False):
         expected = tz.gettz("America/New_York")
 
-    makedirs(str(tmp_path / "America"))
+    os.makedirs(str(tmp_path / "America"))
     make_invalid(tmp_path / "America" / "New_York")
 
     with set_tzpath((str(tmp_path),), block_tzdata=False):
@@ -2117,7 +2005,7 @@ def test_missing_footer_newline():
     data = data[:footer_start] + data[footer_start + 1 :]
 
     with pytest.raises(ValueError):
-        tz.tzfile(six.BytesIO(data))
+        tz.tzfile(io.BytesIO(data))
 
 
 def test_invalid_transition_index():
@@ -2140,7 +2028,7 @@ def test_invalid_transition_index():
     data[idx_offset + 1] = 2  # typecnt is 2, so index 2 is out of bounds
 
     with pytest.raises(ValueError):
-        tz.tzfile(six.BytesIO(bytes(data)))
+        tz.tzfile(io.BytesIO(bytes(data)))
 
 
 def test_transition_lookahead_out_of_bounds():
@@ -2358,9 +2246,9 @@ def test_invalid_tzstr(tzstr):
     "tzstr",
     [
         # Non-ASCII letter in the abbreviation
-        "AB" + six.unichr(0xC0) + "C3",
+        "AB" + chr(0xC0) + "C3",
         # Non-ASCII digit in the day-of-year
-        "AAA4BBB,J" + six.unichr(0x661) + ",J300/2",
+        "AAA4BBB,J" + chr(0x661) + ",J300/2",
     ],
 )
 def test_invalid_tzstr_non_ascii(tzstr):
@@ -2378,16 +2266,13 @@ def test_invalid_tzstr_non_ascii(tzstr):
     ],
 )
 def test_sub_minute_offset_tz_str(tz_str, dt, expected_seconds):
-    """Sub-minute offsets in the TZ string are rounded like those in the file."""
-    GMT = _RawZoneOffset("GMT", ZERO)
+    """Sub-minute offsets in the TZ string are kept exact, like those in the file."""
+    GMT = ZoneOffset("GMT", ZERO)
     zone = tz.tzfile(
         construct_zone([ZoneTransition(datetime(1900, 1, 1), GMT, GMT)], tz_str)
     )
 
-    if SUPPORTS_SUB_MINUTE_OFFSETS:
-        expected = timedelta(seconds=expected_seconds)
-    else:
-        expected = timedelta(minutes=(expected_seconds + 30) // 60)
+    expected = timedelta(seconds=expected_seconds)
 
     assert dt.replace(tzinfo=zone).utcoffset() == expected
 
@@ -2519,9 +2404,9 @@ def test_gettz_missing_search_path_entry(zoneinfo_cache, tmp_path):
         "tzdata.zi",
         "leapseconds",
         # Not encodable as a module or file name on some versions
-        "Am" + six.unichr(0xE9) + "rica/New_York",
-        "America/" + six.unichr(0xD800),
-        six.unichr(0xD800),
+        "Am" + chr(0xE9) + "rica/New_York",
+        "America/" + chr(0xD800),
+        chr(0xD800),
     ],
 )
 def test_tzdata_bad_keys(key):
@@ -2556,7 +2441,7 @@ def _make_fake_tzpath(root):
     ]
     for zone in zones:
         path = os.path.join(root, *zone.split("/"))
-        makedirs(os.path.dirname(path), exist_ok=True)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
         with open(path, "wb") as f:
             f.write(tzif)
 
@@ -2585,7 +2470,7 @@ def test_available_iana_timezones_tzpath_only(tmp_path):
 def test_available_iana_timezones_missing_path(tmp_path):
     """Search path entries that do not exist are skipped."""
     root = str(tmp_path / "zoneinfo")
-    makedirs(root)
+    os.makedirs(root)
     expected = _make_fake_tzpath(root)
     missing = str(tmp_path / "missing")
 
@@ -2635,181 +2520,30 @@ def test_tz_tzpath_tracks_reset(tmp_path):
     assert tz.TZPATH != (new_path,)
 
 
-def _load_backport_tzpath(monkeypatch):
-    """Executes the _tzpath source with the standard library zoneinfo blocked."""
-    import types
-
-    import dateutil.tz._tzpath as real_tzpath
-
-    source_path = real_tzpath.__file__
-    if source_path.endswith((".pyc", ".pyo")):  # Python 2
-        source_path = source_path[:-1]
-
-    monkeypatch.setitem(sys.modules, "zoneinfo", None)
-
-    module = types.ModuleType("_tzpath_backport")
-    module.__file__ = source_path
-    with open(source_path, "rb") as f:
-        code = compile(f.read(), source_path, "exec")
-    six.exec_(code, module.__dict__)
-
-    return module
-
-
-@pytest.fixture
-def backport_tzpath(monkeypatch):
-    """The pure-Python _tzpath implementation, regardless of Python version.
-
-    On Python 3.9+ dateutil.tz._tzpath is a thin alias for zoneinfo's search
-    path handling, so to test the backport itself the module source is
-    executed with the standard library zoneinfo module blocked.
-    """
-    monkeypatch.delenv("PYTHONTZPATH", raising=False)
-    return _load_backport_tzpath(monkeypatch)
-
-
-def test_backport_env_variable_relative_paths_at_import(monkeypatch, tmp_path):
-    """An invalid PYTHONTZPATH warns, rather than fails, at import time."""
-    absolute = str(tmp_path / "a")
-    monkeypatch.setenv(
-        "PYTHONTZPATH", os.pathsep.join(["relative/path", absolute])
-    )
-
-    with pytest.warns(RuntimeWarning, match="relative/path"):
-        module = _load_backport_tzpath(monkeypatch)
-
-    assert module.TZPATH == (absolute,)
-
-
-@pytest.mark.skipif(
-    sys.version_info < (3, 9), reason="zoneinfo was added in Python 3.9"
-)
 def test_invalid_tzpath_warning_is_zoneinfos():
     import zoneinfo
 
     assert tz._tzpath.InvalidTZPathWarning is zoneinfo.InvalidTZPathWarning
 
 
-@pytest.mark.parametrize("platform", ["linux", "darwin", "win32"])
-def test_backport_default_tzpath(backport_tzpath, monkeypatch, platform):
-    monkeypatch.setattr(sys, "platform", platform)
-    backport_tzpath.reset_tzpath()
-
-    if platform == "win32":
-        assert backport_tzpath.TZPATH == ()
-    else:
-        assert backport_tzpath.TZPATH == (
-            "/usr/share/zoneinfo",
-            "/usr/lib/zoneinfo",
-            "/usr/share/lib/zoneinfo",
-            "/etc/zoneinfo",
-        )
-
-
-def test_backport_env_variable(backport_tzpath, monkeypatch, tmp_path):
-    paths = [str(tmp_path / "a"), str(tmp_path / "b")]
-    monkeypatch.setenv("PYTHONTZPATH", os.pathsep.join(paths))
-    backport_tzpath.reset_tzpath()
-
-    assert backport_tzpath.TZPATH == tuple(paths)
-
-
-def test_backport_env_variable_empty(backport_tzpath, monkeypatch):
-    monkeypatch.setenv("PYTHONTZPATH", "")
-    backport_tzpath.reset_tzpath()
-
-    assert backport_tzpath.TZPATH == ()
-
-
-def test_backport_env_variable_relative_paths(
-    backport_tzpath, monkeypatch, tmp_path
-):
-    absolute = str(tmp_path / "a")
-    monkeypatch.setenv(
-        "PYTHONTZPATH", os.pathsep.join(["relative/path", absolute, "other"])
-    )
-
-    with pytest.warns(backport_tzpath.InvalidTZPathWarning) as record:
-        backport_tzpath.reset_tzpath()
-
-    assert backport_tzpath.TZPATH == (absolute,)
-    assert (
-        os.path.splitext(record[0].filename)[0] == os.path.splitext(__file__)[0]
-    )
-    message = str(record[0].message)
-    assert "relative/path" in message
-    assert "other" in message
-    assert absolute not in message
-
-
-def test_backport_reset_explicit(backport_tzpath, tmp_path):
-    paths = [str(tmp_path / "a"), str(tmp_path / "b")]
-    backport_tzpath.reset_tzpath(to=paths)
-    assert backport_tzpath.TZPATH == tuple(paths)
-
-    backport_tzpath.reset_tzpath(to=())
-    assert backport_tzpath.TZPATH == ()
-
-
-def test_backport_reset_pathlike(backport_tzpath, tmp_path):
-    backport_tzpath.reset_tzpath(to=[tmp_path])
-    assert tuple(map(str, backport_tzpath.TZPATH)) == (str(tmp_path),)
-
-
-@pytest.mark.parametrize(
-    "bad", ["/a/string", b"/a/bytestring", six.text_type("/a/text_string")]
-)
-def test_backport_reset_type_error(backport_tzpath, bad):
-    with pytest.raises(TypeError):
-        backport_tzpath.reset_tzpath(to=bad)
-
-
-def test_backport_reset_relative_paths(backport_tzpath, tmp_path):
-    with pytest.raises(ValueError, match="relative"):
-        backport_tzpath.reset_tzpath(to=[str(tmp_path), "relative/path"])
-
-
-def test_backport_callbacks(backport_tzpath, tmp_path):
-    seen = []
-    backport_tzpath.TZPATH_CALLBACKS.append(seen.append)
-
-    backport_tzpath.reset_tzpath(to=[str(tmp_path)])
-    backport_tzpath.reset_tzpath(to=())
-
-    assert seen == [(str(tmp_path),), ()]
-
-
 ####
 # Sub-minute offsets
-class _RawZoneOffset(object):
-    """Like ZoneOffset, but without rounding the offset on Python < 3.6."""
-
-    def __init__(self, tzname, utcoffset, dst=ZERO):
-        self.tzname = tzname
-        self.utcoffset = utcoffset
-        self.raw_utcoffset = utcoffset
-        self.dst = dst
-
-
 def _sub_minute_zone():
     # Africa/Abidjan's LMT offset is -0:16:08; the file must contain the
-    # exact value even where the tzinfo will round it.
-    LMT = _RawZoneOffset("LMT", timedelta(seconds=-968))
-    GMT = _RawZoneOffset("GMT", ZERO)
+    # exact value.
+    LMT = ZoneOffset("LMT", timedelta(seconds=-968))
+    GMT = ZoneOffset("GMT", ZERO)
     return construct_zone(
         [ZoneTransition(datetime(1912, 1, 1), LMT, GMT)], "GMT0"
     )
 
 
 def test_sub_minute_offset():
-    """Sub-minute offsets are exact on 3.6+ and rounded to a minute before."""
+    """Sub-minute offsets retain their exact value."""
     zone = tz.tzfile(_sub_minute_zone())
     dt = datetime(1900, 1, 1, tzinfo=zone)
 
-    if SUPPORTS_SUB_MINUTE_OFFSETS:
-        assert dt.utcoffset() == timedelta(seconds=-968)
-    else:
-        assert dt.utcoffset() == timedelta(minutes=-16)
+    assert dt.utcoffset() == timedelta(seconds=-968)
 
     assert dt.tzname() == "LMT"
     assert datetime(2000, 1, 1, tzinfo=zone).utcoffset() == ZERO
@@ -2819,8 +2553,8 @@ def test_sub_minute_offset_round_trip():
     """Converting to and from UTC near a sub-minute transition round trips."""
     # America/New_York's LMT offset is -4:56:02, so the switch to EST in 1883
     # creates a fold whose boundaries move when the offset is rounded.
-    LMT = _RawZoneOffset("LMT", timedelta(seconds=-17762))
-    EST = _RawZoneOffset("EST", timedelta(hours=-5))
+    LMT = ZoneOffset("LMT", timedelta(seconds=-17762))
+    EST = ZoneOffset("EST", timedelta(hours=-5))
     zone = tz.tzfile(
         construct_zone(
             [ZoneTransition(datetime(1883, 11, 18, 12, 3, 58), LMT, EST)],
@@ -2836,7 +2570,7 @@ def test_sub_minute_offset_round_trip():
 
 @pytest.mark.parametrize("protocol", range(0, pickle.HIGHEST_PROTOCOL + 1))
 def test_sub_minute_offset_pickle(protocol):
-    """Pickling preserves the raw offset, even where it has been rounded."""
+    """Pickling preserves sub-minute offsets."""
     zone = tz.tzfile(_sub_minute_zone(), key="Africa/Abidjan")
     data = pickle.dumps(zone, protocol=protocol)
 
@@ -2858,7 +2592,7 @@ def test_sub_minute_offset_pickle(protocol):
 
 class _DescribedTzfile(tz.tzfile):
     def __init__(self, fileobj, description, **kwargs):
-        super(_DescribedTzfile, self).__init__(fileobj, **kwargs)
+        super().__init__(fileobj, **kwargs)
         self.description = description
 
 

@@ -15,16 +15,16 @@ on:
         default: false
 
 env:
-  pypi-hosts: "pypi.python.org pypi.org files.pythonhosted.org"
   TZDATA_VERSION: "2024a"
 
+# TODO: Enable Dependabot or Renovate to keep action commit pins updated.
 jobs:
   build-tzdata:
     runs-on: ubuntu-latest
     steps:
       - name: Cache tzdata
         id: cache-tzdata
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: tzdata_built
           key: tzdata-${{ env.TZDATA_VERSION }}
@@ -44,7 +44,7 @@ jobs:
                         DATAFORM=main
 
       - name: Upload tzdata artifact
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: tzdata
           path: tzdata_built/usr/share/zoneinfo
@@ -53,9 +53,6 @@ jobs:
     strategy:
       matrix:
         python-version: [
-          "3.8",
-          "3.9",
-          "3.10",
           "3.11",
           "3.12",
           "3.13",
@@ -63,75 +60,40 @@ jobs:
           "3.14t",
           "3.15",
           "3.15t",
-          "pypy-2.7",
-          "pypy-3.8",
+          "pypy-3.11",
         ]
         os: [ubuntu-latest, windows-latest, macos-latest]
-        include:
-          # Older versions (<=3.7) are included separately since they need
-          # special handling (using an older os or a container)
-          - os: "macos-15-intel"
-            python-version: "3.5"
-          - os: "macos-15-intel"
-            python-version: "3.6"
-          - os: "macos-15-intel"
-            python-version: "3.7"
-          - os: "windows-latest"
-            python-version: "3.5"
-          - os: "windows-latest"
-            python-version: "3.6"
-          - os: "windows-latest"
-            python-version: "3.7"
-          - os: "ubuntu-latest"
-            python-version: "2.7"
-            use-container: true
-          - os: "ubuntu-latest"
-            python-version: "3.5"
-            use-container: true
-          - os: "ubuntu-latest"
-            python-version: "3.6"
-            use-container: true
-          - os: "ubuntu-latest"
-            python-version: "3.7"
-            use-container: true
     runs-on: ${{ matrix.os }}
     needs: [build-tzdata, build-dist]
-    container:
-      image: ${{ matrix.use-container && format('python:{0}', matrix.python-version) || '' }}
     env:
       TOXENV: py
-      PIP_TRUSTED_HOST: pypi.python.org
-      SUDO: ${{ !matrix.use-container && 'sudo' || '' }}
       TZ: ${{ !startsWith(matrix.os, 'windows-latest') && 'America/New_York' || null }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Set timezone (Windows)
         if: startsWith(matrix.os, 'windows-latest')
         run: tzutil /s "Eastern Standard Time"
-      - if: ${{ !matrix.use-container }}
-        name: Set up Python ${{ matrix.python-version }} on ${{ matrix.os }} (non-containers)
-        uses: actions/setup-python@v7
+      - name: Set up Python ${{ matrix.python-version }} on ${{ matrix.os }}
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: ${{ matrix.python-version }}
           allow-prereleases: true
-        env:
-          PIP_TRUSTED_HOST: ${{ contains(fromJson('["2.7", "3.5", "3.6", "3.7"]'), matrix.python-version) && env.pypi-hosts || '' }}
       - name: Download distributions
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
           name: dist
           path: dist
       - name: Download tzdata artifact
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         if: startsWith(matrix.os, 'ubuntu')
         with:
           name: tzdata
           path: tzdata_download
       - name: Install specific tzdata version
         run: |
-          $SUDO rm -rf /usr/share/zoneinfo
-          $SUDO mv tzdata_download /usr/share/zoneinfo
+          sudo rm -rf /usr/share/zoneinfo
+          sudo mv tzdata_download /usr/share/zoneinfo
 
           head -n 1 /usr/share/zoneinfo/tzdata.zi
         if: startsWith(matrix.os, 'ubuntu')
@@ -146,7 +108,7 @@ jobs:
       - name: Generate coverage.xml
         run: python -m tox -e coverage
       - name: Report coverage to Codecov
-        uses: codecov/codecov-action@v7
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7
         with:
           files: ./.tox/coverage.xml
           name: ${{ matrix.os }}:${{ matrix.python-version }}
@@ -159,9 +121,6 @@ jobs:
     strategy:
       matrix:
         python-version: [
-          "3.8",
-          "3.9",
-          "3.10",
           "3.11",
           "3.12",
           "3.13",
@@ -169,61 +128,39 @@ jobs:
           "3.14t",
           "3.15",
           "3.15t",
-          "pypy-2.7",
-          "pypy-3.8",
+          "pypy-3.11",
         ]
-        include:
-          - python-version: "2.7"
-            use-container: true
-          - python-version: "3.5"
-            use-container: true
-          - python-version: "3.6"
-            use-container: true
-          - python-version: "3.7"
-            use-container: true
     runs-on: ubuntu-latest
     needs: [build-tzdata, build-dist]
-    container:
-      image: ${{ matrix.use-container && format('python:{0}', matrix.python-version) || '' }}
     env:
       TOXENV: py
-      PIP_TRUSTED_HOST: pypi.python.org
-      SUDO: ${{ !matrix.use-container && 'sudo' || '' }}
       TZ: America/New_York
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
-      - if: ${{ !matrix.use-container }}
-        name: Set up Python ${{ matrix.python-version }} (non-containers)
-        uses: actions/setup-python@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: ${{ matrix.python-version }}
           allow-prereleases: true
-        env:
-          PIP_TRUSTED_HOST: ${{ contains(fromJson('["2.7", "3.5", "3.6", "3.7"]'), matrix.python-version) && env.pypi-hosts || '' }}
       - name: Download distributions
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
           name: dist
           path: dist
       - name: Download tzdata artifact
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
           name: tzdata
           path: tzdata_download
       - name: Install specific tzdata version
         run: |
-          $SUDO rm -rf /usr/share/zoneinfo
-          $SUDO mv tzdata_download /usr/share/zoneinfo
+          sudo rm -rf /usr/share/zoneinfo
+          sudo mv tzdata_download /usr/share/zoneinfo
 
           head -n 1 /usr/share/zoneinfo/tzdata.zi
       - name: Install dependencies
-        env:
-          # tox 4.8, the newest tox that supports Python 3.7, deadlocks on exit
-          # when it is given an sdist: its build backend process is waiting for
-          # a command while tox is waiting for that process to exit.
-          TOX_SPEC: ${{ matrix.python-version == '3.7' && 'tox<4' || 'tox' }}
-        run: python -m pip install -U "$TOX_SPEC"
+        run: python -m pip install -U tox
       # tox installs the sdist with pip, as a user would with --no-binary.
       - name: Run tox on the sdist
         run: python -m tox --installpkg "$(ls dist/*.tar.gz)"
@@ -239,18 +176,18 @@ jobs:
       TZ: ${{ !startsWith(matrix.os, 'windows-latest') && 'America/New_York' || null }}
 
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
       - name: Set timezone (Windows)
         if: startsWith(matrix.os, 'windows-latest')
         run: tzutil /s "Eastern Standard Time"
       - name: ${{ matrix.toxenv }}
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: "3.13"
       - name: Download tzdata artifact
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
           name: tzdata
           path: tzdata_download
@@ -273,10 +210,10 @@ jobs:
     if: ${{ !inputs.release }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
-      - uses: actions/setup-python@v7
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: "3.13"
       - name: Install darker
@@ -294,12 +231,12 @@ jobs:
   build-dist:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           # The version comes from git tags, so we need the history.
           fetch-depth: 0
       - name: Set up Python
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: "3.14"
       - name: Install tox
@@ -321,7 +258,7 @@ jobs:
           exactly_one '*.tar.gz'
           exactly_one '*.whl'
       - name: Upload distributions
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: dist
           path: dist/
