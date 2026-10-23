@@ -1,0 +1,6 @@
+rrulestr now raises a clearer ``ValueError`` when a line cannot be split into
+a valid property name, which usually happens when a datetime is written with
+colons (e.g. ``UNTIL=2019-03-29T00:59:59``). The error now shows the whole
+line and explains that RFC 5545 datetimes take no delimiters, instead of
+reporting a confusing "unsupported property: FREQ=YEARLY". Reported by
+@tamis-laan (gh issue #960). Fixed by @Enesuygurs.
