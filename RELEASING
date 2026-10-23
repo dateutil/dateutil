@@ -1,6 +1,6 @@
 Release Checklist
 -----------------------------------------
-[ ] Update classifiers in setup.cfg to include the latest supported Python
+[ ] Update classifiers in pyproject.toml to include the latest supported Python
     versions.
 [ ] Update NEWS with list of changes:
     [ ] Invoke `tox -e news -- --version <NEXT_VERSION>`
