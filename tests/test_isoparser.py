@@ -276,6 +276,35 @@ def test_iso_raises(isostr, exception):
         isoparse(isostr)
 
 
+@pytest.mark.parametrize(
+    "isostr",
+    [
+        "20200728121240",  # Seconds too short (gh issue #1074)
+        "2014-W1",  # ISO week too short
+        "2014-04-21T14:3",  # Minutes too short
+        "2014-04-21T12:30+01:0",  # Time zone minutes too short
+        "2014-04-21T12:30+01000",  # Time zone minutes too long
+        "2_14-04-21",  # Underscore in year
+        "+014-04-21",  # Sign in year
+        "2014- 4-21",  # Whitespace in month
+        "2014-04-2 ",  # Whitespace in day
+        "2014- 10",  # Whitespace in ordinal day
+        "2014-W1 -1",  # Whitespace in ISO week
+        "2014-04-21T1 :30",  # Whitespace in hour
+        "2014-04-21T12:+5",  # Sign in minutes
+        "2014-04-21T12:30: 5",  # Whitespace in seconds
+        "2014-04-21T12:30+ 1:00",  # Whitespace in time zone hours
+        "2014-04-21T12:30+-1:00",  # Sign in time zone hours
+        "2014-04-21T12:30+01:-5",  # Sign in time zone minutes
+    ],
+)
+def test_iso_raises_non_digit_field(isostr):
+    # int() accepts whitespace, signs, underscores and short strings, none of
+    # which may appear inside a fixed-width ISO-8601 field.
+    with pytest.raises(ValueError):
+        isoparse(isostr)
+
+
 @pytest.mark.parametrize('sep_act, valid_sep, exception', [
     ('T', 'C', ValueError),
     ('C', 'T', ValueError),

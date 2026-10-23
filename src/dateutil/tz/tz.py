@@ -745,6 +745,8 @@ class tzical:
             s = s[1:]
         else:
             signal = +1
+        if not s.isdigit():
+            raise ValueError("invalid offset: " + s)
         if len(s) == 4:
             return (int(s[:2]) * 3600 + int(s[2:]) * 60) * signal
         elif len(s) == 6:
