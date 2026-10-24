@@ -660,6 +660,10 @@ class _tzicalvtz(_tzinfo):
         return self._find_comp(dt).tzoffsetto
 
     def dst(self, dt):
+        # 2026-10-10: Date-dependent zones need a date to choose an observance.
+        if dt is None and len(self._comps) > 1:
+            return None
+
         comp = self._find_comp(dt)
         if comp.isdst:
             return comp.tzoffsetdiff
@@ -667,6 +671,10 @@ class _tzicalvtz(_tzinfo):
             return ZERO
 
     def tzname(self, dt):
+        # 2026-10-10: Date-dependent zones need a date to choose an observance.
+        if dt is None and len(self._comps) > 1:
+            return None
+
         return self._find_comp(dt).tzname
 
     def __repr__(self):

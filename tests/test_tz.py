@@ -1777,6 +1777,26 @@ def test_tzstr_default_cmp(tzstr_1, tzstr_2):
 
     assert tz1 == tz2
 
+# 2026-10-09: A time without a date cannot select a VTIMEZONE observance.
+@pytest.mark.parametrize("method", ["utcoffset", "dst", "tzname"])
+def test_tzical_time_only(method):
+    zone = tz.tzical(StringIO(TZICAL_EST5EDT)).get()
+    value = dt_time(12, 30, tzinfo=zone)
+
+    assert getattr(value, method)() is None
+
+
+# 2026-10-10: Keep fixed-observance time-only results unchanged.
+def test_tzical_single_observance_time_only():
+    data = TZICAL_EST5EDT.split("BEGIN:DAYLIGHT")[0] + "END:VTIMEZONE\n"
+    zone = tz.tzical(StringIO(data)).get()
+    value = dt_time(12, 30, tzinfo=zone)
+
+    assert value.utcoffset() is None
+    assert value.dst() == timedelta(0)
+    assert value.tzname() == "EST"
+
+
 class TZICalTest(unittest.TestCase, TzFoldMixin):
     def _gettz_str_tuple(self, tzname):
         TZ_EST = (
