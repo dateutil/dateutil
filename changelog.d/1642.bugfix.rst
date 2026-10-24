@@ -1,0 +1,4 @@
+Fixed issue where ``rrule`` ignored the days that week 1 of the following year
+contributes to the end of the year when that week was addressed with a negative
+``BYWEEKNO`` value (e.g. ``-52`` in a 52-week year). Reported and fixed by
+@simpleqt (gh pr #1642)
