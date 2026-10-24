@@ -972,7 +972,7 @@ class parser:
                 idx += 1
             idx += 1
 
-        elif idx + 1 >= len_l or info.jump(tokens[idx + 1]):
+        elif idx + 1 >= len_l or info.jump(tokens[idx + 1]) or tokens[idx + 1] == ':':
             if idx + 2 < len_l and info.ampm(tokens[idx + 2]) is not None:
                 # 12 am
                 hour = int(value)
@@ -981,6 +981,11 @@ class parser:
             else:
                 # Year, month or day
                 ymd.append(value)
+                if idx + 1 < len_l and tokens[idx + 1] == ':':
+                    # Trailing ':' cannot continue a date (e.g.
+                    # "23. November 2016:"); leave it unconsumed so
+                    # fuzzy mode reports it among the skipped tokens.
+                    return idx
             idx += 1
 
         elif info.ampm(tokens[idx + 1]) is not None and (0 <= value < 24):
