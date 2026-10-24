@@ -1654,7 +1654,7 @@ class _rrulestr:
                 line = lines[i].rstrip()
                 if not line:
                     del lines[i]
-                elif i > 0 and line[0] == " ":
+                elif i > 0 and line[0] in (" ", "\t"):
                     lines[i-1] += line[1:]
                     del lines[i]
                 else:

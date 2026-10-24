@@ -1,0 +1,2 @@
+Accept HTAB-folded recurrence rules when unfolding RFC 5545 content lines.
+Reported by @GreedyC (gh issue #1591). Fixed by @mikamikasuki (gh pr #1592).
