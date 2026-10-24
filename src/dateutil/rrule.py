@@ -1178,6 +1178,18 @@ class _iterinfo:
                     wyearlen = self.yearlen-no1wkst
                 div, mod = divmod(wyearlen, 7)
                 numweeks = div+mod//4
+                # Number of weeks in the next year, so that week 1 of that
+                # year can also be recognized as week -nextnumweeks.
+                nextyearweekday = (self.yearweekday + self.yearlen) % 7
+                nextno1wkst = (7 - nextyearweekday + rr._wkst) % 7
+                if nextno1wkst >= 4:
+                    nextwyearlen = (
+                        self.nextyearlen + (nextyearweekday - rr._wkst) % 7
+                    )
+                else:
+                    nextwyearlen = self.nextyearlen - nextno1wkst
+                nextdiv, nextmod = divmod(nextwyearlen, 7)
+                nextnumweeks = nextdiv + nextmod // 4
                 for n in rr._byweekno:
                     if n < 0:
                         n += numweeks+1
@@ -1194,9 +1206,11 @@ class _iterinfo:
                         i += 1
                         if self.wdaymask[i] == rr._wkst:
                             break
-                if 1 in rr._byweekno:
-                    # Check week number 1 of next year as well
-                    # TODO: Check -numweeks for next year.
+                if 1 in rr._byweekno or -nextnumweeks in rr._byweekno:
+                    # Check week number 1 of next year as well. That week
+                    # may be addressed as either week 1 or week -nextnumweeks,
+                    # since week numbers count backwards from the end of the
+                    # year when they are negative.
                     i = no1wkst+numweeks*7
                     if no1wkst != firstwkst:
                         i -= 7-firstwkst
