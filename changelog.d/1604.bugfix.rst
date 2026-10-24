@@ -1,0 +1,2 @@
+Fixed ``tzical`` reading UTF-8 iCalendar files using the platform's default
+encoding. Reported by @Akuli (gh issue #1207). Fixed by @fhgffy (gh pr #1604).
