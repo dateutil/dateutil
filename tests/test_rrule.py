@@ -2654,6 +2654,40 @@ class RRuleTest(unittest.TestCase):
         for x in rr: pass
         self.assertEqual(datetime(1997, 9, 3, 9, 0) in rr, True)
 
+    def testCachePostQueries(self):
+        dtstart = datetime(1997, 9, 2, 9, 0)
+        rr = rrule(DAILY, count=100, cache=True, dtstart=dtstart)
+        list(rr)
+
+        target = dtstart + timedelta(days=75)
+
+        self.assertEqual(rr.before(target),
+                         target - timedelta(days=1))
+        self.assertEqual(rr.before(target, inc=True), target)
+        self.assertEqual(rr.after(target),
+                         target + timedelta(days=1))
+        self.assertEqual(rr.after(target, inc=True), target)
+        self.assertEqual(list(rr.xafter(target, count=3)),
+                         [target + timedelta(days=1),
+                          target + timedelta(days=2),
+                          target + timedelta(days=3)])
+        self.assertEqual(rr.between(target, target + timedelta(days=4)),
+                         [target + timedelta(days=1),
+                          target + timedelta(days=2),
+                          target + timedelta(days=3)])
+
+    def testCachePostXafterNonIntegerCount(self):
+        dtstart = datetime(1997, 9, 2, 9, 0)
+        rr = rrule(DAILY, count=100, cache=True, dtstart=dtstart)
+        list(rr)
+        target = dtstart + timedelta(days=75)
+
+        # Keep the existing behavior for counts the old iterator accepts.
+        for count, expected_count in ((1.0, 1), (1.5, 1), (2.5, 2)):
+            expected = [target + timedelta(days=i)
+                        for i in range(1, expected_count + 1)]
+            self.assertEqual(list(rr.xafter(target, count=count)), expected)
+
     def testStr(self):
         self.assertEqual(list(rrulestr(
                               "DTSTART:19970902T090000\n"
