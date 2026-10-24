@@ -3048,6 +3048,27 @@ class RRuleTest(unittest.TestCase):
                           "RRULE:FREQ=YEARLY;"
                           "UNTIL=19990101T000000;BYDAY=1TU,-1TH\n"))
 
+    def testStrUntilTimezoneMismatchMessage(self):
+        with self.assertRaisesRegex(
+            ValueError,
+            "RRULE UNTIL and DTSTART must both be timezone-aware "
+            "or both be timezone-naive",
+        ):
+            rrulestr(
+                "RRULE:FREQ=WEEKLY;UNTIL=20181206T075959Z;BYDAY=MO,WE,FR",
+                dtstart=datetime(2018, 12, 1),
+            )
+
+        with self.assertRaisesRegex(
+            ValueError,
+            "RRULE UNTIL and DTSTART must both be timezone-aware "
+            "or both be timezone-naive",
+        ):
+            rrulestr(
+                "RRULE:FREQ=WEEKLY;UNTIL=20181206T075959;BYDAY=MO,WE,FR",
+                dtstart=datetime(2018, 12, 1, tzinfo=tz.UTC),
+            )
+    
     def testStrUntilWithTZ(self):
         NYC = tz.gettz('America/New_York')
         self.assertIsNotNone(NYC)
