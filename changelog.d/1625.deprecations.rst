@@ -1,0 +1,2 @@
+Dropped support for Python versions older than 3.11 and removed the dependency
+on ``six``.

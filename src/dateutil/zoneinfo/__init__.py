@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 The ``dateutil.zoneinfo`` module was originally designed to work with a tarball
 shipped with ``dateutil``. Since ``dateutil`` now uses data from the same
@@ -16,7 +15,6 @@ import sys
 import warnings
 from tarfile import TarFile
 
-import six
 
 from dateutil import _tzdata_impl
 from dateutil.tz import tzfile as _tzfile
@@ -41,10 +39,7 @@ def _importer_stacklevel():
         frame = frame.f_back
         filename = frame.f_code.co_filename
         if "importlib" in filename and "_bootstrap" in filename:
-            # Since Python 3.5, the warnings machinery skips these frames
-            # without counting them; before that they count like any other.
-            if sys.version_info < (3, 5):
-                level += 1
+            # The warnings machinery skips these frames without counting them.
             continue
 
         level += 1
@@ -66,7 +61,7 @@ warnings.warn(
 
 tzfile = _tzfile
 
-class ZoneInfoFile(object):
+class ZoneInfoFile:
     def __init__(self, zonefile_stream=None):
         if zonefile_stream is not None:
             self._load_legacy_zonefile_stream(zonefile_stream)
@@ -77,13 +72,9 @@ class ZoneInfoFile(object):
         try:
             import tzdata
         except ImportError as e:
-            six.raise_from(
-                ImportError(
-                    "The tzdata module is required to use ZoneInfoFile; either add "
-                    "a dependency on tzdata or migrate away from dateutil.zoneinfo."
-                ),
-                e,
-            )
+            raise ImportError(
+                "The tzdata module is required to use ZoneInfoFile; either add a dependency on tzdata or migrate away from dateutil.zoneinfo."
+            ) from e
 
         zone_dict = {}
 

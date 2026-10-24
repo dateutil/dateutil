@@ -1,7 +1,4 @@
-from __future__ import unicode_literals
-
 import contextlib
-import functools
 import os
 import pickle
 import subprocess
@@ -9,7 +6,6 @@ import sys
 import tempfile
 import threading
 import time
-import warnings
 
 import pytest
 
@@ -25,37 +21,7 @@ from dateutil import tz
 TZPATH_LOCK = threading.RLock()
 
 
-if sys.version_info < (3, 4):
-
-    def contextdecorator(wrapped):
-        @functools.wraps(wrapped)
-        def wrapper(*args, **kwargs):
-            class ContextDecorator:
-                def __init__(self):
-                    self.cm = contextlib.contextmanager(wrapped)(
-                        *args, **kwargs
-                    )
-
-                def __enter__(self):
-                    return self.cm.__enter__()
-
-                def __exit__(self, *args, **kwargs):
-                    return self.cm.__exit__(*args, **kwargs)
-
-                def __call__(self, f):
-                    @functools.wraps(f)
-                    def inner(*iargs, **ikwargs):
-                        with self:
-                            return f(*iargs, **ikwargs)
-
-                    return inner
-
-            return ContextDecorator()
-
-        return wrapper
-
-else:
-    contextdecorator = contextlib.contextmanager
+contextdecorator = contextlib.contextmanager
 
 
 def pop_tzdata_modules():
@@ -136,7 +102,7 @@ def tz_source_context(source):
         return set_tzpath((), block_tzdata=False)
 
 
-class TzSourceMixin(object):
+class TzSourceMixin:
     """Runs the tests in a TestCase against a single source of time zone data.
 
     unittest.TestCase subclasses can't use parametrized pytest fixtures, so to
@@ -148,7 +114,7 @@ class TzSourceMixin(object):
     tz_source = "tzpath"
 
     def setUp(self):
-        super(TzSourceMixin, self).setUp()
+        super().setUp()
         if self.tz_source is None:
             return
 
@@ -161,7 +127,7 @@ class TzSourceMixin(object):
         self.addCleanup(context.__exit__, None, None, None)
 
 
-class PicklableMixin(object):
+class PicklableMixin:
     def _get_nobj_bytes(self, obj, dump_kwargs, load_kwargs):
         """
         Pickle and unpickle an object using ``pickle.dumps`` / ``pickle.loads``
@@ -198,7 +164,7 @@ class PicklableMixin(object):
         self.assertEqual(obj, nobj)
 
 
-class TZContextBase(object):
+class TZContextBase:
     """
     Base class for a context manager which allows changing of time zones.
 
@@ -316,7 +282,7 @@ class TZWinContext(TZContextBase):
 
 ###
 # Utility classes
-class NotAValueClass(object):
+class NotAValueClass:
     """
     A class analogous to NaN that has operations defined for any type.
     """
@@ -329,7 +295,6 @@ class NotAValueClass(object):
     __add__ = __radd__ = _op
     __sub__ = __rsub__ = _op
     __mul__ = __rmul__ = _op
-    __div__ = __rdiv__ = _op
     __truediv__ = __rtruediv__ = _op
     __floordiv__ = __rfloordiv__ = _op
 
@@ -343,7 +308,7 @@ class NotAValueClass(object):
 NotAValue = NotAValueClass()
 
 
-class ComparesEqualClass(object):
+class ComparesEqualClass:
     """
     A class that is always equal to whatever you compare it to.
     """
@@ -377,7 +342,7 @@ class ComparesEqualClass(object):
 ComparesEqual = ComparesEqualClass()
 
 
-class UnsetTzClass(object):
+class UnsetTzClass:
     """ Sentinel class for unset time zone variable """
     pass
 

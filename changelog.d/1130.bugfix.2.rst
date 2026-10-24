@@ -1,8 +1,0 @@
-``tz.tzfile`` now infers ``dst()`` from the standard time on both sides of
-each DST period, rather than only the one before it, and does so for each
-transition rather than for each local time type. This fixes ``dst()`` for
-double summer time (e.g. in ``Europe/London`` in the 1940s), for half-hour DST
-(e.g. in ``Pacific/Rarotonga``) and where the standard offset changed at the
-same time as a DST transition (e.g. in ``America/Bahia_Banderas`` in 2010).
-Against the standard offsets in the tz database source, the only remaining
-errors are in ``Europe/Paris`` in 1944 and 1945. (gh pr #1130)

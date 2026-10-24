@@ -1,6 +1,6 @@
-# -*- coding: utf-8 -*-
 import bisect
 import calendar
+import contextlib
 import functools
 import io
 import os
@@ -10,23 +10,10 @@ import struct
 import sys
 from datetime import MAXYEAR, MINYEAR, datetime, timedelta
 
-import six
-
-from ._common import _tzinfo, enfold, tzname_in_python2
+from ._common import _tzinfo, enfold
 
 EPOCH = datetime(1970, 1, 1)
 EPOCHORDINAL = EPOCH.toordinal()
-
-# TODO: Move this to _common.py
-try:
-    # Python 3.7 feature
-    from contextlib import nullcontext as _nullcontext
-except ImportError:
-    import contextlib
-
-    @contextlib.contextmanager
-    def _nullcontext(context):
-        yield context
 
 
 # It is relatively expensive to construct new timedelta objects, and in most
@@ -41,39 +28,9 @@ except ImportError:
 # hits, but specifically crafted ZoneInfo objects don't leak arbitrary amounts
 # of memory.
 _TIMEDELTA_CACHE_SIZE = 512
-if six.PY2:
-
-    def _cache_load_timedelta(f):
-        from collections import OrderedDict
-
-        from six.moves import _thread
-
-        CACHE_LOCK = _thread.allocate_lock()
-        TIMEDELTA_CACHE = OrderedDict()
-
-        @functools.wraps(f)
-        def cached_load_timedelta(seconds):
-            # OrderedDict is implemented in Python on Python 2, so every
-            # access has to hold the lock to keep its linked list intact.
-            with CACHE_LOCK:
-                rv = TIMEDELTA_CACHE.pop(seconds, None)
-                if rv is None:
-                    rv = f(seconds)
-
-                TIMEDELTA_CACHE[seconds] = rv
-
-                if len(TIMEDELTA_CACHE) > _TIMEDELTA_CACHE_SIZE:
-                    TIMEDELTA_CACHE.popitem(last=False)
-
-            return rv
-
-        return cached_load_timedelta
-
-else:
-    _cache_load_timedelta = functools.lru_cache(maxsize=512)
 
 
-@_cache_load_timedelta
+@functools.lru_cache(maxsize=_TIMEDELTA_CACHE_SIZE)
 def _load_timedelta(seconds):
     return timedelta(seconds=seconds)
 
@@ -164,9 +121,6 @@ class tzfile(_tzinfo):
        >>> print(datetime(1883, 11, 18, tzinfo=NYC))    # LMT
        1883-11-18 00:00:00-04:56:02
 
-    Python versions before 3.6 do not support sub-minute offsets, so there the
-    offset is rounded to ``-04:56``.
-
     And during World War II, New York was on "Eastern War Time", which was a
     state of permanent daylight saving time:
 
@@ -178,10 +132,10 @@ class tzfile(_tzinfo):
     """
 
     def __init__(self, fileobj, filename=None, key=None):
-        super(tzfile, self).__init__()
+        super().__init__()
 
         file_opened_here = False
-        if isinstance(fileobj, six.string_types):
+        if isinstance(fileobj, str):
             self._filename = fileobj
             fileobj = open(fileobj, "rb")
             file_opened_here = True
@@ -196,7 +150,7 @@ class tzfile(_tzinfo):
 
         if fileobj is not None:
             if not file_opened_here:
-                fileobj = _nullcontext(fileobj)
+                fileobj = contextlib.nullcontext(fileobj)
 
             with fileobj as file_stream:
                 self._load_file(file_stream)
@@ -254,7 +208,6 @@ class tzfile(_tzinfo):
     def dst(self, dt):
         return self._find_trans(dt).dstoff
 
-    @tzname_in_python2
     def tzname(self, dt):
         return self._find_trans(dt).tzname
 
@@ -344,7 +297,7 @@ class tzfile(_tzinfo):
             ts = timestamp
 
         if fold is None:
-            fold = getattr(dt, "fold", 0)
+            fold = dt.fold
 
         lt = self._trans_local[fold]
 
@@ -403,7 +356,6 @@ class tzfile(_tzinfo):
             "_ttinfos",
             "_tz_after",
             "_tz_str",
-            "_utcoff_raw",
         ]
     )
 
@@ -414,7 +366,6 @@ class tzfile(_tzinfo):
         utcoff = [
             int(ttinfo.utcoff.total_seconds()) for ttinfo in self._ttinfo_list
         ]
-        utcoff = getattr(self, "_utcoff_raw", utcoff)
         abbr = [ttinfo.tzname for ttinfo in self._ttinfo_list]
 
         # dst() is inferred per transition, so the transitions don't map back
@@ -461,29 +412,16 @@ class tzfile(_tzinfo):
         for idx, trans_off in zip(trans_idx, trans_dstoff):
             dstoff[idx] = trans_off
 
-        if sys.version_info < (3, 6):
-            # For python pre-3.6, round to full-minutes if that's not the case.
-            # Python's datetime doesn't accept sub-minute timezones. Check
-            # http://python.org/sf/1447945 or https://bugs.python.org/issue5288
-            # for some information.
-            utcoff_adjusted = [60 * ((s + 30) // 60) for s in utcoff]
-            dstoff = [60 * ((s + 30) // 60) for s in dstoff]
-            trans_dstoff = [60 * ((s + 30) // 60) for s in trans_dstoff]
-            self._utcoff_raw = utcoff
-        else:
-            utcoff_adjusted = utcoff
 
         # Convert all the transition times (UTC) into "seconds since 1970-01-01 local time"
-        trans_local = self._ts_to_local(trans_idx, trans_utc, utcoff_adjusted)
+        trans_local = self._ts_to_local(trans_idx, trans_utc, utcoff)
 
         # Construct `_ttinfo` objects for each transition in the file
         _ttinfo_list = [
             _ttinfo(
                 _load_timedelta(utcoffset), _load_timedelta(dstoffset), tzname
             )
-            for utcoffset, dstoffset, tzname in zip(
-                utcoff_adjusted, dstoff, abbr
-            )
+            for utcoffset, dstoffset, tzname in zip(utcoff, dstoff, abbr)
         ]
 
         self._ttinfo_list = _ttinfo_list
@@ -698,8 +636,6 @@ class tzfile(_tzinfo):
 
     __hash__ = None
 
-    def __ne__(self, other):
-        return not (self == other)
 
     def __repr__(self):
         return "%s(%s)" % (self.__class__.__name__, repr(self._filename))
@@ -715,7 +651,7 @@ def _is_seekable(fobj):
         return False
 
     seekable = getattr(fobj, "seekable", None)
-    # Python 2 file objects can seek but have no seekable() method
+    # File-like objects need not implement seekable().
     if seekable is not None and not seekable():
         return False
 
@@ -740,9 +676,7 @@ def load_data(fobj):
         return _load_data(fobj)
     except struct.error as e:
         # struct.unpack fails when a read comes up short
-        six.raise_from(
-            ValueError("Invalid TZif file: unexpected end of file"), e
-        )
+        raise ValueError("Invalid TZif file: unexpected end of file") from e
 
 
 def _load_data(fobj):
@@ -859,7 +793,7 @@ def _load_data(fobj):
 _DST_CONSENSUS_WINDOW = 10 * 365 * 86400
 
 
-class _TZifHeader(object):
+class _TZifHeader:
     __slots__ = [
         "version",
         "isutcnt",
@@ -896,7 +830,7 @@ class _TZifHeader(object):
         return cls(*args)
 
 
-class _ttinfo(object):
+class _ttinfo:
     __slots__ = ["utcoff", "dstoff", "tzname"]
 
     def __init__(self, utcoff, dstoff, tzname):
@@ -914,12 +848,6 @@ class _ttinfo(object):
             and self.tzname == other.tzname
         )
 
-    def __ne__(self, other):
-        # Python 2 does not derive __ne__ from __eq__
-        eq = self.__eq__(other)
-        if eq is NotImplemented:
-            return eq
-        return not eq
 
     def __repr__(self):  # pragma: nocover
         return "%s(%s, %s, %s)" % (
@@ -931,29 +859,6 @@ class _ttinfo(object):
 
 
 _NO_TTINFO = _ttinfo(None, None, None)
-
-
-def _unpack(t):
-    # Python 2-specific backport for x, *y = t
-    return t[0], t[1:]
-
-
-# re.ASCII does not exist on Python 2, where str patterns are ASCII-only
-# anyway (and unicode patterns are too unless re.UNICODE is passed).
-_RE_ASCII = getattr(re, "ASCII", 0)
-
-
-def _fullmatch(pattern, string, flags=0):
-    # Python 2-specific backport of re.fullmatch
-    return re.match(r"(?:%s)\Z" % pattern, string, flags)
-
-
-def _round_offset(seconds):
-    # Python < 3.6 does not support sub-minute offsets, see the comment in
-    # tzfile._load_from_data.
-    if sys.version_info < (3, 6):
-        return 60 * ((seconds + 30) // 60)
-    return seconds
 
 
 def _parse_tz_str(tz_str):
@@ -968,8 +873,7 @@ def _parse_tz_str(tz_str):
     #
     # The format of the offset is ``[+|-]hh[:mm[:ss]]``
 
-    # TODO: When we drop Python 2, this should be offset_str, *start_end_str = ...
-    offset_str, start_end_str = _unpack(tz_str.split(",", 1))
+    offset_str, *start_end_str = tz_str.split(",", 1)
 
     parser_re = (
         r"(?P<std>[a-zA-Z]+|<[a-zA-Z0-9+-]+>)"
@@ -982,7 +886,7 @@ def _parse_tz_str(tz_str):
         r")?"  # stdoff
     )
 
-    m = _fullmatch(parser_re, offset_str, _RE_ASCII)
+    m = re.fullmatch(parser_re, offset_str, re.ASCII)
 
     if m is None:
         raise ValueError("%s is not a valid TZ string" % tz_str)
@@ -999,7 +903,7 @@ def _parse_tz_str(tz_str):
     std_offset = m.group("stdoff")
     if std_offset:
         try:
-            std_offset = _round_offset(_parse_tz_delta(std_offset))
+            std_offset = _parse_tz_delta(std_offset)
         except ValueError as e:
             raise ValueError("Invalid STD offset in %s" % tz_str)
     else:
@@ -1010,7 +914,7 @@ def _parse_tz_str(tz_str):
         dst_offset = m.group("dstoff")
         if dst_offset:
             try:
-                dst_offset = _round_offset(_parse_tz_delta(dst_offset))
+                dst_offset = _parse_tz_delta(dst_offset)
             except ValueError as e:
                 raise ValueError("Invalid DST offset in %s" % tz_str)
         else:
@@ -1036,11 +940,11 @@ def _parse_tz_str(tz_str):
 
 
 def _parse_dst_start_end(dststr):
-    date, time = _unpack(dststr.split("/", 1))
+    date, *time = dststr.split("/", 1)
     date_type = date[:1]
     if date_type == "M":
         n_is_julian = False
-        m = _fullmatch(r"M(\d{1,2})\.(\d)\.(\d)", date, _RE_ASCII)
+        m = re.fullmatch(r"M(\d{1,2})\.(\d)\.(\d)", date, re.ASCII)
         if m is None:
             raise ValueError("Invalid dst start/end date: %s" % dststr)
         date_offset = tuple(map(int, m.groups()))
@@ -1052,7 +956,7 @@ def _parse_dst_start_end(dststr):
         else:
             n_is_julian = False
 
-        if _fullmatch(r"\d{1,3}", date, _RE_ASCII) is None:
+        if re.fullmatch(r"\d{1,3}", date, re.ASCII) is None:
             raise ValueError("Invalid dst start/end date: %s" % dststr)
         doy = int(date)
         offset = _DayOffset(doy, n_is_julian)
@@ -1066,10 +970,10 @@ def _parse_dst_start_end(dststr):
 
 
 def _parse_transition_time(time_str):
-    match = _fullmatch(
+    match = re.fullmatch(
         r"(?P<sign>[+-])?(?P<h>\d{1,3})(:(?P<m>\d{2})(:(?P<s>\d{2}))?)?",
         time_str,
-        _RE_ASCII,
+        re.ASCII,
     )
     if match is None:
         raise ValueError("Invalid time: %s" % time_str)
@@ -1086,10 +990,10 @@ def _parse_transition_time(time_str):
 
 
 def _parse_tz_delta(tz_delta):
-    match = _fullmatch(
+    match = re.fullmatch(
         r"(?P<sign>[+-])?(?P<h>\d{1,3})(:(?P<m>\d{2})(:(?P<s>\d{2}))?)?",
         tz_delta,
-        _RE_ASCII,
+        re.ASCII,
     )
     # Anything passed to this function should already have hit an equivalent
     # regular expression to find the section to parse.
@@ -1109,7 +1013,7 @@ def _parse_tz_delta(tz_delta):
     return total
 
 
-class _TZStr(object):
+class _TZStr:
     __slots__ = (
         "std",
         "dst",
@@ -1304,7 +1208,7 @@ def _post_epoch_days_before_year(year):
     return y * 365 + y // 4 - y // 100 + y // 400 + 1 - EPOCHORDINAL
 
 
-class _DayOffset(object):
+class _DayOffset:
     __slots__ = ["d", "julian", "hour", "minute", "second"]
 
     def __init__(self, d, julian, hour=2, minute=0, second=0):
@@ -1336,7 +1240,7 @@ class _DayOffset(object):
         return epoch
 
 
-class _CalendarOffset(object):
+class _CalendarOffset:
     __slots__ = ["m", "w", "d", "hour", "minute", "second"]
 
     _DAYS_BEFORE_MONTH = (

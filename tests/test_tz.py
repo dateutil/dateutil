@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
 import base64
 import copy
 import gc
@@ -8,7 +5,6 @@ import os
 import pickle
 import sys
 import tempfile
-import threading
 import unittest
 import warnings
 import weakref
@@ -18,7 +14,6 @@ from datetime import timedelta, tzinfo
 from functools import partial
 from io import BytesIO, StringIO
 
-from six import PY2
 
 from ._common import (
     ComparesEqual,
@@ -179,8 +174,6 @@ END:VTIMEZONE
 EST_TUPLE = ('EST', timedelta(hours=-5), timedelta(hours=0))
 EDT_TUPLE = ('EDT', timedelta(hours=-4), timedelta(hours=1))
 
-SUPPORTS_SUB_MINUTE_OFFSETS = sys.version_info >= (3, 6)
-
 
 ###
 # Helper functions
@@ -191,7 +184,7 @@ def get_timezone_tuple(dt):
 
 ###
 # Mix-ins
-class context_passthrough(object):
+class context_passthrough:
     def __init__(*args, **kwargs):
         pass
 
@@ -202,7 +195,7 @@ class context_passthrough(object):
         pass
 
 
-class TzFoldMixin(object):
+class TzFoldMixin:
     """ Mix-in class for testing ambiguous times """
     def gettz(self, tzname):
         raise NotImplementedError
@@ -439,7 +432,9 @@ class TzFoldMixin(object):
         self._test_imaginary_time(datetime(2012, 4, 1, 3, 30),
                                   'Australia/Sydney', True)
 
-    @unittest.skip("Known failure in Python 3.6.")
+    @unittest.skip(
+        "PEP 495 inter-zone comparisons are false for ambiguous times."
+    )
     def testEqualAmbiguousComparison(self):
         tzname = self._get_tzname('Australia/Sydney')
 
@@ -457,11 +452,11 @@ class TzFoldMixin(object):
             self.assertEqual(t0_syd0, t0_syd1)
 
 
-class TzWinFoldMixin(object):
+class TzWinFoldMixin:
     def get_args(self, tzname):
         return (tzname, )
 
-    class context(object):
+    class context:
         def __init__(*args, **kwargs):
             pass
 
@@ -795,21 +790,10 @@ def test_tzoffset_singleton(args):
 
 
 @pytest.mark.tzoffset
-@pytest.mark.skipif(not SUPPORTS_SUB_MINUTE_OFFSETS,
-                    reason='Sub-minute offsets not supported')
 def test_tzoffset_sub_minute():
     delta = timedelta(hours=12, seconds=30)
     test_datetime = datetime(2000, 1, 1, tzinfo=tz.tzoffset(None, delta))
     assert test_datetime.utcoffset() == delta
-
-
-@pytest.mark.tzoffset
-@pytest.mark.skipif(SUPPORTS_SUB_MINUTE_OFFSETS,
-                    reason='Sub-minute offsets supported')
-def test_tzoffset_sub_minute_rounding():
-    delta = timedelta(hours=12, seconds=30)
-    test_date = datetime(2000, 1, 1, tzinfo=tz.tzoffset(None, delta))
-    assert test_date.utcoffset() == timedelta(hours=12, minutes=1)
 
 
 @pytest.mark.tzlocal
@@ -1183,11 +1167,6 @@ def test_gettz_badzone_unicode():
             b"America/New_York",
             ".*should be str, not bytes.*",
             id="bytes on Python 3",
-            marks=[
-                pytest.mark.skipif(
-                    PY2, reason="bytes arguments accepted in Python 2"
-                )
-            ],
         ),
         pytest.param(
             object(),
@@ -1521,13 +1500,16 @@ class TZStrTest(unittest.TestCase, TzFoldMixin):
 
         return tz.tzstr(tzname_map[tzname])
 
-    def testStrStr(self):
-        # Test that tz.tzstr() won't throw an error if given a str instead
-        # of a unicode literal.
-        self.assertEqual(datetime(2003, 4, 6, 1, 59,
-                                  tzinfo=tz.tzstr(str("EST5EDT"))).tzname(), "EST")
-        self.assertEqual(datetime(2003, 4, 6, 2, 00,
-                                  tzinfo=tz.tzstr(str("EST5EDT"))).tzname(), "EDT")
+    def testStrTransition(self):
+        # Check the abbreviation on either side of the DST transition.
+        self.assertEqual(
+            datetime(2003, 4, 6, 1, 59, tzinfo=tz.tzstr("EST5EDT")).tzname(),
+            "EST",
+        )
+        self.assertEqual(
+            datetime(2003, 4, 6, 2, 00, tzinfo=tz.tzstr("EST5EDT")).tzname(),
+            "EDT",
+        )
 
     def testStrInequality(self):
         TZS1 = tz.tzstr('EST5EDT4')
@@ -2174,23 +2156,9 @@ class TZTest(unittest.TestCase):
 
 
 @pytest.mark.tzfile
-@pytest.mark.skipif(not SUPPORTS_SUB_MINUTE_OFFSETS,
-                    reason='Sub-minute offsets not supported')
 def test_tzfile_sub_minute_offset():
-    # If user running python 3.6 or newer, exact offset is used
     tzc = tz.tzfile(BytesIO(base64.b64decode(EUROPE_HELSINKI)))
     offset = timedelta(hours=1, minutes=39, seconds=52)
-    assert datetime(1900, 1, 1, 0, 0, tzinfo=tzc).utcoffset() == offset
-
-
-@pytest.mark.tzfile
-@pytest.mark.skipif(SUPPORTS_SUB_MINUTE_OFFSETS,
-                    reason='Sub-minute offsets supported.')
-def test_sub_minute_rounding_tzfile():
-    # This timezone has an offset of 5992 seconds in 1900-01-01.
-    # For python version pre-3.6, this will be rounded
-    tzc = tz.tzfile(BytesIO(base64.b64decode(EUROPE_HELSINKI)))
-    offset = timedelta(hours=1, minutes=40)
     assert datetime(1900, 1, 1, 0, 0, tzinfo=tzc).utcoffset() == offset
 
 
@@ -2550,7 +2518,7 @@ class DatetimeAmbiguousTest(TzSourceMixin, unittest.TestCase):
                 if not dst_only:
                     dt_n = dt.replace(tzinfo=None)
 
-                    if dt_start <= dt_n < dt_end and getattr(dt_n, 'fold', 0):
+                    if dt_start <= dt_n < dt_end and dt_n.fold:
                         return timedelta(hours=-1)
 
                 return timedelta(hours=0)
@@ -2558,7 +2526,7 @@ class DatetimeAmbiguousTest(TzSourceMixin, unittest.TestCase):
             def dst(self, dt):
                 dt_n = dt.replace(tzinfo=None)
 
-                if dt_start <= dt_n < dt_end and getattr(dt_n, 'fold', 0):
+                if dt_start <= dt_n < dt_end and dt_n.fold:
                     return timedelta(hours=1)
                 else:
                     return timedelta(0)
@@ -2790,31 +2758,14 @@ class TestEnfold:
     def test_exit_fold(self):
         dt = tz.enfold(datetime(2020, 1, 19, 3, 32), fold=0)
 
-        # Before Python 3.6, dt.fold won't exist if fold is 0.
-        assert getattr(dt, 'fold', 0) == 0
+        assert dt.fold == 0
 
     def test_defold(self):
         dt = tz.enfold(datetime(2020, 1, 19, 3, 32), fold=1)
 
         dt2 = tz.enfold(dt, fold=0)
 
-        assert getattr(dt2, 'fold', 0) == 0
-
-    def test_fold_replace_args(self):
-        # This test can be dropped when Python < 3.6 is dropped, since it
-        # is mainly to cover the `replace` method on _DatetimeWithFold
-        dt = tz.enfold(datetime(1950, 1, 2, 12, 30, 15, 8), fold=1)
-
-        dt2 = dt.replace(1952, 2, 3, 13, 31, 16, 9)
-        assert dt2 == tz.enfold(datetime(1952, 2, 3, 13, 31, 16, 9), fold=1)
-        assert dt2.fold == 1
-
-    def test_fold_replace_exception_duplicate_args(self):
-        dt = tz.enfold(datetime(1999, 1, 3), fold=1)
-
-        with pytest.raises(TypeError):
-            dt.replace(1950, year=2000)
-
+        assert dt2.fold == 0
 
 @pytest.mark.tz_resolve_imaginary
 class ImaginaryDateTest(TzSourceMixin, unittest.TestCase):
@@ -2851,7 +2802,6 @@ def _gettz(key):
     assert zone is not None, key
     return zone
 
-
 @pytest.mark.tz_resolve_imaginary
 @pytest.mark.parametrize(
     "key, dt",
@@ -2869,7 +2819,6 @@ def test_resolve_imaginary_ambiguous(tz_source, key, dt):
     assert dt is not dt_f
     assert tz.resolve_imaginary(dt_f) is dt_f
 
-
 @pytest.mark.tz_resolve_imaginary
 @pytest.mark.parametrize(
     "key, dt",
@@ -2885,7 +2834,6 @@ def test_resolve_imaginary_ambiguous(tz_source, key, dt):
 def test_resolve_imaginary_existing(tz_source, key, dt):
     dt = dt.replace(tzinfo=_gettz(key))
     assert tz.resolve_imaginary(dt) is dt
-
 
 @pytest.mark.tz_resolve_imaginary
 @pytest.mark.parametrize('dt', [
@@ -2923,15 +2871,13 @@ resolve_imaginary_tests = [
 ]
 
 
-if SUPPORTS_SUB_MINUTE_OFFSETS:
-    resolve_imaginary_tests.append(
-        (
-            "Africa/Monrovia",
-            datetime(1972, 1, 7, 0, 30),
-            datetime(1972, 1, 7, 1, 14, 30),
-        )
+resolve_imaginary_tests.append(
+    (
+        "Africa/Monrovia",
+        datetime(1972, 1, 7, 0, 30),
+        datetime(1972, 1, 7, 1, 14, 30),
     )
-
+)
 
 @pytest.mark.tz_resolve_imaginary
 @pytest.mark.parametrize("key, dt, dt_exp", resolve_imaginary_tests)

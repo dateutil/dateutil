@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Tests for implementation details, not necessarily part of the user-facing
 API.
@@ -7,14 +6,11 @@ The motivating case for these tests is #483, where we want to smoke-test
 code that may be difficult to reach through the standard API calls.
 """
 
-import sys
 import pytest
 import warnings
 
 from dateutil.parser._parser import _ymd
 from dateutil import tz
-
-IS_PY32 = sys.version_info[0:2] == (3, 2)
 
 
 @pytest.mark.smoke
@@ -46,7 +42,6 @@ def test_YMD_could_be_day():
 
 ###
 # Test that private interfaces in _parser are deprecated properly
-@pytest.mark.skipif(IS_PY32, reason='pytest.warns not supported on Python 3.2')
 def test_parser_private_warns():
     from dateutil.parser import _timelex, _tzparser
     from dateutil.parser import _parsetz
@@ -61,7 +56,6 @@ def test_parser_private_warns():
         _parsetz('+05:00')
 
 
-@pytest.mark.skipif(IS_PY32, reason='pytest.warns not supported on Python 3.2')
 def test_parser_parser_private_not_warns():
     from dateutil.parser._parser import _timelex, _tzparser
     from dateutil.parser._parser import _parsetz
