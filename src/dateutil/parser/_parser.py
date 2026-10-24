@@ -103,10 +103,9 @@ class _timelex:
                 while nextchar == '\x00':
                     nextchar = self.instream.read(1)
 
-                # The check in __init__ only looks for a read attribute, so
-                # something like a Mock gets through, and since its read()
-                # never returns an empty string we would never hit EOF.
-                if not isinstance(nextchar, (text_type, bytes)):
+                # __init__ only checks for a read attribute, and an object
+                # whose read() never returns '' would never reach EOF.
+                if not isinstance(nextchar, (str, bytes)):
                     raise TypeError('Character stream must return a string '
                                     'from read(), not {itype}'.format(
                                         itype=nextchar.__class__.__name__))
