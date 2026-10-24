@@ -803,7 +803,7 @@ class parser:
                         else:
                             # For other abbreviations, POSIX applies:
                             # BRST+3 means "my time +3 is BRST".
-                            l[i + 1] = ('+', '-')[l[i + 1] == '+']
+                            l[i + 1] = ("+", "-")[l[i + 1] == "+"]
                             res.tzoffset = None
 
                 # Check for a numbered timezone
