@@ -117,6 +117,12 @@ tox -e py311 -- -m tzstr
 
 This will pass the `-m tzstr` parameter to `pytest`, running only the tests with the `tzstr` mark.
 
+`tox` runs the tests in parallel with [pytest-xdist](https://pytest-xdist.readthedocs.io/). To run them in a single process, for example to use `--pdb`, pass `-n 0`:
+
+```bash
+tox -e py311 -- -n 0 --pdb
+```
+
 The tests can also be run directly by running `pytest` or `python -m pytest` in the root directory. This will be likely be less thorough but is often faster and is a good first pass to check your changes.
 
 The GitHub Actions workflows are checked with [zizmor](https://docs.zizmor.sh/).
