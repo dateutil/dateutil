@@ -39,8 +39,10 @@ def _add_relativedelta(self, other):
 
 
 def _get_replacement(self, other):
-    year = (self.year if self.year is not None else other.year) + self.years
-    month = self.month if self.month is not None else other.month
+    year = self.year
+    year = (year if year is not None else other.year) + self.years
+    month = self.month
+    month = month if month is not None else other.month
     if self.months:
         assert 1 <= abs(self.months) <= 12
         month += self.months
@@ -52,7 +54,7 @@ def _get_replacement(self, other):
             month += 12
     day = min(
         calendar.monthrange(year, month)[1],
-        self.day if self.day is not None else other.day,
+        day if (day := self.day) is not None else other.day,
     )
     repl = {"year": year, "month": month, "day": day}
     for attr in ["hour", "minute", "second", "microsecond"]:
