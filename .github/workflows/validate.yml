@@ -72,6 +72,9 @@ jobs:
       TOXENV: py
       TEST_PYTHON: ${{ matrix.python-version }}
       TZ: ${{ !startsWith(matrix.os, 'windows-latest') && 'America/New_York' || null }}
+      # Coverage has no C tracer on PyPy, which makes the tests about ten times
+      # slower there, and PyPy runs no dateutil code that CPython does not.
+      COVERAGE: ${{ !startsWith(matrix.python-version, 'pypy') }}
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -115,10 +118,14 @@ jobs:
       # `tox` still builds and installs an sdist itself.
       - name: Run tox on the wheel
         shell: bash
-        run: tox -x "testenv:py.base_python=${{ matrix.python-version }}" --installpkg "$(ls dist/*.whl)"
+        run: |
+          if [ "$COVERAGE" = true ]; then posargs=(); else posargs=(-- tests docs); fi
+          tox -x "testenv:py.base_python=${{ matrix.python-version }}" --installpkg "$(ls dist/*.whl)" "${posargs[@]}"
       - name: Generate coverage.xml
+        if: env.COVERAGE == 'true'
         run: tox -e coverage
       - name: Report coverage to Codecov
+        if: env.COVERAGE == 'true'
         uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7
         with:
           files: ./.tox/coverage.xml
@@ -156,6 +163,9 @@ jobs:
       TOXENV: ${{ matrix.toxenv }}
       TEST_PYTHON: ${{ matrix.python-version }}
       TZ: America/New_York
+      # Coverage has no C tracer on PyPy, which makes the tests about ten times
+      # slower there, and PyPy runs no dateutil code that CPython does not.
+      COVERAGE: ${{ !startsWith(matrix.python-version, 'pypy') }}
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -187,7 +197,8 @@ jobs:
           mkdir -p "$sdist_dir"
           tar -xzf "$sdist" --strip-components=1 -C "$sdist_dir"
           cd "$sdist_dir"
-          tox -x "testenv:py.base_python=${{ matrix.python-version }}" --installpkg "$sdist"
+          if [ "$COVERAGE" = true ]; then posargs=(); else posargs=(-- tests docs); fi
+          tox -x "testenv:py.base_python=${{ matrix.python-version }}" --installpkg "$sdist" "${posargs[@]}"
 
   other:
     runs-on: "ubuntu-latest"

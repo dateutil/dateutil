@@ -1,0 +1,2 @@
+CI no longer collects coverage on PyPy, which made the PyPy jobs much slower.
+Fixed by @pganssle (gh pr #1648).
