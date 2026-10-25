@@ -10,14 +10,17 @@ on:
   workflow_call:
     inputs:
       release:
-        description: "Also install the sdist on every supported Python"
+        description: "Run the full sdist validation before publishing"
         type: boolean
         default: false
 
+permissions:
+  contents: read
+
 env:
+  UV_PYTHON_PREFERENCE: only-managed
   TZDATA_VERSION: "2024a"
 
-# TODO: Enable Dependabot or Renovate to keep action commit pins updated.
 jobs:
   build-tzdata:
     runs-on: ubuntu-latest
@@ -60,25 +63,23 @@ jobs:
           "3.14t",
           "3.15",
           "3.15t",
-          "pypy-3.11",
+          "pypy3.11",
         ]
         os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     needs: [build-tzdata, build-dist]
     env:
       TOXENV: py
+      TEST_PYTHON: ${{ matrix.python-version }}
       TZ: ${{ !startsWith(matrix.os, 'windows-latest') && 'America/New_York' || null }}
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
       - name: Set timezone (Windows)
         if: startsWith(matrix.os, 'windows-latest')
         run: tzutil /s "Eastern Standard Time"
-      - name: Set up Python ${{ matrix.python-version }} on ${{ matrix.os }}
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
-        with:
-          python-version: ${{ matrix.python-version }}
-          allow-prereleases: true
       - name: Download distributions
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
@@ -97,16 +98,26 @@ jobs:
 
           head -n 1 /usr/share/zoneinfo/tzdata.zi
         if: startsWith(matrix.os, 'ubuntu')
-      - name: Install dependencies
-        run: python -m pip install -U tox
+      - &setup-uv
+        name: Set up uv
+        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+        with:
+          enable-cache: true
+          cache-suffix: ${{ github.job }}-${{ env.TEST_PYTHON }}-${{ env.TOXENV }}
+          cache-dependency-glob: |
+            **/*requirements*.txt
+            pyproject.toml
+            tox.ini
+      - name: Install tox
+        run: uv tool install --python 3.13 --with tox-uv tox
       # Test the wheel that was built once, on a recent Python, rather than
       # building a package from source on each interpreter. Run locally,
       # `tox` still builds and installs an sdist itself.
       - name: Run tox on the wheel
         shell: bash
-        run: python -m tox --installpkg "$(ls dist/*.whl)"
+        run: tox -x "testenv:py.base_python=${{ matrix.python-version }}" --installpkg "$(ls dist/*.whl)"
       - name: Generate coverage.xml
-        run: python -m tox -e coverage
+        run: tox -e coverage
       - name: Report coverage to Codecov
         uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7
         with:
@@ -114,12 +125,12 @@ jobs:
           name: ${{ matrix.os }}:${{ matrix.python-version }}
           fail_ci_if_error: false
 
-  # Only run for releases: install the sdist, which is what pip builds from on
-  # platforms that have no wheel, on every supported Python.
+  # Exercise the files shipped in the sdist without using the Git checkout.
   test-sdist:
-    if: ${{ inputs.release }}
+    if: ${{ inputs.release || needs.build-dist.outputs.test-sdist == 'true' }}
     strategy:
       matrix:
+        toxenv: [py]
         python-version: [
           "3.11",
           "3.12",
@@ -128,21 +139,28 @@ jobs:
           "3.14t",
           "3.15",
           "3.15t",
-          "pypy-3.11",
+          "pypy3.11",
         ]
+        include:
+          - python-version: "3.13"
+            toxenv: tz-fat
+          - python-version: "3.13"
+            toxenv: tz-slim
+          - python-version: "3.13"
+            toxenv: tz-vanguard
+          - python-version: "3.13"
+            toxenv: tz-rearguard
     runs-on: ubuntu-latest
     needs: [build-tzdata, build-dist]
     env:
-      TOXENV: py
+      TOXENV: ${{ matrix.toxenv }}
+      TEST_PYTHON: ${{ matrix.python-version }}
       TZ: America/New_York
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
-          python-version: ${{ matrix.python-version }}
-          allow-prereleases: true
+          persist-credentials: false
       - name: Download distributions
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
@@ -159,11 +177,17 @@ jobs:
           sudo mv tzdata_download /usr/share/zoneinfo
 
           head -n 1 /usr/share/zoneinfo/tzdata.zi
-      - name: Install dependencies
-        run: python -m pip install -U tox
-      # tox installs the sdist with pip, as a user would with --no-binary.
+      - *setup-uv
+      - name: Install tox
+        run: uv tool install --python 3.13 --with tox-uv tox
       - name: Run tox on the sdist
-        run: python -m tox --installpkg "$(ls dist/*.tar.gz)"
+        run: |
+          sdist=$(realpath dist/*.tar.gz)
+          sdist_dir="$RUNNER_TEMP/dateutil-sdist"
+          mkdir -p "$sdist_dir"
+          tar -xzf "$sdist" --strip-components=1 -C "$sdist_dir"
+          cd "$sdist_dir"
+          tox -x "testenv:py.base_python=${{ matrix.python-version }}" --installpkg "$sdist"
 
   other:
     runs-on: "ubuntu-latest"
@@ -173,19 +197,13 @@ jobs:
         toxenv: ["docs", "tz-fat", "tz-slim", "tz-vanguard", "tz-rearguard", "precommit"]
     env:
       TOXENV: ${{ matrix.toxenv }}
-      TZ: ${{ !startsWith(matrix.os, 'windows-latest') && 'America/New_York' || null }}
+      TZ: America/New_York
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
+          persist-credentials: false
           fetch-depth: 0
-      - name: Set timezone (Windows)
-        if: startsWith(matrix.os, 'windows-latest')
-        run: tzutil /s "Eastern Standard Time"
-      - name: ${{ matrix.toxenv }}
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
-        with:
-          python-version: "3.13"
       - name: Download tzdata artifact
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
@@ -197,10 +215,9 @@ jobs:
           sudo mv tzdata_download /usr/share/zoneinfo
 
           cat /usr/share/zoneinfo/tzdata.zi | head -n 1
+      - *setup-uv
       - name: Install tox
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install -U tox
+        run: uv tool install --python 3.13 --with tox-uv tox
       - name: Run action
         run: tox
 
@@ -212,12 +229,11 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
+          persist-credentials: false
           fetch-depth: 0
-      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
-        with:
-          python-version: "3.13"
+      - *setup-uv
       - name: Install darker
-        run: python -m pip install "darker[black,isort]==3.0.0"
+        run: uv tool install --python 3.13 "darker[black,isort]==3.0.0"
       - name: Run darker
         # Check only the lines changed relative to the merge base of the PR
         # (or the commit before a push). The darker GitHub action is not used
@@ -228,21 +244,44 @@ jobs:
           REVISION: ${{ github.event_name == 'pull_request' && format('{0}...', github.event.pull_request.base.sha) || format('{0}...', github.event.before) }}
         run: darker --check --diff --color --isort --revision "$REVISION" .
 
-  build-dist:
+  zizmor:
+    if: ${{ !inputs.release }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
+          persist-credentials: false
+      - name: Check GitHub Actions security
+        uses: zizmorcore/zizmor-action@53290badfa369cb0bf7ad16342cb62c2fa47ac7b # v0.8.0
+        with:
+          advanced-security: false
+          annotations: true
+
+  build-dist:
+    runs-on: ubuntu-latest
+    outputs:
+      test-sdist: ${{ steps.sdist-changes.outputs.changed }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
           # The version comes from git tags, so we need the history.
           fetch-depth: 0
-      - name: Set up Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
-        with:
-          python-version: "3.14"
+      - name: Check whether the sdist needs testing
+        if: github.event_name == 'pull_request'
+        id: sdist-changes
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          if ! git diff --quiet "$BASE_SHA...$HEAD_SHA" -- pyproject.toml; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+      - *setup-uv
       - name: Install tox
-        run: python -m pip install -U tox
+        run: uv tool install --python 3.13 --with tox-uv tox
       - name: Run tox
-        run: python -m tox -e build
+        run: tox -e build
       - name: Check generation
         run: |
           exactly_one() {

@@ -33,7 +33,8 @@ To keep users abreast of the changes to the module and to give proper credit, `d
 - `feature`: A new feature, (e.g. a new function, method, attribute, etc)
 - `bugfix`: A fix to a bug
 - `doc`: A change to the documentation
-- `deprecation`: Used if deprecating a feature or dropping support for a Python version.
+- `deprecations`: Used if deprecating a feature or dropping support for a Python version.
+- `data`: An update to the bundled time zone data.
 - `misc`: A change that has no interesting effect for end users, such as fixes to the test suite or CI.
 
 PRs that include a feature or bugfix *and* a deprecation should create a separate entry for the deprecation.
@@ -99,6 +100,15 @@ The best way to test `dateutil` is to run `tox`. By default, `tox` will test aga
 tox -e py311,py313
 ```
 
+For faster environment creation and dependency installation, you can install
+`tox` with the `tox-uv` plugin using [uv](https://docs.astral.sh/uv/):
+
+```bash
+uv tool install tox --with tox-uv
+```
+
+The same `tox` commands work with either the uv plugin or the default installer.
+
 You can also pass arguments to `pytest` through `tox` by placing them after `--`:
 
 ```bash
@@ -107,6 +117,22 @@ tox -e py311 -- -m tzstr
 
 This will pass the `-m tzstr` parameter to `pytest`, running only the tests with the `tzstr` mark.
 
+`tox` runs the tests in parallel with [pytest-xdist](https://pytest-xdist.readthedocs.io/). To run them in a single process, for example to use `--pdb`, pass `-n 0`:
+
+```bash
+tox -e py311 -- -n 0 --pdb
+```
+
 The tests can also be run directly by running `pytest` or `python -m pytest` in the root directory. This will be likely be less thorough but is often faster and is a good first pass to check your changes.
+
+The GitHub Actions workflows are checked with [zizmor](https://docs.zizmor.sh/).
+To run the audit locally:
+
+```bash
+uvx zizmor .github/workflows
+```
+
+This uses the latest zizmor release, which may report different findings from
+the version bundled with the pinned zizmor action in CI.
 
 All GitHub pull requests are automatically tested using [GitHub Actions](https://github.com/dateutil/dateutil/actions/).

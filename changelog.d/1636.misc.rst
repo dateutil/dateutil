@@ -1,0 +1,2 @@
+Switched CI environment creation and dependency installation to uv and tox-uv,
+with dependency caching between runs. Fixed by @pganssle (gh pr #1636).
