@@ -1,0 +1,3 @@
+Added inline type annotations and a ``py.typed`` marker, using structural
+protocols to describe duck-typed inputs.
+Reported and fixed by @pganssle (gh pr #1647).
