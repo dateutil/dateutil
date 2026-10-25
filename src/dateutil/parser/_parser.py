@@ -38,16 +38,24 @@ import warnings
 from calendar import monthrange
 from decimal import Decimal
 from io import StringIO
-from typing import cast, overload
 from warnings import warn
 
 from .. import relativedelta, tz
+from .._common import cast
 
 TYPE_CHECKING = False
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Sequence
-    from typing import Literal, Protocol, Self, TypeAlias, TypedDict, Unpack
+    from typing import (
+        Literal,
+        Protocol,
+        Self,
+        TypeAlias,
+        TypedDict,
+        Unpack,
+        overload,
+    )
 
     from .. import _typing
 
@@ -200,7 +208,7 @@ class _timelex:
                 seenletters = True
                 if nextchar == '.' or self.isword(nextchar):
                     token += nextchar
-                elif self.isnum(nextchar) and cast("str", token)[-1] == ".":
+                elif self.isnum(nextchar) and token[-1] == ".":
                     token += nextchar
                     state = '0.'
                 else:
@@ -212,29 +220,27 @@ class _timelex:
                 # break up the tokens later.
                 if nextchar == '.' or self.isnum(nextchar):
                     token += nextchar
-                elif self.isword(nextchar) and cast("str", token)[-1] == ".":
+                elif self.isword(nextchar) and token[-1] == ".":
                     token += nextchar
                     state = 'a.'
                 else:
                     self.charstack.append(nextchar)
                     break  # emit token
 
-        if state is not None:
-            assert token is not None
+        if token is None:
+            return None
 
         if state in ("a.", "0.") and (
-            seenletters
-            or cast("str", token).count(".") > 1
-            or cast("str", token)[-1] in ".,"
+            seenletters or token.count(".") > 1 or token[-1] in ".,"
         ):
-            l = self._split_decimal.split(cast("str", token))
+            l = self._split_decimal.split(token)
             token = l[0]
             for tok in l[1:]:
                 if tok:
                     self.tokenstack.append(tok)
 
-        if state == "0." and cast("str", token).count(".") == 0:
-            token = cast("str", token).replace(",", ".")
+        if state == "0." and token.count(".") == 0:
+            token = token.replace(",", ".")
 
         return token
 
@@ -469,15 +475,15 @@ class _ymd(list[int]):
     def could_be_day(self, value: int | Decimal) -> bool:
         if self.has_day:
             return False
-        elif not self.has_month:
+        elif self.mstridx is None:
             return 1 <= value <= 31
-        elif not self.has_year:
+        elif self.ystridx is None:
             # Be permissive, assume leap year
-            month = self[cast("int", self.mstridx)]
+            month = self[self.mstridx]
             return 1 <= value <= monthrange(2000, month)[1]
         else:
-            month = self[cast("int", self.mstridx)]
-            year = self[cast("int", self.ystridx)]
+            month = self[self.mstridx]
+            year = self[self.ystridx]
             return 1 <= value <= monthrange(year, month)[1]
 
     def append(
@@ -630,47 +636,49 @@ class parser:
     def __init__(self, info: _ParserInfo | None = None) -> None:
         self.info = info or parserinfo()
 
-    @overload
-    def parse(
-        self,
-        timestr: _ParseInput,
-        default: datetime.datetime | None = None,
-        ignoretz: bool | None = False,
-        tzinfos: _TzInfos | None = None,
-        *,
-        dayfirst: bool | None = None,
-        yearfirst: bool | None = None,
-        fuzzy: bool = False,
-        fuzzy_with_tokens: Literal[False] = False,
-    ) -> datetime.datetime: ...
+    if TYPE_CHECKING:
 
-    @overload
-    def parse(
-        self,
-        timestr: _ParseInput,
-        default: datetime.datetime | None = None,
-        ignoretz: bool | None = False,
-        tzinfos: _TzInfos | None = None,
-        *,
-        dayfirst: bool | None = None,
-        yearfirst: bool | None = None,
-        fuzzy: bool = False,
-        fuzzy_with_tokens: Literal[True],
-    ) -> tuple[datetime.datetime, tuple[str, ...]]: ...
+        @overload
+        def parse(
+            self,
+            timestr: _ParseInput,
+            default: datetime.datetime | None = None,
+            ignoretz: bool | None = False,
+            tzinfos: _TzInfos | None = None,
+            *,
+            dayfirst: bool | None = None,
+            yearfirst: bool | None = None,
+            fuzzy: bool = False,
+            fuzzy_with_tokens: Literal[False] = False,
+        ) -> datetime.datetime: ...
 
-    @overload
-    def parse(
-        self,
-        timestr: _ParseInput,
-        default: datetime.datetime | None = None,
-        ignoretz: bool | None = False,
-        tzinfos: _TzInfos | None = None,
-        *,
-        dayfirst: bool | None = None,
-        yearfirst: bool | None = None,
-        fuzzy: bool = False,
-        fuzzy_with_tokens: bool,
-    ) -> _ParseReturn: ...
+        @overload
+        def parse(
+            self,
+            timestr: _ParseInput,
+            default: datetime.datetime | None = None,
+            ignoretz: bool | None = False,
+            tzinfos: _TzInfos | None = None,
+            *,
+            dayfirst: bool | None = None,
+            yearfirst: bool | None = None,
+            fuzzy: bool = False,
+            fuzzy_with_tokens: Literal[True],
+        ) -> tuple[datetime.datetime, tuple[str, ...]]: ...
+
+        @overload
+        def parse(
+            self,
+            timestr: _ParseInput,
+            default: datetime.datetime | None = None,
+            ignoretz: bool | None = False,
+            tzinfos: _TzInfos | None = None,
+            *,
+            dayfirst: bool | None = None,
+            yearfirst: bool | None = None,
+            fuzzy: bool = False,
+            fuzzy_with_tokens: bool,
+        ) -> _ParseReturn: ...
 
     def parse(
         self,
@@ -911,9 +919,8 @@ class parser:
                     val_is_ampm = self._ampm_valid(res.hour, res.ampm, fuzzy)
 
                     if val_is_ampm:
-                        res.hour = self._adjust_ampm(
-                            cast("int", res.hour), value
-                        )
+                        assert res.hour is not None
+                        res.hour = self._adjust_ampm(res.hour, value)
                         res.ampm = value
 
                     elif fuzzy:
@@ -1099,7 +1106,7 @@ class parser:
                     value = info.month(tokens[idx + 2])
 
                     if value is not None:
-                        ymd.append(cast("int", value), "M")
+                        ymd.append(value, "M")
                     else:
                         raise ValueError()
 
@@ -1108,7 +1115,7 @@ class parser:
                     value = info.month(tokens[idx + 4])
 
                     if value is not None:
-                        ymd.append(cast("int", value), "M")
+                        ymd.append(value, "M")
                     else:
                         ymd.append(tokens[idx + 4])
                     idx += 2
@@ -1447,49 +1454,51 @@ class parser:
 DEFAULTPARSER = parser()
 
 
-@overload
-def parse(
-    timestr: _ParseInput,
-    parserinfo: _ParserInfo | None = None,
-    *,
-    default: datetime.datetime | None = None,
-    ignoretz: bool | None = False,
-    tzinfos: _TzInfos | None = None,
-    dayfirst: bool | None = None,
-    yearfirst: bool | None = None,
-    fuzzy: bool = False,
-    fuzzy_with_tokens: Literal[False] = False,
-) -> datetime.datetime: ...
+if TYPE_CHECKING:
+
+    @overload
+    def parse(
+        timestr: _ParseInput,
+        parserinfo: _ParserInfo | None = None,
+        *,
+        default: datetime.datetime | None = None,
+        ignoretz: bool | None = False,
+        tzinfos: _TzInfos | None = None,
+        dayfirst: bool | None = None,
+        yearfirst: bool | None = None,
+        fuzzy: bool = False,
+        fuzzy_with_tokens: Literal[False] = False,
+    ) -> datetime.datetime: ...
 
 
-@overload
-def parse(
-    timestr: _ParseInput,
-    parserinfo: _ParserInfo | None = None,
-    *,
-    default: datetime.datetime | None = None,
-    ignoretz: bool | None = False,
-    tzinfos: _TzInfos | None = None,
-    dayfirst: bool | None = None,
-    yearfirst: bool | None = None,
-    fuzzy: bool = False,
-    fuzzy_with_tokens: Literal[True],
-) -> tuple[datetime.datetime, tuple[str, ...]]: ...
+    @overload
+    def parse(
+        timestr: _ParseInput,
+        parserinfo: _ParserInfo | None = None,
+        *,
+        default: datetime.datetime | None = None,
+        ignoretz: bool | None = False,
+        tzinfos: _TzInfos | None = None,
+        dayfirst: bool | None = None,
+        yearfirst: bool | None = None,
+        fuzzy: bool = False,
+        fuzzy_with_tokens: Literal[True],
+    ) -> tuple[datetime.datetime, tuple[str, ...]]: ...
 
 
-@overload
-def parse(
-    timestr: _ParseInput,
-    parserinfo: _ParserInfo | None = None,
-    *,
-    default: datetime.datetime | None = None,
-    ignoretz: bool | None = False,
-    tzinfos: _TzInfos | None = None,
-    dayfirst: bool | None = None,
-    yearfirst: bool | None = None,
-    fuzzy: bool = False,
-    fuzzy_with_tokens: bool,
-) -> _ParseReturn: ...
+    @overload
+    def parse(
+        timestr: _ParseInput,
+        parserinfo: _ParserInfo | None = None,
+        *,
+        default: datetime.datetime | None = None,
+        ignoretz: bool | None = False,
+        tzinfos: _TzInfos | None = None,
+        dayfirst: bool | None = None,
+        yearfirst: bool | None = None,
+        fuzzy: bool = False,
+        fuzzy_with_tokens: bool,
+    ) -> _ParseReturn: ...
 
 
 def parse(

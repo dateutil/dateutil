@@ -16,10 +16,10 @@ import math
 import re
 import sys
 from functools import wraps
-from typing import cast, overload
 # For warning about deprecation of until and count
 from warnings import warn
 
+from ._common import cast
 from ._common import weekday as weekdaybase
 
 TYPE_CHECKING = False
@@ -43,6 +43,7 @@ if TYPE_CHECKING:
         TypedDict,
         TypeVar,
         Unpack,
+        overload,
     )
 
     from . import _typing
@@ -205,8 +206,8 @@ class rrulebase:
             self._invalidate_cache()
 
     def __iter__(self) -> Iterator[datetime.datetime]:
-        if self._cache_complete:
-            return iter(cast("Sequence[datetime.datetime]", self._cache))
+        if self._cache_complete and self._cache is not None:
+            return iter(self._cache)
         elif self._cache is None:
             return self._iter()
         else:
@@ -226,7 +227,8 @@ class rrulebase:
     def _iter_cached(self) -> Iterator[datetime.datetime]:
         i = 0
         gen = self._cache_gen
-        cache = cast("list[datetime.datetime]", self._cache)
+        cache = self._cache
+        assert cache is not None
         acquire = self._cache_lock.acquire
         release = self._cache_lock.release
         while gen:
@@ -244,21 +246,24 @@ class rrulebase:
                 release()
             yield cache[i]
             i += 1
-        while i < cast("int", self._len):
+        assert self._len is not None
+        while i < self._len:
             yield cache[i]
             i += 1
 
-    @overload
-    def __getitem__(self, item: int) -> datetime.datetime: ...
+    if TYPE_CHECKING:
 
-    @overload
-    def __getitem__(self, item: slice) -> Sequence[datetime.datetime]: ...
+        @overload
+        def __getitem__(self, item: int) -> datetime.datetime: ...
+
+        @overload
+        def __getitem__(self, item: slice) -> Sequence[datetime.datetime]: ...
 
     def __getitem__(
         self, item: int | slice
     ) -> datetime.datetime | Sequence[datetime.datetime]:
-        if self._cache_complete:
-            return cast("list[datetime.datetime]", self._cache)[item]
+        if self._cache_complete and self._cache is not None:
+            return self._cache[item]
         elif isinstance(item, slice):
             if item.step and item.step < 0:
                 return list(iter(self))[item]
@@ -281,8 +286,8 @@ class rrulebase:
             return list(iter(self))[item]
 
     def __contains__(self, item: datetime.datetime) -> bool:
-        if self._cache_complete:
-            return item in cast("Sequence[datetime.datetime]", self._cache)
+        if self._cache_complete and self._cache is not None:
+            return item in self._cache
         else:
             for i in self:
                 if i == item:
@@ -298,7 +303,8 @@ class rrulebase:
         if self._len is None:
             for x in self:
                 pass
-        return cast("int", self._len)
+        assert self._len is not None
+        return self._len
 
     def before(
         self, dt: datetime.datetime, inc: bool = False
@@ -306,8 +312,8 @@ class rrulebase:
         """Returns the last recurrence before the given datetime instance. The
         inc keyword defines what happens if dt is an occurrence. With
         inc=True, if dt itself is an occurrence, it will be returned."""
-        if self._cache_complete:
-            gen = cast("Sequence[datetime.datetime]", self._cache)
+        if self._cache_complete and self._cache is not None:
+            gen = self._cache
         else:
             gen = self
         last = None
@@ -329,8 +335,8 @@ class rrulebase:
         """Returns the first recurrence after the given datetime instance. The
         inc keyword defines what happens if dt is an occurrence. With
         inc=True, if dt itself is an occurrence, it will be returned."""
-        if self._cache_complete:
-            gen = cast("Sequence[datetime.datetime]", self._cache)
+        if self._cache_complete and self._cache is not None:
+            gen = self._cache
         else:
             gen = self
         if inc:
@@ -364,8 +370,8 @@ class rrulebase:
         :yields: Yields a sequence of `datetime` objects.
         """
 
-        if self._cache_complete:
-            gen = cast("Sequence[datetime.datetime]", self._cache)
+        if self._cache_complete and self._cache is not None:
+            gen = self._cache
         else:
             gen = self
 
@@ -397,8 +403,8 @@ class rrulebase:
         The inc keyword defines what happens if after and/or before are
         themselves occurrences. With inc=True, they will be included in the
         list, if they are found in the recurrence set."""
-        if self._cache_complete:
-            gen = cast("Sequence[datetime.datetime]", self._cache)
+        if self._cache_complete and self._cache is not None:
+            gen = self._cache
         else:
             gen = self
         started = False
@@ -982,9 +988,7 @@ class rrule(rrulebase):
                     or (byweekno and not cast("Sequence[int]", ii.wnomask)[i])
                     or (byweekday and ii.wdaymask[i] not in byweekday)
                     or (ii.nwdaymask and not ii.nwdaymask[i])
-                    or (
-                        byeaster and not cast("Sequence[int]", ii.eastermask)[i]
-                    )
+                    or (byeaster and not ii.eastermask[i])
                     or (
                         (bymonthday or bynmonthday)
                         and ii.mdaymask[i] not in bymonthday
@@ -1043,7 +1047,7 @@ class rrule(rrulebase):
                         total += 1
                         yield res
             else:
-                for i in cast("Sequence[int]", dayset[start:end]):
+                for i in dayset[start:end]:
                     if i is not None:
                         date = datetime.date.fromordinal(ii.yearordinal + i)
                         for time in timeset:
@@ -1420,10 +1424,8 @@ class _iterinfo:
 
         if rr._byeaster:
             self.eastermask = [0] * (self.yearlen + 7)
-            eyday = (
-                cast("types.ModuleType", easter).easter(year).toordinal()
-                - self.yearordinal
-            )
+            assert easter is not None
+            eyday = easter.easter(year).toordinal() - self.yearordinal
             for offset in rr._byeaster:
                 self.eastermask[eyday+offset] = 1
 
@@ -1717,7 +1719,7 @@ class _rrulestr:
         try:
             rrkwargs["until"] = parser.parse(
                 value,
-                ignoretz=cast("bool", kwargs.get("ignoretz")),
+                ignoretz=kwargs.get("ignoretz"),
                 tzinfos=kwargs.get("tzinfos"),
             )
         except ValueError:
@@ -1754,14 +1756,13 @@ class _rrulestr:
                 for i in range(len(wday)):
                     if wday[i] not in '+-0123456789':
                         break
-                n = wday[:i] or None
+                n_str = wday[:i]
                 w = wday[i:]
-                if n:
-                    n = int(n)
+                n = int(n_str) if n_str else None
             else:
                 raise ValueError("Invalid (empty) BYDAY specification.")
 
-            l.append(weekdays[self._weekday_map[w]](cast("int | None", n)))
+            l.append(weekdays[self._weekday_map[w]](n))
         rrkwargs["byweekday"] = l
 
     _handle_BYDAY = _handle_BYWEEKDAY
@@ -1793,9 +1794,7 @@ class _rrulestr:
                 raise ValueError("unknown parameter '%s'" % name)
             except (KeyError, ValueError):
                 raise ValueError("invalid '%s': %s" % (name, value))
-        return cast("Callable[..., rrule]", rrule)(
-            dtstart=dtstart, cache=cache, **rrkwargs
-        )
+        return rrule(dtstart=dtstart, cache=cache, **rrkwargs)
 
     def _parse_date_value(
         self,
@@ -1958,9 +1957,10 @@ class _rrulestr:
                                                      ignoretz=ignoretz,
                                                      tzinfos=tzinfos))
                 for value in rdatevals:
+                    assert parser is not None
                     for datestr in value.split(","):
                         rset.rdate(
-                            cast("types.ModuleType", parser).parse(
+                            parser.parse(
                                 datestr, ignoretz=ignoretz, tzinfos=tzinfos
                             )
                         )
@@ -1980,40 +1980,42 @@ class _rrulestr:
                                              ignoretz=ignoretz,
                                              tzinfos=tzinfos)
 
-    @overload
-    def __call__(
-        self,
-        s: str,
-        *,
-        forceset: Literal[True],
-        dtstart: datetime.datetime | None = None,
-        cache: bool | None = False,
-        unfold: bool = False,
-        compatible: bool = False,
-        ignoretz: bool = False,
-        tzids: _TzIds | None = None,
-        tzinfos: _TzInfos | None = None,
-    ) -> rruleset: ...
+    if TYPE_CHECKING:
 
-    @overload
-    def __call__(
-        self,
-        s: str,
-        *,
-        compatible: Literal[True],
-        dtstart: datetime.datetime | None = None,
-        cache: bool | None = False,
-        unfold: bool = False,
-        forceset: bool = False,
-        ignoretz: bool = False,
-        tzids: _TzIds | None = None,
-        tzinfos: _TzInfos | None = None,
-    ) -> rruleset: ...
+        @overload
+        def __call__(
+            self,
+            s: str,
+            *,
+            forceset: Literal[True],
+            dtstart: datetime.datetime | None = None,
+            cache: bool | None = False,
+            unfold: bool = False,
+            compatible: bool = False,
+            ignoretz: bool = False,
+            tzids: _TzIds | None = None,
+            tzinfos: _TzInfos | None = None,
+        ) -> rruleset: ...
 
-    @overload
-    def __call__(
-        self, s: str, **kwargs: Unpack[_ParseOptions]
-    ) -> rrule | rruleset: ...
+        @overload
+        def __call__(
+            self,
+            s: str,
+            *,
+            compatible: Literal[True],
+            dtstart: datetime.datetime | None = None,
+            cache: bool | None = False,
+            unfold: bool = False,
+            forceset: bool = False,
+            ignoretz: bool = False,
+            tzids: _TzIds | None = None,
+            tzinfos: _TzInfos | None = None,
+        ) -> rruleset: ...
+
+        @overload
+        def __call__(
+            self, s: str, **kwargs: Unpack[_ParseOptions]
+        ) -> rrule | rruleset: ...
 
     def __call__(
         self, s: str, **kwargs: Unpack[_ParseOptions]

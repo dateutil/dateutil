@@ -15,8 +15,8 @@ import os
 import struct
 import winreg
 from ctypes import wintypes
-from typing import cast
 
+from .._common import cast
 from ._common import tzrangebase
 
 TYPE_CHECKING = False
@@ -405,15 +405,15 @@ def valuestodict(key: winreg.HKEYType | int) -> Mapping[str, _RegistryValue]:
         if dtype == winreg.REG_DWORD or dtype == winreg.REG_DWORD_LITTLE_ENDIAN:
             # If it's a DWORD (32-bit integer), it's stored as unsigned - convert
             # that to a proper signed integer
-            if cast("int", value) & (1 << 31):
-                value = cast("int", value) - (1 << 32)
+            if value & (1 << 31):
+                value = value - (1 << 32)
         elif dtype == winreg.REG_SZ:
             # If it's a reference to the tzres DLL, load the actual string
-            if cast("str", value).startswith("@tzres"):
+            if value.startswith("@tzres"):
                 tz_res = tz_res or tzres()
-                value = tz_res.name_from_string(cast("str", value))
+                value = tz_res.name_from_string(value)
 
-            value = cast("str", value).rstrip("\x00")  # Remove trailing nulls
+            value = value.rstrip("\x00")  # Remove trailing nulls
 
         dout[key_name] = value
 

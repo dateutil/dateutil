@@ -13,9 +13,9 @@ import calendar
 import re
 from datetime import date, datetime, time, timedelta
 from functools import wraps
-from typing import cast
 
 from dateutil import tz
+from dateutil._common import cast
 
 TYPE_CHECKING = False
 
@@ -31,11 +31,7 @@ if TYPE_CHECKING:
     _AsciiInput: TypeAlias = (
         str | bytes | bytearray | _typing._ReadAll[str | bytes | bytearray]
     )
-    _DateParts: TypeAlias = tuple[int, int, int]
     _TimeParts: TypeAlias = tuple[int, int, int, int, _datetime.tzinfo | None]
-    _DatetimeParts: TypeAlias = tuple[
-        int, int, int, int, int, int, int, _datetime.tzinfo | None
-    ]
 
 
 __all__ = ["isoparse", "isoparser"]
@@ -53,20 +49,21 @@ def _takes_ascii(
         **kwargs: _P.kwargs,
     ) -> _R:
         # If it's a stream, read the whole thing
-        str_in = cast(
-            "str | bytes | bytearray", getattr(str_in, "read", lambda: str_in)()
+        ascii_in = cast(
+            "str | bytes | bytearray",
+            getattr(str_in, "read", lambda: str_in)(),
         )
 
         # If it's unicode, turn it into bytes, since ISO-8601 only covers ASCII
-        if isinstance(str_in, str):
+        if isinstance(ascii_in, str):
             # ASCII is the same in UTF-8
             try:
-                str_in = str_in.encode('ascii')
+                ascii_in = ascii_in.encode("ascii")
             except UnicodeEncodeError as e:
                 msg = 'ISO-8601 strings should contain only ASCII characters'
                 raise ValueError(msg) from e
 
-        return f(self, str_in, *args, **kwargs)
+        return f(self, ascii_in, *args, **kwargs)
 
     return func
 
@@ -162,25 +159,29 @@ class isoparser:
         .. versionadded:: 2.7.0
         """
         date_components, pos = self._parse_isodate(dt_str)
-        components: list[int | _datetime.tzinfo | None] = list(date_components)
+        year, month, day = date_components
+        if len(dt_str) == pos:
+            return datetime(year, month, day)
 
-        if len(dt_str) > pos:
-            if self._sep is None or dt_str[pos:pos + 1] == self._sep:
-                components += self._parse_isotime(dt_str[pos + 1:])
-            else:
-                raise ValueError('String contains unknown ISO components')
+        if self._sep is not None and dt_str[pos : pos + 1] != self._sep:
+            raise ValueError("String contains unknown ISO components")
 
-        if len(components) > 3 and components[3] == 24:
-            components[3] = 0
-            # The date parser produces three integers; the time parser appends
-            # four integers followed by a tzinfo (or None).
-            return datetime(
-                *cast("_DatetimeParts", tuple(components))
-            ) + timedelta(days=1)
-
-        if len(components) == 3:
-            return datetime(*cast("_DateParts", tuple(components)))
-        return datetime(*cast("_DatetimeParts", tuple(components)))
+        hour, minute, second, microsecond, zone = self._parse_isotime(
+            dt_str[pos + 1 :]
+        )
+        result = datetime(
+            year,
+            month,
+            day,
+            hour=0 if hour == 24 else hour,
+            minute=minute,
+            second=second,
+            microsecond=microsecond,
+            tzinfo=zone,
+        )
+        if hour == 24:
+            result += timedelta(days=1)
+        return result
 
     @_takes_ascii
     def parse_isodate(self, datestr: bytes | bytearray) -> date:
@@ -210,10 +211,10 @@ class isoparser:
         :return:
             Returns a :class:`datetime.time` object
         """
-        components = self._parse_isotime(timestr)
-        if components[0] == 24:
-            components[0] = 0
-        return time(*cast("_TimeParts", tuple(components)))
+        hour, minute, second, microsecond, zone = self._parse_isotime(timestr)
+        return time(
+            0 if hour == 24 else hour, minute, second, microsecond, zone
+        )
 
     @_takes_ascii
     def parse_tzstr(
@@ -372,11 +373,10 @@ class isoparser:
         week_offset = (week - 1) * 7 + (day - 1)
         return week_1 + timedelta(days=week_offset)
 
-    def _parse_isotime(
-        self, timestr: bytes | bytearray
-    ) -> list[int | _datetime.tzinfo | None]:
+    def _parse_isotime(self, timestr: bytes | bytearray) -> _TimeParts:
         len_str = len(timestr)
-        components: list[int | _datetime.tzinfo | None] = [0, 0, 0, 0, None]
+        components = [0, 0, 0, 0]
+        zone = None
         pos = 0
         comp = -1
 
@@ -390,7 +390,7 @@ class isoparser:
 
             if timestr[pos:pos + 1] in b'-+Zz':
                 # Detect time zone boundary
-                components[-1] = self._parse_tzstr(timestr[pos:])
+                zone = self._parse_tzstr(timestr[pos:])
                 pos = len_str
                 break
 
@@ -425,7 +425,7 @@ class isoparser:
             if any(component != 0 for component in components[1:4]):
                 raise ValueError('Hour may only be 24 at 24:00:00.000')
 
-        return components
+        return components[0], components[1], components[2], components[3], zone
 
     def _parse_tzstr(
         self, tzstr: bytes | bytearray, zero_as_utc: bool = True

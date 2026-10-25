@@ -4,14 +4,19 @@ Common code used in multiple modules.
 
 from __future__ import annotations
 
-from typing import cast
 
 TYPE_CHECKING = False
 
 if TYPE_CHECKING:
-    from typing import Self
+    from typing import Self, TypeVar, cast
 
     from . import _typing
+
+    _T = TypeVar("_T")
+else:
+
+    def cast(typ: object, val: _T) -> _T:
+        return val
 
 
 class weekday:

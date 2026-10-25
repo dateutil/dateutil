@@ -17,9 +17,9 @@ import time
 import warnings
 import weakref
 from collections import OrderedDict
-from typing import cast
 
 from .. import _tzdata_impl
+from .._common import cast
 from . import _tzpath
 from ._common import _tzinfo, _validate_fromutc_inputs, enfold, tzrangebase
 from ._factories import _TzOffsetFactory, _TzSingleton, _TzStrFactory
@@ -35,10 +35,18 @@ TYPE_CHECKING = False
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence, Set
-    from typing import Literal, Protocol, Self, TypeAlias, TypeVar
+    from typing import Literal, Protocol, Self, TypeAlias, TypedDict, TypeVar
 
     from .. import _typing, relativedelta, rrule
     from ..parser import _parser as parser
+
+    class _DeltaOptions(TypedDict, total=False):
+        month: int
+        day: int
+        weekday: relativedelta.weekday
+        yearday: int
+        nlyearday: int
+        seconds: int
 
     _Offset: TypeAlias = float | _typing._TotalSeconds
     _DateDelta: TypeAlias = (
@@ -311,11 +319,12 @@ class tzlocal(_tzinfo):
         if not self._hasdst:
             return False
 
+        assert dt is not None
         # Check for ambiguous times:
-        dstval = self._naive_is_dst(cast("datetime.datetime", dt))
+        dstval = self._naive_is_dst(dt)
 
-        if self.is_ambiguous(cast("datetime.datetime", dt)):
-            return not cast("datetime.datetime", dt).fold
+        if self.is_ambiguous(dt):
+            return not dt.fold
 
         return dstval
 
@@ -601,12 +610,13 @@ class tzstr(tzrange, metaclass=_TzStrFactory):
     ) -> relativedelta.relativedelta:
         from dateutil import relativedelta
 
-        kwargs: dict[str, object] = {}
+        kwargs: _DeltaOptions = {}
         if x.month is not None:
             kwargs["month"] = x.month
             if x.weekday is not None:
                 kwargs["weekday"] = relativedelta.weekday(x.weekday, x.week)
-                if cast("int", x.week) > 0:
+                assert x.week is not None
+                if x.week > 0:
                     kwargs["day"] = 1
                 else:
                     kwargs["day"] = 31
@@ -638,14 +648,9 @@ class tzstr(tzrange, metaclass=_TzStrFactory):
             # of the tzinfo class.
             delta = self._dst_offset - self._std_offset
             kwargs["seconds"] = (
-                cast("int", kwargs["seconds"])
-                - delta.seconds
-                - delta.days * 86400
+                kwargs["seconds"] - delta.seconds - delta.days * 86400
             )
-        return cast(
-            "Callable[..., relativedelta.relativedelta]",
-            relativedelta.relativedelta,
-        )(**kwargs)
+        return relativedelta.relativedelta(**kwargs)
 
     def __repr__(self) -> str:
         return "%s(%s)" % (self.__class__.__name__, repr(self._s))

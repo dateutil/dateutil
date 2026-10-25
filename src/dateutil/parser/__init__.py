@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from typing import cast
-
+from .._common import cast
 from ._parser import (
     DEFAULTPARSER,
     DEFAULTTZPARSER,

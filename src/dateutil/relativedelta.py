@@ -4,16 +4,15 @@ import calendar
 import datetime
 import operator
 from math import copysign
-from typing import cast, overload
 from warnings import warn
 
-from ._common import weekday
+from ._common import cast, weekday
 
 TYPE_CHECKING = False
 
 if TYPE_CHECKING:
     import types
-    from typing import Self, SupportsFloat, SupportsIndex
+    from typing import Self, SupportsFloat, SupportsIndex, overload
 
     from . import _typing
 
@@ -191,9 +190,7 @@ class relativedelta:
                 dtm = self.__radd__(dt2)
 
             # Get the timedelta between the "months-adjusted" date and dt1
-            delta = cast("datetime.datetime", dt1) - cast(
-                "datetime.datetime", dtm
-            )
+            delta = dt1 - cast("datetime.datetime", dtm)
             self.seconds = delta.seconds + delta.days * 86400
             self.microseconds = delta.microseconds
         else:
@@ -343,14 +340,18 @@ class relativedelta:
                               minute=self.minute, second=self.second,
                               microsecond=self.microsecond)
 
-    @overload
-    def __add__(self, other: relativedelta | datetime.timedelta) -> Self: ...
+    if TYPE_CHECKING:
 
-    @overload
-    def __add__(self, other: datetime.datetime) -> datetime.datetime: ...
+        @overload
+        def __add__(
+            self, other: relativedelta | datetime.timedelta
+        ) -> Self: ...
 
-    @overload
-    def __add__(self, other: datetime.date) -> datetime.date: ...
+        @overload
+        def __add__(self, other: datetime.datetime) -> datetime.datetime: ...
+
+        @overload
+        def __add__(self, other: datetime.date) -> datetime.date: ...
 
     def __add__(
         self, other: object
@@ -441,28 +442,36 @@ class relativedelta:
             ret += datetime.timedelta(days=jumpdays)
         return ret
 
-    @overload
-    def __radd__(self, other: relativedelta | datetime.timedelta) -> Self: ...
+    if TYPE_CHECKING:
 
-    @overload
-    def __radd__(self, other: datetime.datetime) -> datetime.datetime: ...
+        @overload
+        def __radd__(
+            self, other: relativedelta | datetime.timedelta
+        ) -> Self: ...
 
-    @overload
-    def __radd__(self, other: datetime.date) -> datetime.date: ...
+        @overload
+        def __radd__(self, other: datetime.datetime) -> datetime.datetime: ...
+
+        @overload
+        def __radd__(self, other: datetime.date) -> datetime.date: ...
 
     def __radd__(
         self, other: object
     ) -> Self | datetime.date | types.NotImplementedType:
         return self.__add__(cast("datetime.date", other))
 
-    @overload
-    def __rsub__(self, other: relativedelta | datetime.timedelta) -> Self: ...
+    if TYPE_CHECKING:
 
-    @overload
-    def __rsub__(self, other: datetime.datetime) -> datetime.datetime: ...
+        @overload
+        def __rsub__(
+            self, other: relativedelta | datetime.timedelta
+        ) -> Self: ...
 
-    @overload
-    def __rsub__(self, other: datetime.date) -> datetime.date: ...
+        @overload
+        def __rsub__(self, other: datetime.datetime) -> datetime.datetime: ...
+
+        @overload
+        def __rsub__(self, other: datetime.date) -> datetime.date: ...
 
     def __rsub__(
         self, other: object

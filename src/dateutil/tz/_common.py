@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, tzinfo
 from functools import wraps
-from typing import cast
+
+from .._common import cast
 
 TYPE_CHECKING = False
 

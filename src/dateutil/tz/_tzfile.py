@@ -11,15 +11,15 @@ import stat
 import struct
 import sys
 from datetime import MAXYEAR, MINYEAR, datetime, timedelta
-from typing import Generic, TypeVar, cast, overload
 
+from .._common import cast
 from ._common import _tzinfo, enfold
 
 TYPE_CHECKING = False
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
-    from typing import Self, SupportsIndex, TypeAlias
+    from typing import Self, SupportsIndex, TypeAlias, TypeVar, overload
 
     from .. import _typing
 
@@ -37,8 +37,6 @@ if TYPE_CHECKING:
         tuple[Callable[..., tzfile], _PickleArgs]
         | tuple[Callable[..., tzfile], _PickleArgs, dict[str, object]]
     )
-
-_OffsetT = TypeVar("_OffsetT", bound="timedelta | None")
 
 EPOCH = datetime(1970, 1, 1)
 EPOCHORDINAL = EPOCH.toordinal()
@@ -278,7 +276,7 @@ class tzfile(_tzinfo):
         num_trans = len(self._trans_utc)
 
         if num_trans >= 1 and timestamp < self._trans_utc[0]:
-            tti = cast("_ttinfo[timedelta]", self._tti_before)
+            tti = cast("_ttinfo", self._tti_before)
             fold = 0
         elif (
             num_trans == 0 or timestamp > self._trans_utc[-1]
@@ -293,12 +291,12 @@ class tzfile(_tzinfo):
                 if num_trans > 1:
                     tti_prev = self._ttinfos[-2]
                 else:
-                    tti_prev = cast("_ttinfo[timedelta]", self._tti_before)
+                    tti_prev = cast("_ttinfo", self._tti_before)
 
                 shift = tti_prev.utcoff - tti.utcoff
                 fold = shift.total_seconds() > timestamp - self._trans_utc[-1]
         elif num_trans == 0:
-            tti = cast("_ttinfo[timedelta]", self._tz_after)
+            tti = cast("_ttinfo", self._tz_after)
             fold = 0
         else:
             idx = bisect.bisect_right(self._trans_utc, timestamp)
@@ -308,10 +306,10 @@ class tzfile(_tzinfo):
             elif timestamp > self._trans_utc[-1]:
                 # Only reachable with exactly one transition, so the
                 # offset before it is _tti_before, not _ttinfos[-1].
-                tti_prev = cast("_ttinfo[timedelta]", self._tti_before)
-                tti = cast("_ttinfo[timedelta]", self._tz_after)
+                tti_prev = cast("_ttinfo", self._tti_before)
+                tti = cast("_ttinfo", self._tz_after)
             else:
-                tti_prev = cast("_ttinfo[timedelta]", self._tti_before)
+                tti_prev = cast("_ttinfo", self._tti_before)
                 tti = self._ttinfos[0]
 
             # Detect fold
@@ -323,31 +321,33 @@ class tzfile(_tzinfo):
         else:
             return dt
 
-    @overload
-    def _find_trans(
-        self,
-        dt: datetime,
-        fold: int | None = None,
-        timestamp: float | None = None,
-    ) -> _ttinfo[timedelta]: ...
+    if TYPE_CHECKING:
 
-    @overload
+        @overload
+        def _find_trans(
+            self,
+            dt: datetime,
+            fold: int | None = None,
+            timestamp: float | None = None,
+        ) -> _ttinfo: ...
+
+        @overload
+        def _find_trans(
+            self,
+            dt: datetime | None,
+            fold: int | None = None,
+            timestamp: float | None = None,
+        ) -> _ttinfo | _NoTTInfo: ...
+
     def _find_trans(
         self,
         dt: datetime | None,
         fold: int | None = None,
         timestamp: float | None = None,
-    ) -> _ttinfo[timedelta] | _ttinfo[None]: ...
-
-    def _find_trans(
-        self,
-        dt: datetime | None,
-        fold: int | None = None,
-        timestamp: float | None = None,
-    ) -> _ttinfo[timedelta] | _ttinfo[None]:
+    ) -> _ttinfo | _NoTTInfo:
         if dt is None:
             if self._fixed_offset:
-                return cast("_ttinfo[timedelta]", self._tz_after)
+                return cast("_ttinfo", self._tz_after)
             else:
                 return _NO_TTINFO
 
@@ -364,7 +364,7 @@ class tzfile(_tzinfo):
         num_trans = len(lt)
 
         if num_trans and ts < lt[0]:
-            return cast("_ttinfo[timedelta]", self._tti_before)
+            return cast("_ttinfo", self._tti_before)
         elif not num_trans or ts > lt[-1]:
             if isinstance(self._tz_after, _TZStr):
                 tti = self._tz_after.get_trans_info(ts, dt.year, fold)
@@ -385,7 +385,7 @@ class tzfile(_tzinfo):
 
                 return tti
             else:
-                return cast("_ttinfo[timedelta]", self._tz_after)
+                return self._tz_after
         else:
             # idx is the transition that occurs after this timestamp, so we
             # subtract off 1 to get the current ttinfo
@@ -695,7 +695,7 @@ class tzfile(_tzinfo):
             and self._fallback_key() == other._fallback_key()
         )
 
-    def _fallback_key(self) -> _ttinfo[timedelta] | bytes | None:
+    def _fallback_key(self) -> _ttinfo | bytes | None:
         # The behavior after the last transition is determined either by the
         # TZ string or, in its absence, by a single _ttinfo; _TZStr objects
         # do not define equality, so compare the string they came from.
@@ -906,11 +906,11 @@ class _TZifHeader:
         return cls(*args)
 
 
-class _ttinfo(Generic[_OffsetT]):
+class _ttinfo:
     __slots__ = ["utcoff", "dstoff", "tzname"]
 
     def __init__(
-        self, utcoff: _OffsetT, dstoff: _OffsetT, tzname: str | None
+        self, utcoff: timedelta, dstoff: timedelta, tzname: str | None
     ) -> None:
         self.utcoff = utcoff
         self.dstoff = dstoff
@@ -936,10 +936,17 @@ class _ttinfo(Generic[_OffsetT]):
         )
 
 
-_NO_TTINFO = _ttinfo(None, None, None)
+class _NoTTInfo:
+    __slots__ = ()
+    utcoff = None
+    dstoff = None
+    tzname = None
 
 
-def _parse_tz_str(tz_str: str) -> _TZStr | _ttinfo[timedelta]:
+_NO_TTINFO = _NoTTInfo()
+
+
+def _parse_tz_str(tz_str: str) -> _TZStr | _ttinfo:
     # The tz string has the format:
     #
     # std[offset[dst[offset],start[/time],end[/time]]]
@@ -1117,8 +1124,6 @@ class _TZStr:
             utcoff=std_delta, dstoff=_load_timedelta(0), tzname=std_abbr
         )
 
-        self.start = cast("_DayOffset | _CalendarOffset", start)
-        self.end = cast("_DayOffset | _CalendarOffset", end)
 
         dst_delta = _load_timedelta(dst_offset)
         delta = _load_timedelta(self.dst_diff)
@@ -1128,6 +1133,8 @@ class _TZStr:
         # by functions that would fail before passing start or end
         assert start is not None, "No transition start specified"
         assert end is not None, "No transition end specified"
+        self.start = start
+        self.end = end
 
         self.get_trans_info = self._get_trans_info
         self.get_trans_info_fromutc = self._get_trans_info_fromutc
@@ -1147,9 +1154,7 @@ class _TZStr:
             or ts >= year_end - _NEW_YEAR_MARGIN
         )
 
-    def _get_trans_info(
-        self, ts: float, year: int, fold: int
-    ) -> _ttinfo[timedelta]:
+    def _get_trans_info(self, ts: float, year: int, fold: int) -> _ttinfo:
         """Get the information about the current transition - tti"""
         if self._near_new_year(ts, year):
             return self._get_trans_info_near_new_year(ts, fold)
@@ -1176,9 +1181,7 @@ class _TZStr:
 
         return self.dst if isdst else self.std
 
-    def _get_trans_info_near_new_year(
-        self, ts: float, fold: int
-    ) -> _ttinfo[timedelta]:
+    def _get_trans_info_near_new_year(self, ts: float, fold: int) -> _ttinfo:
         # Answer the question in terms of UTC, where the transitions from the
         # adjacent years are taken into account: a local time is valid for
         # an offset if the rules give that offset at the corresponding UTC
@@ -1210,7 +1213,7 @@ class _TZStr:
 
     def _get_trans_info_fromutc_near_new_year(
         self, ts: float, year: int
-    ) -> tuple[_ttinfo[timedelta], bool]:
+    ) -> tuple[_ttinfo, bool]:
         # The rules are in terms of the local year, which near the new year
         # is not always the UTC year, and a rule can put a transition up to a
         # week into the previous or next year (e.g. "J365/25"), so look at the
@@ -1259,7 +1262,7 @@ class _TZStr:
 
     def _get_trans_info_fromutc(
         self, ts: float, year: int
-    ) -> tuple[_ttinfo[timedelta], bool]:
+    ) -> tuple[_ttinfo, bool]:
         if self._near_new_year(ts, year):
             return self._get_trans_info_fromutc_near_new_year(ts, year)
 

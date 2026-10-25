@@ -16,16 +16,17 @@ import json
 import sys
 import warnings
 from tarfile import TarFile
-from typing import cast, overload
 
 from dateutil import _tzdata_impl
 from dateutil.tz import tzfile as _tzfile
+
+from .._common import cast
 
 TYPE_CHECKING = False
 
 if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
-    from typing import BinaryIO, Protocol, TypeAlias, TypeVar
+    from typing import BinaryIO, TypeAlias, TypeVar, overload
 
     from dateutil import _typing
 
@@ -33,9 +34,6 @@ if TYPE_CHECKING:
     _Json: TypeAlias = (
         None | bool | int | float | str | Sequence[_Json] | Mapping[str, _Json]
     )
-
-    class _ZonefileCache(Protocol):
-        _cached_instance: ZoneInfoFile
 
 __all__ = ["get_zonefile_instance", "gettz", "gettz_db_metadata"]
 
@@ -141,11 +139,13 @@ class ZoneInfoFile:
                 # no metadata in tar file
                 self.metadata = None
 
-    @overload
-    def get(self, name: str) -> tzfile | None: ...
+    if TYPE_CHECKING:
 
-    @overload
-    def get(self, name: str, default: _T) -> tzfile | _T: ...
+        @overload
+        def get(self, name: str) -> tzfile | None: ...
+
+        @overload
+        def get(self, name: str, default: _T) -> tzfile | _T: ...
 
     def get(self, name: str, default: _T | None = None) -> tzfile | _T | None:
         """
@@ -197,7 +197,7 @@ def get_zonefile_instance(new_instance: bool = False) -> ZoneInfoFile:
     if zif is None:
         zif = ZoneInfoFile()
 
-        cast("_ZonefileCache", get_zonefile_instance)._cached_instance = zif
+        setattr(get_zonefile_instance, "_cached_instance", zif)
 
     return zif
 

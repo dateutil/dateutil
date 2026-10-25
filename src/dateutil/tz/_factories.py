@@ -4,7 +4,8 @@ import _thread
 import weakref
 from collections import OrderedDict
 from datetime import timedelta
-from typing import cast
+
+from .._common import cast
 
 TYPE_CHECKING = False
 
@@ -26,7 +27,7 @@ class _TzSingleton(type):
         factory = cast("_TzSingleton", cls)
         if factory.__instance is None:
             factory.__instance = super(_TzSingleton, factory).__call__()
-        return cast("_T", factory.__instance)
+        return factory.__instance
 
 
 class _TzFactory(type):
@@ -68,7 +69,7 @@ class _TzOffsetFactory(_TzFactory):
             if len(factory.__strong_cache) > factory.__strong_cache_size:
                 factory.__strong_cache.popitem(last=False)
 
-        return cast("_T", instance)
+        return instance
 
 
 class _TzStrFactory(_TzFactory):
@@ -100,4 +101,4 @@ class _TzStrFactory(_TzFactory):
             if len(factory.__strong_cache) > factory.__strong_cache_size:
                 factory.__strong_cache.popitem(last=False)
 
-        return cast("_T", instance)
+        return instance
