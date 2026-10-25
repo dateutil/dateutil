@@ -4,8 +4,17 @@ It will only live as long as :mod:`dateutil.zoneinfo` lives; when the
 ``dateutil.zoneinfo`` module is removed, this can all move under :mod:`tz`.
 """
 
+from __future__ import annotations
+
 import importlib.resources
-from typing import BinaryIO, TextIO
+
+TYPE_CHECKING = False
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from . import _typing
+
 
 _TZDATA_LOAD_EXCEPTIONS = (
     ImportError,
@@ -16,7 +25,7 @@ _TZDATA_LOAD_EXCEPTIONS = (
 )
 
 
-def _open_text(package: str, resource: str) -> TextIO:
+def _open_text(package: str, resource: str) -> _typing._ResourceReader[str]:
     return (
         importlib.resources.files(package)
         .joinpath(resource)
@@ -24,7 +33,7 @@ def _open_text(package: str, resource: str) -> TextIO:
     )
 
 
-def _open_binary(package: str, resource: str) -> BinaryIO:
+def _open_binary(package: str, resource: str) -> _typing._ResourceReader[bytes]:
     return importlib.resources.files(package).joinpath(resource).open("rb")
 
 
@@ -36,7 +45,7 @@ def _is_package_directory(package: str, resource: str) -> bool:
         return False
 
 
-def _load_tzdata(key):
+def _load_tzdata(key: str) -> _typing._ResourceReader[bytes]:
     components = key.split("/")
     package_name = ".".join(["tzdata.zoneinfo"] + components[:-1])
     resource_name = components[-1]
@@ -62,7 +71,7 @@ def _load_tzdata(key):
         raise TZFileNotFound("Time zone not found: %s", zone_key=key) from None
 
 
-def _load_tzdata_keys():
+def _load_tzdata_keys() -> Sequence[str]:
     with _open_text("tzdata", "zones") as f:
         return list(filter(None, (l.strip() for l in f)))
 

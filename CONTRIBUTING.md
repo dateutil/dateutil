@@ -130,3 +130,39 @@ This uses the latest zizmor release, which may report different findings from
 the version bundled with the pinned zizmor action in CI.
 
 All GitHub pull requests are automatically tested using [GitHub Actions](https://github.com/dateutil/dateutil/actions/).
+
+
+## Type annotations
+
+`dateutil` has historically accepted duck-typed inputs, and its annotations
+should preserve that flexibility. Prefer structural protocols and abstract
+collection interfaces, using generic protocols when the types of inputs and
+outputs are related. Check the implementation when choosing annotations,
+because typeshed's signatures may exclude inputs that `dateutil` supports.
+
+For example, a character stream passed to `parser.parse` only needs a
+`read(size)` method, so its annotation shouldn't require inheritance from an
+I/O base class. Use concrete return types when they are part of the public
+contract, such as the list returned by `rrule.between`.
+
+Place annotation-only imports in an `if TYPE_CHECKING:` block at the end of the
+imports section, with `TYPE_CHECKING = False` defined locally to avoid importing
+`typing` just for the guard. Use postponed annotations. Evaluating annotations
+with `typing.get_type_hints` may require a namespace containing the names
+imported only for type checking.
+
+### Checking the annotations
+
+Run `tox -e typing` to check the library and `tests/test_typing.py` with pyrefly.
+The tests use `assert_type` to check inferred types and ordinary pytest
+assertions to verify that the annotated inputs work at runtime. The environment
+checks `dateutil.tz.win` separately using a Windows target, even when running
+on another operating system. Do not add annotations to existing unittest tests.
+
+The package includes a `py.typed` marker. When checking an installation, remove
+separate `types-python-dateutil` stubs and verify that the checker resolves the
+inline annotations. Pyrefly 1.4.0 can resolve its bundled dateutil stubs before
+an installed package's annotations. The repository's `search-path = ["src"]`
+selects the implementation; an explicit search path to an installation can be
+used to check its annotations. See pyrefly's
+[import resolution documentation](https://pyrefly.org/en/docs/import-resolution/).

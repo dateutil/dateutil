@@ -3,16 +3,24 @@ This module offers a generic Easter computing method for any given year, using
 Western, Orthodox or Julian algorithms.
 """
 
+from __future__ import annotations
+
 import datetime
+
+TYPE_CHECKING = False
+
+if TYPE_CHECKING:
+    from typing import Final
+
 
 __all__ = ["easter", "EASTER_JULIAN", "EASTER_ORTHODOX", "EASTER_WESTERN"]
 
-EASTER_JULIAN = 1
-EASTER_ORTHODOX = 2
-EASTER_WESTERN = 3
+EASTER_JULIAN: Final = 1
+EASTER_ORTHODOX: Final = 2
+EASTER_WESTERN: Final = 3
 
 
-def easter(year, method=EASTER_WESTERN):
+def easter(year: int, method: int = EASTER_WESTERN) -> datetime.date:
     """
     This method was ported from the work done by GM Arts,
     on top of the algorithm by Claus Tondering, which was

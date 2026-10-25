@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import bisect
 import calendar
 import contextlib
@@ -9,8 +11,34 @@ import stat
 import struct
 import sys
 from datetime import MAXYEAR, MINYEAR, datetime, timedelta
+from typing import Generic, TypeVar, cast, overload
 
 from ._common import _tzinfo, enfold
+
+TYPE_CHECKING = False
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Sequence
+    from typing import Self, SupportsIndex, TypeAlias
+
+    from .. import _typing
+
+    _TZFileT = TypeVar("_TZFileT", bound="tzfile")
+    _TZifData: TypeAlias = tuple[
+        Sequence[int],
+        Sequence[int],
+        Sequence[int],
+        Sequence[int],
+        Sequence[str],
+        bytes | None,
+    ]
+    _PickleArgs: TypeAlias = tuple[type[tzfile], str | None, object, _TZifData]
+    _Reduction: TypeAlias = (
+        tuple[Callable[..., tzfile], _PickleArgs]
+        | tuple[Callable[..., tzfile], _PickleArgs, dict[str, object]]
+    )
+
+_OffsetT = TypeVar("_OffsetT", bound="timedelta | None")
 
 EPOCH = datetime(1970, 1, 1)
 EPOCHORDINAL = EPOCH.toordinal()
@@ -31,11 +59,13 @@ _TIMEDELTA_CACHE_SIZE = 512
 
 
 @functools.lru_cache(maxsize=_TIMEDELTA_CACHE_SIZE)
-def _load_timedelta(seconds):
+def _load_timedelta(seconds: float) -> timedelta:
     return timedelta(seconds=seconds)
 
 
-def _unpickle(cls, key, filename, data):
+def _unpickle(
+    cls: type[_TZFileT], key: str | None, filename: object, data: _TZifData
+) -> _TZFileT:
     obj = cls.__new__(cls)
     obj._key = key
     obj._filename = filename
@@ -131,7 +161,14 @@ class tzfile(_tzinfo):
 
     """
 
-    def __init__(self, fileobj, filename=None, key=None):
+    _filename: object
+
+    def __init__(
+        self,
+        fileobj: str | _typing._Reader[bytes] | None,
+        filename: str | None = None,
+        key: str | None = None,
+    ) -> None:
         super().__init__()
 
         file_opened_here = False
@@ -142,7 +179,7 @@ class tzfile(_tzinfo):
         elif filename is not None:
             self._filename = filename
         elif hasattr(fileobj, "name"):
-            self._filename = fileobj.name
+            self._filename = getattr(fileobj, "name")
         elif key is not None:
             self._filename = key
         else:
@@ -150,15 +187,17 @@ class tzfile(_tzinfo):
 
         if fileobj is not None:
             if not file_opened_here:
-                fileobj = contextlib.nullcontext(fileobj)
+                file_context = contextlib.nullcontext(fileobj)
+            else:
+                file_context = cast("io.BufferedReader", fileobj)
 
-            with fileobj as file_stream:
+            with file_context as file_stream:
                 self._load_file(file_stream)
 
         self._key = key
 
     @property
-    def key(self):
+    def key(self) -> str | None:
         """
         Read-only attribute returning the ``key`` constructor argument.
 
@@ -173,7 +212,7 @@ class tzfile(_tzinfo):
         """
         return self._key
 
-    def is_ambiguous(self, dt):
+    def is_ambiguous(self, dt: datetime | None) -> bool:
         """
         Whether or not the "wall time" of a given datetime is ambiguous in this
         zone.
@@ -189,7 +228,7 @@ class tzfile(_tzinfo):
         """
         return self._is_ambiguous_or_imaginary(dt) == 1
 
-    def _is_ambiguous_or_imaginary(self, dt):
+    def _is_ambiguous_or_imaginary(self, dt: datetime | None) -> int:
         if dt is None or self._fixed_offset:
             return 0
 
@@ -202,16 +241,16 @@ class tzfile(_tzinfo):
             tti_1.utcoff > tti_0.utcoff
         )
 
-    def utcoffset(self, dt):
+    def utcoffset(self, dt: datetime | None) -> timedelta | None:
         return self._find_trans(dt).utcoff
 
-    def dst(self, dt):
+    def dst(self, dt: datetime | None) -> timedelta | None:
         return self._find_trans(dt).dstoff
 
-    def tzname(self, dt):
+    def tzname(self, dt: datetime | None) -> str | None:
         return self._find_trans(dt).tzname
 
-    def fromutc(self, dt):
+    def fromutc(self, dt: datetime) -> datetime:
         """
         The ``tzfile`` implementation of :py:func:`datetime.tzinfo.fromutc`.
 
@@ -239,7 +278,7 @@ class tzfile(_tzinfo):
         num_trans = len(self._trans_utc)
 
         if num_trans >= 1 and timestamp < self._trans_utc[0]:
-            tti = self._tti_before
+            tti = cast("_ttinfo[timedelta]", self._tti_before)
             fold = 0
         elif (
             num_trans == 0 or timestamp > self._trans_utc[-1]
@@ -254,12 +293,12 @@ class tzfile(_tzinfo):
                 if num_trans > 1:
                     tti_prev = self._ttinfos[-2]
                 else:
-                    tti_prev = self._tti_before
+                    tti_prev = cast("_ttinfo[timedelta]", self._tti_before)
 
                 shift = tti_prev.utcoff - tti.utcoff
                 fold = shift.total_seconds() > timestamp - self._trans_utc[-1]
         elif num_trans == 0:
-            tti = self._tz_after
+            tti = cast("_ttinfo[timedelta]", self._tz_after)
             fold = 0
         else:
             idx = bisect.bisect_right(self._trans_utc, timestamp)
@@ -269,10 +308,10 @@ class tzfile(_tzinfo):
             elif timestamp > self._trans_utc[-1]:
                 # Only reachable with exactly one transition, so the
                 # offset before it is _tti_before, not _ttinfos[-1].
-                tti_prev = self._tti_before
-                tti = self._tz_after
+                tti_prev = cast("_ttinfo[timedelta]", self._tti_before)
+                tti = cast("_ttinfo[timedelta]", self._tz_after)
             else:
-                tti_prev = self._tti_before
+                tti_prev = cast("_ttinfo[timedelta]", self._tti_before)
                 tti = self._ttinfos[0]
 
             # Detect fold
@@ -284,10 +323,31 @@ class tzfile(_tzinfo):
         else:
             return dt
 
-    def _find_trans(self, dt, fold=None, timestamp=None):
+    @overload
+    def _find_trans(
+        self,
+        dt: datetime,
+        fold: int | None = None,
+        timestamp: float | None = None,
+    ) -> _ttinfo[timedelta]: ...
+
+    @overload
+    def _find_trans(
+        self,
+        dt: datetime | None,
+        fold: int | None = None,
+        timestamp: float | None = None,
+    ) -> _ttinfo[timedelta] | _ttinfo[None]: ...
+
+    def _find_trans(
+        self,
+        dt: datetime | None,
+        fold: int | None = None,
+        timestamp: float | None = None,
+    ) -> _ttinfo[timedelta] | _ttinfo[None]:
         if dt is None:
             if self._fixed_offset:
-                return self._tz_after
+                return cast("_ttinfo[timedelta]", self._tz_after)
             else:
                 return _NO_TTINFO
 
@@ -304,7 +364,7 @@ class tzfile(_tzinfo):
         num_trans = len(lt)
 
         if num_trans and ts < lt[0]:
-            return self._tti_before
+            return cast("_ttinfo[timedelta]", self._tti_before)
         elif not num_trans or ts > lt[-1]:
             if isinstance(self._tz_after, _TZStr):
                 tti = self._tz_after.get_trans_info(ts, dt.year, fold)
@@ -325,7 +385,7 @@ class tzfile(_tzinfo):
 
                 return tti
             else:
-                return self._tz_after
+                return cast("_ttinfo[timedelta]", self._tz_after)
         else:
             # idx is the transition that occurs after this timestamp, so we
             # subtract off 1 to get the current ttinfo
@@ -333,7 +393,7 @@ class tzfile(_tzinfo):
             assert idx >= 0
             return self._ttinfos[idx]
 
-    def _get_local_timestamp(self, dt):
+    def _get_local_timestamp(self, dt: datetime) -> int:
         return (
             (dt.toordinal() - EPOCHORDINAL) * 86400
             + dt.hour * 3600
@@ -359,14 +419,14 @@ class tzfile(_tzinfo):
         ]
     )
 
-    def __reduce__(self):
+    def __reduce__(self) -> _Reduction:
         return self.__reduce_ex__(None)
 
-    def __reduce_ex__(self, protocol):
+    def __reduce_ex__(self, protocol: SupportsIndex | None) -> _Reduction:
         utcoff = [
             int(ttinfo.utcoff.total_seconds()) for ttinfo in self._ttinfo_list
         ]
-        abbr = [ttinfo.tzname for ttinfo in self._ttinfo_list]
+        abbr = [cast("str", ttinfo.tzname) for ttinfo in self._ttinfo_list]
 
         # dst() is inferred per transition, so the transitions don't map back
         # to the local time types, and these are kept as they were in the file
@@ -389,7 +449,7 @@ class tzfile(_tzinfo):
 
         return (_unpickle, args)
 
-    def _load_file(self, fobj):
+    def _load_file(self, fobj: _typing._Reader[bytes]) -> None:
         # Reading the file requires seeking past the parts we don't use and
         # reading the footer a line at a time, so read anything that doesn't
         # support that (e.g. a pipe) into memory first; TZif files are small.
@@ -397,10 +457,10 @@ class tzfile(_tzinfo):
             fobj = io.BytesIO(fobj.read())
 
         # Retrieve all the data as it exists in the zoneinfo file
-        data = load_data(fobj)
+        data = load_data(cast("_typing._SeekableReader[bytes]", fobj))
         self._load_from_data(data)
 
-    def _load_from_data(self, data):
+    def _load_from_data(self, data: _TZifData) -> None:
         trans_idx, trans_utc, utcoff, isdst, abbr, tz_str = data
 
         # Infer the DST offsets (needed for .dst()) from the data, for each
@@ -499,7 +559,12 @@ class tzfile(_tzinfo):
             self._fixed_offset = _ttinfo_list[0] == self._tz_after
 
     @staticmethod
-    def _utcoff_to_dstoff(trans_idx, trans_utc, utcoffsets, isdsts):
+    def _utcoff_to_dstoff(
+        trans_idx: Sequence[int],
+        trans_utc: Sequence[int],
+        utcoffsets: Sequence[int],
+        isdsts: Sequence[int],
+    ) -> list[int]:
         """Infer the DST offset (the value of dst()) for each transition.
 
         TZif files give the total UTC offset of each local time type and
@@ -519,8 +584,8 @@ class tzfile(_tzinfo):
             (utcoff for utcoff, dst in zip(utcoffsets, isdsts) if not dst),
             None,
         )
-        before = [None] * n
-        after = [None] * n
+        before: list[int | None] = [None] * n
+        after: list[int | None] = [None] * n
         for indices, implied, std_utcoff in (
             (range(n), before, first_std_utcoff),
             (range(n - 1, -1, -1), after, None),
@@ -581,7 +646,11 @@ class tzfile(_tzinfo):
         return dstoffs
 
     @staticmethod
-    def _ts_to_local(trans_idx, trans_list_utc, utcoffsets):
+    def _ts_to_local(
+        trans_idx: Sequence[int],
+        trans_list_utc: Sequence[int],
+        utcoffsets: Sequence[int],
+    ) -> Sequence[Sequence[int]]:
         """Generate number of seconds since 1970 *in the local time*.
 
         This is necessary to easily find the transition times in local time"""
@@ -614,7 +683,7 @@ class tzfile(_tzinfo):
 
         return trans_list_wall
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         if not isinstance(other, tzfile):
             return NotImplemented
 
@@ -626,7 +695,7 @@ class tzfile(_tzinfo):
             and self._fallback_key() == other._fallback_key()
         )
 
-    def _fallback_key(self):
+    def _fallback_key(self) -> _ttinfo[timedelta] | bytes | None:
         # The behavior after the last transition is determined either by the
         # TZ string or, in its absence, by a single _ttinfo; _TZStr objects
         # do not define equality, so compare the string they came from.
@@ -637,7 +706,7 @@ class tzfile(_tzinfo):
     __hash__ = None
 
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "%s(%s)" % (self.__class__.__name__, repr(self._filename))
 
 
@@ -646,7 +715,7 @@ class tzfile(_tzinfo):
 _SEEKABLE_PIPES_BUG = sys.platform == "win32" and sys.version_info < (3, 16)
 
 
-def _is_seekable(fobj):
+def _is_seekable(fobj: _typing._Reader[bytes]) -> bool:
     if not hasattr(fobj, "seek"):
         return False
 
@@ -660,7 +729,7 @@ def _is_seekable(fobj):
 
     # For anything backed by a file descriptor, only trust regular files.
     try:
-        fd = fobj.fileno()
+        fd = getattr(fobj, "fileno")()
     except (AttributeError, OSError, ValueError):
         # io.UnsupportedOperation (e.g. from BytesIO) is both of the latter
         return True
@@ -671,7 +740,7 @@ def _is_seekable(fobj):
         return True
 
 
-def load_data(fobj):
+def load_data(fobj: _typing._SeekableReader[bytes]) -> _TZifData:
     try:
         return _load_data(fobj)
     except struct.error as e:
@@ -679,7 +748,7 @@ def load_data(fobj):
         raise ValueError("Invalid TZif file: unexpected end of file") from e
 
 
-def _load_data(fobj):
+def _load_data(fobj: _typing._SeekableReader[bytes]) -> _TZifData:
     header = _TZifHeader.from_file(fobj)
 
     if header.version == 1:
@@ -744,7 +813,7 @@ def _load_data(fobj):
     abbr_vals = {}
     abbr_chars = fobj.read(charcnt)
 
-    def get_abbr(idx):
+    def get_abbr(idx: int) -> str:
         # Gets a string starting at idx and running until the next \x00
         #
         # We cannot pre-populate abbr_vals by splitting on \x00 because there
@@ -794,6 +863,13 @@ _DST_CONSENSUS_WINDOW = 10 * 365 * 86400
 
 
 class _TZifHeader:
+    version: int
+    isutcnt: int
+    isstdcnt: int
+    leapcnt: int
+    timecnt: int
+    typecnt: int
+    charcnt: int
     __slots__ = [
         "version",
         "isutcnt",
@@ -804,13 +880,13 @@ class _TZifHeader:
         "charcnt",
     ]
 
-    def __init__(self, *args):
+    def __init__(self, *args: int) -> None:
         assert len(self.__slots__) == len(args)
         for attr, val in zip(self.__slots__, args):
             setattr(self, attr, val)
 
     @classmethod
-    def from_file(cls, stream):
+    def from_file(cls, stream: _typing._Reader[bytes]) -> Self:
         # The header starts with a 4-byte "magic" value
         if stream.read(4) != b"TZif":
             raise ValueError("Invalid TZif file: magic not found")
@@ -830,15 +906,17 @@ class _TZifHeader:
         return cls(*args)
 
 
-class _ttinfo:
+class _ttinfo(Generic[_OffsetT]):
     __slots__ = ["utcoff", "dstoff", "tzname"]
 
-    def __init__(self, utcoff, dstoff, tzname):
+    def __init__(
+        self, utcoff: _OffsetT, dstoff: _OffsetT, tzname: str | None
+    ) -> None:
         self.utcoff = utcoff
         self.dstoff = dstoff
         self.tzname = tzname
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         if not isinstance(other, _ttinfo):
             return NotImplemented
 
@@ -849,7 +927,7 @@ class _ttinfo:
         )
 
 
-    def __repr__(self):  # pragma: nocover
+    def __repr__(self) -> str:  # pragma: nocover
         return "%s(%s, %s, %s)" % (
             self.__class__.__name__,
             self.utcoff,
@@ -861,7 +939,7 @@ class _ttinfo:
 _NO_TTINFO = _ttinfo(None, None, None)
 
 
-def _parse_tz_str(tz_str):
+def _parse_tz_str(tz_str: str) -> _TZStr | _ttinfo[timedelta]:
     # The tz string has the format:
     #
     # std[offset[dst[offset],start[/time],end[/time]]]
@@ -939,7 +1017,7 @@ def _parse_tz_str(tz_str):
         )
 
 
-def _parse_dst_start_end(dststr):
+def _parse_dst_start_end(dststr: str) -> _DayOffset | _CalendarOffset:
     date, *time = dststr.split("/", 1)
     date_type = date[:1]
     if date_type == "M":
@@ -969,7 +1047,7 @@ def _parse_dst_start_end(dststr):
     return offset
 
 
-def _parse_transition_time(time_str):
+def _parse_transition_time(time_str: str) -> tuple[int, int, int]:
     match = re.fullmatch(
         r"(?P<sign>[+-])?(?P<h>\d{1,3})(:(?P<m>\d{2})(:(?P<s>\d{2}))?)?",
         time_str,
@@ -989,7 +1067,7 @@ def _parse_transition_time(time_str):
     return h, m, s
 
 
-def _parse_tz_delta(tz_delta):
+def _parse_tz_delta(tz_delta: str) -> int:
     match = re.fullmatch(
         r"(?P<sign>[+-])?(?P<h>\d{1,3})(:(?P<m>\d{2})(:(?P<s>\d{2}))?)?",
         tz_delta,
@@ -1025,20 +1103,26 @@ class _TZStr:
     )
 
     def __init__(
-        self, std_abbr, std_offset, dst_abbr, dst_offset, start=None, end=None
-    ):
+        self,
+        std_abbr: str,
+        std_offset: int,
+        dst_abbr: str,
+        dst_offset: int,
+        start: _DayOffset | _CalendarOffset | None = None,
+        end: _DayOffset | _CalendarOffset | None = None,
+    ) -> None:
         self.dst_diff = dst_offset - std_offset
-        std_offset = _load_timedelta(std_offset)
+        std_delta = _load_timedelta(std_offset)
         self.std = _ttinfo(
-            utcoff=std_offset, dstoff=_load_timedelta(0), tzname=std_abbr
+            utcoff=std_delta, dstoff=_load_timedelta(0), tzname=std_abbr
         )
 
-        self.start = start
-        self.end = end
+        self.start = cast("_DayOffset | _CalendarOffset", start)
+        self.end = cast("_DayOffset | _CalendarOffset", end)
 
-        dst_offset = _load_timedelta(dst_offset)
+        dst_delta = _load_timedelta(dst_offset)
         delta = _load_timedelta(self.dst_diff)
-        self.dst = _ttinfo(utcoff=dst_offset, dstoff=delta, tzname=dst_abbr)
+        self.dst = _ttinfo(utcoff=dst_delta, dstoff=delta, tzname=dst_abbr)
 
         # These are assertions because the constructor should only be called
         # by functions that would fail before passing start or end
@@ -1048,12 +1132,12 @@ class _TZStr:
         self.get_trans_info = self._get_trans_info
         self.get_trans_info_fromutc = self._get_trans_info_fromutc
 
-    def transitions(self, year):
+    def transitions(self, year: int) -> tuple[int, int]:
         start = self.start.year_to_epoch(year)
         end = self.end.year_to_epoch(year)
         return start, end
 
-    def _near_new_year(self, ts, year):
+    def _near_new_year(self, ts: float, year: int) -> bool:
         """Whether ts is close enough to the new year that the rules for the
         previous or next year might matter."""
         year_start = _post_epoch_days_before_year(year) * 86400
@@ -1063,7 +1147,9 @@ class _TZStr:
             or ts >= year_end - _NEW_YEAR_MARGIN
         )
 
-    def _get_trans_info(self, ts, year, fold):
+    def _get_trans_info(
+        self, ts: float, year: int, fold: int
+    ) -> _ttinfo[timedelta]:
         """Get the information about the current transition - tti"""
         if self._near_new_year(ts, year):
             return self._get_trans_info_near_new_year(ts, fold)
@@ -1090,7 +1176,9 @@ class _TZStr:
 
         return self.dst if isdst else self.std
 
-    def _get_trans_info_near_new_year(self, ts, fold):
+    def _get_trans_info_near_new_year(
+        self, ts: float, fold: int
+    ) -> _ttinfo[timedelta]:
         # Answer the question in terms of UTC, where the transitions from the
         # adjacent years are taken into account: a local time is valid for
         # an offset if the rules give that offset at the corresponding UTC
@@ -1120,7 +1208,9 @@ class _TZStr:
             # Imaginary: fold=0 uses the offset from before the transition
             return smaller if fold == 0 else larger
 
-    def _get_trans_info_fromutc_near_new_year(self, ts, year):
+    def _get_trans_info_fromutc_near_new_year(
+        self, ts: float, year: int
+    ) -> tuple[_ttinfo[timedelta], bool]:
         # The rules are in terms of the local year, which near the new year
         # is not always the UTC year, and a rule can put a transition up to a
         # week into the previous or next year (e.g. "J365/25"), so look at the
@@ -1167,7 +1257,9 @@ class _TZStr:
 
         return (tti, fold)
 
-    def _get_trans_info_fromutc(self, ts, year):
+    def _get_trans_info_fromutc(
+        self, ts: float, year: int
+    ) -> tuple[_ttinfo[timedelta], bool]:
         if self._near_new_year(ts, year):
             return self._get_trans_info_fromutc_near_new_year(ts, year)
 
@@ -1202,7 +1294,7 @@ class _TZStr:
 _NEW_YEAR_MARGIN = 10 * 86400
 
 
-def _post_epoch_days_before_year(year):
+def _post_epoch_days_before_year(year: int) -> int:
     """Get the number of days between 1970-01-01 and YEAR-01-01"""
     y = year - 1
     return y * 365 + y // 4 - y // 100 + y // 400 + 1 - EPOCHORDINAL
@@ -1211,7 +1303,14 @@ def _post_epoch_days_before_year(year):
 class _DayOffset:
     __slots__ = ["d", "julian", "hour", "minute", "second"]
 
-    def __init__(self, d, julian, hour=2, minute=0, second=0):
+    def __init__(
+        self,
+        d: int,
+        julian: bool,
+        hour: int = 2,
+        minute: int = 0,
+        second: int = 0,
+    ) -> None:
         min_day = 0 + julian  # convert bool to int
         if not min_day <= d <= 365:
             raise ValueError("d must be in [%s, 365], not: %s" % (min_day, d))
@@ -1222,7 +1321,7 @@ class _DayOffset:
         self.minute = minute
         self.second = second
 
-    def year_to_epoch(self, year):
+    def year_to_epoch(self, year: int) -> int:
         days_before_year = _post_epoch_days_before_year(year)
 
         # "n" counts days from 0 and includes February 29; "Jn" counts days
@@ -1259,7 +1358,15 @@ class _CalendarOffset:
         334,
     )
 
-    def __init__(self, m, w, d, hour=2, minute=0, second=0):
+    def __init__(
+        self,
+        m: int,
+        w: int,
+        d: int,
+        hour: int = 2,
+        minute: int = 0,
+        second: int = 0,
+    ) -> None:
         if not 1 <= m <= 12:
             raise ValueError("m must be in [1, 12]")
 
@@ -1277,7 +1384,7 @@ class _CalendarOffset:
         self.second = second
 
     @classmethod
-    def _ymd2ord(cls, year, month, day):
+    def _ymd2ord(cls, year: int, month: int, day: int) -> int:
         return (
             _post_epoch_days_before_year(year)
             + cls._DAYS_BEFORE_MONTH[month]
@@ -1287,7 +1394,7 @@ class _CalendarOffset:
         )
 
     # TODO: These are not actually epoch dates as they are expressed in local time
-    def year_to_epoch(self, year):
+    def year_to_epoch(self, year: int) -> int:
         """Calculates the datetime of the occurrence from the year"""
         # We know year and month, we need to convert w, d into day of month
         #

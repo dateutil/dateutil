@@ -1,7 +1,14 @@
+from __future__ import annotations
+
 from . import _tzpath
 from ._tzpath import reset_tzpath
 from .tz import *
 from .tz import __doc__
+
+TYPE_CHECKING = False
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 __all__ = [
     "tzutc",
@@ -27,7 +34,7 @@ __all__ = [
 ]
 
 
-def __getattr__(name):
+def __getattr__(name: str) -> Sequence[str]:
     if name == "TZPATH":
         return _tzpath.TZPATH
     else:
@@ -36,7 +43,7 @@ def __getattr__(name):
         )
 
 
-def __dir__():
+def __dir__() -> Sequence[str]:
     return sorted(list(globals()) + ["TZPATH"])
 
 

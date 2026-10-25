@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import sys
 
 try:
@@ -5,10 +7,16 @@ try:
 except ImportError:
     __version__ = 'unknown'
 
+
+TYPE_CHECKING = False
+
+if TYPE_CHECKING:
+    import types
+
 __all__ = ["easter", "parser", "relativedelta", "rrule", "tz", "utils"]
 
 
-def __getattr__(name):
+def __getattr__(name: str) -> types.ModuleType:
     import importlib
 
     if name in __all__ or name == "zoneinfo":
@@ -18,7 +26,7 @@ def __getattr__(name):
     )
 
 
-def __dir__():
+def __dir__() -> list[str]:
     # __dir__ should include all the lazy-importable modules as well.
     return (
         [x for x in globals() if x not in sys.modules] + __all__ + ["zoneinfo"]

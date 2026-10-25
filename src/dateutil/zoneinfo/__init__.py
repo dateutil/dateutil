@@ -10,14 +10,32 @@ sources as :py:mod:`zoneinfo`, this module is no longer necessary.
 
 """
 
+from __future__ import annotations
+
 import json
 import sys
 import warnings
 from tarfile import TarFile
-
+from typing import cast, overload
 
 from dateutil import _tzdata_impl
 from dateutil.tz import tzfile as _tzfile
+
+TYPE_CHECKING = False
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping, Sequence
+    from typing import BinaryIO, Protocol, TypeAlias, TypeVar
+
+    from dateutil import _typing
+
+    _T = TypeVar("_T")
+    _Json: TypeAlias = (
+        None | bool | int | float | str | Sequence[_Json] | Mapping[str, _Json]
+    )
+
+    class _ZonefileCache(Protocol):
+        _cached_instance: ZoneInfoFile
 
 __all__ = ["get_zonefile_instance", "gettz", "gettz_db_metadata"]
 
@@ -25,7 +43,7 @@ ZONEFILENAME = None
 METADATA_FN = 'METADATA'
 
 
-def _importer_stacklevel():
+def _importer_stacklevel() -> int:
     """The ``stacklevel`` that attributes a warning to the importing code.
 
     This module can be imported through ``dateutil.__getattr__`` (e.g. by
@@ -62,13 +80,18 @@ warnings.warn(
 tzfile = _tzfile
 
 class ZoneInfoFile:
-    def __init__(self, zonefile_stream=None):
+    metadata: _Json
+    zones: dict[str, tzfile]
+
+    def __init__(
+        self, zonefile_stream: _typing._ArchiveReader[bytes] | None = None
+    ) -> None:
         if zonefile_stream is not None:
             self._load_legacy_zonefile_stream(zonefile_stream)
         else:
             self._eager_load_tzdata()
 
-    def _eager_load_tzdata(self):
+    def _eager_load_tzdata(self) -> None:
         try:
             import tzdata
         except ImportError as e:
@@ -88,8 +111,11 @@ class ZoneInfoFile:
             "tzversion": tzdata.IANA_VERSION,
         }
 
-    def _load_legacy_zonefile_stream(self, zonefile_stream):
-        with TarFile.open(fileobj=zonefile_stream) as tf:
+    def _load_legacy_zonefile_stream(
+        self, zonefile_stream: _typing._ArchiveReader[bytes]
+    ) -> None:
+        # TarFile also types writable modes; this path only reads the archive.
+        with TarFile.open(fileobj=cast("BinaryIO", zonefile_stream)) as tf:
             self.zones = {
                 zf.name: tzfile(tf.extractfile(zf), filename=zf.name)
                 for zf in tf.getmembers()
@@ -105,13 +131,23 @@ class ZoneInfoFile:
             self.zones.update(links)
             try:
                 metadata_json = tf.extractfile(tf.getmember(METADATA_FN))
-                metadata_str = metadata_json.read().decode("UTF-8")
+                metadata_str = (
+                    cast("_typing._Reader[bytes]", metadata_json)
+                    .read()
+                    .decode("UTF-8")
+                )
                 self.metadata = json.loads(metadata_str)
             except KeyError:
                 # no metadata in tar file
                 self.metadata = None
 
-    def get(self, name, default=None):
+    @overload
+    def get(self, name: str) -> tzfile | None: ...
+
+    @overload
+    def get(self, name: str, default: _T) -> tzfile | _T: ...
+
+    def get(self, name: str, default: _T | None = None) -> tzfile | _T | None:
         """
         Wrapper for :func:`ZoneInfoFile.zones.get`. This is a convenience method
         for retrieving zones from the zone dictionary.
@@ -134,10 +170,10 @@ class ZoneInfoFile:
 # timezone. Ugly, but adheres to the api.
 #
 # TODO: Remove after deprecation period.
-_CLASS_ZONE_INSTANCE = []
+_CLASS_ZONE_INSTANCE: list[ZoneInfoFile] = []
 
 
-def get_zonefile_instance(new_instance=False):
+def get_zonefile_instance(new_instance: bool = False) -> ZoneInfoFile:
     """
     This is a convenience function which provides a :class:`ZoneInfoFile`
     instance using the data provided by the ``dateutil`` package. By default, it
@@ -161,12 +197,12 @@ def get_zonefile_instance(new_instance=False):
     if zif is None:
         zif = ZoneInfoFile()
 
-        get_zonefile_instance._cached_instance = zif
+        cast("_ZonefileCache", get_zonefile_instance)._cached_instance = zif
 
     return zif
 
 
-def gettz(name):
+def gettz(name: str) -> tzfile | None:
     """
     This retrieves a time zone from the ``tzdata`` package.
 
@@ -203,7 +239,7 @@ def gettz(name):
     return _CLASS_ZONE_INSTANCE[0].zones.get(name)
 
 
-def gettz_db_metadata():
+def gettz_db_metadata() -> _Json:
     """Get the zonefile metadata
 
     :returns:

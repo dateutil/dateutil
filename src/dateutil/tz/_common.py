@@ -1,7 +1,21 @@
-
-from functools import wraps
+from __future__ import annotations
 
 from datetime import datetime, timedelta, tzinfo
+from functools import wraps
+from typing import cast
+
+TYPE_CHECKING = False
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+    from typing import Protocol, Self, TypeVar
+
+    _FromUtcT = TypeVar("_FromUtcT", bound=Callable[..., datetime])
+
+    class _Foldable(Protocol):
+        def replace(self, *, fold: int) -> Self: ...
+
+    _FoldableT = TypeVar("_FoldableT", bound=_Foldable)
 
 
 ZERO = timedelta(0)
@@ -11,7 +25,7 @@ __all__ = ["enfold"]
 
 # The following is adapted from Alexander Belopolsky's tz library
 # https://github.com/abalkin/tz
-def enfold(dt: datetime, fold: int = 1) -> datetime:
+def enfold(dt: _FoldableT, fold: int = 1) -> _FoldableT:
     """Returns a datetime with the ``fold`` attribute set to ``fold``.
 
     :param fold:
@@ -25,13 +39,13 @@ def enfold(dt: datetime, fold: int = 1) -> datetime:
     return dt.replace(fold=fold)
 
 
-def _validate_fromutc_inputs(f):
+def _validate_fromutc_inputs(f: _FromUtcT) -> _FromUtcT:
     """
     The CPython version of ``fromutc`` checks that the input is a ``datetime``
     object and that ``self`` is attached as its ``tzinfo``.
     """
     @wraps(f)
-    def fromutc(self, dt):
+    def fromutc(self: tzinfo, dt: datetime) -> datetime:
         if not isinstance(dt, datetime):
             raise TypeError("fromutc() requires a datetime argument")
         if dt.tzinfo is not self:
@@ -39,7 +53,7 @@ def _validate_fromutc_inputs(f):
 
         return f(self, dt)
 
-    return fromutc
+    return cast("_FromUtcT", fromutc)
 
 
 class _tzinfo(tzinfo):
@@ -47,7 +61,7 @@ class _tzinfo(tzinfo):
     Base class for all ``dateutil`` ``tzinfo`` objects.
     """
 
-    def is_ambiguous(self, dt):
+    def is_ambiguous(self, dt: datetime) -> bool:
         """
         Whether or not the "wall time" of a given datetime is ambiguous in this
         zone.
@@ -72,7 +86,7 @@ class _tzinfo(tzinfo):
 
         return same_dt and not same_offset
 
-    def _fold_status(self, dt_utc, dt_wall):
+    def _fold_status(self, dt_utc: datetime, dt_wall: datetime) -> int:
         """
         Determine the fold status of a "wall" datetime, given a representation
         of the same datetime as a (naive) UTC datetime. This is calculated based
@@ -91,13 +105,19 @@ class _tzinfo(tzinfo):
         """
         if self.is_ambiguous(dt_wall):
             delta_wall = dt_wall - dt_utc
-            _fold = int(delta_wall == (dt_utc.utcoffset() - dt_utc.dst()))
+            _fold = int(
+                delta_wall
+                == (
+                    cast("timedelta", dt_utc.utcoffset())
+                    - cast("timedelta", dt_utc.dst())
+                )
+            )
         else:
             _fold = 0
 
         return _fold
 
-    def _fromutc(self, dt):
+    def _fromutc(self, dt: datetime) -> datetime:
         """
         Given a timezone-aware datetime in a given timezone, calculates a
         timezone-aware datetime in a new timezone.
@@ -135,7 +155,7 @@ class _tzinfo(tzinfo):
         return dt + dtdst
 
     @_validate_fromutc_inputs
-    def fromutc(self, dt):
+    def fromutc(self, dt: datetime) -> datetime:
         """
         Given a timezone-aware datetime in a given timezone, calculates a
         timezone-aware datetime in a new timezone.
@@ -179,10 +199,22 @@ class tzrangebase(_tzinfo):
 
     .. versionadded:: 2.6.0
     """
-    def __init__(self):
+
+    hasdst: bool
+    _std_offset: timedelta
+    _dst_offset: timedelta
+    _std_abbr: str | None
+    _dst_abbr: str | None
+    if TYPE_CHECKING:
+
+        def transitions(
+            self, year: int
+        ) -> tuple[datetime, datetime] | None: ...
+
+    def __init__(self) -> None:
         raise NotImplementedError('tzrangebase is an abstract base class')
 
-    def utcoffset(self, dt):
+    def utcoffset(self, dt: datetime | None) -> timedelta | None:
         isdst = self._isdst(dt)
 
         if isdst is None:
@@ -192,7 +224,7 @@ class tzrangebase(_tzinfo):
         else:
             return self._std_offset
 
-    def dst(self, dt):
+    def dst(self, dt: datetime | None) -> timedelta | None:
         isdst = self._isdst(dt)
 
         if isdst is None:
@@ -202,13 +234,13 @@ class tzrangebase(_tzinfo):
         else:
             return ZERO
 
-    def tzname(self, dt):
+    def tzname(self, dt: datetime | None) -> str | None:
         if self._isdst(dt):
             return self._dst_abbr
         else:
             return self._std_abbr
 
-    def fromutc(self, dt):
+    def fromutc(self, dt: datetime) -> datetime:
         """ Given a datetime in UTC, return local time """
         if not isinstance(dt, datetime):
             raise TypeError("fromutc() requires a datetime argument")
@@ -219,7 +251,7 @@ class tzrangebase(_tzinfo):
         # Get transitions - if there are none, fixed offset
         transitions = self.transitions(dt.year)
         if transitions is None:
-            return dt + self.utcoffset(dt)
+            return dt + cast("timedelta", self.utcoffset(dt))
 
         # Get the transition times in UTC
         dston, dstoff = transitions
@@ -241,7 +273,7 @@ class tzrangebase(_tzinfo):
 
         return enfold(dt_wall, fold=_fold)
 
-    def is_ambiguous(self, dt):
+    def is_ambiguous(self, dt: datetime) -> bool:
         """
         Whether or not the "wall time" of a given datetime is ambiguous in this
         zone.
@@ -258,12 +290,14 @@ class tzrangebase(_tzinfo):
         if not self.hasdst:
             return False
 
-        start, end = self.transitions(dt.year)
+        start, end = cast(
+            "tuple[datetime, datetime]", self.transitions(dt.year)
+        )
 
         dt = dt.replace(tzinfo=None)
         return (end <= dt < end + self._dst_base_offset)
 
-    def _isdst(self, dt):
+    def _isdst(self, dt: datetime | None) -> bool | None:
         if not self.hasdst:
             return False
         elif dt is None:
@@ -284,7 +318,9 @@ class tzrangebase(_tzinfo):
         else:
             return isdst
 
-    def _naive_isdst(self, dt, transitions):
+    def _naive_isdst(
+        self, dt: datetime, transitions: tuple[datetime, datetime]
+    ) -> bool:
         dston, dstoff = transitions
 
         dt = dt.replace(tzinfo=None)
@@ -297,12 +333,12 @@ class tzrangebase(_tzinfo):
         return isdst
 
     @property
-    def _dst_base_offset(self):
+    def _dst_base_offset(self) -> timedelta:
         return self._dst_offset - self._std_offset
 
     __hash__ = None
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "%s(...)" % self.__class__.__name__
 
     __reduce__ = object.__reduce__

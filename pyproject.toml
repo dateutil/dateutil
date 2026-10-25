@@ -81,6 +81,14 @@ Source = "https://github.com/dateutil/dateutil"
 [tool.black]
 line-length = 80
 
+[tool.pyrefly]
+project-includes = ["src/dateutil", "tests/test_typing.py"]
+# Windows-only code is checked separately with --python-platform win32.
+project-excludes = ["src/dateutil/tz/win.py"]
+search-path = ["src"]
+python-version = "3.11"
+
+
 [tool.isort]
 atomic=true
 force_grid_wrap=0
