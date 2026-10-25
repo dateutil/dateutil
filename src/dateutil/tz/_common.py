@@ -3,7 +3,6 @@ from __future__ import annotations
 from datetime import datetime, timedelta, tzinfo
 from functools import wraps
 
-
 TYPE_CHECKING = False
 
 if TYPE_CHECKING:
