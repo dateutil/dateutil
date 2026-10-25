@@ -10,7 +10,7 @@ on:
   workflow_call:
     inputs:
       release:
-        description: "Also install the sdist on every supported Python"
+        description: "Run the full sdist validation before publishing"
         type: boolean
         default: false
 
@@ -99,7 +99,7 @@ jobs:
         uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
         with:
           enable-cache: true
-          cache-suffix: ${{ github.job }}-${{ env.TEST_PYTHON || env.TOXENV }}
+          cache-suffix: ${{ github.job }}-${{ env.TEST_PYTHON }}-${{ env.TOXENV }}
           cache-dependency-glob: |
             **/*requirements*.txt
             pyproject.toml
@@ -121,12 +121,12 @@ jobs:
           name: ${{ matrix.os }}:${{ matrix.python-version }}
           fail_ci_if_error: false
 
-  # Only run for releases: install the sdist, which is what pip builds from on
-  # platforms that have no wheel, on every supported Python.
+  # Exercise the files shipped in the sdist without using the Git checkout.
   test-sdist:
-    if: ${{ inputs.release }}
+    if: ${{ inputs.release || needs.build-dist.outputs.test-sdist == 'true' }}
     strategy:
       matrix:
+        toxenv: [py]
         python-version: [
           "3.11",
           "3.12",
@@ -137,10 +137,19 @@ jobs:
           "3.15t",
           "pypy3.11",
         ]
+        include:
+          - python-version: "3.13"
+            toxenv: tz-fat
+          - python-version: "3.13"
+            toxenv: tz-slim
+          - python-version: "3.13"
+            toxenv: tz-vanguard
+          - python-version: "3.13"
+            toxenv: tz-rearguard
     runs-on: ubuntu-latest
     needs: [build-tzdata, build-dist]
     env:
-      TOXENV: py
+      TOXENV: ${{ matrix.toxenv }}
       TEST_PYTHON: ${{ matrix.python-version }}
       TZ: America/New_York
     steps:
@@ -165,9 +174,14 @@ jobs:
       - *setup-uv
       - name: Install tox
         run: uv tool install --python 3.13 --with tox-uv tox
-      # Install the sdist to exercise a build without a Git checkout.
       - name: Run tox on the sdist
-        run: tox -x "testenv:py.base_python=${{ matrix.python-version }}" --installpkg "$(ls dist/*.tar.gz)"
+        run: |
+          sdist=$(realpath dist/*.tar.gz)
+          sdist_dir="$RUNNER_TEMP/dateutil-sdist"
+          mkdir -p "$sdist_dir"
+          tar -xzf "$sdist" --strip-components=1 -C "$sdist_dir"
+          cd "$sdist_dir"
+          tox -x "testenv:py.base_python=${{ matrix.python-version }}" --installpkg "$sdist"
 
   other:
     runs-on: "ubuntu-latest"
@@ -224,11 +238,23 @@ jobs:
 
   build-dist:
     runs-on: ubuntu-latest
+    outputs:
+      test-sdist: ${{ steps.sdist-changes.outputs.changed }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           # The version comes from git tags, so we need the history.
           fetch-depth: 0
+      - name: Check whether the sdist needs testing
+        if: github.event_name == 'pull_request'
+        id: sdist-changes
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          if ! git diff --quiet "$BASE_SHA...$HEAD_SHA" -- pyproject.toml; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
       - *setup-uv
       - name: Install tox
         run: uv tool install --python 3.13 --with tox-uv tox

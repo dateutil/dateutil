@@ -1,0 +1,3 @@
+CI now runs Python and timezone-data tests from the unpacked source distribution
+during releases and when packaging changes.
+Reported and fixed by @pganssle (gh pr #1644).
