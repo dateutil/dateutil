@@ -5,10 +5,24 @@ datetimes.
 .. versionadded:: 2.7.0
 """
 
+from __future__ import annotations
+
 from datetime import datetime, time
 
+TYPE_CHECKING = False
 
-def today(tzinfo=None):
+if TYPE_CHECKING:
+    import datetime as _datetime
+    from typing import TypeVar
+
+    from . import _typing
+
+    _WithTimezoneT = TypeVar("_WithTimezoneT", bound=_typing._WithTimezone)
+    _DeltaT = TypeVar("_DeltaT", bound=_typing._Delta)
+    _OperandT = TypeVar("_OperandT")
+
+
+def today(tzinfo: _datetime.tzinfo | None = None) -> datetime:
     """
     Returns a :py:class:`datetime` representing the current day at midnight
 
@@ -24,7 +38,9 @@ def today(tzinfo=None):
     return datetime.combine(dt.date(), time(0, tzinfo=tzinfo))
 
 
-def default_tzinfo(dt, tzinfo):
+def default_tzinfo(
+    dt: _WithTimezoneT, tzinfo: _datetime.tzinfo | None
+) -> _WithTimezoneT:
     """
     Sets the ``tzinfo`` parameter on naive datetimes only
 
@@ -59,7 +75,11 @@ def default_tzinfo(dt, tzinfo):
         return dt.replace(tzinfo=tzinfo)
 
 
-def within_delta(dt1, dt2, delta):
+def within_delta(
+    dt1: _typing._Subtractable[_OperandT, _DeltaT],
+    dt2: _OperandT,
+    delta: _DeltaT,
+) -> bool:
     """
     Useful for comparing two datetimes that may have a negligible difference
     to be considered equal.

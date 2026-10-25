@@ -6,6 +6,8 @@ Attempting to import this module on a non-Windows platform will raise an
 :py:obj:`ImportError`.
 """
 
+from __future__ import annotations
+
 # This code was originally contributed by Jeffrey Harris.
 import ctypes
 import datetime
@@ -14,7 +16,29 @@ import struct
 import winreg
 from ctypes import wintypes
 
+from .._common import cast
 from ._common import tzrangebase
+
+TYPE_CHECKING = False
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
+    from typing import Self, TypeAlias, TypedDict
+
+    _RegistryValue: TypeAlias = str | bytes | int | list[str] | None
+
+    class _RegistryValues(TypedDict, total=False):
+        Std: str
+        Dlt: str
+        Display: str
+        TZI: bytes
+        StandardName: str
+        DaylightName: str
+        Bias: int
+        StandardBias: int
+        DaylightBias: int
+        StandardStart: bytes
+        DaylightStart: bytes
 
 __all__ = ["tzwin", "tzwinlocal", "tzres"]
 
@@ -25,7 +49,7 @@ TZKEYNAME9X = r"SOFTWARE\Microsoft\Windows\CurrentVersion\Time Zones"
 TZLOCALKEYNAME = r"SYSTEM\CurrentControlSet\Control\TimeZoneInformation"
 
 
-def _settzkeyname():
+def _settzkeyname() -> str:
     handle = winreg.ConnectRegistry(None, winreg.HKEY_LOCAL_MACHINE)
     try:
         winreg.OpenKey(handle, TZKEYNAMENT).Close()
@@ -46,11 +70,12 @@ class tzres:
 
     .. versionadded:: 2.5.0
     """
-    p_wchar = ctypes.POINTER(wintypes.WCHAR)        # Pointer to a wide char
 
-    def __init__(self, tzres_loc='tzres.dll'):
+    p_wchar = ctypes.POINTER(wintypes.WCHAR)  # Pointer to a wide char
+
+    def __init__(self, tzres_loc: str = "tzres.dll") -> None:
         # Load the user32 DLL so we can load strings from tzres
-        user32 = ctypes.WinDLL('user32')
+        user32 = ctypes.WinDLL("user32")
 
         # Specify the LoadStringW function
         user32.LoadStringW.argtypes = (wintypes.HINSTANCE,
@@ -69,7 +94,7 @@ class tzres:
         self._tzres_handle = get_module_handle(os.path.normpath(tzres_loc))
         self.tzres_loc = tzres_loc
 
-    def load_name(self, offset):
+    def load_name(self, offset: int) -> str:
         """
         Load a timezone name from a DLL offset (integer).
 
@@ -90,9 +115,9 @@ class tzres:
         resource = self.p_wchar()
         lpBuffer = ctypes.cast(ctypes.byref(resource), wintypes.LPWSTR)
         nchar = self.LoadStringW(self._tzres_handle, offset, lpBuffer, 0)
-        return resource[:nchar]
+        return ctypes.wstring_at(resource, nchar)
 
-    def name_from_string(self, tzname_str):
+    def name_from_string(self, tzname_str: str) -> str:
         """
         Parse strings as returned from the Windows registry into the time zone
         name as defined in the registry.
@@ -125,10 +150,24 @@ class tzres:
 
 class tzwinbase(tzrangebase):
     """tzinfo class based on win32's timezones available in the registry."""
-    def __init__(self):
-        raise NotImplementedError('tzwinbase is an abstract base class')
 
-    def __eq__(self, other):
+    _stdmonth: int
+    _stddayofweek: int
+    _stdweeknumber: int
+    _stdhour: int
+    _stdminute: int
+    _dstmonth: int
+    _dstdayofweek: int
+    _dstweeknumber: int
+    _dsthour: int
+    _dstminute: int
+    _display: str | None
+    _dst_base_offset_: datetime.timedelta
+
+    def __init__(self) -> None:
+        raise NotImplementedError("tzwinbase is an abstract base class")
+
+    def __eq__(self, other: object) -> bool:
         # Compare on all relevant dimensions, including name.
         if not isinstance(other, tzwinbase):
             return NotImplemented
@@ -147,7 +186,7 @@ class tzwinbase(tzrangebase):
                  self._dst_abbr == other._dst_abbr)
 
     @staticmethod
-    def list():
+    def list() -> list[str]:
         """Return a list of all time zones known to the system."""
         with winreg.ConnectRegistry(None, winreg.HKEY_LOCAL_MACHINE) as handle:
             with winreg.OpenKey(handle, TZKEYNAME) as tzkey:
@@ -155,13 +194,15 @@ class tzwinbase(tzrangebase):
                           for i in range(winreg.QueryInfoKey(tzkey)[0])]
         return result
 
-    def display(self):
+    def display(self) -> str | None:
         """
         Return the display name of the time zone.
         """
         return self._display
 
-    def transitions(self, year):
+    def transitions(
+        self, year: int
+    ) -> tuple[datetime.datetime, datetime.datetime] | None:
         """
         For a given year, get the DST on and off transition times, expressed
         always on the standard time side. For zones with no transitions, this
@@ -192,11 +233,11 @@ class tzwinbase(tzrangebase):
 
         return dston, dstoff
 
-    def _get_hasdst(self):
+    def _get_hasdst(self) -> bool:
         return self._dstmonth != 0
 
     @property
-    def _dst_base_offset(self):
+    def _dst_base_offset(self) -> datetime.timedelta:
         return self._dst_base_offset_
 
 
@@ -213,13 +254,13 @@ class tzwin(tzwinbase):
         The full list of keys can be retrieved with :func:`tzwin.list`.
     """
 
-    def __init__(self, name):
+    def __init__(self, name: str) -> None:
         self._name = name
 
         with winreg.ConnectRegistry(None, winreg.HKEY_LOCAL_MACHINE) as handle:
             tzkeyname = "{kn}\\{name}".format(kn=TZKEYNAME, name=name)
             with winreg.OpenKey(handle, tzkeyname) as tzkey:
-                keydict = valuestodict(tzkey)
+                keydict = _tzvaluestodict(tzkey)
 
         self._std_abbr = keydict["Std"]
         self._dst_abbr = keydict["Dlt"]
@@ -250,10 +291,10 @@ class tzwin(tzwinbase):
         self._dst_base_offset_ = self._dst_offset - self._std_offset
         self.hasdst = self._get_hasdst()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "tzwin(%s)" % repr(self._name)
 
-    def __reduce__(self):
+    def __reduce__(self) -> tuple[type[Self], tuple[str]]:
         return (self.__class__, (self._name,))
 
 
@@ -274,10 +315,11 @@ class tzwinlocal(tzwinbase):
     Because ``tzwinlocal`` reads the registry directly, it is unaffected by
     this issue.
     """
-    def __init__(self):
+
+    def __init__(self) -> None:
         with winreg.ConnectRegistry(None, winreg.HKEY_LOCAL_MACHINE) as handle:
             with winreg.OpenKey(handle, TZLOCALKEYNAME) as tzlocalkey:
-                keydict = valuestodict(tzlocalkey)
+                keydict = _tzvaluestodict(tzlocalkey)
 
             self._std_abbr = keydict["StandardName"]
             self._dst_abbr = keydict["DaylightName"]
@@ -285,7 +327,7 @@ class tzwinlocal(tzwinbase):
             try:
                 tzkeyname = "{kn}\\{sn}".format(kn=TZKEYNAME, sn=self._std_abbr)
                 with winreg.OpenKey(handle, tzkeyname) as tzkey:
-                    _keydict = valuestodict(tzkey)
+                    _keydict = _tzvaluestodict(tzkey)
                     self._display = _keydict["Display"]
             except OSError:
                 self._display = None
@@ -319,19 +361,26 @@ class tzwinlocal(tzwinbase):
         self._dst_base_offset_ = self._dst_offset - self._std_offset
         self.hasdst = self._get_hasdst()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "tzwinlocal()"
 
-    def __str__(self):
+    def __str__(self) -> str:
         # str will return the standard name, not the daylight name.
         return "tzwinlocal(%s)" % repr(self._std_abbr)
 
-    def __reduce__(self):
+    def __reduce__(self) -> tuple[type[Self], tuple[()]]:
         return (self.__class__, ())
 
 
-def picknthweekday(year, month, dayofweek, hour, minute, whichweek):
-    """ dayofweek == 0 means Sunday, whichweek 5 means last instance """
+def picknthweekday(
+    year: int,
+    month: int,
+    dayofweek: int,
+    hour: int,
+    minute: int,
+    whichweek: int,
+) -> datetime.datetime:
+    """dayofweek == 0 means Sunday, whichweek 5 means last instance"""
     first = datetime.datetime(year, month, 1, hour, minute)
 
     # This will work if dayofweek is ISO weekday (1-7) or Microsoft-style (0-6),
@@ -344,7 +393,7 @@ def picknthweekday(year, month, dayofweek, hour, minute, whichweek):
     return wd
 
 
-def valuestodict(key):
+def valuestodict(key: winreg.HKEYType | int) -> Mapping[str, _RegistryValue]:
     """Convert a registry key's values to a dictionary."""
     dout = {}
     size = winreg.QueryInfoKey(key)[1]
@@ -359,12 +408,17 @@ def valuestodict(key):
                 value = value - (1 << 32)
         elif dtype == winreg.REG_SZ:
             # If it's a reference to the tzres DLL, load the actual string
-            if value.startswith('@tzres'):
+            if value.startswith("@tzres"):
                 tz_res = tz_res or tzres()
                 value = tz_res.name_from_string(value)
 
-            value = value.rstrip('\x00')    # Remove trailing nulls
+            value = value.rstrip("\x00")  # Remove trailing nulls
 
         dout[key_name] = value
 
     return dout
+
+
+def _tzvaluestodict(key: winreg.HKEYType | int) -> _RegistryValues:
+    # Windows specifies the value types for its time zone registry keys.
+    return cast("_RegistryValues", valuestodict(key))

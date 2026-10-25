@@ -194,7 +194,7 @@ jobs:
     needs: build-tzdata
     strategy:
       matrix:
-        toxenv: ["docs", "tz-fat", "tz-slim", "tz-vanguard", "tz-rearguard", "precommit"]
+        toxenv: ["docs", "tz-fat", "tz-slim", "tz-vanguard", "tz-rearguard", "precommit", "typing"]
     env:
       TOXENV: ${{ matrix.toxenv }}
       TZ: America/New_York

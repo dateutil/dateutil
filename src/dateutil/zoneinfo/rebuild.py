@@ -15,7 +15,13 @@ class RebuildDeprecationWarning(FutureWarning):
     """
 
 
-def rebuild(filename, tag=None, format="gz", zonegroups=[], metadata=None):
+def rebuild(
+    filename: object,
+    tag: object = None,
+    format: object = "gz",
+    zonegroups: object = [],
+    metadata: object = None,
+) -> None:
     """Formerly rebuilt the zoneinfo tarball bundled with ``dateutil``.
 
     ``dateutil`` no longer ships a zoneinfo tarball; it reads time zone data
