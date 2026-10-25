@@ -3,7 +3,6 @@ from __future__ import annotations
 from datetime import datetime, timedelta, tzinfo
 from functools import wraps
 
-from .._common import cast
 
 TYPE_CHECKING = False
 
@@ -11,7 +10,8 @@ if TYPE_CHECKING:
     from collections.abc import Callable
     from typing import Protocol, Self, TypeVar
 
-    _FromUtcT = TypeVar("_FromUtcT", bound=Callable[..., datetime])
+    _TzInfoT = TypeVar("_TzInfoT", bound=tzinfo)
+    _DatetimeT = TypeVar("_DatetimeT", bound=datetime)
 
     class _Foldable(Protocol):
         def replace(self, *, fold: int) -> Self: ...
@@ -40,13 +40,15 @@ def enfold(dt: _FoldableT, fold: int = 1) -> _FoldableT:
     return dt.replace(fold=fold)
 
 
-def _validate_fromutc_inputs(f: _FromUtcT) -> _FromUtcT:
+def _validate_fromutc_inputs(
+    f: Callable[[_TzInfoT, _DatetimeT], _DatetimeT],
+) -> Callable[[_TzInfoT, _DatetimeT], _DatetimeT]:
     """
     The CPython version of ``fromutc`` checks that the input is a ``datetime``
     object and that ``self`` is attached as its ``tzinfo``.
     """
     @wraps(f)
-    def fromutc(self: tzinfo, dt: datetime) -> datetime:
+    def fromutc(self: _TzInfoT, dt: _DatetimeT) -> _DatetimeT:
         if not isinstance(dt, datetime):
             raise TypeError("fromutc() requires a datetime argument")
         if dt.tzinfo is not self:
@@ -54,7 +56,7 @@ def _validate_fromutc_inputs(f: _FromUtcT) -> _FromUtcT:
 
         return f(self, dt)
 
-    return cast("_FromUtcT", fromutc)
+    return fromutc
 
 
 class _tzinfo(tzinfo):
@@ -106,13 +108,10 @@ class _tzinfo(tzinfo):
         """
         if self.is_ambiguous(dt_wall):
             delta_wall = dt_wall - dt_utc
-            _fold = int(
-                delta_wall
-                == (
-                    cast("timedelta", dt_utc.utcoffset())
-                    - cast("timedelta", dt_utc.dst())
-                )
-            )
+            utcoffset = dt_utc.utcoffset()
+            dst = dt_utc.dst()
+            assert utcoffset is not None and dst is not None
+            _fold = int(delta_wall == (utcoffset - dst))
         else:
             _fold = 0
 
@@ -252,7 +251,9 @@ class tzrangebase(_tzinfo):
         # Get transitions - if there are none, fixed offset
         transitions = self.transitions(dt.year)
         if transitions is None:
-            return dt + cast("timedelta", self.utcoffset(dt))
+            offset = self.utcoffset(dt)
+            assert offset is not None
+            return dt + offset
 
         # Get the transition times in UTC
         dston, dstoff = transitions
@@ -291,9 +292,9 @@ class tzrangebase(_tzinfo):
         if not self.hasdst:
             return False
 
-        start, end = cast(
-            "tuple[datetime, datetime]", self.transitions(dt.year)
-        )
+        transitions = self.transitions(dt.year)
+        assert transitions is not None
+        start, end = transitions
 
         dt = dt.replace(tzinfo=None)
         return (end <= dt < end + self._dst_base_offset)

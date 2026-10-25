@@ -10,8 +10,6 @@ TYPE_CHECKING = False
 if TYPE_CHECKING:
     from typing import Self, TypeVar, cast
 
-    from . import _typing
-
     _T = TypeVar("_T")
 else:
 
@@ -34,11 +32,9 @@ class weekday:
 
     def __eq__(self, other: object) -> bool:
         # Equality deliberately accepts unrelated objects with these attributes.
-        other_weekday = cast("_typing._Weekday", other)
         try:
-            if (
-                self.weekday != other_weekday.weekday
-                or self.n != other_weekday.n
+            if self.weekday != getattr(other, "weekday") or self.n != getattr(
+                other, "n"
             ):
                 return False
         except AttributeError:

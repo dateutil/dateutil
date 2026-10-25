@@ -12,14 +12,20 @@ import struct
 import sys
 from datetime import MAXYEAR, MINYEAR, datetime, timedelta
 
-from .._common import cast
 from ._common import _tzinfo, enfold
 
 TYPE_CHECKING = False
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
-    from typing import Self, SupportsIndex, TypeAlias, TypeVar, overload
+    from typing import (
+        Self,
+        SupportsIndex,
+        TypeAlias,
+        TypeGuard,
+        TypeVar,
+        overload,
+    )
 
     from .. import _typing
 
@@ -29,7 +35,7 @@ if TYPE_CHECKING:
         Sequence[int],
         Sequence[int],
         Sequence[int],
-        Sequence[str],
+        Sequence[str | None],
         bytes | None,
     ]
     _PickleArgs: TypeAlias = tuple[type[tzfile], str | None, object, _TZifData]
@@ -169,27 +175,23 @@ class tzfile(_tzinfo):
     ) -> None:
         super().__init__()
 
-        file_opened_here = False
         if isinstance(fileobj, str):
             self._filename = fileobj
-            fileobj = open(fileobj, "rb")
-            file_opened_here = True
-        elif filename is not None:
-            self._filename = filename
-        elif hasattr(fileobj, "name"):
-            self._filename = getattr(fileobj, "name")
-        elif key is not None:
-            self._filename = key
+            file_context = open(fileobj, "rb")
         else:
-            self._filename = repr(fileobj)
+            file_context = contextlib.nullcontext(fileobj)
+            if filename is not None:
+                self._filename = filename
+            elif hasattr(fileobj, "name"):
+                self._filename = getattr(fileobj, "name")
+            elif key is not None:
+                self._filename = key
+            else:
+                self._filename = repr(fileobj)
 
         if fileobj is not None:
-            if not file_opened_here:
-                file_context = contextlib.nullcontext(fileobj)
-            else:
-                file_context = cast("io.BufferedReader", fileobj)
-
             with file_context as file_stream:
+                assert file_stream is not None
                 self._load_file(file_stream)
 
         self._key = key
@@ -276,7 +278,8 @@ class tzfile(_tzinfo):
         num_trans = len(self._trans_utc)
 
         if num_trans >= 1 and timestamp < self._trans_utc[0]:
-            tti = cast("_ttinfo", self._tti_before)
+            tti = self._tti_before
+            assert tti is not None
             fold = 0
         elif (
             num_trans == 0 or timestamp > self._trans_utc[-1]
@@ -291,12 +294,14 @@ class tzfile(_tzinfo):
                 if num_trans > 1:
                     tti_prev = self._ttinfos[-2]
                 else:
-                    tti_prev = cast("_ttinfo", self._tti_before)
+                    tti_prev = self._tti_before
+                    assert tti_prev is not None
 
                 shift = tti_prev.utcoff - tti.utcoff
                 fold = shift.total_seconds() > timestamp - self._trans_utc[-1]
         elif num_trans == 0:
-            tti = cast("_ttinfo", self._tz_after)
+            tti = self._tz_after
+            assert isinstance(tti, _ttinfo)
             fold = 0
         else:
             idx = bisect.bisect_right(self._trans_utc, timestamp)
@@ -306,10 +311,13 @@ class tzfile(_tzinfo):
             elif timestamp > self._trans_utc[-1]:
                 # Only reachable with exactly one transition, so the
                 # offset before it is _tti_before, not _ttinfos[-1].
-                tti_prev = cast("_ttinfo", self._tti_before)
-                tti = cast("_ttinfo", self._tz_after)
+                tti_prev = self._tti_before
+                assert tti_prev is not None
+                tti = self._tz_after
+                assert isinstance(tti, _ttinfo)
             else:
-                tti_prev = cast("_ttinfo", self._tti_before)
+                tti_prev = self._tti_before
+                assert tti_prev is not None
                 tti = self._ttinfos[0]
 
             # Detect fold
@@ -347,7 +355,8 @@ class tzfile(_tzinfo):
     ) -> _ttinfo | _NoTTInfo:
         if dt is None:
             if self._fixed_offset:
-                return cast("_ttinfo", self._tz_after)
+                assert isinstance(self._tz_after, _ttinfo)
+                return self._tz_after
             else:
                 return _NO_TTINFO
 
@@ -364,7 +373,8 @@ class tzfile(_tzinfo):
         num_trans = len(lt)
 
         if num_trans and ts < lt[0]:
-            return cast("_ttinfo", self._tti_before)
+            assert self._tti_before is not None
+            return self._tti_before
         elif not num_trans or ts > lt[-1]:
             if isinstance(self._tz_after, _TZStr):
                 tti = self._tz_after.get_trans_info(ts, dt.year, fold)
@@ -426,7 +436,7 @@ class tzfile(_tzinfo):
         utcoff = [
             int(ttinfo.utcoff.total_seconds()) for ttinfo in self._ttinfo_list
         ]
-        abbr = [cast("str", ttinfo.tzname) for ttinfo in self._ttinfo_list]
+        abbr = [ttinfo.tzname for ttinfo in self._ttinfo_list]
 
         # dst() is inferred per transition, so the transitions don't map back
         # to the local time types, and these are kept as they were in the file
@@ -453,11 +463,11 @@ class tzfile(_tzinfo):
         # Reading the file requires seeking past the parts we don't use and
         # reading the footer a line at a time, so read anything that doesn't
         # support that (e.g. a pipe) into memory first; TZif files are small.
-        if not _is_seekable(fobj) or not hasattr(fobj, "readline"):
+        if not _is_seekable_reader(fobj):
             fobj = io.BytesIO(fobj.read())
 
         # Retrieve all the data as it exists in the zoneinfo file
-        data = load_data(cast("_typing._SeekableReader[bytes]", fobj))
+        data = load_data(fobj)
         self._load_from_data(data)
 
     def _load_from_data(self, data: _TZifData) -> None:
@@ -713,6 +723,12 @@ class tzfile(_tzinfo):
 # Before Python 3.16, pipes on Windows claim to be seekable, but seeking on
 # them silently does nothing. See https://github.com/python/cpython/issues/86768
 _SEEKABLE_PIPES_BUG = sys.platform == "win32" and sys.version_info < (3, 16)
+
+
+def _is_seekable_reader(
+    fobj: _typing._Reader[bytes],
+) -> TypeGuard[_typing._SeekableReader[bytes]]:
+    return _is_seekable(fobj) and hasattr(fobj, "readline")
 
 
 def _is_seekable(fobj: _typing._Reader[bytes]) -> bool:

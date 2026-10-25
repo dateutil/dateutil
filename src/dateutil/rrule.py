@@ -182,8 +182,9 @@ class rrulebase:
             self._len = None
 
     def __reduce_ex__(self, protocol: SupportsIndex) -> tuple[object, ...]:
-        rv = cast("tuple[object, ...]", super().__reduce_ex__(protocol))
-        state, slots = cast("_State", rv[2]), None
+        rv = super().__reduce_ex__(protocol)
+        assert isinstance(rv, tuple)
+        state, slots = rv[2], None
         if isinstance(state, tuple):
             state, slots = state
         if self._cache is not None:
@@ -579,9 +580,9 @@ class rrule(rrulebase):
         super().__init__(cache)
         global easter
         if not dtstart:
-            if until and cast("datetime.datetime", until).tzinfo:
+            if until and getattr(until, "tzinfo"):
                 dtstart = datetime.datetime.now(
-                    tz=cast("datetime.datetime", until).tzinfo
+                    tz=getattr(until, "tzinfo")
                 ).replace(microsecond=0)
             else:
                 dtstart = datetime.datetime.now().replace(microsecond=0)
@@ -603,9 +604,10 @@ class rrule(rrulebase):
 
         if until and not isinstance(until, datetime.datetime):
             until = datetime.datetime.fromordinal(until.toordinal())
-        self._until = cast("datetime.datetime | None", until)
+        self._until = until
 
         if self._dtstart and self._until:
+            assert isinstance(self._until, datetime.datetime)
             if (self._dtstart.tzinfo is not None) != (self._until.tzinfo is not None):
                 # According to RFC5545 Section 3.3.10:
                 # https://tools.ietf.org/html/rfc5545#section-3.3.10
@@ -835,9 +837,12 @@ class rrule(rrulebase):
             self._timeset = None
         else:
             self._timeset = []
-            for hour in cast("Collection[int]", self._byhour):
-                for minute in cast("Collection[int]", self._byminute):
-                    for second in cast("Collection[int]", self._bysecond):
+            assert self._byhour is not None
+            assert self._byminute is not None
+            assert self._bysecond is not None
+            for hour in self._byhour:
+                for minute in self._byminute:
+                    for second in self._bysecond:
                         self._timeset.append(
                             datetime.time(hour, minute, second,
                                           tzinfo=self._tzinfo))
@@ -909,7 +914,7 @@ class rrule(rrulebase):
     def replace(self, **kwargs: Unpack[_RuleOptions]) -> rrule:
         """Return new rrule with same attributes except for those attributes given new
         values by whichever keyword arguments are specified."""
-        new_kwargs: dict[str, object] = {
+        new_kwargs: _RuleOptions = {
             "interval": self._interval,
             "count": self._count,
             "dtstart": self._dtstart,
@@ -920,7 +925,7 @@ class rrule(rrulebase):
         }
         new_kwargs.update(self._original_rule)
         new_kwargs.update(kwargs)
-        return cast("Callable[..., rrule]", rrule)(**new_kwargs)
+        return rrule(**new_kwargs)
 
     def _iter(self) -> Iterator[datetime.datetime]:
         year, month, day, hour, minute, second, weekday, yearday, _ = \
@@ -930,7 +935,9 @@ class rrule(rrulebase):
         freq = self._freq
         interval = self._interval
         wkst = self._wkst
-        until = self._until
+        until = self._until or None
+        if until is not None:
+            assert isinstance(until, datetime.datetime)
         bymonth = self._bymonth
         byweekno = self._byweekno
         byyearday = self._byyearday
@@ -958,7 +965,8 @@ class rrule(rrulebase):
             Callable[[int, int, int], Sequence[datetime.time]] | None
         ) = None
         if freq < HOURLY:
-            timeset = cast("Sequence[datetime.time]", self._timeset)
+            timeset = self._timeset
+            assert timeset is not None
         else:
             gettimeset = {HOURLY: ii.htimeset,
                           MINUTELY: ii.mtimeset,
@@ -982,10 +990,16 @@ class rrule(rrulebase):
 
             # Do the "hard" work ;-)
             filtered = False
-            for i in cast("Sequence[int]", dayset[start:end]):
+            if byweekno:
+                assert ii.wnomask is not None
+            for i in range(start, end):
                 if (
                     (bymonth and ii.mmask[i] not in bymonth)
-                    or (byweekno and not cast("Sequence[int]", ii.wnomask)[i])
+                    or (
+                        byweekno
+                        and ii.wnomask is not None
+                        and not ii.wnomask[i]
+                    )
                     or (byweekday and ii.wdaymask[i] not in byweekday)
                     or (ii.nwdaymask and not ii.nwdaymask[i])
                     or (byeaster and not ii.eastermask[i])
@@ -1104,7 +1118,7 @@ class rrule(rrulebase):
                 if byhour:
                     ndays, hour = self.__mod_distance(
                         value=hour,
-                        byxxx=cast("Collection[int]", self._byhour),
+                        byxxx=byhour,
                         base=24,
                     )
                 else:
@@ -1127,7 +1141,7 @@ class rrule(rrulebase):
                     if byminute:
                         nhours, minute = self.__mod_distance(
                             value=minute,
-                            byxxx=cast("Collection[int]", self._byminute),
+                            byxxx=byminute,
                             base=60,
                         )
                     else:
@@ -1161,7 +1175,7 @@ class rrule(rrulebase):
                     if bysecond:
                         nminutes, second = self.__mod_distance(
                             value=second,
-                            byxxx=cast("Collection[int]", self._bysecond),
+                            byxxx=bysecond,
                             base=60,
                         )
                     else:
@@ -1476,8 +1490,10 @@ class _iterinfo:
     ) -> Sequence[datetime.time]:
         tset = []
         rr = self.rrule
-        for minute in cast("Collection[int]", rr._byminute):
-            for second in cast("Collection[int]", rr._bysecond):
+        assert rr._byminute is not None
+        assert rr._bysecond is not None
+        for minute in rr._byminute:
+            for second in rr._bysecond:
                 tset.append(datetime.time(hour, minute, second,
                                           tzinfo=rr._tzinfo))
         tset.sort()
@@ -1488,7 +1504,8 @@ class _iterinfo:
     ) -> Sequence[datetime.time]:
         tset = []
         rr = self.rrule
-        for second in cast("Collection[int]", rr._bysecond):
+        assert rr._bysecond is not None
+        for second in rr._bysecond:
             tset.append(datetime.time(hour, minute, second, tzinfo=rr._tzinfo))
         tset.sort()
         return tset
@@ -1539,10 +1556,10 @@ class rruleset(rrulebase):
             return self.dt > other.dt
 
         def __eq__(self, other: object) -> bool:
-            return self.dt == cast("rruleset._genitem", other).dt
+            return self.dt == getattr(other, "dt")
 
         def __ne__(self, other: object) -> bool:
-            return self.dt != cast("rruleset._genitem", other).dt
+            return self.dt != getattr(other, "dt")
 
     def __init__(self, cache: bool | None = False) -> None:
         super().__init__(cache)

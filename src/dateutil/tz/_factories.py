@@ -24,9 +24,10 @@ class _TzSingleton(type):
         super().__init__(*args, **kwargs)
 
     def __call__(cls: type[_T]) -> _T:
-        factory = cast("_TzSingleton", cls)
+        factory = cls
+        assert isinstance(factory, _TzSingleton)
         if factory.__instance is None:
-            factory.__instance = super(_TzSingleton, factory).__call__()
+            factory.__instance = super().__call__()
         return factory.__instance
 
 
@@ -47,7 +48,8 @@ class _TzOffsetFactory(_TzFactory):
     def __call__(
         cls: type[_T], name: str | None, offset: float | _typing._TotalSeconds
     ) -> _T:
-        factory = cast("_TzOffsetFactory", cls)
+        factory = cls
+        assert isinstance(factory, _TzOffsetFactory)
         if isinstance(offset, timedelta):
             key = (name, offset.total_seconds())
         else:
@@ -81,7 +83,8 @@ class _TzStrFactory(_TzFactory):
         cls.__cache_lock = _thread.allocate_lock()
 
     def __call__(cls: type[_T], s: str, posix_offset: bool = False) -> _T:
-        factory = cast("_TzStrFactory", cls)
+        factory = cls
+        assert isinstance(factory, _TzStrFactory)
         key = (s, posix_offset)
         instance = factory.__instances.get(key, None)
 

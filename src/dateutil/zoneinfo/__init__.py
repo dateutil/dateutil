@@ -129,11 +129,8 @@ class ZoneInfoFile:
             self.zones.update(links)
             try:
                 metadata_json = tf.extractfile(tf.getmember(METADATA_FN))
-                metadata_str = (
-                    cast("_typing._Reader[bytes]", metadata_json)
-                    .read()
-                    .decode("UTF-8")
-                )
+                assert metadata_json is not None
+                metadata_str = metadata_json.read().decode("UTF-8")
                 self.metadata = json.loads(metadata_str)
             except KeyError:
                 # no metadata in tar file
