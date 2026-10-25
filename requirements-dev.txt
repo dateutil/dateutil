@@ -1,7 +1,6 @@
 pytest >= 3.0
 pytest-cov >= 2.0.0
 pytest-xdist >= 3.2.0
-freezegun
 hypothesis >= 3.30
 coverage
 build >= 0.3.0
