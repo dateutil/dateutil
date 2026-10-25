@@ -119,4 +119,14 @@ This will pass the `-m tzstr` parameter to `pytest`, running only the tests with
 
 The tests can also be run directly by running `pytest` or `python -m pytest` in the root directory. This will be likely be less thorough but is often faster and is a good first pass to check your changes.
 
+The GitHub Actions workflows are checked with [zizmor](https://docs.zizmor.sh/).
+To run the audit locally:
+
+```bash
+uvx zizmor .github/workflows
+```
+
+This uses the latest zizmor release, which may report different findings from
+the version bundled with the pinned zizmor action in CI.
+
 All GitHub pull requests are automatically tested using [GitHub Actions](https://github.com/dateutil/dateutil/actions/).
