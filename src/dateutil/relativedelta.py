@@ -38,11 +38,22 @@ def _add_relativedelta(self, other):
     )
 
 
+def _use_absolute_value(value):
+    if value:
+        return True
+    value_type = type(value)
+    if issubclass(value_type, int):
+        return not int.__bool__(value)
+    if issubclass(value_type, float):
+        return not float.__bool__(value)
+    return False
+
+
 def _get_replacement(self, other):
     year = self.year
-    year = (year if year is not None else other.year) + self.years
+    year = (year if _use_absolute_value(year) else other.year) + self.years
     month = self.month
-    month = month if month is not None else other.month
+    month = month if _use_absolute_value(month) else other.month
     if self.months:
         assert 1 <= abs(self.months) <= 12
         month += self.months
@@ -54,7 +65,7 @@ def _get_replacement(self, other):
             month += 12
     day = min(
         calendar.monthrange(year, month)[1],
-        day if (day := self.day) is not None else other.day,
+        day if _use_absolute_value(day := self.day) else other.day,
     )
     repl = {"year": year, "month": month, "day": day}
     for attr in ["hour", "minute", "second", "microsecond"]:
