@@ -5091,3 +5091,28 @@ def test_roundtrip_cache_setting_smoke(roundtrip, kind, state):
         assert restored._cache is None
     assert original._cache == original_cache
     assert list(restored) == list(original)
+
+@pytest.mark.rrule
+@pytest.mark.parametrize("whitespace", [" ", "\t"])
+@pytest.mark.parametrize("line_ending", ["\n", "\r\n"])
+@pytest.mark.parametrize("compatible", [False, True])
+@pytest.mark.parametrize("include_dtstart", [False, True])
+def test_rrulestr_folded_lines(
+    whitespace, line_ending, compatible, include_dtstart
+):
+    dtstart = datetime(2026, 1, 1)
+    text = (
+        "RRULE:FREQ=DA"
+        + line_ending
+        + whitespace
+        + "ILY;"
+        + line_ending
+        + whitespace
+        + "COUNT=2"
+    )
+    if include_dtstart:
+        text = "DTSTART:20260101T000000" + line_ending + text
+
+    kwargs = {"compatible": True} if compatible else {"unfold": True}
+    result = rrulestr(text, dtstart=dtstart, **kwargs)
+    assert list(result) == [dtstart, datetime(2026, 1, 2)]
