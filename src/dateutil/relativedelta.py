@@ -13,6 +13,68 @@ MO, TU, WE, TH, FR, SA, SU = weekdays = tuple(weekday(x) for x in range(7))
 __all__ = ["relativedelta", "MO", "TU", "WE", "TH", "FR", "SA", "SU"]
 
 
+def _add_relativedelta(self, other):
+    return self.__class__(
+        years=other.years + self.years,
+        months=other.months + self.months,
+        days=other.days + self.days,
+        hours=other.hours + self.hours,
+        minutes=other.minutes + self.minutes,
+        seconds=other.seconds + self.seconds,
+        microseconds=(other.microseconds + self.microseconds),
+        leapdays=other.leapdays or self.leapdays,
+        year=(other.year if other.year is not None else self.year),
+        month=(other.month if other.month is not None else self.month),
+        day=(other.day if other.day is not None else self.day),
+        weekday=(other.weekday if other.weekday is not None else self.weekday),
+        hour=(other.hour if other.hour is not None else self.hour),
+        minute=(other.minute if other.minute is not None else self.minute),
+        second=(other.second if other.second is not None else self.second),
+        microsecond=(
+            other.microsecond
+            if other.microsecond is not None
+            else self.microsecond
+        ),
+    )
+
+
+def _get_replacement(self, other):
+    year = (self.year if self.year is not None else other.year) + self.years
+    month = self.month if self.month is not None else other.month
+    if self.months:
+        assert 1 <= abs(self.months) <= 12
+        month += self.months
+        if month > 12:
+            year += 1
+            month -= 12
+        elif month < 1:
+            year -= 1
+            month += 12
+    day = min(
+        calendar.monthrange(year, month)[1],
+        self.day if self.day is not None else other.day,
+    )
+    repl = {"year": year, "month": month, "day": day}
+    for attr in ["hour", "minute", "second", "microsecond"]:
+        value = getattr(self, attr)
+        if value is not None:
+            repl[attr] = value
+    return repl
+
+
+def _apply_relative(self, other, repl):
+    days = self.days
+    if self.leapdays and repl["month"] > 2 and calendar.isleap(repl["year"]):
+        days += self.leapdays
+    return other.replace(**repl) + datetime.timedelta(
+        days=days,
+        hours=self.hours,
+        minutes=self.minutes,
+        seconds=self.seconds,
+        microseconds=self.microseconds,
+    )
+
+
 class relativedelta:
     """
     The relativedelta type is designed to be applied to an existing datetime and
@@ -312,35 +374,9 @@ class relativedelta:
                               minute=self.minute, second=self.second,
                               microsecond=self.microsecond)
 
-    def _add_relativedelta(self, other):
-        return self.__class__(
-            years=other.years + self.years,
-            months=other.months + self.months,
-            days=other.days + self.days,
-            hours=other.hours + self.hours,
-            minutes=other.minutes + self.minutes,
-            seconds=other.seconds + self.seconds,
-            microseconds=(other.microseconds + self.microseconds),
-            leapdays=other.leapdays or self.leapdays,
-            year=(other.year if other.year is not None else self.year),
-            month=(other.month if other.month is not None else self.month),
-            day=(other.day if other.day is not None else self.day),
-            weekday=(
-                other.weekday if other.weekday is not None else self.weekday
-            ),
-            hour=(other.hour if other.hour is not None else self.hour),
-            minute=(other.minute if other.minute is not None else self.minute),
-            second=(other.second if other.second is not None else self.second),
-            microsecond=(
-                other.microsecond
-                if other.microsecond is not None
-                else self.microsecond
-            ),
-        )
-
     def __add__(self, other):
         if isinstance(other, relativedelta):
-            return self._add_relativedelta(other)
+            return _add_relativedelta(self, other)
         if isinstance(other, datetime.timedelta):
             return self.__class__(years=self.years,
                                   months=self.months,
@@ -362,8 +398,8 @@ class relativedelta:
             return NotImplemented
         elif self._has_time and not isinstance(other, datetime.datetime):
             other = datetime.datetime.fromordinal(other.toordinal())
-        repl = self._get_replacement(other)
-        ret = self._apply_relative(other, repl)
+        repl = _get_replacement(self, other)
+        ret = _apply_relative(self, other, repl)
         if self.weekday:
             weekday, nth = self.weekday.weekday, self.weekday.n or 1
             jumpdays = (abs(nth) - 1) * 7
@@ -374,45 +410,6 @@ class relativedelta:
                 jumpdays *= -1
             ret += datetime.timedelta(days=jumpdays)
         return ret
-
-    def _get_replacement(self, other):
-        year = (self.year if self.year is not None else other.year) + self.years
-        month = self.month if self.month is not None else other.month
-        if self.months:
-            assert 1 <= abs(self.months) <= 12
-            month += self.months
-            if month > 12:
-                year += 1
-                month -= 12
-            elif month < 1:
-                year -= 1
-                month += 12
-        day = min(
-            calendar.monthrange(year, month)[1],
-            self.day if self.day is not None else other.day,
-        )
-        repl = {"year": year, "month": month, "day": day}
-        for attr in ["hour", "minute", "second", "microsecond"]:
-            value = getattr(self, attr)
-            if value is not None:
-                repl[attr] = value
-        return repl
-
-    def _apply_relative(self, other, repl):
-        days = self.days
-        if (
-            self.leapdays
-            and repl["month"] > 2
-            and calendar.isleap(repl["year"])
-        ):
-            days += self.leapdays
-        return other.replace(**repl) + datetime.timedelta(
-            days=days,
-            hours=self.hours,
-            minutes=self.minutes,
-            seconds=self.seconds,
-            microseconds=self.microseconds,
-        )
 
     def __radd__(self, other):
         return self.__add__(other)
