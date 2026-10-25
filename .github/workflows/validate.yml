@@ -21,7 +21,6 @@ env:
   UV_PYTHON_PREFERENCE: only-managed
   TZDATA_VERSION: "2024a"
 
-# TODO: Enable Dependabot or Renovate to keep action commit pins updated.
 jobs:
   build-tzdata:
     runs-on: ubuntu-latest
