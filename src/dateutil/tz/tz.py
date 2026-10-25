@@ -48,6 +48,8 @@ if TYPE_CHECKING:
         nlyearday: int
         seconds: int
 
+    _OffsetT = TypeVar("_OffsetT", bound="float | None")
+
     _Offset: TypeAlias = float | _typing._TotalSeconds
     _DateDelta: TypeAlias = (
         datetime.timedelta
@@ -156,6 +158,14 @@ class tzutc(datetime.tzinfo, metaclass=_TzSingleton):
 UTC = tzutc()
 
 
+def _get_seconds(offset: _OffsetT | _typing._TotalSeconds) -> _OffsetT | float:
+    try:
+        return getattr(offset, "total_seconds")()
+    except (TypeError, AttributeError):
+        # A numeric subclass may also supply total_seconds; try it first.
+        return cast("_OffsetT", offset)
+
+
 class tzoffset(datetime.tzinfo, metaclass=_TzOffsetFactory):
     """
     A simple class for representing a fixed offset from UTC.
@@ -175,13 +185,7 @@ class tzoffset(datetime.tzinfo, metaclass=_TzOffsetFactory):
     def __init__(self, name: str | None, offset: _Offset) -> None:
         self._name = name
 
-        try:
-            # Allow a timedelta
-            offset = cast("_typing._TotalSeconds", offset).total_seconds()
-        except (TypeError, AttributeError):
-            pass
-
-        self._offset = datetime.timedelta(seconds=cast("float", offset))
+        self._offset = datetime.timedelta(seconds=_get_seconds(offset))
 
     def utcoffset(self, dt: object) -> datetime.timedelta:
         return self._offset
@@ -443,27 +447,16 @@ class tzrange(tzrangebase):
         self._std_abbr = stdabbr
         self._dst_abbr = dstabbr
 
-        try:
-            stdoffset = cast("_typing._TotalSeconds", stdoffset).total_seconds()
-        except (TypeError, AttributeError):
-            pass
-
-        try:
-            dstoffset = cast("_typing._TotalSeconds", dstoffset).total_seconds()
-        except (TypeError, AttributeError):
-            pass
+        stdoffset = _get_seconds(stdoffset)
+        dstoffset = _get_seconds(dstoffset)
 
         if stdoffset is not None:
-            self._std_offset = datetime.timedelta(
-                seconds=cast("float", stdoffset)
-            )
+            self._std_offset = datetime.timedelta(seconds=stdoffset)
         else:
             self._std_offset = ZERO
 
         if dstoffset is not None:
-            self._dst_offset = datetime.timedelta(
-                seconds=cast("float", dstoffset)
-            )
+            self._dst_offset = datetime.timedelta(seconds=dstoffset)
         elif dstabbr and stdoffset is not None:
             self._dst_offset = self._std_offset + datetime.timedelta(hours=+1)
         else:
@@ -505,8 +498,10 @@ class tzrange(tzrangebase):
 
         base_year = datetime.datetime(year, 1, 1)
 
-        start = base_year + cast("_DateDelta", self._start_delta)
-        end = base_year + cast("_DateDelta", self._end_delta)
+        assert self._start_delta is not None and self._start_delta is not False
+        assert self._end_delta is not None and self._end_delta is not False
+        start = base_year + self._start_delta
+        end = base_year + self._end_delta
 
         return (start, end)
 
@@ -586,7 +581,8 @@ class tzstr(tzrange, metaclass=_TzStrFactory):
         # Here we break the compatibility with the TZ variable handling.
         # GMT-3 actually *means* the timezone -3.
         if res.stdabbr in ("GMT", "UTC") and not posix_offset:
-            res.stdoffset = cast("int", res.stdoffset) * -1
+            assert res.stdoffset is not None
+            res.stdoffset = res.stdoffset * -1
 
         # We must initialize it first, since _delta() needs
         # _std_offset and _dst_offset set. Use False in start/end
@@ -683,10 +679,11 @@ class _tzicalvtz(_tzinfo):
         self._cachecomp = []
         self._cache_lock = _thread.allocate_lock()
 
-    def _find_comp(self, dt: datetime.datetime) -> _tzicalvtzcomp:
+    def _find_comp(self, dt: datetime.datetime | None) -> _tzicalvtzcomp:
         if len(self._comps) == 1:
             return self._comps[0]
 
+        assert dt is not None
         dt = dt.replace(tzinfo=None)
 
         try:
@@ -734,7 +731,8 @@ class _tzicalvtz(_tzinfo):
         if comp.tzoffsetdiff < ZERO and dt.fold:
             dt -= comp.tzoffsetdiff
 
-        compdt = cast("rrule.rrulebase", comp.rrule).before(dt, inc=True)
+        assert comp.rrule is not None
+        compdt = comp.rrule.before(dt, inc=True)
 
         return compdt
 
@@ -747,14 +745,14 @@ class _tzicalvtz(_tzinfo):
         return self._find_comp(dt).tzoffsetto
 
     def dst(self, dt: datetime.datetime | None) -> datetime.timedelta | None:
-        comp = self._find_comp(cast("datetime.datetime", dt))
+        comp = self._find_comp(dt)
         if comp.isdst:
             return comp.tzoffsetdiff
         else:
             return ZERO
 
     def tzname(self, dt: datetime.datetime | None) -> str | None:
-        return self._find_comp(cast("datetime.datetime", dt)).tzname
+        return self._find_comp(dt).tzname
 
     def __repr__(self) -> str:
         return "<tzicalvtz %s>" % repr(self._tzid)
@@ -1479,9 +1477,8 @@ def resolve_imaginary(dt: _DatetimeT) -> _DatetimeT:
         curr_offset = (dt + datetime.timedelta(hours=24)).utcoffset()
         old_offset = (dt - datetime.timedelta(hours=24)).utcoffset()
 
-        dt += cast("datetime.timedelta", curr_offset) - cast(
-            "datetime.timedelta", old_offset
-        )
+        assert curr_offset is not None and old_offset is not None
+        dt += curr_offset - old_offset
 
     return dt
 

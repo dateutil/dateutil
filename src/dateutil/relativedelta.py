@@ -6,20 +6,26 @@ import operator
 from math import copysign
 from warnings import warn
 
-from ._common import cast, weekday
+from ._common import weekday
 
 TYPE_CHECKING = False
 
 if TYPE_CHECKING:
     import types
-    from typing import Self, SupportsFloat, SupportsIndex, overload
+    from typing import Self, SupportsFloat, SupportsIndex, TypeVar, overload
 
     from . import _typing
+
+    _DateT = TypeVar("_DateT", datetime.date, datetime.datetime)
 
 
 MO, TU, WE, TH, FR, SA, SU = weekdays = tuple(weekday(x) for x in range(7))
 
 __all__ = ["relativedelta", "MO", "TU", "WE", "TH", "FR", "SA", "SU"]
+
+
+def _subtract_dates(left: _DateT, right: _DateT) -> datetime.timedelta:
+    return left - right
 
 
 class relativedelta:
@@ -177,7 +183,7 @@ class relativedelta:
 
             # If we've overshot our target, make an adjustment
             # Both operands have the same date/datetime kind after coercion.
-            if cast("datetime.datetime", dt1) < cast("datetime.datetime", dt2):
+            if operator.lt(dt1, dt2):
                 compare = operator.gt
                 increment = 1
             else:
@@ -190,7 +196,7 @@ class relativedelta:
                 dtm = self.__radd__(dt2)
 
             # Get the timedelta between the "months-adjusted" date and dt1
-            delta = dt1 - cast("datetime.datetime", dtm)
+            delta = _subtract_dates(dt1, dtm)
             self.seconds = delta.seconds + delta.days * 86400
             self.microseconds = delta.microseconds
         else:
@@ -353,6 +359,11 @@ class relativedelta:
         @overload
         def __add__(self, other: datetime.date) -> datetime.date: ...
 
+        @overload
+        def __add__(
+            self, other: object
+        ) -> Self | datetime.date | types.NotImplementedType: ...
+
     def __add__(
         self, other: object
     ) -> Self | datetime.date | types.NotImplementedType:
@@ -455,10 +466,15 @@ class relativedelta:
         @overload
         def __radd__(self, other: datetime.date) -> datetime.date: ...
 
+        @overload
+        def __radd__(
+            self, other: object
+        ) -> Self | datetime.date | types.NotImplementedType: ...
+
     def __radd__(
         self, other: object
     ) -> Self | datetime.date | types.NotImplementedType:
-        return self.__add__(cast("datetime.date", other))
+        return self.__add__(other)
 
     if TYPE_CHECKING:
 
@@ -473,10 +489,15 @@ class relativedelta:
         @overload
         def __rsub__(self, other: datetime.date) -> datetime.date: ...
 
+        @overload
+        def __rsub__(
+            self, other: object
+        ) -> Self | datetime.date | types.NotImplementedType: ...
+
     def __rsub__(
         self, other: object
     ) -> Self | datetime.date | types.NotImplementedType:
-        return self.__neg__().__radd__(cast("datetime.date", other))
+        return self.__neg__().__radd__(other)
 
     def __sub__(self, other: relativedelta) -> Self:
         if not isinstance(other, relativedelta):

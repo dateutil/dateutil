@@ -166,3 +166,55 @@ def test_timezone_structural_offsets_and_read_only_streams() -> None:
     assert zone.utcoffset(datetime.datetime(2024, 1, 1)) == datetime.timedelta(
         0
     )
+
+
+def test_parser_timezone_lookup_with_none_key() -> None:
+    parsed = parser.parse("2024-01-01", tzinfos={None: tz.UTC})
+    assert_type(parsed, datetime.datetime)
+    assert parsed == datetime.datetime(2024, 1, 1, tzinfo=tz.UTC)
+
+
+class DatetimeSubclass(datetime.datetime):
+    pass
+
+
+def test_fromutc_preserves_datetime_subclasses() -> None:
+    utc_time = DatetimeSubclass(2024, 1, 1, tzinfo=tz.UTC)
+    assert_type(tz.UTC.fromutc(utc_time), DatetimeSubclass)
+    assert tz.UTC.fromutc(utc_time) is utc_time
+
+    fixed = tz.tzoffset("custom", 3600)
+    fixed_time = utc_time.replace(tzinfo=fixed)
+    converted = fixed.fromutc(fixed_time)
+    assert_type(converted, DatetimeSubclass)
+    assert converted == DatetimeSubclass(2024, 1, 1, 1, tzinfo=fixed)
+
+
+def test_relative_delta_returns_not_implemented_for_unknown_operands() -> None:
+    delta = relativedelta.relativedelta(days=1)
+    other = object()
+    assert delta.__add__(other) is NotImplemented
+    assert delta.__radd__(other) is NotImplemented
+    assert delta.__rsub__(other) is NotImplemented
+
+
+class SecondsOverride(float):
+    def total_seconds(self) -> float:
+        return 5400
+
+
+class FailingSecondsOverride(float):
+    def total_seconds(self) -> float:
+        raise TypeError("Use the numeric offset")
+
+
+def test_timezone_numeric_subclass_offset_precedence() -> None:
+    for offset, expected in (
+        (SecondsOverride(3600), datetime.timedelta(seconds=5400)),
+        (FailingSecondsOverride(3600), datetime.timedelta(seconds=3600)),
+    ):
+        assert (
+            tz.tzoffset(type(offset).__name__, offset).utcoffset(None)
+            == expected
+        )
+        assert tz.tzrange("custom", offset).utcoffset(None) == expected

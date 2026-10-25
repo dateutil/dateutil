@@ -115,8 +115,7 @@ class tzres:
         resource = self.p_wchar()
         lpBuffer = ctypes.cast(ctypes.byref(resource), wintypes.LPWSTR)
         nchar = self.LoadStringW(self._tzres_handle, offset, lpBuffer, 0)
-        # ctypes returns a string when slicing a wchar pointer.
-        return cast("str", resource[:nchar])
+        return ctypes.wstring_at(resource, nchar)
 
     def name_from_string(self, tzname_str: str) -> str:
         """
@@ -261,7 +260,7 @@ class tzwin(tzwinbase):
         with winreg.ConnectRegistry(None, winreg.HKEY_LOCAL_MACHINE) as handle:
             tzkeyname = "{kn}\\{name}".format(kn=TZKEYNAME, name=name)
             with winreg.OpenKey(handle, tzkeyname) as tzkey:
-                keydict = cast("_RegistryValues", valuestodict(tzkey))
+                keydict = _tzvaluestodict(tzkey)
 
         self._std_abbr = keydict["Std"]
         self._dst_abbr = keydict["Dlt"]
@@ -320,7 +319,7 @@ class tzwinlocal(tzwinbase):
     def __init__(self) -> None:
         with winreg.ConnectRegistry(None, winreg.HKEY_LOCAL_MACHINE) as handle:
             with winreg.OpenKey(handle, TZLOCALKEYNAME) as tzlocalkey:
-                keydict = cast("_RegistryValues", valuestodict(tzlocalkey))
+                keydict = _tzvaluestodict(tzlocalkey)
 
             self._std_abbr = keydict["StandardName"]
             self._dst_abbr = keydict["DaylightName"]
@@ -328,7 +327,7 @@ class tzwinlocal(tzwinbase):
             try:
                 tzkeyname = "{kn}\\{sn}".format(kn=TZKEYNAME, sn=self._std_abbr)
                 with winreg.OpenKey(handle, tzkeyname) as tzkey:
-                    _keydict = cast("_RegistryValues", valuestodict(tzkey))
+                    _keydict = _tzvaluestodict(tzkey)
                     self._display = _keydict["Display"]
             except OSError:
                 self._display = None
@@ -418,3 +417,8 @@ def valuestodict(key: winreg.HKEYType | int) -> Mapping[str, _RegistryValue]:
         dout[key_name] = value
 
     return dout
+
+
+def _tzvaluestodict(key: winreg.HKEYType | int) -> _RegistryValues:
+    # Windows specifies the value types for its time zone registry keys.
+    return cast("_RegistryValues", valuestodict(key))

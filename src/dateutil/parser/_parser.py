@@ -63,6 +63,7 @@ if TYPE_CHECKING:
     _TzValue: TypeAlias = datetime.tzinfo | str | int | None
     _TzInfos: TypeAlias = (
         _typing._ContainsGet[str, _TzValue]
+        | _typing._ContainsGet[str | None, _TzValue]
         | Callable[[str | None, int | None], _TzValue]
     )
     _ParseReturn: TypeAlias = (
@@ -80,6 +81,10 @@ if TYPE_CHECKING:
         default: datetime.datetime | None
         ignoretz: bool | None
         tzinfos: _TzInfos | None
+
+    class _DigitString(Protocol):
+        def __len__(self) -> int: ...
+        def isdigit(self) -> bool: ...
 
     class _ParserInfo(Protocol):
         @property
@@ -490,7 +495,8 @@ class _ymd(list[int]):
         self, val: str | int | Decimal, label: str | None = None
     ) -> None:
         if hasattr(val, "__len__"):
-            if cast("str", val).isdigit() and len(cast("str", val)) > 2:
+            string = cast("_DigitString", val)
+            if string.isdigit() and len(string) > 2:
                 self.century_specified = True
                 if label not in [None, 'Y']:  # pragma: no cover
                     raise ValueError(label)
@@ -771,7 +777,8 @@ class parser:
             ret = self._build_tzaware(ret, res, tzinfos)
 
         if kwargs.get("fuzzy_with_tokens", False):
-            return ret, cast("tuple[str, ...]", skipped_tokens)
+            assert skipped_tokens is not None
+            return ret, skipped_tokens
         else:
             return ret
 
@@ -883,7 +890,8 @@ class parser:
                 # Check month name
                 elif info.month(l[i]) is not None:
                     value = info.month(l[i])
-                    ymd.append(cast("int", value), "M")
+                    assert value is not None
+                    ymd.append(value, "M")
 
                     if i + 1 < len_l:
                         if l[i + 1] in ('-', '/'):
@@ -1292,7 +1300,9 @@ class parser:
             new_idx = hms_idx
         else:
             # Looking backwards, increment one.
-            hms = cast("int", info.hms(tokens[hms_idx])) + 1
+            hms = info.hms(tokens[hms_idx])
+            assert hms is not None
+            hms += 1
             new_idx = idx
 
         return (new_idx, hms)
@@ -1333,7 +1343,9 @@ class parser:
         if callable(tzinfos):
             tzdata = tzinfos(tzname, tzoffset)
         else:
-            tzdata = tzinfos.get(cast("str", tzname))
+            tzdata = cast(
+                "_typing._Gettable[str | None, _TzValue]", tzinfos
+            ).get(tzname)
         # handle case where tzinfo is paased an options that returns None
         # eg tzinfos = {'BRST' : None}
         if isinstance(tzdata, datetime.tzinfo) or tzdata is None:
@@ -1744,9 +1756,8 @@ class _tzparser:
                     else:
                         signal = 1
                     used_idxs.append(i)
-                    res.dstoffset = (
-                        cast("int", res.stdoffset) + int(l[i]) * signal
-                    )
+                    assert res.stdoffset is not None
+                    res.dstoffset = res.stdoffset + int(l[i]) * signal
 
                 # This was a made-up format that is not in normal use
                 warn(('Parsed time zone "%s"' % tzstr) +
