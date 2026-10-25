@@ -1,0 +1,2 @@
+Added zizmor checks for the GitHub Actions workflows.
+Fixed by @pganssle (gh pr #1645).

@@ -14,6 +14,9 @@ on:
         type: boolean
         default: false
 
+permissions:
+  contents: read
+
 env:
   UV_PYTHON_PREFERENCE: only-managed
   TZDATA_VERSION: "2024a"
@@ -73,6 +76,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
       - name: Set timezone (Windows)
         if: startsWith(matrix.os, 'windows-latest')
         run: tzutil /s "Eastern Standard Time"
@@ -155,6 +160,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
       - name: Download distributions
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
@@ -196,6 +203,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
+          persist-credentials: false
           fetch-depth: 0
       - name: Download tzdata artifact
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
@@ -222,6 +230,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
+          persist-credentials: false
           fetch-depth: 0
       - *setup-uv
       - name: Install darker
@@ -236,6 +245,19 @@ jobs:
           REVISION: ${{ github.event_name == 'pull_request' && format('{0}...', github.event.pull_request.base.sha) || format('{0}...', github.event.before) }}
         run: darker --check --diff --color --isort --revision "$REVISION" .
 
+  zizmor:
+    if: ${{ !inputs.release }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Check GitHub Actions security
+        uses: zizmorcore/zizmor-action@53290badfa369cb0bf7ad16342cb62c2fa47ac7b # v0.8.0
+        with:
+          advanced-security: false
+          annotations: true
+
   build-dist:
     runs-on: ubuntu-latest
     outputs:
@@ -243,6 +265,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
+          persist-credentials: false
           # The version comes from git tags, so we need the history.
           fetch-depth: 0
       - name: Check whether the sdist needs testing
