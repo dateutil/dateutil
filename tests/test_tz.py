@@ -2058,6 +2058,14 @@ class TZICalTest(unittest.TestCase, TzFoldMixin):
         with self.assertRaises(ValueError):
             tz.tzical(StringIO(tz_str))
 
+    def testOffsetNonDigit(self):
+        for offset in ("+-500", "--500", "+ 500", "-05 0"):
+            tz_str = TZICAL_EST5EDT.replace(
+                "TZOFFSETTO:-0500", "TZOFFSETTO:" + offset
+            )
+            with self.assertRaises(ValueError):
+                tz.tzical(StringIO(tz_str))
+
     # Test Parsing
     def testGap(self):
         tzic = tz.tzical(StringIO('\n'.join((TZICAL_EST5EDT, TZICAL_PST8PDT))))

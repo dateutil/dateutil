@@ -1,0 +1,1 @@
+Fixed ``isoparse`` accepting numeric fields that are not exactly the expected number of ASCII digits, which let strings like ``20200728121240``, ``2014- 4-21`` or an offset of ``+-1:00`` parse. The same check was added to the ``TZOFFSETFROM``/``TZOFFSETTO`` parsing in ``tzical``. Reported by @janos-gonye (gh issue #1074). Fixed by @varun3257.
