@@ -4,7 +4,6 @@ Common code used in multiple modules.
 
 from __future__ import annotations
 
-
 TYPE_CHECKING = False
 
 if TYPE_CHECKING:

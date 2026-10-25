@@ -1463,7 +1463,6 @@ if TYPE_CHECKING:
         fuzzy_with_tokens: Literal[False] = False,
     ) -> datetime.datetime: ...
 
-
     @overload
     def parse(
         timestr: _ParseInput,
@@ -1477,7 +1476,6 @@ if TYPE_CHECKING:
         fuzzy: bool = False,
         fuzzy_with_tokens: Literal[True],
     ) -> tuple[datetime.datetime, tuple[str, ...]]: ...
-
 
     @overload
     def parse(
