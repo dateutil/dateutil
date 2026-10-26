@@ -1,0 +1,5 @@
+Fixed issue where ``dayfirst`` behavior was not correctly applied when
+``yearfirst=True``. Previously, when ``yearfirst=True`` and ``dayfirst=True``,
+dates where the day component was greater than 12 (e.g. ``09/25/07``) would
+be incorrectly parsed as YMD instead of YDM. Reported and fixed by
+@algojogacor (gh issue #1448).
