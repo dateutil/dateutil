@@ -1,0 +1,4 @@
+Preserved explicitly supplied native ``int`` and ``float`` zero values for
+absolute ``relativedelta`` year, month and day fields so existing date
+validation handles them. Arbitrary integer-protocol zero handling is unchanged.
+Reported and fixed by @tridev-tej (gh pr #1643).
