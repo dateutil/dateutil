@@ -1,0 +1,1 @@
+Document the weekday constants shared by the ``rrule`` and ``relativedelta`` APIs.
