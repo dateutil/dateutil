@@ -1,0 +1,3 @@
+Clarified that ``ignoretz=True`` ignores time zones in parsed strings while
+retaining the time zone of ``default``. Reported by @LincolnPuzey (gh issue #846).
+Fixed by @2031814001yuyue-tech (gh pr #1651).

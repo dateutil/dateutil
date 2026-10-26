@@ -9,7 +9,8 @@ of a date/time stamp is omitted, the following rules are applied:
 - If AM or PM is left unspecified, a 24-hour clock is assumed, however, an hour
   on a 12-hour clock (``0 <= hour <= 12``) *must* be specified if AM or PM is
   specified.
-- If a time zone is omitted, a timezone-naive datetime is returned.
+- If a time zone is omitted, the time zone of ``default`` is used. If
+  ``default`` is naive or omitted, a timezone-naive datetime is returned.
 
 If any other elements are missing, they are taken from the
 :class:`datetime.datetime` object passed to the parameter ``default``. If this
@@ -33,17 +34,12 @@ import re
 import string
 import time
 import warnings
-
 from calendar import monthrange
-from io import StringIO
-
-
 from decimal import Decimal
-
+from io import StringIO
 from warnings import warn
 
-from .. import relativedelta
-from .. import tz
+from .. import relativedelta, tz
 
 __all__ = ["parse", "parserinfo", "ParserError"]
 
@@ -577,8 +573,9 @@ class parser:
             default object.
 
         :param ignoretz:
-            If set ``True``, time zones in parsed strings are ignored and a
-            naive :class:`datetime.datetime` object is returned.
+            If set ``True``, time zones in parsed strings are ignored. The
+            result retains the time zone of ``default``, or is naive if
+            ``default`` is naive or omitted.
 
         :param tzinfos:
             Additional time zone names / aliases which may be present in the
@@ -1283,8 +1280,9 @@ def parse(timestr, parserinfo=None, **kwargs):
         default object.
 
     :param ignoretz:
-        If set ``True``, time zones in parsed strings are ignored and a naive
-        :class:`datetime` object is returned.
+        If set ``True``, time zones in parsed strings are ignored. The result
+        retains the time zone of ``default``, or is naive if ``default`` is
+        naive or omitted.
 
     :param tzinfos:
         Additional time zone names / aliases which may be present in the
