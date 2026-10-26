@@ -1680,7 +1680,7 @@ class _rrulestr:
                 else:
                     name, value = line.split(':', 1)
                 parms = name.split(';')
-                if not parms:
+                if not parms[0]:
                     raise ValueError("empty property name")
                 name = parms[0]
                 parms = parms[1:]
