@@ -5,6 +5,18 @@ from datetime import datetime, timedelta
 from io import StringIO
 
 import pytest
+from six import PY2, assertRaisesRegex
+
+from dateutil import tz
+from dateutil.parser import (
+    ParserError,
+    UnknownTimezoneWarning,
+    parse,
+    parserinfo,
+)
+from dateutil.tz import tzoffset
+
+from ._common import TZEnvContext
 
 from dateutil import tz
 from dateutil.parser import (
@@ -181,6 +193,11 @@ def test_parse_yearfirst(sep):
     dstr = expected.strftime(fmt)
     result = parse(dstr, yearfirst=True)
     assert result == expected
+
+
+def test_parse_exif_datetime():
+    result = parse("2024:03:29 07:19:05")
+    assert result == datetime(2024, 3, 29, 7, 19, 5)
 
 
 @pytest.mark.parametrize('dstr,expected', [
