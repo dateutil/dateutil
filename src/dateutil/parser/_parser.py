@@ -34,17 +34,12 @@ import re
 import string
 import time
 import warnings
-
 from calendar import monthrange
-from io import StringIO
-
-
 from decimal import Decimal
-
+from io import StringIO
 from warnings import warn
 
-from .. import relativedelta
-from .. import tz
+from .. import relativedelta, tz
 
 __all__ = ["parse", "parserinfo", "ParserError"]
 
