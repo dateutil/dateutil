@@ -4607,6 +4607,52 @@ class RRuleTest(unittest.TestCase):
 
 
 @pytest.mark.rrule
+@pytest.mark.parametrize("wkst", [MO, TU, WE, TH, FR, SA, SU])
+def test_weekly_byeaster_cross_year(wkst):
+    rule = rrule(
+        WEEKLY,
+        dtstart=datetime(2023, 12, 25),
+        count=3,
+        wkst=wkst,
+        byeaster=(-90, 0),
+    )
+
+    assert list(rule) == [
+        datetime(2024, 1, 1),
+        datetime(2024, 3, 31),
+        datetime(2025, 1, 20),
+    ]
+
+
+@pytest.mark.rrule
+@pytest.mark.parametrize(
+    "start, expected",
+    [
+        (datetime(2023, 12, 24), []),
+        (datetime(2023, 12, 31), [datetime(2024, 1, 1)]),
+    ],
+)
+def test_weekly_byeaster_cross_year_interval(start, expected):
+    rule = rrule(
+        WEEKLY,
+        dtstart=start,
+        until=datetime(2024, 1, 2),
+        interval=2,
+        wkst=SU,
+        byeaster=-90,
+    )
+
+    assert list(rule) == expected
+
+
+@pytest.mark.rrule
+def test_weekly_byeaster_max_year():
+    rule = rrule(WEEKLY, dtstart=datetime(9999, 1, 1), count=1, byeaster=0)
+
+    assert list(rule) == [datetime(9999, 3, 28)]
+
+
+@pytest.mark.rrule
 @freeze_time(datetime(2018, 3, 6, 5, 36, tzinfo=tz.UTC))
 def test_generated_aware_dtstart():
     dtstart_exp = datetime(2018, 3, 6, 5, 36, tzinfo=tz.UTC)
