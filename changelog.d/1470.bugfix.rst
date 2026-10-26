@@ -1,0 +1,5 @@
+Fixed ``dateutil.parser.parse`` dropping the year token in ``fuzzy=True``
+mode when the year is followed by a ``:`` (issue #326), e.g.
+``parse("23. November 2016:", fuzzy=True)`` now returns 2016 instead of
+the default year, and the trailing ``:`` is reported as a skipped token
+with ``fuzzy_with_tokens=True``.
