@@ -656,7 +656,7 @@ class RelativeDeltaTest(unittest.TestCase):
     def testHashable(self):
         try:
             {relativedelta(minute=1): 'test'}
-        except:
+        except Exception:
             self.fail("relativedelta() failed to hash!")
 
     def testDayOfMonthPlus(self):
