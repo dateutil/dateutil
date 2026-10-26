@@ -1,0 +1,5 @@
+Fixed ``parser.parse()`` leaking a ``decimal.InvalidOperation`` exception
+instead of a ``ParserError`` when given a numeric token with more digits than
+the active decimal context precision (e.g. an over-long hour, minute, or
+second field). Such inputs are now rejected as a ``ParserError``. Reported by
+@pventuzelo and @senier (gh issues #1359, #1366).
