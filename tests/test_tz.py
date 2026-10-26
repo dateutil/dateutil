@@ -1337,6 +1337,85 @@ class ZoneInfoGettzTest(GettzTest):
         assert metadata["tzversion"]
 
 
+@pytest.mark.parametrize(
+    "kwargs",
+    [{}, {"stdoffset": None}, {"stdoffset": 0}, {"stdoffset": timedelta(0)}],
+    ids=["omitted", "none", "zero", "timedelta-zero"],
+)
+@pytest.mark.parametrize(
+    "month, offset, name",
+    [(1, timedelta(0), "STD"), (7, timedelta(hours=1), "DST")],
+)
+def test_tzrange_default_dst_offset(kwargs, month, offset, name):
+    tzi = tz.tzrange("STD", dstabbr="DST", **kwargs)
+    dt = datetime(2014, month, 15, 12, tzinfo=tzi)
+
+    assert dt.utcoffset() == offset
+    assert dt.dst() == offset
+    assert dt.tzname() == name
+    assert (
+        dt.astimezone(tz.UTC)
+        == datetime(2014, month, 15, 12, tzinfo=tz.UTC) - offset
+    )
+
+
+@pytest.mark.parametrize(
+    "dstoffset, expected",
+    [
+        (0, timedelta(0)),
+        (1800, timedelta(minutes=30)),
+        (timedelta(0), timedelta(0)),
+        (timedelta(minutes=30), timedelta(minutes=30)),
+    ],
+)
+def test_tzrange_default_std_offset_explicit_dst_offset(dstoffset, expected):
+    tzi = tz.tzrange("STD", dstabbr="DST", dstoffset=dstoffset)
+    dt = datetime(2014, 7, 15, 12, tzinfo=tzi)
+
+    assert dt.utcoffset() == expected
+    assert dt.dst() == expected
+
+
+@pytest.mark.parametrize(
+    "utc_dt, wall_dt, offset, fold",
+    [
+        (
+            datetime(2014, 4, 6, 1, 30),
+            datetime(2014, 4, 6, 1, 30),
+            timedelta(0),
+            0,
+        ),
+        (
+            datetime(2014, 4, 6, 2, 30),
+            datetime(2014, 4, 6, 3, 30),
+            timedelta(hours=1),
+            0,
+        ),
+        (
+            datetime(2014, 10, 26, 0, 30),
+            datetime(2014, 10, 26, 1, 30),
+            timedelta(hours=1),
+            0,
+        ),
+        (
+            datetime(2014, 10, 26, 1, 30),
+            datetime(2014, 10, 26, 1, 30),
+            timedelta(0),
+            1,
+        ),
+    ],
+)
+def test_tzrange_default_dst_offset_transitions(utc_dt, wall_dt, offset, fold):
+    tzi = tz.tzrange("STD", dstabbr="DST")
+    utc_dt = utc_dt.replace(tzinfo=tz.UTC)
+    dt = utc_dt.astimezone(tzi)
+
+    assert dt.replace(tzinfo=None) == wall_dt
+    assert dt.utcoffset() == offset
+    assert getattr(dt, "fold", 0) == fold
+    assert dt.astimezone(tz.UTC) == utc_dt
+
+
 class TZRangeTest(unittest.TestCase, TzFoldMixin):
     TZ_EST = tz.tzrange('EST', timedelta(hours=-5),
                         'EDT', timedelta(hours=-4),
