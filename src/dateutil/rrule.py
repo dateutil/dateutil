@@ -1263,6 +1263,13 @@ class _iterinfo:
             eyday = easter.easter(year).toordinal()-self.yearordinal
             for offset in rr._byeaster:
                 self.eastermask[eyday+offset] = 1
+            if rr._freq == WEEKLY and year < datetime.MAXYEAR:
+                # Cross-year weeks can include dates from next year's Easter.
+                eyday = easter.easter(year + 1).toordinal() - self.yearordinal
+                for offset in rr._byeaster:
+                    i = eyday + offset
+                    if self.yearlen <= i < len(self.eastermask):
+                        self.eastermask[i] = 1
 
         self.lastyear = year
         self.lastmonth = month
