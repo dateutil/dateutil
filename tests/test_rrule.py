@@ -313,6 +313,51 @@ class RRuleTest(unittest.TestCase):
                           datetime(2004, 12, 27, 9, 0),
                           datetime(2009, 12, 28, 9, 0)])
 
+    def testYearlyByWeekNoNegativeAlias(self):
+        # Week 1 of the following year can also be addressed as week
+        # -<weeks in that year>, so the days it contributes to the end of
+        # this year are the same in both spellings.
+        self.assertEqual(
+            list(
+                rrule(
+                    YEARLY,
+                    byweekno=[-52],
+                    wkst=SU,
+                    dtstart=datetime(2023, 1, 1),
+                    until=datetime(2023, 12, 31),
+                )
+            ),
+            [
+                datetime(2023, 1, 1, 0, 0),
+                datetime(2023, 1, 2, 0, 0),
+                datetime(2023, 1, 3, 0, 0),
+                datetime(2023, 1, 4, 0, 0),
+                datetime(2023, 1, 5, 0, 0),
+                datetime(2023, 1, 6, 0, 0),
+                datetime(2023, 1, 7, 0, 0),
+                datetime(2023, 12, 31, 0, 0),
+            ],
+        )
+
+    def testYearlyByWeekNoNegativeAlias53(self):
+        # 1991 has 53 weeks, so week 1 of 1991 is week -53 of that year.
+        self.assertEqual(
+            list(
+                rrule(
+                    YEARLY,
+                    byweekno=[-53],
+                    wkst=SA,
+                    dtstart=datetime(1990, 1, 1),
+                    until=datetime(1990, 12, 31),
+                )
+            ),
+            [
+                datetime(1990, 12, 29, 0, 0),
+                datetime(1990, 12, 30, 0, 0),
+                datetime(1990, 12, 31, 0, 0),
+            ],
+        )
+
     def testYearlyByHour(self):
         self.assertEqual(list(rrule(YEARLY,
                               count=3,
