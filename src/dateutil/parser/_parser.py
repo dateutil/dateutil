@@ -906,6 +906,15 @@ class parser:
                 res.minute = int(s[2:4])
                 res.second, res.microsecond = self._parsems(s[4:])
 
+        elif len_li == 9 and ymd and res.hour is None:
+            # HHMMSSmmm - a time with millisecond precision but no decimal
+            # point (e.g. the "040506789" in "20010203 040506789").
+            s = tokens[idx]
+            res.hour = int(s[:2])
+            res.minute = int(s[2:4])
+            res.second = int(s[4:6])
+            res.microsecond = int(s[6:9].ljust(6, "0"))
+
         elif len_li in (8, 12, 14):
             # YYYYMMDD
             s = tokens[idx]
