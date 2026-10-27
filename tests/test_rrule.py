@@ -5091,3 +5091,56 @@ def test_roundtrip_cache_setting_smoke(roundtrip, kind, state):
         assert restored._cache is None
     assert original._cache == original_cache
     assert list(restored) == list(original)
+
+
+@pytest.mark.parametrize(
+    "until, expected",
+    [
+        (datetime(2018, 8, 27, 17, tzinfo=tz.UTC), "20180827T170000Z"),
+        (
+            datetime(2018, 8, 27, 1, tzinfo=tz.tzoffset("EAST", 14 * 3600)),
+            "20180826T110000Z",
+        ),
+        (
+            datetime(2018, 8, 27, 17, tzinfo=tz.tzoffset("WEST", -12 * 3600)),
+            "20180828T050000Z",
+        ),
+        (datetime(2018, 8, 27, 17), "20180827T170000"),
+        (date(2018, 8, 27), "20180827T000000"),
+    ],
+    ids=["utc", "positive-offset", "negative-offset", "naive", "date"],
+)
+def test_until_serialization(until, expected):
+    until_tz = getattr(until, "tzinfo", None)
+    dtstart = datetime(2018, 8, 25, 17, tzinfo=until_tz)
+    rule = rrule(DAILY, dtstart=dtstart, until=until)
+    expected_dates = list(rule)
+
+    # Test the RRULE property separately from DTSTART's TZID serialization.
+    rule_property = str(rule).splitlines()[-1]
+    assert rule_property == "RRULE:FREQ=DAILY;UNTIL=" + expected
+    assert list(rrulestr(rule_property, dtstart=dtstart)) == expected_dates
+    assert list(rule) == expected_dates
+
+
+def test_until_serialization_full_string_aware_requires_dtstart():
+    dtstart = datetime(2018, 8, 25, 17)
+    until = datetime(2018, 8, 27, 17)
+    naive_rule = rrule(DAILY, dtstart=dtstart, until=until)
+    assert list(rrulestr(str(naive_rule))) == list(naive_rule)
+
+    aware_dtstart = dtstart.replace(tzinfo=tz.UTC)
+    aware_rule = rrule(
+        DAILY, dtstart=aware_dtstart, until=until.replace(tzinfo=tz.UTC)
+    )
+    with pytest.raises(
+        ValueError,
+        match="^RRULE UNTIL values must be specified in UTC when "
+        "DTSTART is timezone-aware$",
+    ):
+        rrulestr(str(aware_rule))
+
+    rule_property = str(aware_rule).splitlines()[-1]
+    assert list(rrulestr(rule_property, dtstart=aware_dtstart)) == list(
+        aware_rule
+    )

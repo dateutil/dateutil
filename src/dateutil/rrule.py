@@ -719,6 +719,10 @@ class rrule(rrulebase):
         Output a string that would generate this RRULE if passed to rrulestr.
         This is mostly compatible with RFC5545, except for the
         dateutil-specific extension BYEASTER.
+
+        An aware DTSTART's timezone is not serialized, so passing the full
+        string to rrulestr can raise ValueError when UNTIL is aware. Parse
+        the RRULE property with the original aware dtstart instead.
         """
 
         output = []
@@ -738,7 +742,14 @@ class rrule(rrulebase):
             parts.append('COUNT=' + str(self._count))
 
         if self._until:
-            parts.append(self._until.strftime('UNTIL=%Y%m%dT%H%M%S'))
+            until = self._until
+            until_format = "UNTIL=%Y%m%dT%H%M%S"
+            if until.utcoffset() is not None:
+                from . import tz
+
+                until = until.astimezone(tz.UTC)
+                until_format += "Z"
+            parts.append(until.strftime(until_format))
 
         if self._original_rule.get('byweekday') is not None:
             # The str() method on weekday objects doesn't generate
