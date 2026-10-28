@@ -11,6 +11,7 @@ switch, and thus all their contributions are dual-licensed.
 
 ## Contributors (alphabetical order)
 
+- 00200200 (gh: @00200200) **D**
 - Aarni Koskela <akx@iki.fi> **D**
 - Adam Chainz <adam@MASKED>
 - Adrien Cossa <cossa@MASKED>
