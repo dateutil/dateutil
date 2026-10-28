@@ -103,6 +103,16 @@ class _timelex:
                 while nextchar == '\x00':
                     nextchar = self.instream.read(1)
 
+                # __init__ only checks for a read attribute, and an object
+                # whose read() never returns '' would never reach EOF.
+                if not isinstance(nextchar, (str, bytes)):
+                    raise TypeError(
+                        "Character stream must return a string "
+                        "from read(), not {itype}".format(
+                            itype=nextchar.__class__.__name__
+                        )
+                    )
+
             if not nextchar:
                 self.eof = True
                 break
