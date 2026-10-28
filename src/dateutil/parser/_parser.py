@@ -106,9 +106,12 @@ class _timelex:
                 # __init__ only checks for a read attribute, and an object
                 # whose read() never returns '' would never reach EOF.
                 if not isinstance(nextchar, (str, bytes)):
-                    raise TypeError('Character stream must return a string '
-                                    'from read(), not {itype}'.format(
-                                        itype=nextchar.__class__.__name__))
+                    raise TypeError(
+                        "Character stream must return a string "
+                        "from read(), not {itype}".format(
+                            itype=nextchar.__class__.__name__
+                        )
+                    )
 
             if not nextchar:
                 self.eof = True
