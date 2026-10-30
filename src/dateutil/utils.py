@@ -1,11 +1,9 @@
-# -*- coding: utf-8 -*-
 """
 This module offers general convenience and utility functions for dealing with
 datetimes.
 
 .. versionadded:: 2.7.0
 """
-from __future__ import unicode_literals
 
 from datetime import datetime, time
 

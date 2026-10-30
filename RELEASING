@@ -1,10 +1,7 @@
 Release Checklist
 -----------------------------------------
-[ ] Update classifiers in setup.cfg to include the latest supported Python
+[ ] Update classifiers in pyproject.toml to include the latest supported Python
     versions.
-[ ] Update the metadata in zonefile_metadata.json to include the latest tzdata
-    release from https://www.iana.org/time-zones.
-[ ] If necessary, update the tzdata mirror at https://github.com/dateutil/tzdata
 [ ] Update NEWS with list of changes:
     [ ] Invoke `tox -e news -- --version <NEXT_VERSION>`
     [ ] Make sure that only `template.rst` remains in changelog.d/
@@ -25,8 +22,8 @@ Optional:
 Versioning
 ----------
 Try and keep to a semantic versioning scheme (http://semver.org/). The versions
-are managed with `setuptools_scm`, so to update the version, simply tag the
-relevant commit with the new version number.
+are managed with `hatch-vcs` (using `setuptools-scm`), so to update the
+version, simply tag the relevant commit with the new version number.
 
 
 Instructions
@@ -38,10 +35,21 @@ for more details.
 Building and Releasing
 ----------------------
 Releasing is automated via the `publish.yml` GitHub Actions workflow. When a
-new tag is pushed to the repository, the project is automatically built and
-uploaded to Test PyPI. When the publish action is triggered manually (see
+new tag is pushed to the repository, or the publish action is triggered
+manually (see
 https://docs.github.com/en/actions/managing-workflow-runs/manually-running-a-workflow
-for more details), the result is uploaded to PyPI.
+for more details), the project is automatically built and uploaded to Test
+PyPI. When a GitHub release is created, the result is uploaded to PyPI.
+
+Before publication, the full test suite is run on all platforms against the
+official release artifacts (both sdist and wheel). If this fails the artifacts
+will not be uploaded. In the event of a transient failure, rerunning all failed
+jobs should trigger the publication without needing to make a release.
+
+Uploads use PyPI's trusted publishing, so no API tokens are needed. The
+trusted publisher for both PyPI and Test PyPI is configured with the workflow
+name `publish.yml` and the environment name `release`, which is the GitHub
+environment the upload job runs in.
 
 To make a release:
 

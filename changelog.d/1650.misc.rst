@@ -1,0 +1,2 @@
+Removed an outdated warning that the tz tox environments modify the repository.
+Fixed by @pganssle (gh pr #1650).

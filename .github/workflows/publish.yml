@@ -8,6 +8,13 @@
 #
 # It is done this way until PyPI has draft reviews, to allow for a two-stage
 # upload with a chance for manual intervention before the final publication.
+#
+# Nothing is uploaded unless the validate workflow passes first, including
+# installing the built sdist and wheel on every supported version of Python.
+#
+# Uploads use PyPI trusted publishing (OIDC), so no API tokens are stored as
+# secrets. The trusted publisher on both PyPI and Test PyPI must be configured
+# with workflow "publish.yml" and environment "release".
 name: Upload package
 
 on:
@@ -18,46 +25,36 @@ on:
       - '*'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
-  deploy:
+  # Run the full validation suite, including installing the sdist on every
+  # supported Python. This builds the distributions that are uploaded below,
+  # so the files that get published are exactly the files that were tested.
+  validate:
+    # Reusable workflows resolve at the caller's commit, not from the workspace.
+    uses: ./.github/workflows/validate.yml # zizmor: ignore[self-repository]
+    with:
+      release: true
+
+  publish:
+    needs: validate
     runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      id-token: write  # Required for trusted publishing
     steps:
-    - uses: actions/checkout@v7
-    - name: Set up Python
-      uses: actions/setup-python@v7
+    - name: Download distributions
+      uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
       with:
-        python-version: '3.9'
-    - name: Run updatezinfo.py (Unix)
-      run: |
-        python -m venv venv
-        venv/bin/pip install -e .
-        ./ci_tools/retry.sh venv/bin/python updatezinfo.py
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -U tox
-    - name: Create tox environments
-      run: |
-        tox -p -e py,build,release --notest
-    - name: Run tests
-      run: |
-        tox -e py
-    - name: Build package
-      run: |
-        tox -e build
-    - name: Publish package
-      env:
-        TWINE_USERNAME: "__token__"
-      run: |
-        if [[ "$GITHUB_EVENT_NAME" == "push" || \
-              "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]]; then
-          export TWINE_REPOSITORY_URL="https://test.pypi.org/legacy/"
-          export TWINE_PASSWORD="${{ secrets.TEST_PYPI_UPLOAD_TOKEN }}"
-        elif [[ "$GITHUB_EVENT_NAME" == "release" ]]; then
-          export TWINE_REPOSITORY="pypi"
-          export TWINE_PASSWORD="${{ secrets.PYPI_UPLOAD_TOKEN }}"
-        else
-          echo "Unknown event name: ${GITHUB_EVENT_NAME}"
-          exit 1
-        fi
-        tox -e release
+        name: dist
+        path: dist/
+    - name: Publish package to Test PyPI
+      if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+      uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
+      with:
+        repository-url: https://test.pypi.org/legacy/
+    - name: Publish package to PyPI
+      if: github.event_name == 'release'
+      uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3

@@ -3,7 +3,7 @@ Common code used in multiple modules.
 """
 
 
-class weekday(object):
+class weekday:
     __slots__ = ["weekday", "n"]
 
     def __init__(self, weekday, n=None):
@@ -30,13 +30,9 @@ class weekday(object):
           self.n,
         ))
 
-    def __ne__(self, other):
-        return not (self == other)
-
     def __getstate__(self):
-        # PyPy 2.7 will not pickle a slots class that has no __getstate__.
-        # This is the (instance dict, slot dict) pair CPython already produces,
-        # so existing pickles still load through pickle's default builder.
+        # PyPy will not pickle a slots class that has no __getstate__.
+        # This is the (instance dict, slot dict) pair CPython already produces.
         slotstate = {}
         for name in self.__slots__:
             slotstate[name] = getattr(self, name)
