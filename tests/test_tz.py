@@ -1570,8 +1570,8 @@ class TZStrTest(unittest.TestCase, TzFoldMixin):
         # tzstr docstring). glibc accepts these; tzstr used to raise
         # "unknown string format" instead.
         for tz_string, offset in (
-            ('LMT-0:14:44', timedelta(seconds=884)),
-            ('AAA0:17:15', timedelta(hours=-0, minutes=-17, seconds=-15)),
+            ("LMT-0:14:44", timedelta(seconds=884)),
+            ("AAA0:17:15", timedelta(hours=-0, minutes=-17, seconds=-15)),
         ):
             with self.subTest(tz_string=tz_string):
                 zone = tz.tzstr(tz_string)
@@ -1581,18 +1581,26 @@ class TZStrTest(unittest.TestCase, TzFoldMixin):
                 )
 
         # Explicit DST offset with seconds
-        TZ1 = tz.tzstr('AAA5BBB-6:44:30,M3.2.0/2,M11.1.0/2')
-        self.assertEqual(datetime(2026, 1, 15, 12, tzinfo=TZ1).utcoffset(),
-                         timedelta(hours=-5))
-        self.assertEqual(datetime(2026, 7, 15, 12, tzinfo=TZ1).utcoffset(),
-                         timedelta(hours=6, minutes=44, seconds=30))
+        TZ1 = tz.tzstr("AAA5BBB-6:44:30,M3.2.0/2,M11.1.0/2")
+        self.assertEqual(
+            datetime(2026, 1, 15, 12, tzinfo=TZ1).utcoffset(),
+            timedelta(hours=-5),
+        )
+        self.assertEqual(
+            datetime(2026, 7, 15, 12, tzinfo=TZ1).utcoffset(),
+            timedelta(hours=6, minutes=44, seconds=30),
+        )
 
         # Defaulted DST offset (std - 1h) with sub-minute std offset
-        TZ2 = tz.tzstr('AAA0:17:15BBB,M3.2.0,M11.1.0')
-        self.assertEqual(datetime(2026, 1, 15, 12, tzinfo=TZ2).utcoffset(),
-                         timedelta(minutes=-17, seconds=-15))
-        self.assertEqual(datetime(2026, 7, 15, 12, tzinfo=TZ2).utcoffset(),
-                         timedelta(minutes=42, seconds=45))
+        TZ2 = tz.tzstr("AAA0:17:15BBB,M3.2.0,M11.1.0")
+        self.assertEqual(
+            datetime(2026, 1, 15, 12, tzinfo=TZ2).utcoffset(),
+            timedelta(minutes=-17, seconds=-15),
+        )
+        self.assertEqual(
+            datetime(2026, 7, 15, 12, tzinfo=TZ2).utcoffset(),
+            timedelta(minutes=42, seconds=45),
+        )
 
     def testTzStrFailure(self):
         with self.assertRaises(ValueError):

@@ -1429,13 +1429,15 @@ class _tzparser:
                                      int(l[i + 2]) * 60) * signal)
                             used_idxs.append(i)
                             i += 2
-                            if i + 1 < len_l and l[i + 1] == ':':
+                            if i + 1 < len_l and l[i + 1] == ":":
                                 # -03:00:30
                                 used_idxs.append(i)
                                 i += 2
-                                setattr(res, offattr,
-                                         getattr(res, offattr) +
-                                         int(l[i]) * signal)
+                                setattr(
+                                    res,
+                                    offattr,
+                                    getattr(res, offattr) + int(l[i]) * signal,
+                                )
                         elif len_li <= 2:
                             # -[0]3
                             setattr(res, offattr,
