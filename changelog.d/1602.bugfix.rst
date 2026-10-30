@@ -1,0 +1,3 @@
+Fixed pickling of tzical time zones. Those objects hold a thread lock, so
+pickle raised TypeError. Reported by @daniele-athome (gh issue #1242).
+Fixed by @Cherith1222 (gh pr #1602).

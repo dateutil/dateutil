@@ -27,6 +27,7 @@ from dateutil.rrule import (
     rrule,
     rruleset,
     rrulestr,
+    weekday,
 )
 
 
@@ -5091,3 +5092,17 @@ def test_roundtrip_cache_setting_smoke(roundtrip, kind, state):
         assert restored._cache is None
     assert original._cache == original_cache
     assert list(restored) == list(original)
+
+
+@pytest.mark.parametrize("protocol", list(range(pickle.HIGHEST_PROTOCOL + 1)))
+@pytest.mark.parametrize(
+    "original",
+    [weekday(1), weekday(1, 2)],
+    ids=["without_n", "with_n"],
+)
+def test_weekday_pickle_protocols(original, protocol):
+    restored = pickle.loads(pickle.dumps(original, protocol))
+    assert restored == original
+    assert restored.weekday == original.weekday
+    assert restored.n == original.n
+    assert type(restored) is weekday

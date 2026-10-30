@@ -2467,10 +2467,40 @@ class TzPickleTest(PicklableMixin, unittest.TestCase):
         tzc = tz.tzfile(BytesIO(base64.b64decode(NEW_YORK)))
         self.assertPicklable(tzc)
 
-    @unittest.skip("Known failure")
-    def testPickleTzICal(self):
+    def testPickleTzICalRoundTrip(self):
+        # GH #1242. tzical equality is undefined, so this checks the offsets
+        # instead of assertPicklable.
         tzc = tz.tzical(StringIO(TZICAL_EST5EDT)).get()
-        self.assertPicklable(tzc)
+
+        def get_dts(tzi):
+            return [
+                datetime(2003, 1, 15, 12, tzinfo=tzi),
+                datetime(2003, 7, 15, 12, tzinfo=tzi),
+                tz.enfold(datetime(2003, 10, 26, 1, 30, tzinfo=tzi)),
+            ]
+
+        # Populate the timezone and rrule caches before pickling
+        expected = [
+            (dt.utcoffset(), dt.dst(), dt.tzname()) for dt in get_dts(tzc)
+        ]
+        self.assertTrue(tzc._cachedate)
+        self.assertTrue(tzc._cachecomp)
+
+        get_nobj = self._get_nobj_file if self._asfile else self._get_nobj_bytes
+        ntzc = get_nobj(tzc, {}, {})
+        self.assertIsNot(tzc, ntzc)
+        self.assertEqual(repr(ntzc), repr(tzc))
+        self.assertEqual(ntzc._cachedate, [])
+        self.assertEqual(ntzc._cachecomp, [])
+
+        actual = [
+            (dt.utcoffset(), dt.dst(), dt.tzname()) for dt in get_dts(ntzc)
+        ]
+        self.assertEqual(actual, expected)
+
+        ndt = get_nobj(datetime(2003, 7, 15, 12, tzinfo=tzc), {}, {})
+        self.assertEqual(ndt.utcoffset(), timedelta(hours=-4))
+        self.assertEqual(ndt.tzname(), "EDT")
 
     @requires_tzdata
     def testPickleZoneFileGettz(self):

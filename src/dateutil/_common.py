@@ -30,6 +30,19 @@ class weekday:
           self.n,
         ))
 
+    def __getstate__(self):
+        # PyPy will not pickle a slots class that has no __getstate__.
+        # This is the (instance dict, slot dict) pair CPython already produces.
+        slotstate = {}
+        for name in self.__slots__:
+            slotstate[name] = getattr(self, name)
+        inst_dict = getattr(self, "__dict__", None)
+        if inst_dict:
+            inst_dict = inst_dict.copy()
+        else:
+            inst_dict = None
+        return (inst_dict, slotstate)
+
     def __repr__(self):
         s = ("MO", "TU", "WE", "TH", "FR", "SA", "SU")[self.weekday]
         if not self.n:
