@@ -977,7 +977,6 @@ class rrule(rrulebase):
                  self._bysecond and second not in self._bysecond)):
                 timeset = ()
             else:
-                assert gettimeset is not None
                 timeset = gettimeset(hour, minute, second)
 
         total = 0
@@ -1126,7 +1125,6 @@ class rrule(rrulebase):
                     day += ndays
                     fixday = True
 
-                assert gettimeset is not None
                 timeset = gettimeset(hour, minute, second)
             elif freq == MINUTELY:
                 if filtered:
@@ -1159,7 +1157,6 @@ class rrule(rrulebase):
                     raise ValueError('Invalid combination of interval and ' +
                                      'byhour resulting in empty rule.')
 
-                assert gettimeset is not None
                 timeset = gettimeset(hour, minute, second)
             elif freq == SECONDLY:
                 if filtered:
@@ -1198,7 +1195,6 @@ class rrule(rrulebase):
                                      'byhour and byminute resulting in empty' +
                                      ' rule.')
 
-                assert gettimeset is not None
                 timeset = gettimeset(hour, minute, second)
 
             if fixday and day > 28:
