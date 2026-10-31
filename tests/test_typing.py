@@ -5,9 +5,12 @@ from __future__ import annotations
 import datetime
 import decimal
 import importlib.resources
+import inspect
 import io
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from typing import Generic, TypeVar, assert_type
+
+import pytest
 
 from dateutil import parser, relativedelta, rrule, tz, utils
 
@@ -88,6 +91,22 @@ def test_iso_parser_minimal_streams_and_bytearray() -> None:
     assert parser.isoparse(ReadOnly(bytearray(b"2024-01-01"))) == expected
     assert_type(parser.isoparser().parse_isodate(b"2024-01-01"), datetime.date)
     assert_type(parser.isoparser().parse_isotime("12:00"), datetime.time)
+
+
+@pytest.mark.parametrize(
+    "method",
+    [
+        parser.isoparser.isoparse,
+        parser.isoparser.parse_isodate,
+        parser.isoparser.parse_isotime,
+        parser.isoparser.parse_tzstr,
+    ],
+)
+def test_iso_parser_signatures_show_accepted_inputs(
+    method: Callable[..., object],
+) -> None:
+    _, input_param, *_ = inspect.signature(method).parameters.values()
+    assert input_param.annotation.startswith("str | bytes | bytearray")
 
 
 def test_utilities_preserve_structural_operand_types() -> None:

@@ -10,6 +10,7 @@ ISO-8601 specification.
 from __future__ import annotations
 
 import calendar
+import inspect
 import re
 from datetime import date, datetime, time, timedelta
 from functools import wraps
@@ -64,6 +65,21 @@ def _takes_ascii(
                 raise ValueError(msg) from e
 
         return f(self, ascii_in, *args, **kwargs)
+
+    # Document the accepted input types (_AsciiInput) rather than the bytes
+    # that ``f`` receives.
+    signature = inspect.signature(f)
+    self_param, input_param, *params = signature.parameters.values()
+    input_param = input_param.replace(
+        annotation=(
+            "str | bytes | bytearray | "
+            "_typing._ReadAll[str | bytes | bytearray]"
+        )
+    )
+    # pyrefly: ignore[missing-attribute]
+    func.__signature__ = signature.replace(
+        parameters=[self_param, input_param, *params]
+    )
 
     return func
 
