@@ -1640,10 +1640,12 @@ class _rrulestr:
             forceset = True
             unfold = True
 
-        TZID_NAMES = dict(map(
-            lambda x: (x.upper(), x),
-            re.findall('TZID=(?P<name>[^:]+):', s)
-        ))
+        TZID_NAMES = dict(
+            map(
+                lambda x: (x.upper(), x),
+                re.findall(r"TZID=(?P<name>[^:;]+)", s, re.IGNORECASE),
+            )
+        )
         s = s.upper()
         if not s.strip():
             raise ValueError("empty string")
