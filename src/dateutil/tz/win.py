@@ -113,7 +113,8 @@ class tzres:
         resource = self.p_wchar()
         lpBuffer = ctypes.cast(ctypes.byref(resource), wintypes.LPWSTR)
         nchar = self.LoadStringW(self._tzres_handle, offset, lpBuffer, 0)
-        return ctypes.wstring_at(resource, nchar)
+        # Slicing a c_wchar pointer returns a str, not a list.
+        return resource[:nchar]  # pyrefly: ignore[bad-return]
 
     def name_from_string(self, tzname_str: str) -> str:
         """
