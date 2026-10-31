@@ -1368,7 +1368,7 @@ class parser:
             # i.e. no timezone information was found.
             aware = naive
 
-        elif res.tzname:
+        else:
             # tz-like string was parsed but we don't know what to do
             # with it
             warnings.warn("tzname {tzname} identified but not understood.  "
@@ -1378,9 +1378,6 @@ class parser:
                           "exception.".format(tzname=res.tzname),
                           category=UnknownTimezoneWarning)
             aware = naive
-
-        else:  # All combinations of tzname and tzoffset are handled above.
-            raise AssertionError("unreachable timezone state")
 
         return aware
 
