@@ -238,13 +238,18 @@ class FailingSecondsOverride(float):
         raise TypeError("Use the numeric offset")
 
 
-def test_timezone_numeric_subclass_offset_precedence() -> None:
-    for offset, expected in (
+@pytest.mark.parametrize(
+    ("offset", "expected"),
+    [
         (SecondsOverride(3600), datetime.timedelta(seconds=5400)),
         (FailingSecondsOverride(3600), datetime.timedelta(seconds=3600)),
-    ):
-        assert (
-            tz.tzoffset(type(offset).__name__, offset).utcoffset(None)
-            == expected
-        )
-        assert tz.tzrange("custom", offset).utcoffset(None) == expected
+    ],
+    ids=["total_seconds", "numeric_fallback"],
+)
+def test_timezone_numeric_subclass_offset_precedence(
+    offset: float, expected: datetime.timedelta
+) -> None:
+    assert (
+        tz.tzoffset(type(offset).__name__, offset).utcoffset(None) == expected
+    )
+    assert tz.tzrange("custom", offset).utcoffset(None) == expected
