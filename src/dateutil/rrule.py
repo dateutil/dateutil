@@ -1717,11 +1717,9 @@ class _rrulestr:
         if not parser:
             from dateutil import parser
         try:
-            rrkwargs["until"] = parser.parse(
-                value,
-                ignoretz=kwargs.get("ignoretz"),
-                tzinfos=kwargs.get("tzinfos"),
-            )
+            rrkwargs["until"] = parser.parse(value,
+                                             ignoretz=kwargs.get("ignoretz"),
+                                             tzinfos=kwargs.get("tzinfos"))
         except ValueError:
             raise ValueError("invalid until date")
 
@@ -1958,12 +1956,10 @@ class _rrulestr:
                                                      tzinfos=tzinfos))
                 for value in rdatevals:
                     assert parser is not None
-                    for datestr in value.split(","):
-                        rset.rdate(
-                            parser.parse(
-                                datestr, ignoretz=ignoretz, tzinfos=tzinfos
-                            )
-                        )
+                    for datestr in value.split(','):
+                        rset.rdate(parser.parse(datestr,
+                                                ignoretz=ignoretz,
+                                                tzinfos=tzinfos))
                 for value in exrulevals:
                     rset.exrule(self._parse_rfc_rrule(value, dtstart=dtstart,
                                                       ignoretz=ignoretz,

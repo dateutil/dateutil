@@ -408,11 +408,11 @@ def valuestodict(key: winreg.HKEYType | int) -> Mapping[str, _RegistryValue]:
                 value = value - (1 << 32)
         elif dtype == winreg.REG_SZ:
             # If it's a reference to the tzres DLL, load the actual string
-            if value.startswith("@tzres"):
+            if value.startswith('@tzres'):
                 tz_res = tz_res or tzres()
                 value = tz_res.name_from_string(value)
 
-            value = value.rstrip("\x00")  # Remove trailing nulls
+            value = value.rstrip('\x00')    # Remove trailing nulls
 
         dout[key_name] = value
 

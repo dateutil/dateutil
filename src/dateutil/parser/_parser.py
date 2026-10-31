@@ -208,7 +208,7 @@ class _timelex:
                 seenletters = True
                 if nextchar == '.' or self.isword(nextchar):
                     token += nextchar
-                elif self.isnum(nextchar) and token[-1] == ".":
+                elif self.isnum(nextchar) and token[-1] == '.':
                     token += nextchar
                     state = '0.'
                 else:
@@ -220,7 +220,7 @@ class _timelex:
                 # break up the tokens later.
                 if nextchar == '.' or self.isnum(nextchar):
                     token += nextchar
-                elif self.isword(nextchar) and token[-1] == ".":
+                elif self.isword(nextchar) and token[-1] == '.':
                     token += nextchar
                     state = 'a.'
                 else:
@@ -239,8 +239,8 @@ class _timelex:
                 if tok:
                     self.tokenstack.append(tok)
 
-        if state == "0." and token.count(".") == 0:
-            token = token.replace(",", ".")
+        if state == '0.' and token.count('.') == 0:
+            token = token.replace(',', '.')
 
         return token
 
@@ -1106,7 +1106,7 @@ class parser:
                     value = info.month(tokens[idx + 2])
 
                     if value is not None:
-                        ymd.append(value, "M")
+                        ymd.append(value, 'M')
                     else:
                         raise ValueError()
 
@@ -1115,7 +1115,7 @@ class parser:
                     value = info.month(tokens[idx + 4])
 
                     if value is not None:
-                        ymd.append(value, "M")
+                        ymd.append(value, 'M')
                     else:
                         ymd.append(tokens[idx + 4])
                     idx += 2
