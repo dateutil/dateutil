@@ -7,14 +7,18 @@ TYPE_CHECKING = False
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
+    TZPATH: Sequence[str]
+
 reset_tzpath = zoneinfo.reset_tzpath
 InvalidTZPathWarning = zoneinfo.InvalidTZPathWarning
 
 
-def __getattr__(name: str) -> Sequence[str]:
-    if name == "TZPATH":
-        return zoneinfo.TZPATH
-    else:
-        raise AttributeError(
-            "Module %s has no attribute %s" % (repr(__name__), repr(name))
-        )
+if not TYPE_CHECKING:
+
+    def __getattr__(name: str) -> Sequence[str]:
+        if name == "TZPATH":
+            return zoneinfo.TZPATH
+        else:
+            raise AttributeError(
+                "Module %s has no attribute %s" % (repr(__name__), repr(name))
+            )

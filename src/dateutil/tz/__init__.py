@@ -10,6 +10,8 @@ TYPE_CHECKING = False
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
+    TZPATH: Sequence[str]
+
 __all__ = [
     "tzutc",
     "tzoffset",
@@ -34,13 +36,15 @@ __all__ = [
 ]
 
 
-def __getattr__(name: str) -> Sequence[str]:
-    if name == "TZPATH":
-        return _tzpath.TZPATH
-    else:
-        raise AttributeError(
-            "Module %s has no attribute %s" % (repr(__name__), repr(name))
-        )
+if not TYPE_CHECKING:
+
+    def __getattr__(name: str) -> Sequence[str]:
+        if name == "TZPATH":
+            return _tzpath.TZPATH
+        else:
+            raise AttributeError(
+                "Module %s has no attribute %s" % (repr(__name__), repr(name))
+            )
 
 
 def __dir__() -> Sequence[str]:
