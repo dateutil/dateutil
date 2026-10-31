@@ -11,8 +11,7 @@ from ._common import weekday
 TYPE_CHECKING = False
 
 if TYPE_CHECKING:
-    import types
-    from typing import Self, SupportsFloat, SupportsIndex, TypeVar, overload
+    from typing import Self, SupportsFloat, TypeVar, overload
 
     from . import _typing
 
@@ -376,14 +375,9 @@ class relativedelta:
         @overload
         def __add__(self, other: datetime.date) -> datetime.date: ...
 
-        @overload
-        def __add__(
-            self, other: object
-        ) -> Self | datetime.date | types.NotImplementedType: ...
-
     def __add__(
-        self, other: object
-    ) -> Self | datetime.date | types.NotImplementedType:
+        self, other: relativedelta | datetime.timedelta | datetime.date
+    ) -> Self | datetime.date:
         if isinstance(other, relativedelta):
             return self.__class__(years=other.years + self.years,
                                  months=other.months + self.months,
@@ -483,14 +477,9 @@ class relativedelta:
         @overload
         def __radd__(self, other: datetime.date) -> datetime.date: ...
 
-        @overload
-        def __radd__(
-            self, other: object
-        ) -> Self | datetime.date | types.NotImplementedType: ...
-
     def __radd__(
-        self, other: object
-    ) -> Self | datetime.date | types.NotImplementedType:
+        self, other: relativedelta | datetime.timedelta | datetime.date
+    ) -> Self | datetime.date:
         return self.__add__(other)
 
     if TYPE_CHECKING:
@@ -506,14 +495,9 @@ class relativedelta:
         @overload
         def __rsub__(self, other: datetime.date) -> datetime.date: ...
 
-        @overload
-        def __rsub__(
-            self, other: object
-        ) -> Self | datetime.date | types.NotImplementedType: ...
-
     def __rsub__(
-        self, other: object
-    ) -> Self | datetime.date | types.NotImplementedType:
+        self, other: relativedelta | datetime.timedelta | datetime.date
+    ) -> Self | datetime.date:
         return self.__neg__().__radd__(other)
 
     def __sub__(self, other: relativedelta) -> Self:

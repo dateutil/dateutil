@@ -211,12 +211,21 @@ def test_fromutc_preserves_datetime_subclasses() -> None:
     assert converted == DatetimeSubclass(2024, 1, 1, 1, tzinfo=fixed)
 
 
-def test_relative_delta_returns_not_implemented_for_unknown_operands() -> None:
+def test_relative_delta_rejects_unsupported_operands() -> None:
+    # The type check reports unused suppressions, so each one asserts that
+    # the expression is rejected.
     delta = relativedelta.relativedelta(days=1)
-    other = object()
-    assert delta.__add__(other) is NotImplemented
-    assert delta.__radd__(other) is NotImplemented
-    assert delta.__rsub__(other) is NotImplemented
+    with pytest.raises(TypeError):
+        delta + "x"  # pyrefly: ignore[unsupported-operation]
+    with pytest.raises(TypeError):
+        "x" + delta  # pyrefly: ignore[unsupported-operation]
+    with pytest.raises(TypeError):
+        delta + 5  # pyrefly: ignore[unsupported-operation]
+    with pytest.raises(TypeError):
+        5 - delta  # pyrefly: ignore[unsupported-operation]
+    # Scaling converts the operand with float(), but strings are not part of
+    # the interface.
+    delta * "2"  # pyrefly: ignore[unsupported-operation]
 
 
 class SecondsOverride(float):

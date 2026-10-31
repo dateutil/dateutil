@@ -88,6 +88,10 @@ project-excludes = ["src/dateutil/tz/win.py"]
 search-path = ["src"]
 python-version = "3.11"
 
+[tool.pyrefly.errors]
+# Suppressions in tests/test_typing.py mark code that must be rejected.
+unused-ignore = "error"
+
 
 [tool.isort]
 atomic=true
