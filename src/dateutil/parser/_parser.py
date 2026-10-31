@@ -212,6 +212,8 @@ class _timelex:
 
 class _resultbase:
 
+    __slots__ = ()
+
     def __init__(self):
         for attr in self.__slots__:
             setattr(self, attr, None)
@@ -636,7 +638,7 @@ class parser:
         if res is None:
             raise ParserError("Unknown string format: %s", timestr)
 
-        if len(res) == 0:
+        if len(res) == 1 and res.century_specified is False:
             raise ParserError("String does not contain a date: %s", timestr)
 
         try:
@@ -655,7 +657,8 @@ class parser:
     class _result(_resultbase):
         __slots__ = ["year", "month", "day", "weekday",
                      "hour", "minute", "second", "microsecond",
-                     "tzname", "tzoffset", "ampm","any_unused_tokens"]
+                     "century_specified", "tzname", "tzoffset", "ampm",
+                     "any_unused_tokens"]
 
     def _parse(self, timestr, dayfirst=None, yearfirst=None, fuzzy=False,
                fuzzy_with_tokens=False):
@@ -1367,7 +1370,7 @@ class _tzparser:
     class _result(_resultbase):
 
         __slots__ = ["stdabbr", "stdoffset", "dstabbr", "dstoffset",
-                     "start", "end"]
+                     "start", "end", "any_unused_tokens"]
 
         class _attr(_resultbase):
             __slots__ = ["month", "week", "weekday",
