@@ -42,6 +42,7 @@ if TYPE_CHECKING:
         TypedDict,
         TypeVar,
         Unpack,
+        cast,
         overload,
     )
 
@@ -989,7 +990,12 @@ class rrule(rrulebase):
             # Do the "hard" work ;-)
             filtered = False
             wnomask = ii.wnomask
-            for i in range(start, end):
+            if TYPE_CHECKING:
+                # Before filtering, the day set slice holds only day indices.
+                days = cast(list[int], dayset[start:end])
+            else:
+                days = dayset[start:end]
+            for i in days:
                 if (
                     (bymonth and ii.mmask[i] not in bymonth)
                     or (wnomask is not None and not wnomask[i])
