@@ -183,7 +183,7 @@ class tzfile(_tzinfo):
             if filename is not None:
                 self._filename = filename
             elif hasattr(fileobj, "name"):
-                self._filename = getattr(fileobj, "name")
+                self._filename = fileobj.name
             elif key is not None:
                 self._filename = key
             else:
@@ -745,7 +745,7 @@ def _is_seekable(fobj: _typing._Reader[bytes]) -> bool:
 
     # For anything backed by a file descriptor, only trust regular files.
     try:
-        fd = getattr(fobj, "fileno")()
+        fd = fobj.fileno()  # pyrefly: ignore[missing-attribute]
     except (AttributeError, OSError, ValueError):
         # io.UnsupportedOperation (e.g. from BytesIO) is both of the latter
         return True

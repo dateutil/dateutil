@@ -1544,10 +1544,10 @@ class rruleset(rrulebase):
             return self.dt > other.dt
 
         def __eq__(self, other: object) -> bool:
-            return self.dt == getattr(other, "dt")
+            return self.dt == other.dt  # pyrefly: ignore[missing-attribute]
 
         def __ne__(self, other: object) -> bool:
-            return self.dt != getattr(other, "dt")
+            return self.dt != other.dt  # pyrefly: ignore[missing-attribute]
 
     def __init__(self, cache: bool | None = False) -> None:
         super().__init__(cache)

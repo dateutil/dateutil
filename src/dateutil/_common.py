@@ -27,9 +27,8 @@ class weekday:
     def __eq__(self, other: object) -> bool:
         # Equality deliberately accepts unrelated objects with these attributes.
         try:
-            if self.weekday != getattr(other, "weekday") or self.n != getattr(
-                other, "n"
-            ):
+            # pyrefly: ignore[missing-attribute]
+            if self.weekday != other.weekday or self.n != other.n:
                 return False
         except AttributeError:
             return False

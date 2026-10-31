@@ -194,7 +194,8 @@ def get_zonefile_instance(new_instance: bool = False) -> ZoneInfoFile:
     if zif is None:
         zif = ZoneInfoFile()
 
-        setattr(get_zonefile_instance, "_cached_instance", zif)
+        # pyrefly: ignore[missing-attribute]
+        get_zonefile_instance._cached_instance = zif
 
     return zif
 
