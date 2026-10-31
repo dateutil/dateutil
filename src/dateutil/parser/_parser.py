@@ -248,6 +248,21 @@ class parserinfo:
         (e.g. 01/05/09) as the year. If ``True``, the first number is taken
         to be the year, otherwise the last number is taken to be the year.
         Default is ``False``.
+
+    :param dmy_dayfirst:
+        Whether to interpret an ambiguous 3-integer date with year last as
+        DMY. Eg.: 01/02/99 will be interpreted as DD/MM/YY if this is True.
+        This does not change the interpretation of the ambiguous YYYY-MM-DD
+        style dates which will still be interpreted as day last by default.
+        Default is ``False``.
+
+    :param ymd_dayfirst:
+        Whether to interpret an ambiguous 3-integer date with year first as
+        YMD. Eg.: 1999-02-01 will be interpreted as YYYY-DD-MM if this is
+        True. This does not change the interpretation of the ambiguous
+        MM/DD/YY style dates which will still be interpreted as day last
+        by default.
+        Default is ``False``.
     """
 
     # m from a.m/p.m, t from ISO T separator
@@ -285,7 +300,7 @@ class parserinfo:
     # TODO: ERA = ["AD", "BC", "CE", "BCE", "Stardate",
     #              "Anno Domini", "Year of Our Lord"]
 
-    def __init__(self, dayfirst=False, yearfirst=False):
+    def __init__(self, dayfirst=False, yearfirst=False, dmy_dayfirst=False, ymd_dayfirst=False):
         self._jump = self._convert(self.JUMP)
         self._weekdays = self._convert(self.WEEKDAYS)
         self._months = self._convert(self.MONTHS)
@@ -296,6 +311,8 @@ class parserinfo:
 
         self.dayfirst = dayfirst
         self.yearfirst = yearfirst
+        self.dmy_dayfirst = dmy_dayfirst
+        self.ymd_dayfirst = ymd_dayfirst
 
         self._year = time.localtime().tm_year
         self._century = self._year // 100 * 100
@@ -465,7 +482,7 @@ class _ymd(list):
         out = {key: self[strids[key]] for key in strids}
         return (out.get('y'), out.get('m'), out.get('d'))
 
-    def resolve_ymd(self, yearfirst, dayfirst):
+    def resolve_ymd(self, yearfirst, dayfirst, ymd_dayfirst, dmy_dayfirst):
         len_ymd = len(self)
         year, month, day = (None, None, None)
 
@@ -545,11 +562,11 @@ class _ymd(list):
                     self.ystridx == 0 or
                         (yearfirst and self[1] <= 12 and self[2] <= 31)):
                     # 99-01-01
-                    if dayfirst and self[2] <= 12:
+                    if (ymd_dayfirst or dayfirst) and self[2] <= 12:
                         year, day, month = self
                     else:
                         year, month, day = self
-                elif self[0] > 12 or (dayfirst and self[1] <= 12):
+                elif self[0] > 12 or ((dmy_dayfirst or dayfirst) and self[1] <= 12):
                     # 13-01-01
                     day, month, year = self
                 else:
@@ -658,7 +675,7 @@ class parser:
                      "tzname", "tzoffset", "ampm","any_unused_tokens"]
 
     def _parse(self, timestr, dayfirst=None, yearfirst=None, fuzzy=False,
-               fuzzy_with_tokens=False):
+               fuzzy_with_tokens=False, ymd_dayfirst=None, dmy_dayfirst=None):
         """
         Private method which performs the heavy lifting of parsing, called from
         ``parse()``, which passes on its ``kwargs`` to this function.
@@ -680,6 +697,19 @@ class parser:
             to be the year, otherwise the last number is taken to be the year.
             If this is set to ``None``, the value is retrieved from the current
             :class:`parserinfo` object (which itself defaults to ``False``).
+
+        :param dmy_dayfirst:
+            Whether to interpret an ambiguous 3-integer date with year last as
+            DMY. Eg.: 01/02/99 will be interpreted as DD/MM/YY if this is True.
+            This does not change the interpretation of the ambiguous YYYY-MM-DD
+            style dates which will still be interpreted as day last by default.
+
+        :param ymd_dayfirst:
+            Whether to interpret an ambiguous 3-integer date with year first as
+            YMD. Eg.: 1999-02-01 will be interpreted as YYYY-DD-MM if this is
+            True. This does not change the interpretation of the ambiguous
+            MM/DD/YY style dates which will still be interpreted as day last
+            by default.
 
         :param fuzzy:
             Whether to allow fuzzy parsing, allowing for string like "Today is
@@ -708,6 +738,12 @@ class parser:
 
         if yearfirst is None:
             yearfirst = info.yearfirst
+
+        if ymd_dayfirst is None:
+            ymd_dayfirst = info.ymd_dayfirst
+
+        if dmy_dayfirst is None:
+            dmy_dayfirst = info.dmy_dayfirst
 
         res = self._result()
         l = _timelex.split(timestr)         # Splits the timestr into tokens
@@ -847,7 +883,7 @@ class parser:
                 i += 1
 
             # Process year/month/day
-            year, month, day = ymd.resolve_ymd(yearfirst, dayfirst)
+            year, month, day = ymd.resolve_ymd(yearfirst, dayfirst, ymd_dayfirst, dmy_dayfirst)
 
             res.century_specified = ymd.century_specified
             res.year = year
