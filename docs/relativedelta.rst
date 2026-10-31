@@ -218,3 +218,13 @@ We can use the non-leap year day to ignore this:
 
     >>> date(2000, 1, 1)+relativedelta(nlyearday=260)
     datetime.date(2000, 9, 17)
+
+We can use milliseconds with relativedelta:
+
+.. doctest:: relativedelta
+
+    >>> NOW+relativedelta(seconds=+1, milliseconds=+1)
+    datetime.datetime(2003, 09, 17, 20, 54, 48, 283310)
+
+    >>> NOW+relativedelta(seconds=+1, milliseconds=+5, microseonds=+1)
+    datetime.datetime(2003, 09, 17, 20, 54, 48, 287311)
