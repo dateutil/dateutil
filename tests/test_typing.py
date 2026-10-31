@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import datetime
+import decimal
 import importlib.resources
 import io
 from collections.abc import Sequence
@@ -106,7 +107,7 @@ def test_utilities_preserve_structural_operand_types() -> None:
 
 def test_relative_delta_fractional_units_and_structural_weekday() -> None:
     delta = relativedelta.relativedelta(days=1.5, weekday=Monday())
-    scaled = delta * "2"
+    scaled = delta * decimal.Decimal(2)
     assert_type(scaled, relativedelta.relativedelta)
     assert scaled.days == 3
     result = datetime.datetime(2024, 1, 1) + delta

@@ -569,9 +569,7 @@ class relativedelta:
                     self.second is None and
                     self.microsecond is None)
 
-    def __mul__(
-        self, other: SupportsFloat | SupportsIndex | str | bytes | bytearray
-    ) -> Self:
+    def __mul__(self, other: SupportsFloat) -> Self:
         try:
             f = float(other)
         except TypeError:
@@ -643,9 +641,7 @@ class relativedelta:
             self.microsecond,
         ))
 
-    def __truediv__(
-        self, other: SupportsFloat | SupportsIndex | str | bytes | bytearray
-    ) -> Self:
+    def __truediv__(self, other: SupportsFloat) -> Self:
         try:
             reciprocal = 1 / float(other)
         except TypeError:
