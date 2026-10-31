@@ -960,10 +960,9 @@ class rrule(rrulebase):
                      MINUTELY: ii.ddayset,
                      SECONDLY: ii.ddayset}[freq]
 
-        gettimeset: (
-            Callable[[int, int, int], Sequence[datetime.time]] | None
-        ) = None
         if freq < HOURLY:
+            # Only called for HOURLY and finer, but always bound to a callable.
+            gettimeset = ii.htimeset
             timeset = self._timeset
             assert timeset is not None
         else:
