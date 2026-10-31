@@ -856,12 +856,11 @@ class tzical:
         comps = []
         invtz = False
         comptype = None
-        # BEGIN initializes these before any component properties or END.
-        founddtstart: bool
-        tzoffsetfrom: int | None
-        tzoffsetto: int | None
-        rrulelines: list[str]
-        tzname: str | None
+        founddtstart = False
+        tzoffsetfrom: int | None = None
+        tzoffsetto: int | None = None
+        rrulelines: list[str] = []
+        tzname: str | None = None
         for line in lines:
             if not line:
                 continue
@@ -897,32 +896,24 @@ class tzical:
                         self._vtz[tzid] = _tzicalvtz(tzid, comps)
                         invtz = False
                     elif value == comptype:
-                        if not founddtstart:  # pyrefly: ignore[unbound-name]
+                        if not founddtstart:
                             raise ValueError("mandatory DTSTART not found")
-                        if (
-                            tzoffsetfrom  # pyrefly: ignore[unbound-name]
-                            is None
-                        ):
-                            raise ValueError("mandatory TZOFFSETFROM not found")
-                        if tzoffsetto is None:  # pyrefly: ignore[unbound-name]
+                        if tzoffsetfrom is None:
+                            raise ValueError(
+                                "mandatory TZOFFSETFROM not found")
+                        if tzoffsetto is None:
                             raise ValueError(
                                 "mandatory TZOFFSETFROM not found")
                         # Process component
                         rr = None
-                        if rrulelines:  # pyrefly: ignore[unbound-name]
-                            rr = rrule.rrulestr(
-                                "\n".join(rrulelines),
-                                compatible=True,
-                                ignoretz=True,
-                                cache=True,
-                            )
-                        comp = _tzicalvtzcomp(
-                            tzoffsetfrom,
-                            tzoffsetto,
-                            (comptype == "DAYLIGHT"),
-                            tzname,  # pyrefly: ignore[unbound-name]
-                            rr,
-                        )
+                        if rrulelines:
+                            rr = rrule.rrulestr("\n".join(rrulelines),
+                                                compatible=True,
+                                                ignoretz=True,
+                                                cache=True)
+                        comp = _tzicalvtzcomp(tzoffsetfrom, tzoffsetto,
+                                              (comptype == "DAYLIGHT"),
+                                              tzname, rr)
                         comps.append(comp)
                         comptype = None
                     else:
@@ -936,10 +927,10 @@ class tzical:
                                 msg = ('Unsupported DTSTART param in ' +
                                        'VTIMEZONE: ' + parm)
                                 raise ValueError(msg)
-                        rrulelines.append(line)  # pyrefly: ignore[unbound-name]
+                        rrulelines.append(line)
                         founddtstart = True
                     elif name in ("RRULE", "RDATE", "EXRULE", "EXDATE"):
-                        rrulelines.append(line)  # pyrefly: ignore[unbound-name]
+                        rrulelines.append(line)
                     elif name == "TZOFFSETFROM":
                         if parms:
                             raise ValueError(
