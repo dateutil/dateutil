@@ -430,7 +430,7 @@ class isoparser:
     def _parse_tzstr(
         self, tzstr: bytes | bytearray, zero_as_utc: bool = True
     ) -> tz.tzoffset | tz.tzutc:
-        if tzstr == b"Z" or tzstr == b"z":
+        if tzstr == b'Z' or tzstr == b'z':
             return tz.UTC
 
         if len(tzstr) not in {3, 5, 6}:

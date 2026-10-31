@@ -70,12 +70,11 @@ class tzres:
 
     .. versionadded:: 2.5.0
     """
-
-    p_wchar = ctypes.POINTER(wintypes.WCHAR)  # Pointer to a wide char
+    p_wchar = ctypes.POINTER(wintypes.WCHAR)        # Pointer to a wide char
 
     def __init__(self, tzres_loc: str = "tzres.dll") -> None:
         # Load the user32 DLL so we can load strings from tzres
-        user32 = ctypes.WinDLL("user32")
+        user32 = ctypes.WinDLL('user32')
 
         # Specify the LoadStringW function
         user32.LoadStringW.argtypes = (wintypes.HINSTANCE,
@@ -166,7 +165,7 @@ class tzwinbase(tzrangebase):
     _dst_base_offset_: datetime.timedelta
 
     def __init__(self) -> None:
-        raise NotImplementedError("tzwinbase is an abstract base class")
+        raise NotImplementedError('tzwinbase is an abstract base class')
 
     def __eq__(self, other: object) -> bool:
         # Compare on all relevant dimensions, including name.
@@ -381,7 +380,7 @@ def picknthweekday(
     minute: int,
     whichweek: int,
 ) -> datetime.datetime:
-    """dayofweek == 0 means Sunday, whichweek 5 means last instance"""
+    """ dayofweek == 0 means Sunday, whichweek 5 means last instance """
     first = datetime.datetime(year, month, 1, hour, minute)
 
     # This will work if dayofweek is ISO weekday (1-7) or Microsoft-style (0-6),

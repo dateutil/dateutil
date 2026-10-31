@@ -488,7 +488,7 @@ class _ymd(list[int]):
                 self.century_specified = True
                 if label not in [None, 'Y']:  # pragma: no cover
                     raise ValueError(label)
-                label = "Y"
+                label = 'Y'
         elif cast("int | Decimal", val) > 100:
             self.century_specified = True
             if label not in [None, 'Y']:  # pragma: no cover
@@ -1206,16 +1206,12 @@ class parser:
         tzoffset: int | None,
         token: str,
     ) -> bool:
-        return (
-            hour is not None
-            and tzname is None
-            and tzoffset is None
-            and len(token) <= 5
-            and (
-                all(x in string.ascii_uppercase for x in token)
-                or token in self.info.UTCZONE
-            )
-        )
+        return (hour is not None and
+                tzname is None and
+                tzoffset is None and
+                len(token) <= 5 and
+                (all(x in string.ascii_uppercase for x in token)
+                 or token in self.info.UTCZONE))
 
     def _ampm_valid(
         self, hour: int | None, ampm: int | None, fuzzy: bool
@@ -1346,7 +1342,7 @@ class parser:
         res: parser._result,
         tzinfos: _TzInfos | None,
     ) -> datetime.datetime:
-        if callable(tzinfos) or (tzinfos and res.tzname in tzinfos):
+        if (callable(tzinfos) or (tzinfos and res.tzname in tzinfos)):
             tzinfo = self._build_tzinfo(tzinfos, res.tzname, res.tzoffset)
             aware = naive.replace(tzinfo=tzinfo)
             aware = self._assign_tzname(aware, res.tzname)

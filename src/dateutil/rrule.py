@@ -393,7 +393,7 @@ class rrulebase:
         inc: bool = False,
         count: int = 1,
     ) -> list[datetime.datetime]:
-        """Returns all the occurrences of the rrule between after and before.
+        """ Returns all the occurrences of the rrule between after and before.
         The inc keyword defines what happens if after and/or before are
         themselves occurrences. With inc=True, they will be included in the
         list, if they are found in the recurrence set."""
@@ -548,7 +548,7 @@ class rrule(rrulebase):
         If given, it must be a boolean value specifying to enable or disable
         caching of results. If you will use the same rrule instance multiple
         times, enabling caching will improve the performance considerably.
-    """
+     """
 
     def __init__(
         self,
@@ -1439,7 +1439,7 @@ class _iterinfo:
         self, year: int, month: int, day: int
     ) -> tuple[list[int | None], int, int]:
         dset: list[int | None] = [None] * self.yearlen
-        start, end = self.mrange[month - 1 : month + 1]
+        start, end = self.mrange[month-1:month+1]
         for i in range(start, end):
             dset[i] = i
         return dset, start, end
@@ -1449,7 +1449,7 @@ class _iterinfo:
     ) -> tuple[list[int | None], int, int]:
         # We need to handle cross-year weeks here.
         dset: list[int | None] = [None] * (self.yearlen + 7)
-        i = datetime.date(year, month, day).toordinal() - self.yearordinal
+        i = datetime.date(year, month, day).toordinal()-self.yearordinal
         start = i
         for j in range(7):
             dset[i] = i
@@ -1681,7 +1681,7 @@ class _rrulestr:
         value: str,
         **kwargs: Unpack[_ParseOptions],
     ) -> None:
-        rrkwargs[name.lower()] = [int(x) for x in value.split(",")]
+        rrkwargs[name.lower()] = [int(x) for x in value.split(',')]
 
     _handle_INTERVAL = _handle_int
     _handle_COUNT = _handle_int
@@ -1774,8 +1774,8 @@ class _rrulestr:
         ignoretz: bool = False,
         tzinfos: _TzInfos | None = None,
     ) -> rrule:
-        if line.find(":") != -1:
-            name, value = line.split(":")
+        if line.find(':') != -1:
+            name, value = line.split(':')
             if name != "RRULE":
                 raise ValueError("unknown parameter name")
         else:
