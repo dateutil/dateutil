@@ -145,7 +145,7 @@ class _timelex:
             return self.tokenstack.pop(0)
 
         seenletters = False
-        token = None
+        token = ""
         state = None
 
         while not self.eof:
@@ -177,7 +177,6 @@ class _timelex:
                 else:
                     break  # emit token
             elif state == 'a':
-                assert token is not None
                 # If we've already started reading a word, we keep reading
                 # letters until we find something that's not part of a word.
                 seenletters = True
@@ -190,7 +189,6 @@ class _timelex:
                     self.charstack.append(nextchar)
                     break  # emit token
             elif state == '0':
-                assert token is not None
                 # If we've already started reading a number, we keep reading
                 # numbers until we find something that doesn't fit.
                 if self.isnum(nextchar):
@@ -202,7 +200,6 @@ class _timelex:
                     self.charstack.append(nextchar)
                     break  # emit token
             elif state == 'a.':
-                assert token is not None
                 # If we've seen some letters and a dot separator, continue
                 # parsing, and the tokens will be broken up later.
                 seenletters = True
@@ -215,7 +212,6 @@ class _timelex:
                     self.charstack.append(nextchar)
                     break  # emit token
             elif state == '0.':
-                assert token is not None
                 # If we've seen at least one dot separator, keep going, we'll
                 # break up the tokens later.
                 if nextchar == '.' or self.isnum(nextchar):
@@ -227,12 +223,11 @@ class _timelex:
                     self.charstack.append(nextchar)
                     break  # emit token
 
-        if token is None:
+        if not token:
             return None
 
-        if state in ("a.", "0.") and (
-            seenletters or token.count(".") > 1 or token[-1] in ".,"
-        ):
+        if (state in ('a.', '0.') and (seenletters or token.count('.') > 1 or
+                                       token[-1] in '.,')):
             l = self._split_decimal.split(token)
             token = l[0]
             for tok in l[1:]:
