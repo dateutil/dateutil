@@ -579,10 +579,12 @@ class rrule(rrulebase):
         super().__init__(cache)
         global easter
         if not dtstart:
-            if until and getattr(until, "tzinfo"):
-                dtstart = datetime.datetime.now(
-                    tz=getattr(until, "tzinfo")
-                ).replace(microsecond=0)
+            # A date has no tzinfo, so a date until without dtstart raises
+            # AttributeError here.
+            # pyrefly: ignore[missing-attribute]
+            if until and until.tzinfo:
+                # pyrefly: ignore[bad-argument-type]
+                dtstart = datetime.datetime.now(tz=until.tzinfo).replace(microsecond=0)
             else:
                 dtstart = datetime.datetime.now().replace(microsecond=0)
         elif not isinstance(dtstart, datetime.datetime):
