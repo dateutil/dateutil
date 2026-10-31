@@ -19,7 +19,6 @@ import weakref
 from collections import OrderedDict
 
 from .. import _tzdata_impl
-from .._common import cast
 from . import _tzpath
 from ._common import _tzinfo, _validate_fromutc_inputs, enfold, tzrangebase
 from ._factories import _TzOffsetFactory, _TzSingleton, _TzStrFactory
@@ -160,10 +159,10 @@ UTC = tzutc()
 
 def _get_seconds(offset: _OffsetT | _typing._TotalSeconds) -> _OffsetT | float:
     try:
-        return getattr(offset, "total_seconds")()
+        return offset.total_seconds()  # pyrefly: ignore[missing-attribute]
     except (TypeError, AttributeError):
         # A numeric subclass may also supply total_seconds; try it first.
-        return cast("_OffsetT", offset)
+        return offset  # pyrefly: ignore[bad-return]
 
 
 class tzoffset(datetime.tzinfo, metaclass=_TzOffsetFactory):

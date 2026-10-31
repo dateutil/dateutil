@@ -16,14 +16,13 @@ import struct
 import winreg
 from ctypes import wintypes
 
-from .._common import cast
 from ._common import tzrangebase
 
 TYPE_CHECKING = False
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
-    from typing import Self, TypeAlias, TypedDict
+    from typing import Self, TypeAlias, TypedDict, cast
 
     _RegistryValue: TypeAlias = str | bytes | int | list[str] | None
 
@@ -420,4 +419,7 @@ def valuestodict(key: winreg.HKEYType | int) -> Mapping[str, _RegistryValue]:
 
 def _tzvaluestodict(key: winreg.HKEYType | int) -> _RegistryValues:
     # Windows specifies the value types for its time zone registry keys.
-    return cast("_RegistryValues", valuestodict(key))
+    if TYPE_CHECKING:
+        return cast(_RegistryValues, valuestodict(key))
+    else:
+        return valuestodict(key)

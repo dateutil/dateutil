@@ -16,14 +16,13 @@ from datetime import date, datetime, time, timedelta
 from functools import wraps
 
 from dateutil import tz
-from dateutil._common import cast
 
 TYPE_CHECKING = False
 
 if TYPE_CHECKING:
     import datetime as _datetime
     from collections.abc import Callable
-    from typing import Concatenate, ParamSpec, TypeAlias, TypeVar
+    from typing import Concatenate, ParamSpec, TypeAlias, TypeVar, cast
 
     from dateutil import _typing
 
@@ -50,10 +49,9 @@ def _takes_ascii(
         **kwargs: _P.kwargs,
     ) -> _R:
         # If it's a stream, read the whole thing
-        ascii_in = cast(
-            "str | bytes | bytearray",
-            getattr(str_in, "read", lambda: str_in)(),
-        )
+        ascii_in = getattr(str_in, "read", lambda: str_in)()
+        if TYPE_CHECKING:
+            ascii_in = cast(str | bytes | bytearray, ascii_in)
 
         # If it's unicode, turn it into bytes, since ISO-8601 only covers ASCII
         if isinstance(ascii_in, str):

@@ -20,13 +20,11 @@ from tarfile import TarFile
 from dateutil import _tzdata_impl
 from dateutil.tz import tzfile as _tzfile
 
-from .._common import cast
-
 TYPE_CHECKING = False
 
 if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
-    from typing import BinaryIO, TypeAlias, TypeVar, overload
+    from typing import BinaryIO, TypeAlias, TypeVar, cast, overload
 
     from dateutil import _typing
 
@@ -112,8 +110,10 @@ class ZoneInfoFile:
     def _load_legacy_zonefile_stream(
         self, zonefile_stream: _typing._ArchiveReader[bytes]
     ) -> None:
-        # TarFile also types writable modes; this path only reads the archive.
-        with TarFile.open(fileobj=cast("BinaryIO", zonefile_stream)) as tf:
+        if TYPE_CHECKING:
+            # TarFile also types writable modes; this only reads the archive.
+            zonefile_stream = cast(BinaryIO, zonefile_stream)
+        with TarFile.open(fileobj=zonefile_stream) as tf:
             self.zones = {
                 zf.name: tzfile(tf.extractfile(zf), filename=zf.name)
                 for zf in tf.getmembers()

@@ -19,7 +19,6 @@ from functools import wraps
 # For warning about deprecation of until and count
 from warnings import warn
 
-from ._common import cast
 from ._common import weekday as weekdaybase
 
 TYPE_CHECKING = False
@@ -738,11 +737,11 @@ class rrule(rrulebase):
             # single-element sequence before the iterator that builds the
             # byweekday set.
             if isinstance(byweekday, int) or hasattr(byweekday, "n"):
-                byweekday = (cast("int | _typing._Weekday", byweekday),)
+                byweekday = (byweekday,)  # pyrefly: ignore[bad-assignment]
 
             self._byweekday = set()
             self._bynweekday = set()
-            for wday in cast("Iterable[int | _typing._Weekday]", byweekday):
+            for wday in byweekday:  # pyrefly: ignore[not-iterable]
                 if isinstance(wday, int):
                     self._byweekday.add(wday)
                 elif not wday.n or freq > MONTHLY:

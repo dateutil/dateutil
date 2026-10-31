@@ -5,13 +5,10 @@ import weakref
 from collections import OrderedDict
 from datetime import timedelta
 
-from .._common import cast
-
 TYPE_CHECKING = False
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
-    from typing import TypeVar
+    from typing import TypeVar, cast
 
     from .. import _typing
 
@@ -24,8 +21,10 @@ class _TzSingleton(type):
         super().__init__(*args, **kwargs)
 
     def __call__(cls: type[_T]) -> _T:
-        factory = cls
-        assert isinstance(factory, _TzSingleton)
+        if TYPE_CHECKING:
+            factory = cast(_TzSingleton, cls)
+        else:
+            factory = cls
         if factory.__instance is None:
             factory.__instance = super().__call__()
         return factory.__instance
@@ -48,8 +47,10 @@ class _TzOffsetFactory(_TzFactory):
     def __call__(
         cls: type[_T], name: str | None, offset: float | _typing._TotalSeconds
     ) -> _T:
-        factory = cls
-        assert isinstance(factory, _TzOffsetFactory)
+        if TYPE_CHECKING:
+            factory = cast(_TzOffsetFactory, cls)
+        else:
+            factory = cls
         if isinstance(offset, timedelta):
             key = (name, offset.total_seconds())
         else:
@@ -58,7 +59,9 @@ class _TzOffsetFactory(_TzFactory):
         instance = factory.__instances.get(key, None)
         if instance is None:
             instance = factory.__instances.setdefault(
-                key, cast("Callable[..., _T]", factory.instance)(name, offset)
+                key,
+                # pyrefly: ignore[bad-argument-type]
+                factory.instance(name, offset),
             )
 
         # This lock may not be necessary in Python 3. See GH issue #901
@@ -83,15 +86,18 @@ class _TzStrFactory(_TzFactory):
         cls.__cache_lock = _thread.allocate_lock()
 
     def __call__(cls: type[_T], s: str, posix_offset: bool = False) -> _T:
-        factory = cls
-        assert isinstance(factory, _TzStrFactory)
+        if TYPE_CHECKING:
+            factory = cast(_TzStrFactory, cls)
+        else:
+            factory = cls
         key = (s, posix_offset)
         instance = factory.__instances.get(key, None)
 
         if instance is None:
             instance = factory.__instances.setdefault(
                 key,
-                cast("Callable[..., _T]", factory.instance)(s, posix_offset),
+                # pyrefly: ignore[bad-argument-type]
+                factory.instance(s, posix_offset),
             )
 
         # This lock may not be necessary in Python 3. See GH issue #901

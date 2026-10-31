@@ -41,7 +41,6 @@ from io import StringIO
 from warnings import warn
 
 from .. import relativedelta, tz
-from .._common import cast
 
 TYPE_CHECKING = False
 
@@ -81,10 +80,6 @@ if TYPE_CHECKING:
         default: datetime.datetime | None
         ignoretz: bool | None
         tzinfos: _TzInfos | None
-
-    class _DigitString(Protocol):
-        def __len__(self) -> int: ...
-        def isdigit(self) -> bool: ...
 
     class _ParserInfo(Protocol):
         @property
@@ -490,13 +485,13 @@ class _ymd(list[int]):
         self, val: str | int | Decimal, label: str | None = None
     ) -> None:
         if hasattr(val, '__len__'):
-            string = cast("_DigitString", val)
-            if string.isdigit() and len(string) > 2:
+            # pyrefly: ignore[missing-attribute, bad-argument-type]
+            if val.isdigit() and len(val) > 2:
                 self.century_specified = True
                 if label not in [None, 'Y']:  # pragma: no cover
                     raise ValueError(label)
                 label = 'Y'
-        elif cast("int | Decimal", val) > 100:
+        elif val > 100:  # pyrefly: ignore[unsupported-operation]
             self.century_specified = True
             if label not in [None, 'Y']:  # pragma: no cover
                 raise ValueError(label)
@@ -1334,9 +1329,7 @@ class parser:
         if callable(tzinfos):
             tzdata = tzinfos(tzname, tzoffset)
         else:
-            tzdata = cast(
-                "_typing._Gettable[str | None, _TzValue]", tzinfos
-            ).get(tzname)
+            tzdata = tzinfos.get(tzname)  # pyrefly: ignore[bad-argument-type]
         # handle case where tzinfo is paased an options that returns None
         # eg tzinfos = {'BRST' : None}
         if isinstance(tzdata, datetime.tzinfo) or tzdata is None:

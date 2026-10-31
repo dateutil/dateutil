@@ -8,13 +8,7 @@ from __future__ import annotations
 TYPE_CHECKING = False
 
 if TYPE_CHECKING:
-    from typing import Self, TypeVar, cast
-
-    _T = TypeVar("_T")
-else:
-
-    def cast(typ: object, val: _T) -> _T:
-        return val
+    from typing import Self
 
 
 class weekday:

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from .._common import cast
 from ._parser import (
     DEFAULTPARSER,
     DEFAULTTZPARSER,
@@ -17,7 +16,7 @@ TYPE_CHECKING = False
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-    from typing import Any, ParamSpec, TypeVar
+    from typing import Any, ParamSpec, TypeVar, cast
 
     _P = ParamSpec("_P")
     _R = TypeVar("_R")
@@ -58,7 +57,7 @@ def __deprecate_private_class(c: type[_T]) -> type[_T]:
     msg = msg.format(name=c.__name__)
 
     # The runtime base is selected by the caller; the return type preserves it.
-    base = cast("Any", c)
+    base: Any = c
 
     class private_class(base):
         __doc__ = c.__doc__
@@ -69,7 +68,10 @@ def __deprecate_private_class(c: type[_T]) -> type[_T]:
 
     private_class.__name__ = c.__name__
 
-    return cast("type[_T]", private_class)
+    if TYPE_CHECKING:
+        return cast(type[_T], private_class)
+    else:
+        return private_class
 
 
 from ._parser import _parsetz, _resultbase, _timelex, _tzparser
