@@ -26,6 +26,10 @@ docs/docs_venv
 # Timezone information
 tzdata*.tar.gz
 
+# asv results and artifacts
+asv_bench/env/
+asv_bench/results/
+
 .idea
 .cache
 .mypy_cache
