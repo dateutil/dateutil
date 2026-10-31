@@ -987,16 +987,11 @@ class rrule(rrulebase):
 
             # Do the "hard" work ;-)
             filtered = False
-            if byweekno:
-                assert ii.wnomask is not None
+            wnomask = ii.wnomask
             for i in range(start, end):
                 if (
                     (bymonth and ii.mmask[i] not in bymonth)
-                    or (
-                        byweekno
-                        and ii.wnomask is not None
-                        and not ii.wnomask[i]
-                    )
+                    or (wnomask is not None and not wnomask[i])
                     or (byweekday and ii.wdaymask[i] not in byweekday)
                     or (ii.nwdaymask and not ii.nwdaymask[i])
                     or (byeaster and not ii.eastermask[i])
