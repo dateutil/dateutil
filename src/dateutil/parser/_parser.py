@@ -136,6 +136,11 @@ class _timelex:
                 # numbers until we find something that doesn't fit.
                 if self.isnum(nextchar):
                     token += nextchar
+
+                elif nextchar=="," and len(token) >= 2:
+                    token += nextchar
+                    state = '0.'
+                    seenletters=True
                 elif nextchar == '.' or (nextchar == ',' and len(token) >= 2):
                     token += nextchar
                     state = '0.'
