@@ -1,3 +1,6 @@
 Added inline type annotations and a ``py.typed`` marker, using structural
-protocols to describe duck-typed inputs.
+protocols to describe duck-typed inputs. If you have ``types-python-dateutil``
+installed, you should uninstall it: type checkers prefer stub-only packages
+over inline annotations (:pep:`561`), so its stubs would otherwise take
+precedence over these annotations.
 Reported and fixed by @pganssle (gh pr #1647).
