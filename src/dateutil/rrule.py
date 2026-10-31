@@ -309,9 +309,9 @@ class rrulebase:
     def before(
         self, dt: datetime.datetime, inc: bool = False
     ) -> datetime.datetime | None:
-        """Returns the last recurrence before the given datetime instance. The
-        inc keyword defines what happens if dt is an occurrence. With
-        inc=True, if dt itself is an occurrence, it will be returned."""
+        """ Returns the last recurrence before the given datetime instance. The
+            inc keyword defines what happens if dt is an occurrence. With
+            inc=True, if dt itself is an occurrence, it will be returned. """
         if self._cache_complete and self._cache is not None:
             gen = self._cache
         else:
@@ -332,9 +332,9 @@ class rrulebase:
     def after(
         self, dt: datetime.datetime, inc: bool = False
     ) -> datetime.datetime | None:
-        """Returns the first recurrence after the given datetime instance. The
-        inc keyword defines what happens if dt is an occurrence. With
-        inc=True, if dt itself is an occurrence, it will be returned."""
+        """ Returns the first recurrence after the given datetime instance. The
+            inc keyword defines what happens if dt is an occurrence. With
+            inc=True, if dt itself is an occurrence, it will be returned.  """
         if self._cache_complete and self._cache is not None:
             gen = self._cache
         else:
@@ -402,7 +402,7 @@ class rrulebase:
         """ Returns all the occurrences of the rrule between after and before.
         The inc keyword defines what happens if after and/or before are
         themselves occurrences. With inc=True, they will be included in the
-        list, if they are found in the recurrence set."""
+        list, if they are found in the recurrence set. """
         if self._cache_complete and self._cache is not None:
             gen = self._cache
         else:
@@ -1423,7 +1423,7 @@ class _iterinfo:
                             self.nwdaymask[i] = 1
 
         if rr._byeaster:
-            self.eastermask = [0] * (self.yearlen + 7)
+            self.eastermask = [0]*(self.yearlen+7)
             assert easter is not None
             eyday = easter.easter(year).toordinal() - self.yearordinal
             for offset in rr._byeaster:
