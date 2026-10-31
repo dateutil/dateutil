@@ -1438,7 +1438,7 @@ class _iterinfo:
         if rr._byeaster:
             self.eastermask = [0]*(self.yearlen+7)
             assert easter is not None
-            eyday = easter.easter(year).toordinal() - self.yearordinal
+            eyday = easter.easter(year).toordinal()-self.yearordinal
             for offset in rr._byeaster:
                 self.eastermask[eyday+offset] = 1
 
