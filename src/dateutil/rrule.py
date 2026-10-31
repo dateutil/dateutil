@@ -1486,10 +1486,8 @@ class _iterinfo:
     ) -> Sequence[datetime.time]:
         tset = []
         rr = self.rrule
-        assert rr._byminute is not None
-        assert rr._bysecond is not None
-        for minute in rr._byminute:
-            for second in rr._bysecond:
+        for minute in rr._byminute:  # pyrefly: ignore[not-iterable]
+            for second in rr._bysecond:  # pyrefly: ignore[not-iterable]
                 tset.append(datetime.time(hour, minute, second,
                                           tzinfo=rr._tzinfo))
         tset.sort()
@@ -1500,8 +1498,7 @@ class _iterinfo:
     ) -> Sequence[datetime.time]:
         tset = []
         rr = self.rrule
-        assert rr._bysecond is not None
-        for second in rr._bysecond:
+        for second in rr._bysecond:  # pyrefly: ignore[not-iterable]
             tset.append(datetime.time(hour, minute, second, tzinfo=rr._tzinfo))
         tset.sort()
         return tset
