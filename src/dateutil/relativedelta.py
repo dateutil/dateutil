@@ -11,20 +11,14 @@ from ._common import weekday
 TYPE_CHECKING = False
 
 if TYPE_CHECKING:
-    from typing import Self, SupportsFloat, TypeVar, overload
+    from typing import Self, SupportsFloat, overload
 
     from . import _typing
-
-    _DateT = TypeVar("_DateT", datetime.date, datetime.datetime)
 
 
 MO, TU, WE, TH, FR, SA, SU = weekdays = tuple(weekday(x) for x in range(7))
 
 __all__ = ["relativedelta", "MO", "TU", "WE", "TH", "FR", "SA", "SU"]
-
-
-def _subtract_dates(left: _DateT, right: _DateT) -> datetime.timedelta:
-    return left - right
 
 
 class relativedelta:
@@ -198,8 +192,8 @@ class relativedelta:
             dtm = self.__radd__(dt2)
 
             # If we've overshot our target, make an adjustment
-            # Both operands have the same date/datetime kind after coercion.
-            if operator.lt(dt1, dt2):
+            # The coercion above makes these both dates or both datetimes.
+            if dt1 < dt2:  # pyrefly: ignore[unsupported-operation]
                 compare = operator.gt
                 increment = 1
             else:
@@ -212,7 +206,7 @@ class relativedelta:
                 dtm = self.__radd__(dt2)
 
             # Get the timedelta between the "months-adjusted" date and dt1
-            delta = _subtract_dates(dt1, dtm)
+            delta = dt1 - dtm  # pyrefly: ignore[unsupported-operation]
             self.seconds = delta.seconds + delta.days * 86400
             self.microseconds = delta.microseconds
         else:
