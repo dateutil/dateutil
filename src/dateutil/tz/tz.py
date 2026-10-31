@@ -710,7 +710,8 @@ class _tzicalvtz(_tzinfo):
                     lastcomp = comp
                     break
             else:
-                # Existing all-DST fallback indexes a component; preserve its error behavior.
+                # `comp` is not subscriptable, so this raises TypeError; see
+                # GH PR #1605.
                 lastcomp = comp[0]  # pyrefly: ignore[bad-index]
 
         with self._cache_lock:
