@@ -68,18 +68,17 @@ def _takes_ascii(
 
     # Document the accepted input types (_AsciiInput) rather than the bytes
     # that ``f`` receives.
+    annotation = (
+        "str | bytes | bytearray | _typing._ReadAll[str | bytes | bytearray]"
+    )
     signature = inspect.signature(f)
     self_param, input_param, *params = signature.parameters.values()
-    input_param = input_param.replace(
-        annotation=(
-            "str | bytes | bytearray | "
-            "_typing._ReadAll[str | bytes | bytearray]"
-        )
-    )
+    input_param = input_param.replace(annotation=annotation)
     # pyrefly: ignore[missing-attribute]
     func.__signature__ = signature.replace(
         parameters=[self_param, input_param, *params]
     )
+    func.__annotations__ = {**f.__annotations__, input_param.name: annotation}
 
     return func
 

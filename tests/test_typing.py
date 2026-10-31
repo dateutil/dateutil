@@ -107,6 +107,7 @@ def test_iso_parser_signatures_show_accepted_inputs(
 ) -> None:
     _, input_param, *_ = inspect.signature(method).parameters.values()
     assert input_param.annotation.startswith("str | bytes | bytearray")
+    assert method.__annotations__[input_param.name] == input_param.annotation
 
 
 def test_utilities_preserve_structural_operand_types() -> None:
