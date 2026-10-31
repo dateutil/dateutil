@@ -489,7 +489,7 @@ class _ymd(list[int]):
     def append(
         self, val: str | int | Decimal, label: str | None = None
     ) -> None:
-        if hasattr(val, "__len__"):
+        if hasattr(val, '__len__'):
             string = cast("_DigitString", val)
             if string.isdigit() and len(string) > 2:
                 self.century_specified = True
@@ -771,7 +771,7 @@ class parser:
         if not ignoretz:
             ret = self._build_tzaware(ret, res, tzinfos)
 
-        if kwargs.get("fuzzy_with_tokens", False):
+        if kwargs.get('fuzzy_with_tokens', False):
             assert skipped_tokens is not None
             return ret, skipped_tokens
         else:
