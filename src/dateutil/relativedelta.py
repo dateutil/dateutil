@@ -110,6 +110,23 @@ class relativedelta:
 
     """
 
+    years: int
+    months: int
+    days: float
+    leapdays: float
+    hours: float
+    minutes: float
+    seconds: float
+    microseconds: float
+    year: int | None
+    month: int | None
+    day: int | None
+    weekday: _typing._Weekday | None
+    hour: int | None
+    minute: int | None
+    second: int | None
+    microsecond: int | None
+
     def __init__(
         self,
         dt1: datetime.date | None = None,
@@ -152,20 +169,20 @@ class relativedelta:
 
             self.years = 0
             self.months = 0
-            self.days: float = 0
-            self.leapdays: float = 0
-            self.hours: float = 0
-            self.minutes: float = 0
-            self.seconds: float = 0
-            self.microseconds: float = 0
-            self.year: int | None = None
-            self.month: int | None = None
-            self.day: int | None = None
-            self.weekday: _typing._Weekday | None = None
-            self.hour: int | None = None
-            self.minute: int | None = None
-            self.second: int | None = None
-            self.microsecond: int | None = None
+            self.days = 0
+            self.leapdays = 0
+            self.hours = 0
+            self.minutes = 0
+            self.seconds = 0
+            self.microseconds = 0
+            self.year = None
+            self.month = None
+            self.day = None
+            self.weekday = None
+            self.hour = None
+            self.minute = None
+            self.second = None
+            self.microsecond = None
             self._has_time = 0
 
             # Get year / month delta between the two
