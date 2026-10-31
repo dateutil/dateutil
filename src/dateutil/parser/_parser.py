@@ -886,7 +886,7 @@ class parser:
                 elif info.month(l[i]) is not None:
                     value = info.month(l[i])
                     assert value is not None
-                    ymd.append(value, "M")
+                    ymd.append(value, 'M')
 
                     if i + 1 < len_l:
                         if l[i + 1] in ('-', '/'):
@@ -1745,7 +1745,7 @@ class _tzparser:
                         signal = 1
                     used_idxs.append(i)
                     assert res.stdoffset is not None
-                    res.dstoffset = res.stdoffset + int(l[i]) * signal
+                    res.dstoffset = (res.stdoffset + int(l[i]) * signal)
 
                 # This was a made-up format that is not in normal use
                 warn(('Parsed time zone "%s"' % tzstr) +
