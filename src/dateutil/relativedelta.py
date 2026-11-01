@@ -208,7 +208,11 @@ class relativedelta:
                 yday = nlyearday
             elif yearday:
                 yday = yearday
-                if yearday > 59:
+                # Days after February are converted as common-year days,
+                # and leapdays=-1 moves them back over Feb 29 in leap
+                # years. Day 366 becomes December 32, which is clamped to
+                # December 31, so it must not be moved back.
+                if 59 < yearday < 366:
                     self.leapdays = -1
             if yday:
                 ydayidx = [31, 59, 90, 120, 151, 181, 212,
