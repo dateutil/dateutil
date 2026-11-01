@@ -1,0 +1,3 @@
+Improved deep queries against completed ``rrule`` and ``rruleset`` caches
+by using their existing chronological ordering. Reported and fixed by
+@Johnny-Kao (gh pr #1590).
