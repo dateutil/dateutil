@@ -1,0 +1,1 @@
+Fixed slicing of rrule and rruleset with a negative start or stop (for example ``rule[-2:]``), which raised a ValueError unless the cache was already complete. Fixed by @heykav (gh pr #1598).
