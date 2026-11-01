@@ -1,0 +1,3 @@
+Fixed weekly recurrences with ``byeaster`` omitting dates in early January
+when their week starts in the previous year. Reported and fixed by @umtong
+(gh pr #1652).
