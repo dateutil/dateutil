@@ -1,0 +1,3 @@
+Removed the test-only dependency on ``freezegun``; the tests now use a small
+``freeze_time`` helper in ``tests/_common.py``. Reported by @pganssle (gh
+issue #923).

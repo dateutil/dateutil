@@ -1,4 +1,5 @@
 import contextlib
+import datetime
 import os
 import pickle
 import subprocess
@@ -9,7 +10,7 @@ import time
 
 import pytest
 
-from dateutil import tz
+from dateutil import tz, utils
 
 ####
 # Selecting the source of time zone data
@@ -278,6 +279,44 @@ class TZWinContext(TZContextBase):
         if p.returncode:
             raise OSError('Failed to set current time zone: ' +
                           (err or 'Unknown error.'))
+
+
+###
+# Freezing the current time
+class _FrozenDatetimeMeta(type):
+    # Keep isinstance checks against the patched class working for real
+    # datetimes created before or outside of the freeze
+    def __instancecheck__(cls, obj):
+        return isinstance(obj, cls.__bases__[0])
+
+
+@contextdecorator
+def freeze_time(frozen, tz_offset=0):
+    """
+    Patches ``datetime.datetime.now`` (including the reference imported by
+    ``dateutil.utils``) to return ``frozen``.
+
+    Naive values of ``frozen`` are interpreted as UTC; ``tz_offset`` is the
+    offset of the local time zone from UTC, in hours.
+    """
+    real_datetime = datetime.datetime
+    if frozen.tzinfo is not None:
+        frozen = frozen.astimezone(tz.UTC).replace(tzinfo=None)
+
+    def now(cls, tz=None):
+        if tz is None:
+            return frozen + datetime.timedelta(hours=tz_offset)
+        return tz.fromutc(frozen.replace(tzinfo=tz))
+
+    frozen_datetime = _FrozenDatetimeMeta(
+        "FrozenDatetime", (real_datetime,), {"now": classmethod(now)}
+    )
+
+    datetime.datetime = utils.datetime = frozen_datetime
+    try:
+        yield
+    finally:
+        datetime.datetime = utils.datetime = real_datetime
 
 
 ###
