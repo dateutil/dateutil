@@ -1,0 +1,1 @@
+``isoparse("2024-W53")`` no longer returns 30 December 2024. Week 53 is rejected when the year does not contain it. Reported and fixed by @SashaMIT (gh pr #1582).
