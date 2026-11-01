@@ -3,6 +3,7 @@ import sys
 import unittest
 from datetime import datetime, timedelta
 from io import StringIO
+from unittest import mock
 
 import pytest
 
@@ -318,6 +319,10 @@ class TestInputTypes:
         res = parse(dstr)
         expected = datetime(2014, 1, 19)
         assert res == expected
+
+    def test_read_not_returning_string_invalid(self):
+        with pytest.raises(TypeError):
+            parse(mock.MagicMock())
 
     def test_parse_stream(self):
         dstr = StringIO('2014 January 19')
