@@ -1,0 +1,3 @@
+Fix misleading RRULE UNTIL timezone-mismatch error message when
+DTSTART and UNTIL have inconsistent timezone awareness.
+Reported in issue #851. Fixed by Elham Roshanbin.

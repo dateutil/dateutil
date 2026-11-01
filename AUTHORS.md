@@ -46,6 +46,7 @@ switch, and thus all their contributions are dual-licensed.
 - David Lehrian <david@MASKED>
 - Dean Allsopp (gh: @daplantagenet) **D**
 - Dominik Kozaczko <dominik@MASKED>
+- Elham Roshanbin (gh: @eroshanbin-glitch) **D**
 - Elliot Hughes <elliot.hughes@gmail.com> (gh: @ElliotJH) **D**
 - Elvis Pranskevichus <el@MASKED>
 - Fan Huang <fanhuang.scb@gmail.com>(gh: @fhuang5) **D**
