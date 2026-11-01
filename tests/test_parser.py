@@ -966,3 +966,23 @@ def test_parsererror_repr():
     s = repr(ParserError("Problem with string: %s", "2019-01-01"))
 
     assert s == "ParserError('Problem with string: %s', '2019-01-01')"
+
+
+@pytest.mark.parametrize('dtstr,dt', [
+    # Ref: github issue #294
+    ('2016-01-30-15-30-10', datetime(2016, 1, 30, 15, 30, 10)),
+    ('1999-12-31-23-59', datetime(1999, 12, 31, 23, 59)),
+    ('2008-09-26T10-49-41', datetime(2008, 9, 26, 10, 49, 41)),
+    ('2016-01-30-15-30-10+05:00',
+     datetime(2016, 1, 30, 15, 30, 10, tzinfo=tzoffset(None, 5 * 3600))),
+])
+def test_parse_dash_separated_time(dtstr, dt):
+    # A dash-separated time of day following a fully-specified date
+    # (e.g. in a file-name timestamp) used to be rejected
+    assert parse(dtstr) == dt
+
+
+def test_parse_dash_separated_time_fuzzy():
+    # Ref: github issue #294 - timestamps embedded in file names
+    res = parse("Screenshot_2016-09-07_12-26-45.png", fuzzy=True)
+    assert res == datetime(2016, 9, 7, 12, 26, 45)
