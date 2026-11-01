@@ -881,7 +881,7 @@ class parser:
         if (len(ymd) == 3 and len_li in (2, 4) and
             res.hour is None and
             (idx + 1 >= len_l or
-             (tokens[idx + 1] != ':' and
+             (tokens[idx + 1] != ':' and tokens[idx + 1] != '-' and
               info.hms(tokens[idx + 1]) is None))):
             # 19990101T23[59]
             s = tokens[idx]
@@ -944,6 +944,18 @@ class parser:
 
         elif idx + 1 < len_l and tokens[idx + 1] in ('-', '/', '.'):
             sep = tokens[idx + 1]
+
+            if (sep == '-' and res.hour is None and len(ymd) == 3 and
+                    self._could_be_dash_separated_time(tokens, idx)):
+                # h-m[-s] following a fully-specified date, e.g.
+                # 2016-01-30-15-30-10
+                res.hour = int(value_repr)
+                res.minute = int(tokens[idx + 2])
+                idx += 2
+                if idx + 2 < len_l and tokens[idx + 1] == sep:
+                    res.second = int(tokens[idx + 2])
+                    idx += 2
+                return idx
             ymd.append(value_repr)
 
             if idx + 2 < len_l and not info.jump(tokens[idx + 2]):
@@ -996,6 +1008,26 @@ class parser:
             raise ValueError()
 
         return idx
+
+    def _could_be_dash_separated_time(self, tokens, idx):
+        """
+        Whether the tokens starting at *idx* may be a time of the form
+        ``h-m`` or ``h-m-s`` (a dash as the field separator, like in
+        ``2016-01-30-15-30-10``), following the separator at *idx* + 1.
+        """
+        if (idx + 2 >= len(tokens) or not tokens[idx].isdigit() or
+                not tokens[idx + 2].isdigit()):
+            return False
+
+        if int(tokens[idx]) > 23 or int(tokens[idx + 2]) > 59:
+            return False
+
+        if idx + 3 < len(tokens) and tokens[idx + 3] == '-':
+            if (idx + 4 >= len(tokens) or not tokens[idx + 4].isdigit() or
+                    int(tokens[idx + 4]) > 59):
+                return False
+
+        return True
 
     def _find_hms_idx(self, idx, tokens, info, allow_jump):
         len_l = len(tokens)
