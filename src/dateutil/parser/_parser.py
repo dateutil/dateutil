@@ -1424,11 +1424,17 @@ class _tzparser:
                                                    int(l[i][2:]) * 60) * signal)
                         elif i + 1 < len_l and l[i + 1] == ':':
                             # -03:00
-                            setattr(res, offattr,
-                                    (int(l[i]) * 3600 +
-                                     int(l[i + 2]) * 60) * signal)
+                            offset = int(l[i]) * 3600 + int(l[i + 2]) * 60
                             used_idxs.append(i)
                             i += 2
+                            if i + 1 < len_l and l[i + 1] == ':':
+                                # -03:00:00; the POSIX offset is
+                                # [+|-]hh[:mm[:ss]], and the transition time
+                                # below already reads the seconds.
+                                used_idxs.append(i)
+                                i += 2
+                                offset += int(l[i])
+                            setattr(res, offattr, offset * signal)
                         elif len_li <= 2:
                             # -[0]3
                             setattr(res, offattr,
