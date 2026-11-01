@@ -1730,6 +1730,29 @@ def test_invalid_GNU_tzstr(tz_str):
         tz.tzstr(tz_str)
 
 
+@pytest.mark.tzstr
+@pytest.mark.parametrize('tz_str, offset', [
+    # POSIX defines the offset as [+|-]hh[:mm[:ss]]; tzstr read only hh:mm and
+    # then tripped over the seconds.
+    ('LMT-0:14:44', timedelta(seconds=884)),
+    ('AAA0:17:15', timedelta(seconds=-1035)),
+    ('AAA0:17:15BBB,M3.2.0,M11.1.0', timedelta(seconds=-1035)),
+    ('AAA5BBB-6:44:30,M3.2.0/2,M11.1.0/2', timedelta(hours=-5)),
+])
+def test_tzstr_seconds_in_offset(tz_str, offset):
+    tzi = tz.tzstr(tz_str)
+
+    assert datetime(2026, 1, 1, tzinfo=tzi).utcoffset() == offset
+
+
+@pytest.mark.tzstr
+def test_tzstr_seconds_in_the_dst_offset():
+    tzi = tz.tzstr("AAA5BBB-6:44:30,M3.2.0/2,M11.1.0/2")
+
+    # The DST offset is written the same way: hh:mm:ss, west-positive.
+    assert datetime(2026, 7, 1, tzinfo=tzi).utcoffset() == timedelta(seconds=24270)
+
+
 # Different representations of the same default rule set
 DEFAULT_TZSTR_RULES_EQUIV_2003 = [
     'EST5EDT',

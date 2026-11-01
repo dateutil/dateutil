@@ -1,0 +1,1 @@
+tz.tzstr now accepts POSIX TZ strings whose offset has a seconds component, like `LMT-0:14:44`.
