@@ -1,0 +1,3 @@
+Fixed ``parser.parse()`` raising ``ParserError`` for a bare 9-digit time token
+(``HHMMSSmmm``), e.g. ``20010203 040506789``. Reported by @Magic-sheep (gh issue
+#1442).
