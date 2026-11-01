@@ -1,0 +1,1 @@
+Added a fast path for complete ISO-8601 timestamps in ``parser.parse()``: for those inputs the ``datetime`` is built directly (roughly 5-8x faster), while every other form falls back to the full parser with identical results. (gh pr #1523)
