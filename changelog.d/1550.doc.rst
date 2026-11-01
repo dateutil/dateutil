@@ -1,0 +1,2 @@
+Clarified the Martin Luther King Day exercise to require explicitly specifying
+January. Reported by @pganssle (gh issue #775). Fixed by @nightcityblade (gh pr #1550).
