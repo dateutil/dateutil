@@ -1,0 +1,3 @@
+Fixed a TypeError when a daylight-only VTIMEZONE is queried before its first
+onset. Use the existing first-observance fallback when there is no STANDARD
+observance. Reported and fixed by @fhgffy (gh pr #1605).
