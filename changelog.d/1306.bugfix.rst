@@ -1,0 +1,1 @@
+Fixed issue where ``_parse_rfc`` failed to raise a ValueError on empty property names. Reported by @drocta (gh issue #1306).
