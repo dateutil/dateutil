@@ -1,0 +1,2 @@
+Prevented ``INTERVAL=0`` recurrence rules from entering an infinite loop.
+Reported by @jmbarbier (gh issue #1441). Fixed by @Mirochill (gh pr #1495)
