@@ -1,5 +1,0 @@
-Fixed an issue where iterating over a cached ``rrule`` or ``rruleset`` could
-hang forever if another iterator over the same rule had already completed the
-cache, for example when a cached ``rrule`` was included twice in an
-``rruleset``. Reported by @bysiber (gh pr #1455). Fixed by @pganssle (gh pr
-#1655).

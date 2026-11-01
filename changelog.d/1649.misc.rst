@@ -1,2 +1,0 @@
-The test suite now runs in parallel with pytest-xdist.
-Fixed by @pganssle (gh pr #1649).
