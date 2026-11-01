@@ -569,7 +569,8 @@ class parser:
         Parse the date/time string into a :class:`datetime.datetime` object.
 
         :param timestr:
-            Any date/time string using the supported formats.
+            Any date/time string using the supported formats. Bytes and
+            bytearray inputs are decoded as UTF-8 before parsing.
 
         :param default:
             The default datetime object, if this is a datetime object and not
@@ -621,6 +622,9 @@ class parser:
 
         :raises TypeError:
             Raised for non-string or character stream input.
+
+        :raises UnicodeDecodeError:
+            Raised when bytes or bytearray inputs cannot be decoded as UTF-8.
 
         :raises OverflowError:
             Raised if the parsed date exceeds the largest valid C integer on
@@ -1268,7 +1272,8 @@ def parse(timestr, parserinfo=None, **kwargs):
     ``parserinfo`` parameters.
 
     :param timestr:
-        A string containing a date/time stamp.
+        A string containing a date/time stamp. Bytes and bytearray inputs are
+        decoded as UTF-8 before parsing.
 
     :param parserinfo:
         A :class:`parserinfo` object containing parameters for the parser.
@@ -1351,6 +1356,9 @@ def parse(timestr, parserinfo=None, **kwargs):
         Raised for invalid or unknown string formats, if the provided
         :class:`tzinfo` is not in a valid format, or if an invalid date would
         be created.
+
+    :raises UnicodeDecodeError:
+        Raised when bytes or bytearray inputs cannot be decoded as UTF-8.
 
     :raises OverflowError:
         Raised if the parsed date exceeds the largest valid C integer on

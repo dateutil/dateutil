@@ -1,0 +1,3 @@
+Documented how byte inputs are decoded by the parser, including the
+``UnicodeDecodeError`` raised for invalid UTF-8. Reported by @pventuzelo
+(gh issue #1358). Fixed by @Mirochill (gh pr #1498).
