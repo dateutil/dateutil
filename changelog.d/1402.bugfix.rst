@@ -1,0 +1,1 @@
+Fixed a ``TypeError`` raised when constructing a ``tz.tzstr`` from a bare ``GMT`` or ``UTC`` string (which carries no explicit offset). These now behave like UTC (offset 0), consistent with other bare abbreviations such as ``EST``. Reported by @gabe-sherman (gh issue #1402). Fixed by @apoorvdarshan (gh pr #1530).
