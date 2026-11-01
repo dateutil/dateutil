@@ -1,0 +1,3 @@
+Corrected the documented default weekday for ISO week dates in
+``isoparse`` to 1 (Monday), matching the existing parser behavior.
+Reported by @Upua (gh issue #1629). Fixed by @tongwentao (gh pr #1630).
