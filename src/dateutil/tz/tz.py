@@ -1155,10 +1155,17 @@ class DeprecatedTzKeyWarning(FutureWarning):
 
 
 def _escapes_tzpath(name):
-    # A relative key stays inside every TZPATH entry unless, once normalized
-    # (which also turns os.altsep into os.sep), it starts by going up a
-    # directory.
-    return os.path.normpath(name).split(os.sep, 1)[0] == os.pardir
+    # A relative key stays inside every TZPATH entry unless it has a drive or
+    # root of its own, which os.path.join does not append to the directory
+    # (on Windows, os.path.isabs does not consider a rooted key like "\\x"
+    # absolute), or unless, once normalized (which also turns os.altsep into
+    # os.sep), it starts by going up a directory.
+    drive, path = os.path.splitdrive(os.path.normpath(name))
+    return (
+        bool(drive)
+        or path.startswith(os.sep)
+        or path.split(os.sep, 1)[0] == os.pardir
+    )
 
 
 def _warn_tzpath_escape(name):
