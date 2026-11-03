@@ -2,6 +2,7 @@ import copy
 import itertools
 import pickle
 import threading
+import time
 import unittest
 from datetime import date, datetime, timedelta
 from functools import partial
@@ -2736,6 +2737,15 @@ class RRuleTest(unittest.TestCase):
 
         with self.assertRaises(TzInfoError):
             rrulestr(rrstr, tzids=tzinfos)
+
+    def testStrManyUnterminatedTZIDsIsLinear(self):
+        # A scan that is quadratic in the input length takes much longer
+        start = time.perf_counter()
+
+        with self.assertRaises(ValueError):
+            rrulestr("TZID=" * 40000)
+
+        self.assertLess(time.perf_counter() - start, 5)
 
     def testStrWithConflictingTZID(self):
         # RFC 5545 Section 3.3.5, FORM #2: DATE WITH UTC TIME
