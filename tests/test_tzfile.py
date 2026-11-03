@@ -1605,6 +1605,26 @@ def test_gettz_key_outside_tzpath_is_an_error(tzpath_and_outside_zone, key):
             tz.gettz(key)
 
 
+@pytest.mark.skipif(
+    not IS_WIN or sys.version_info < (3, 13),
+    reason="os.path.isabs() considers a rooted path absolute before 3.13",
+)
+@pytest.mark.parametrize("sep", ["\\", "/"])
+def test_gettz_rooted_key_outside_tzpath_is_an_error(
+    tzpath_and_outside_zone, tmp_path, sep
+):
+    # A rooted key has no drive, so os.path.isabs() is False, but
+    # os.path.join() discards the TZPATH entry for it all the same.
+    outside = str(tmp_path / "outside" / "Outside")
+    key = os.path.splitdrive(outside)[1].replace(os.sep, sep)
+    assert not os.path.isabs(key)
+
+    with warnings.catch_warnings():
+        warnings.resetwarnings()
+        with pytest.raises(tz.DeprecatedTzKeyWarning):
+            tz.gettz(key)
+
+
 def test_gettz_key_outside_tzpath_can_be_allowed(tzpath_and_outside_zone):
     with warnings.catch_warnings(record=True) as record:
         warnings.resetwarnings()
