@@ -1319,6 +1319,15 @@ class _iterinfo:
                 tzinfo=self.rrule._tzinfo),)
 
 
+def _coerce_date(d):
+    """Normalize a bare :py:class:`date` to midnight, the same conversion
+    ``rrule`` applies to ``dtstart``, so that all values stored in an
+    rruleset are comparable datetimes."""
+    if isinstance(d, datetime.date) and not isinstance(d, datetime.datetime):
+        return datetime.datetime.fromordinal(d.toordinal())
+    return d
+
+
 class rruleset(rrulebase):
     """ The rruleset type allows more complex recurrence setups, mixing
     multiple rules, dates, exclusion rules, and exclusion dates. The type
@@ -1376,8 +1385,9 @@ class rruleset(rrulebase):
     @_invalidates_cache
     def rdate(self, rdate):
         """ Include the given :py:class:`datetime` instance in the recurrence
-            set generation. """
-        self._rdate.append(rdate)
+            set generation. A bare :py:class:`date` is interpreted as midnight,
+            matching how ``dtstart`` is handled. """
+        self._rdate.append(_coerce_date(rdate))
 
     @_invalidates_cache
     def exrule(self, exrule):
@@ -1391,8 +1401,10 @@ class rruleset(rrulebase):
     def exdate(self, exdate):
         """ Include the given datetime instance in the recurrence set
             exclusion list. Dates included that way will not be generated,
-            even if some inclusive rrule or rdate matches them. """
-        self._exdate.append(exdate)
+            even if some inclusive rrule or rdate matches them. A bare
+            :py:class:`date` is interpreted as midnight, matching how
+            ``dtstart`` is handled. """
+        self._exdate.append(_coerce_date(exdate))
 
     def _iter(self):
         rlist = []
