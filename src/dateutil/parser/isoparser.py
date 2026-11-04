@@ -55,7 +55,7 @@ class isoparser:
         self._sep = sep
 
     @_takes_ascii
-    def isoparse(self, dt_str):
+    def isoparse(self, dt_str, default=None):
         """
         Parse an ISO-8601 datetime string into a :class:`datetime.datetime`.
 
@@ -115,7 +115,7 @@ class isoparser:
 
         :return:
             Returns a :class:`datetime.datetime` representing the string.
-            Unspecified components default to their lowest value.
+            Unspecified components default to their lowest value, or to the corresponding component of default when given.
 
         .. warning::
 
@@ -129,6 +129,8 @@ class isoparser:
 
         .. versionadded:: 2.7.0
         """
+                if default is not None and not isinstance(default, datetime):
+                    raise TypeError
         components, pos = self._parse_isodate(dt_str)
 
         if len(dt_str) > pos:
@@ -137,6 +139,42 @@ class isoparser:
             else:
                 raise ValueError('String contains unknown ISO components')
 
+                if default is not None:
+                    date_str = dt_str[:pos]
+                    if b'W' not in date_str:
+                        date_digits = date_str.replace(b'-', b'')
+                        if len(date_digits) == 4:
+                            components[1] = default.month
+                            components[2] = default.day
+                        elif len(date_digits) == 6:
+                            components[2] = default.day
+                    if len(dt_str) > pos:
+                        time_str = dt_str[pos + 1:]
+                        tz_start = None
+                        if time_str[-1:] in (b'Z', b'z'):
+                            tz_start = len(time_str) - 1
+                        else:
+                            for i in range(len(time_str) - 1, -1, -1):
+                                if time_str[i:i + 1] in (b'+', b'-'):
+                                    tz_start = i
+                                    break
+                        core = time_str[:tz_start] if tz_start is not None else time_str
+                        fraction_present = b'.' in core or b',' in core
+                        if fraction_present:
+                            core = core.split(b'.')[0] if b'.' in core else core.split(b',')[0]
+                        time_digits = core.replace(b':', b'')
+                        if components[3] != 24:
+                            if len(time_digits) == 2:
+                                components[4] = default.minute
+                                components[5] = default.second
+                            elif len(time_digits) == 4:
+                                components[5] = default.second
+                            if not fraction_present:
+                                components[6] = default.microsecond
+                        if components[7] is None:
+                            components[7] = default.tzinfo
+                    else:
+                        components += [default.hour, default.minute, default.second, default.microsecond, default.tzinfo]
         if len(components) > 3 and components[3] == 24:
             components[3] = 0
             return datetime(*components) + timedelta(days=1)
