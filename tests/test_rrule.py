@@ -4655,6 +4655,40 @@ class RRuleSetTest(unittest.TestCase):
                           datetime(1997, 9, 4, 9, 0),
                           datetime(1997, 9, 9, 9, 0)])
 
+    def testSetRDateDate(self):
+        # A bare date must be accepted like dtstart is, as midnight (#275)
+        rrset = rruleset()
+        rrset.rrule(
+            rrule(
+                YEARLY,
+                count=1,
+                byweekday=TU,
+                dtstart=datetime(1997, 9, 2, 9, 0),
+            )
+        )
+        rrset.rdate(date(1997, 9, 4))
+        rrset.rdate(datetime(1997, 9, 9, 9))
+        self.assertEqual(
+            list(rrset),
+            [
+                datetime(1997, 9, 2, 9, 0),
+                datetime(1997, 9, 4, 0, 0),
+                datetime(1997, 9, 9, 9, 0),
+            ],
+        )
+
+    def testSetExDateDate(self):
+        # A bare date must be accepted like dtstart is, as midnight (#275).
+        # RFC 5545 3.8.5.1 excludes by exact DATE-TIME value, so a DATE-form
+        # EXDATE excludes the midnight instance of a DATE-form DTSTART set.
+        rrset = rruleset()
+        rrset.rrule(rrule(DAILY, count=3, dtstart=date(1997, 9, 2)))
+        rrset.exdate(date(1997, 9, 3))
+        self.assertEqual(
+            list(rrset),
+            [datetime(1997, 9, 2, 0, 0), datetime(1997, 9, 4, 0, 0)],
+        )
+
     def testSetExRule(self):
         rrset = rruleset()
         rrset.rrule(rrule(YEARLY, count=6, byweekday=(TU, TH),
