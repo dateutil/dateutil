@@ -526,3 +526,22 @@ def test_isotime_raises(isostr, exception):
     iparser = isoparser()
     with pytest.raises(exception):
         iparser.parse_isotime(isostr)
+
+
+def test_isoparse_default():
+    default = datetime(2020, 2, 3, 4, 5, 6, 700000, tzinfo=UTC)
+    iparser = isoparser()
+    assert iparser.isoparse('2017', default=default) == default.replace(year=2017)
+    assert iparser.isoparse('2017-01', default=default) == default.replace(year=2017, month=1)
+    assert iparser.isoparse('2017-01-01', default=default) == default.replace(year=2017, month=1, day=1)
+    assert iparser.isoparse('2017-01-01T12', default=default) == default.replace(year=2017, month=1, day=1, hour=12)
+    assert iparser.isoparse('2017-01-01T12:30', default=default) == default.replace(year=2017, month=1, day=1, hour=12, minute=30)
+    assert iparser.isoparse('2017-01-01T12:30:45', default=default) == default.replace(year=2017, month=1, day=1, hour=12, minute=30, second=45)
+    assert iparser.isoparse('2017-01-01T12:30:45.123456+01:00', default=default) == datetime(2017, 1, 1, 12, 30, 45, 123456, tzinfo=tz.tzoffset(None, timedelta(hours=1)))
+    with pytest.raises(TypeError):
+        iparser.isoparse('2017-01-01', default='2020-01-01')
+
+def test_isoparse_default_no_default_unchanged():
+    assert isoparse('2017-01-01') == datetime(2017, 1, 1)
+    assert isoparse('2017') == datetime(2017, 1, 1)
+    assert isoparse('2017-01-01T12:30:45') == datetime(2017, 1, 1, 12, 30, 45)
