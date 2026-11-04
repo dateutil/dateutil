@@ -4658,14 +4658,24 @@ class RRuleSetTest(unittest.TestCase):
     def testSetRDateDate(self):
         # A bare date must be accepted like dtstart is, as midnight (#275)
         rrset = rruleset()
-        rrset.rrule(rrule(YEARLY, count=1, byweekday=TU,
-                          dtstart=datetime(1997, 9, 2, 9, 0)))
+        rrset.rrule(
+            rrule(
+                YEARLY,
+                count=1,
+                byweekday=TU,
+                dtstart=datetime(1997, 9, 2, 9, 0),
+            )
+        )
         rrset.rdate(date(1997, 9, 4))
         rrset.rdate(datetime(1997, 9, 9, 9))
-        self.assertEqual(list(rrset),
-                         [datetime(1997, 9, 2, 9, 0),
-                          datetime(1997, 9, 4, 0, 0),
-                          datetime(1997, 9, 9, 9, 0)])
+        self.assertEqual(
+            list(rrset),
+            [
+                datetime(1997, 9, 2, 9, 0),
+                datetime(1997, 9, 4, 0, 0),
+                datetime(1997, 9, 9, 9, 0),
+            ],
+        )
 
     def testSetExDateDate(self):
         # A bare date must be accepted like dtstart is, as midnight (#275).
@@ -4674,9 +4684,10 @@ class RRuleSetTest(unittest.TestCase):
         rrset = rruleset()
         rrset.rrule(rrule(DAILY, count=3, dtstart=date(1997, 9, 2)))
         rrset.exdate(date(1997, 9, 3))
-        self.assertEqual(list(rrset),
-                         [datetime(1997, 9, 2, 0, 0),
-                          datetime(1997, 9, 4, 0, 0)])
+        self.assertEqual(
+            list(rrset),
+            [datetime(1997, 9, 2, 0, 0), datetime(1997, 9, 4, 0, 0)],
+        )
 
     def testSetExRule(self):
         rrset = rruleset()

@@ -1384,9 +1384,9 @@ class rruleset(rrulebase):
 
     @_invalidates_cache
     def rdate(self, rdate):
-        """ Include the given :py:class:`datetime` instance in the recurrence
-            set generation. A bare :py:class:`date` is interpreted as midnight,
-            matching how ``dtstart`` is handled. """
+        """Include the given :py:class:`datetime` instance in the recurrence
+        set generation. A bare :py:class:`date` is interpreted as midnight,
+        matching how ``dtstart`` is handled."""
         self._rdate.append(_coerce_date(rdate))
 
     @_invalidates_cache
@@ -1399,11 +1399,11 @@ class rruleset(rrulebase):
 
     @_invalidates_cache
     def exdate(self, exdate):
-        """ Include the given datetime instance in the recurrence set
-            exclusion list. Dates included that way will not be generated,
-            even if some inclusive rrule or rdate matches them. A bare
-            :py:class:`date` is interpreted as midnight, matching how
-            ``dtstart`` is handled. """
+        """Include the given datetime instance in the recurrence set
+        exclusion list. Dates included that way will not be generated,
+        even if some inclusive rrule or rdate matches them. A bare
+        :py:class:`date` is interpreted as midnight, matching how
+        ``dtstart`` is handled."""
         self._exdate.append(_coerce_date(exdate))
 
     def _iter(self):
