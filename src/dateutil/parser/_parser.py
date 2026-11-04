@@ -314,30 +314,21 @@ class parserinfo:
         return name.lower() in self._jump
 
     def weekday(self, name):
-        try:
-            return self._weekdays[name.lower()]
-        except KeyError:
-            pass
-        return None
+        return self._weekdays.get(name.lower())
 
     def month(self, name):
-        try:
-            return self._months[name.lower()] + 1
-        except KeyError:
-            pass
-        return None
+        month = self._months.get(name.lower())
+
+        if month is None:
+            return None
+
+        return month + 1
 
     def hms(self, name):
-        try:
-            return self._hms[name.lower()]
-        except KeyError:
-            return None
+        return self._hms.get(name.lower())
 
     def ampm(self, name):
-        try:
-            return self._ampm[name.lower()]
-        except KeyError:
-            return None
+        return self._ampm.get(name.lower())
 
     def pertain(self, name):
         return name.lower() in self._pertain
@@ -718,6 +709,18 @@ class parser:
         ymd = _ymd()
 
         len_l = len(l)
+
+        # Hoist the per-token callables to locals. Subclass overrides of
+        # the parserinfo methods are still honored through self/info.
+        info_weekday = info.weekday
+        info_month = info.month
+        info_ampm = info.ampm
+        info_jump = info.jump
+        parse_numeric_token = self._parse_numeric_token
+        ampm_valid = self._ampm_valid
+        adjust_ampm = self._adjust_ampm
+        could_be_tzname = self._could_be_tzname
+
         i = 0
         try:
             while i < len_l:
@@ -731,16 +734,16 @@ class parser:
 
                 if value is not None:
                     # Numeric token
-                    i = self._parse_numeric_token(l, i, info, ymd, res, fuzzy)
+                    i = parse_numeric_token(l, i, info, ymd, res, fuzzy)
 
                 # Check weekday
-                elif info.weekday(l[i]) is not None:
-                    value = info.weekday(l[i])
+                elif info_weekday(l[i]) is not None:
+                    value = info_weekday(l[i])
                     res.weekday = value
 
                 # Check month name
-                elif info.month(l[i]) is not None:
-                    value = info.month(l[i])
+                elif info_month(l[i]) is not None:
+                    value = info_month(l[i])
                     ymd.append(value, 'M')
 
                     if i + 1 < len_l:
@@ -772,19 +775,19 @@ class parser:
                             i += 4
 
                 # Check am/pm
-                elif info.ampm(l[i]) is not None:
-                    value = info.ampm(l[i])
-                    val_is_ampm = self._ampm_valid(res.hour, res.ampm, fuzzy)
+                elif info_ampm(l[i]) is not None:
+                    value = info_ampm(l[i])
+                    val_is_ampm = ampm_valid(res.hour, res.ampm, fuzzy)
 
                     if val_is_ampm:
-                        res.hour = self._adjust_ampm(res.hour, value)
+                        res.hour = adjust_ampm(res.hour, value)
                         res.ampm = value
 
                     elif fuzzy:
                         skipped_idxs.append(i)
 
                 # Check for a timezone name
-                elif self._could_be_tzname(res.hour, res.tzname, res.tzoffset, l[i]):
+                elif could_be_tzname(res.hour, res.tzname, res.tzoffset, l[i]):
                     res.tzname = l[i]
                     res.tzoffset = info.tzoffset(res.tzname)
 
@@ -827,10 +830,10 @@ class parser:
 
                     # Look for a timezone name between parenthesis
                     if (i + 5 < len_l and
-                            info.jump(l[i + 2]) and l[i + 3] == '(' and
+                            info_jump(l[i + 2]) and l[i + 3] == '(' and
                             l[i + 5] == ')' and
                             3 <= len(l[i + 4]) and
-                            self._could_be_tzname(res.hour, res.tzname,
+                            could_be_tzname(res.hour, res.tzname,
                                                   None, l[i + 4])):
                         # -0300 (BRST)
                         res.tzname = l[i + 4]
@@ -839,7 +842,12 @@ class parser:
                     i += 1
 
                 # Check jumps
-                elif not (info.jump(l[i]) or fuzzy):
+                elif fuzzy:
+                    # In fuzzy mode unknown tokens are skipped without
+                    # consulting parserinfo.jump.
+                    skipped_idxs.append(i)
+
+                elif not info_jump(l[i]):
                     raise ValueError(timestr)
 
                 else:
@@ -1048,11 +1056,16 @@ class parser:
             (res.second, res.microsecond) = self._parsems(value_repr)
 
     def _could_be_tzname(self, hour, tzname, tzoffset, token):
+        # Note: ``not token.strip(string.ascii_uppercase)`` is exactly
+        # equivalent to ``all(x in string.ascii_uppercase for x in token)``
+        # (both are true iff every character is an ASCII uppercase letter,
+        # including for the empty string), but runs as a single C-level
+        # call instead of a per-character generator.
         return (hour is not None and
                 tzname is None and
                 tzoffset is None and
                 len(token) <= 5 and
-                (all(x in string.ascii_uppercase for x in token)
+                (not token.strip(string.ascii_uppercase)
                  or token in self.info.UTCZONE))
 
     def _ampm_valid(self, hour, ampm, fuzzy):
