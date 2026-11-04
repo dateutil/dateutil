@@ -1,0 +1,5 @@
+Fixed a ``TypeError`` when passing a ``datetime.date`` to
+``rruleset.rdate`` or ``rruleset.exdate``, which previously only surfaced
+at iteration time. Bare dates are now normalized to midnight, consistent
+with how ``rrule`` handles ``dtstart``. Reported by @pganssle
+(gh issue #275). Fixed by @0718lol (gh pr #1663)
