@@ -1,3 +1,5 @@
 Fixed pickling of tzical time zones. Those objects hold a thread lock, so
-pickle raised TypeError. Reported by @daniele-athome (gh issue #1242).
+pickle raised TypeError. Also fixed pickling of weekday objects like ``MO``
+(and relativedeltas that use them) with pickle protocols 0 and 1.
+Reported by @daniele-athome (gh issue #1242).
 Fixed by @Cherith1222 (gh pr #1602).

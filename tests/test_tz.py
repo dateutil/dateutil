@@ -2479,19 +2479,17 @@ class TzPickleTest(PicklableMixin, unittest.TestCase):
                 tz.enfold(datetime(2003, 10, 26, 1, 30, tzinfo=tzi)),
             ]
 
-        # Populate the timezone and rrule caches before pickling
+        # Use the zone first so a cache would show up in the pickle if kept.
         expected = [
             (dt.utcoffset(), dt.dst(), dt.tzname()) for dt in get_dts(tzc)
         ]
-        self.assertTrue(tzc._cachedate)
-        self.assertTrue(tzc._cachecomp)
+        cold = tz.tzical(StringIO(TZICAL_EST5EDT)).get()
+        self.assertEqual(pickle.dumps(tzc), pickle.dumps(cold))
 
         get_nobj = self._get_nobj_file if self._asfile else self._get_nobj_bytes
         ntzc = get_nobj(tzc, {}, {})
         self.assertIsNot(tzc, ntzc)
         self.assertEqual(repr(ntzc), repr(tzc))
-        self.assertEqual(ntzc._cachedate, [])
-        self.assertEqual(ntzc._cachecomp, [])
 
         actual = [
             (dt.utcoffset(), dt.dst(), dt.tzname()) for dt in get_dts(ntzc)
