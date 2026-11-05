@@ -1,0 +1,3 @@
+Improved the performance of ``rrule.between()`` for uncached daily recurrence
+rules whose lower bound is far from ``DTSTART``. Reported by @jelly (gh issue
+#654). Fixed by @mercury125 (gh pr #1560).
