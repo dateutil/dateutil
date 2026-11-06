@@ -9,9 +9,8 @@ from typing import BinaryIO, TextIO
 
 _TZDATA_LOAD_EXCEPTIONS = (
     ImportError,
-    FileNotFoundError,
+    OSError,
     UnicodeEncodeError,
-    IsADirectoryError,
     ValueError,
 )
 
@@ -55,9 +54,10 @@ def _load_tzdata(key):
         return _open_binary(package_name, resource_name)
     except _TZDATA_LOAD_EXCEPTIONS:
         # ImportError: package does not exist (or tzdata is not installed)
-        # FileNotFoundError: the key is not a file in the package
+        # OSError: the key is not a file in the package, names a package
+        #   rather than a resource, or cannot be a file name at all (e.g. it
+        #   is too long, or has characters like "*" that Windows does not allow)
         # UnicodeEncodeError: the key is not encodable as a filename
-        # IsADirectoryError: the key names a package rather than a resource
         # ValueError: the key is not a valid path (e.g. contains a NUL byte)
         raise TZFileNotFound("Time zone not found: %s", zone_key=key) from None
 
