@@ -124,6 +124,7 @@ switch, and thus all their contributions are dual-licensed.
 - Tomi Pieviläinen <tomi.pievilainen@iki.fi>
 - Unrud <Unrud@MASKED> (gh: @unrud)
 - varun netrakar <varun@security.bugqore.com> (gh: @varun3257) **D**
+- Weilun Li <b84330808@gmail.com> (gh: @b84330808) **D**
 - Xavier Lapointe <lapointe.xavier@MASKED> (gh: @lapointexavier) **D**
 - X O <xo@MASKED>
 - Yaron de Leeuw <me@jarondl.net> (gh: @jarondl)

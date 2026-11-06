@@ -2219,6 +2219,9 @@ class TzWinTest(unittest.TestCase, TzWinFoldMixin):
         dt = parse("2013-03-06 19:08:15")
         self.assertFalse(tz._isdst(dt))
 
+    def testGettzRegistryKeyNotAZone(self):
+        self.assertIsNone(tz.gettz("Eastern Standard Time\\Dynamic DST"))
+
     def testOffset(self):
         tz = tzwin.tzwin("Cape Verde Standard Time")
         self.assertEqual(tz.utcoffset(datetime(1995, 5, 21, 12, 9, 13)),

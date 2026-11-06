@@ -1109,7 +1109,9 @@ def __get_gettz():
                         if tzwin is not None:
                             try:
                                 tz = tzwin(name)
-                            except OSError:
+                            except (OSError, KeyError):
+                                # KeyError: a registry key that is not a zone
+                                # (e.g. the "Dynamic DST" subkey of one)
                                 tz = None
 
                         if not tz:
