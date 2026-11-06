@@ -31,7 +31,9 @@ def _is_package_directory(package: str, resource: str) -> bool:
     """Checks for directories before opening resources on Windows."""
     try:
         return importlib.resources.files(package).joinpath(resource).is_dir()
-    except ImportError:
+    except (ImportError, OSError):
+        # OSError: the resource name cannot be a file name at all (e.g. it is
+        # too long), so it does not name a directory either
         return False
 
 
