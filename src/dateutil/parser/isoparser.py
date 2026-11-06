@@ -86,11 +86,20 @@ class isoparser:
         - ``hh``
         - ``hh:mm`` or ``hhmm``
         - ``hh:mm:ss`` or ``hhmmss``
-        - ``hh:mm:ss.ssssss`` (Up to 6 sub-second digits)
+        - ``hh:mm:ss.s`` (One or more sub-second digits)
 
         Midnight is a special case for `hh`, as the standard supports both
         00:00 and 24:00 as a representation. The decimal separator can be
-        either a dot or a comma.
+        either a dot or a comma. Fractional seconds are truncated to microsecond
+        precision; digits after the sixth are discarded, not rounded.
+
+        For example::
+
+            >>> from dateutil.parser import isoparse
+            >>> isoparse("2020-01-01T12:34:56.123456789").microsecond
+            123456
+            >>> isoparse("2020-01-01T12:34:56,123456789").microsecond
+            123456
 
 
         .. caution::
