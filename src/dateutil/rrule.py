@@ -1283,8 +1283,9 @@ class _iterinfo:
         for j in range(7):
             dset[i] = i
             i += 1
-            if (self.wdaymask[i] == self.rrule._wkst or
-                    (year == datetime.MAXYEAR and i == self.yearlen)):
+            if self.wdaymask[i] == self.rrule._wkst or (
+                year == datetime.MAXYEAR and i == self.yearlen
+            ):
                 break
         return dset, start, i
 

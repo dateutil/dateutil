@@ -747,13 +747,20 @@ class RRuleTest(unittest.TestCase):
         start = datetime(9999, 12, 24)
         rule = rrule(WEEKLY, dtstart=start, wkst=MO, byweekday=(SA, SU))
         self.assertEqual(rule.count(), 2)
-        self.assertEqual(list(rule), [datetime(9999, 12, 25),
-                                      datetime(9999, 12, 26)])
+        self.assertEqual(
+            list(rule), [datetime(9999, 12, 25), datetime(9999, 12, 26)]
+        )
 
     def testWeeklyLastRepresentableWeekBySetPos(self):
         start = datetime(9999, 12, 27)
-        rule = rrule(WEEKLY, dtstart=start, wkst=MO, byweekday=(FR, SA),
-                     bysetpos=-1, until=datetime(9999, 12, 31))
+        rule = rrule(
+            WEEKLY,
+            dtstart=start,
+            wkst=MO,
+            byweekday=(FR, SA),
+            bysetpos=-1,
+            until=datetime(9999, 12, 31),
+        )
         self.assertEqual(list(rule), [datetime(9999, 12, 31)])
 
     def testWeeklyInterval(self):
