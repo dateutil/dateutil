@@ -461,6 +461,23 @@ class tzfile(_tzinfo):
         self._tz_str = tz_str
         if tz_str is not None and tz_str != b"":
             self._tz_after = _parse_tz_str(tz_str.decode())
+
+            # zic writes DST all year as negative DST from a made-up standard
+            # offset (e.g. "XXX-2<+01>-1,0/0,J365/23"), so if the explicit
+            # transitions end in that same period, they are the better source
+            # for how much of the offset is DST.
+            if (
+                self._ttinfos
+                and isinstance(self._tz_after, _TZStr)
+                and self._tz_after.is_dst_all_year()
+                and isdst[trans_idx[-1]]
+                and self._ttinfos[-1].utcoff == self._tz_after.dst.utcoff
+            ):
+                self._tz_after.dst = _ttinfo(
+                    self._tz_after.dst.utcoff,
+                    self._ttinfos[-1].dstoff,
+                    self._tz_after.dst.tzname,
+                )
         else:
             if not self._ttinfos and not _ttinfo_list:
                 raise ValueError("No time zone information found.")
@@ -1052,6 +1069,20 @@ class _TZStr:
         start = self.start.year_to_epoch(year)
         end = self.end.year_to_epoch(year)
         return start, end
+
+    def is_dst_all_year(self):
+        """Whether each year's DST period lasts until the next one starts."""
+        std_utcoff = self.std.utcoff.total_seconds()
+        dst_utcoff = self.dst.utcoff.total_seconds()
+
+        # One year of each length, since some rules depend on the leap day
+        for year in (2023, 2024):
+            start, end = self.transitions(year)
+            next_start, _ = self.transitions(year + 1)
+            if start >= end or end - dst_utcoff < next_start - std_utcoff:
+                return False
+
+        return True
 
     def _near_new_year(self, ts, year):
         """Whether ts is close enough to the new year that the rules for the
