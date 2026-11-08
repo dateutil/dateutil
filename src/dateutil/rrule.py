@@ -1737,6 +1737,8 @@ class _rrulestr:
                     rset.rdate(dtstart)
                 return rset
             else:
+                if not rrulevals:
+                    raise ValueError("No RRULE found")
                 return self._parse_rfc_rrule(rrulevals[0],
                                              dtstart=dtstart,
                                              cache=cache,
