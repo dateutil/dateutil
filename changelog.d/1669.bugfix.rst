@@ -1,0 +1,3 @@
+Fixed rrulestr raising IndexError instead of ValueError for input containing
+DTSTART without a recurrence rule. Reported by @Driedsandwich (gh issue #1668).
+Fixed by @ada-wh525 (gh pr #1669).
