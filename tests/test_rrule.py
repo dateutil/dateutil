@@ -4618,7 +4618,7 @@ class RRuleTest(unittest.TestCase):
 )
 @pytest.mark.parametrize("dtstart", [None, datetime(2019, 1, 1)])
 def test_rrulestr_missing_rule(rule_string, dtstart):
-    with pytest.raises(ValueError, match="(?i)rrule"):
+    with pytest.raises(ValueError, match="DTSTART.*forceset=True"):
         rrulestr(rule_string, dtstart=dtstart)
 
 
