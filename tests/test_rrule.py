@@ -1,3 +1,4 @@
+import calendar
 import copy
 import itertools
 import pickle
@@ -57,6 +58,23 @@ class RRuleTest(unittest.TestCase):
           'DTSTART:19970105T083000\nRRULE:FREQ=YEARLY;INTERVAL=2'
         )
         self.assertEqual(str(rrulestr(rr_str)), rr_str)
+
+    def testStrExplicitMondayWeekStart(self):
+        rule = rrule(
+            WEEKLY,
+            interval=2,
+            count=4,
+            dtstart=datetime(2024, 1, 2),
+            byweekday=(TU, SU),
+            wkst=MO,
+        )
+        text = str(rule)
+        firstweekday = calendar.firstweekday()
+        try:
+            calendar.setfirstweekday(calendar.SUNDAY)
+            self.assertEqual(list(rrulestr(text)), list(rule))
+        finally:
+            calendar.setfirstweekday(firstweekday)
 
     def testYearly(self):
         self.assertEqual(list(rrule(YEARLY,
