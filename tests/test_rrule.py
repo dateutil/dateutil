@@ -4607,6 +4607,35 @@ class RRuleTest(unittest.TestCase):
                              [datetime(1997, 1, 6)])
 
 
+@pytest.mark.rrulestr
+@pytest.mark.parametrize(
+    "rule_string",
+    [
+        "DTSTART:20200101",
+        "DTSTART:20200101\n",
+        "DTSTART;TZID=UTC:20200101T000000",
+    ],
+)
+@pytest.mark.parametrize("dtstart", [None, datetime(2019, 1, 1)])
+def test_rrulestr_missing_rule(rule_string, dtstart):
+    with pytest.raises(ValueError, match="DTSTART.*forceset=True"):
+        rrulestr(rule_string, dtstart=dtstart)
+
+
+@pytest.mark.rrulestr
+@pytest.mark.parametrize(
+    "options, expected",
+    [
+        ({"forceset": True}, []),
+        ({"compatible": True}, [datetime(2020, 1, 1)]),
+    ],
+)
+def test_rrulestr_dtstart_only_set(options, expected):
+    result = rrulestr("DTSTART:20200101", **options)
+    assert isinstance(result, rruleset)
+    assert list(result) == expected
+
+
 @pytest.mark.rrule
 @freeze_time(datetime(2018, 3, 6, 5, 36, tzinfo=tz.UTC))
 def test_generated_aware_dtstart():
