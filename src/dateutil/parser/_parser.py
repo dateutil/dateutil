@@ -69,6 +69,7 @@ class _timelex:
         self.charstack = []
         self.tokenstack = []
         self.eof = False
+        self._last_nonspace_token = None
 
     def get_token(self):
         """
@@ -85,7 +86,10 @@ class _timelex:
         demands that multiple tokens be parsed at once.
         """
         if self.tokenstack:
-            return self.tokenstack.pop(0)
+            tok = self.tokenstack.pop(0)
+            if tok and not tok.isspace():
+                self._last_nonspace_token = tok
+            return tok
 
         seenletters = False
         token = None
@@ -175,8 +179,23 @@ class _timelex:
                     self.tokenstack.append(tok)
 
         if state == '0.' and token.count('.') == 0:
-            token = token.replace(',', '.')
+            # A comma between a day and a 4-digit year is a separator, not a
+            # decimal point: "may15,2021" means day 15, year 2021, not 15.2021.
+            # Only do this right after a month name (a word): a comma after a
+            # time component ("12:30:45,1234") is a fractional second, and a
+            # bare "15,2021" is left as-is. See GH issue #1191.
+            head, sep, tail = token.partition(',')
+            prev = self._last_nonspace_token
+            if (sep and head.isdigit() and tail.isdigit() and len(tail) == 4
+                    and prev is not None and prev[:1].isalpha()):
+                self.tokenstack.append(sep)
+                self.tokenstack.append(tail)
+                token = head
+            else:
+                token = token.replace(',', '.')
 
+        if token and not token.isspace():
+            self._last_nonspace_token = token
         return token
 
     def __iter__(self):

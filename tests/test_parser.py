@@ -221,6 +221,28 @@ def test_parse_with_tzoffset(dstr, expected):
     assert result == expected
 
 
+@pytest.mark.parametrize("dstr,expected", [
+    ("may15,2021", datetime(2021, 5, 15)),
+    ("may 15,2021", datetime(2021, 5, 15)),
+    ("september22,1999", datetime(1999, 9, 22)),
+    ("Mar 31,2000", datetime(2000, 3, 31)),
+])
+def test_parse_comma_before_year(dstr, expected):
+    # GH #1191: a comma between the day and a 4-digit year after a month name is
+    # a separator, not a decimal point, so the year is not dropped.
+    assert parse(dstr) == expected
+
+
+@pytest.mark.parametrize("dstr,expected_microsecond", [
+    ("12:30:45,1234", 123400),
+    ("12:30:45,5", 500000),
+])
+def test_parse_comma_fractional_second_unaffected(dstr, expected_microsecond):
+    # The GH #1191 fix must not change comma fractional seconds, which follow a
+    # time (a ":"), not a month name.
+    assert parse(dstr).microsecond == expected_microsecond
+
+
 class TestFormat:
 
     def test_ybd(self):
