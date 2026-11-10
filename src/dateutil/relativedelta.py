@@ -163,8 +163,9 @@ class relativedelta:
 
             # Get the timedelta between the "months-adjusted" date and dt1
             delta = dt1 - dtm
-            self.seconds = delta.seconds + delta.days * 86400
-            self.microseconds = delta.microseconds
+            # The fields of a negative timedelta are not all negative, so take
+            # the total and let _fix() split it up with a single sign.
+            self.microseconds = delta // datetime.timedelta(microseconds=1)
         else:
             # Check for non-integer values in integer-only quantities
             if any(x is not None and x != int(x) for x in (years, months)):

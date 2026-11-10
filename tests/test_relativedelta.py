@@ -731,6 +731,30 @@ def test_yearday_is_ordinal_day(year):
     ]
 
 
+@pytest.mark.parametrize(
+    "dt1, dt2, expected",
+    [
+        (
+            datetime(2000, 1, 1),
+            datetime(2000, 1, 1, 0, 0, 1, 500000),
+            relativedelta(seconds=-1, microseconds=-500000),
+        ),
+        (
+            datetime(2000, 1, 1, 0, 0, 1, 500000),
+            datetime(2000, 1, 1),
+            relativedelta(seconds=1, microseconds=500000),
+        ),
+        (
+            datetime(2003, 1, 31, 23, 59, 59, 500000),
+            datetime(2003, 3, 1),
+            relativedelta(months=-1, microseconds=-500000),
+        ),
+    ],
+)
+def test_difference_fields_have_one_sign(dt1, dt2, expected):
+    assert relativedelta(dt1, dt2) == expected
+
+
 class RelativeDeltaWeeksPropertyGetterTest(unittest.TestCase):
     """Test the weeks property getter"""
 
