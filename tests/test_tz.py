@@ -1702,7 +1702,7 @@ def test_tzstr_default_cmp(tzstr_1, tzstr_2):
 
     assert tz1 == tz2
 
-# 2026-10-09: Before the first onset, daylight-only zones use their first rule.
+
 def test_tzical_daylight_only_before_first_onset():
     data = TZICAL_EST5EDT.replace("STANDARD", "DAYLIGHT")
     zone = tz.tzical(StringIO(data)).get()
