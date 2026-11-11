@@ -128,6 +128,7 @@ AAAOJZ6djgAAAA8nf9EPAAAAECpQ9ZAAAAARLDIpEQAAABIuE1ySAAAAEzDnJBMAAAAUM7hIlAAA
 ABU2jBAVAAAAFkO3G5YAAAAXAAAAAQAAAAE=
 """
 
+
 TZICAL_EST5EDT = """
 BEGIN:VTIMEZONE
 TZID:US-Eastern
@@ -1776,6 +1777,34 @@ def test_tzstr_default_cmp(tzstr_1, tzstr_2):
     tz2 = tz.tzstr(tzstr_2)
 
     assert tz1 == tz2
+
+# 2026-10-09: File input uses the iCalendar charset independently of locale.
+def test_tzical_utf8_file(tmp_path):
+    name = "Caf\u00e9"
+    data = "\r\n".join(
+        [
+            "BEGIN:VTIMEZONE",
+            "TZID:" + name,
+            "BEGIN:STANDARD",
+            "DTSTART:19700101T000000",
+            "TZOFFSETFROM:+0100",
+            "TZOFFSETTO:+0100",
+            "TZNAME:CET",
+            "END:STANDARD",
+            "END:VTIMEZONE",
+            "",
+        ]
+    )
+    path = tmp_path / "timezone.ics"
+    path.write_bytes(data.encode("utf-8"))
+
+    parsed = tz.tzical(str(path))
+    assert parsed.keys() == [name]
+    zone = parsed.get(name)
+    expected_name = b"CET" if PY2 else "CET"
+    assert zone.tzname(datetime(2026, 1, 1)) == expected_name
+    assert zone.utcoffset(datetime(2026, 1, 1)) == timedelta(hours=1)
+
 
 class TZICalTest(unittest.TestCase, TzFoldMixin):
     def _gettz_str_tuple(self, tzname):
