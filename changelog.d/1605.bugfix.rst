@@ -1,0 +1,2 @@
+Fixed a TypeError when a daylight-only VTIMEZONE is queried before its first
+onset. Reported by @bysiber (gh pr #1454). Fixed by @fhgffy (gh pr #1605).
