@@ -3,7 +3,7 @@ dateutil - powerful extensions to datetime
 
 |pypi| |support| |licence|
 
-|gitter| |readthedocs|
+|readthedocs|
 
 |gha| |coverage|
 
