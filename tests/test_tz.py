@@ -1026,6 +1026,20 @@ def test_tzlocal_offset_unequal(tzvar, tzoff):
         assert not (tz.tzlocal() == tzoff)
 
 
+@mark_tzlocal_nix
+@pytest.mark.parametrize(
+    "tzvar, tzname",
+    [
+        ("UTC", "UTC"),
+        ("EST5", "EST"),
+        ("EST+5EDT,M3.2.0/2,M11.1.0/2", None),
+    ],
+)
+def test_tzlocal_time_only_tzname(tzvar, tzname):
+    with TZEnvContext(tzvar):
+        assert dt_time(13, 20, tzinfo=tz.tzlocal()).tzname() == tzname
+
+
 @pytest.mark.gettz
 class GettzTest(TzSourceMixin, unittest.TestCase, TzFoldMixin):
     gettz = staticmethod(tz.gettz)
