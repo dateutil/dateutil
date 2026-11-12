@@ -23,10 +23,6 @@ dateutil - powerful extensions to datetime
     :target: https://codecov.io/gh/dateutil/dateutil?branch=master
     :alt: Code coverage
 
-.. |gitter| image:: https://badges.gitter.im/dateutil/dateutil.svg
-   :alt: Join the chat at https://gitter.im/dateutil/dateutil
-   :target: https://gitter.im/dateutil/dateutil
-
 .. |licence| image:: https://img.shields.io/pypi/l/python-dateutil.svg?style=flat-square
     :target: https://pypi.org/project/python-dateutil/
     :alt: licence
