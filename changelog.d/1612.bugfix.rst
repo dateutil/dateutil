@@ -1,0 +1,1 @@
+Fixed issue where rrulestr dropped the timezone if TZID was followed by another parameter such as VALUE=DATE-TIME. Reported by @ChipLab (gh issue #1611). Fixed by @Fire162 (gh pr #1612).
