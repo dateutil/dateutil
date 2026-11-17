@@ -39,6 +39,7 @@ switch, and thus all their contributions are dual-licensed.
 - Christopher Cordero <ccordero@pm.me> (gh: cs-cordero) **D**
 - Christopher Corley <cscorley@MASKED>
 - Claudio Canepa <ccanepacc@MASKED>
+- Colin Watson <cjwatson@debian.org> (gh: cjwatson) **D**
 - Corey Girard <corey.r.girard@gmail.com> (gh: @coreygirard) **D**
 - Cosimo Lupo <cosimo@anthrotype.com> (gh: @anthrotype) **D**
 - Daniel Lemm (gh: @ffe4) **D**
