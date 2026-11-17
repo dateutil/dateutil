@@ -1,0 +1,6 @@
+Fixed ``rrule`` with ``byweekno`` misattributing the first days of a year that
+belong to the last ISO week of the previous year. The last week number of the
+previous year was computed from the current year's length instead of the
+previous year's, so e.g. ``byweekno=52`` skipped and ``byweekno=53`` wrongly
+included 2011-01-01/02 (ISO week 52 of 2010). Reported and fixed by
+@vineethsaivs (gh pr #1537).
