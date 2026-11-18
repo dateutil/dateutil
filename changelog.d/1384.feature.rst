@@ -1,0 +1,1 @@
+Improved the speed of parser _timelex by inlining methods.
