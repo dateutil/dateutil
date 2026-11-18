@@ -1,0 +1,3 @@
+Fixed ``tz.tzfile.dst()`` returning a negative value for times after the last
+transition in zones that end in permanent DST, such as ``Africa/Casablanca`` in
+the rearguard format. Reported and fixed by @pganssle (gh pr #1667)
