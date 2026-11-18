@@ -219,6 +219,9 @@ class tzlocal(_tzinfo):
             return ZERO
 
     def tzname(self, dt):
+        if dt is None and self._hasdst:
+            return None
+
         return self._tznames[self._isdst(dt)]
 
     def is_ambiguous(self, dt):
