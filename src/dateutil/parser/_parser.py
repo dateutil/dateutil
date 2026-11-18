@@ -823,6 +823,12 @@ class parser:
                     else:
                         raise ValueError(timestr)
 
+                    if hour_offset > 23 or min_offset > 59:
+                        # Reject out-of-range offsets (e.g. +0060, +2400) so they
+                        # fail like isoparse() instead of silently producing a
+                        # wrong or unusable ("toxic") tzoffset.
+                        raise ValueError(timestr)
+
                     res.tzoffset = signal * (hour_offset * 3600 + min_offset * 60)
 
                     # Look for a timezone name between parenthesis
