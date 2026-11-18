@@ -58,6 +58,16 @@ class RRuleTest(unittest.TestCase):
         )
         self.assertEqual(str(rrulestr(rr_str)), rr_str)
 
+    def testStrFourDigitYear(self):
+        rule = rrule(
+            DAILY, dtstart=datetime(876, 1, 2), until=datetime(876, 1, 3)
+        )
+        self.assertEqual(
+            str(rule),
+            "DTSTART:08760102T000000\nRRULE:FREQ=DAILY;UNTIL=08760103T000000",
+        )
+        self._rrulestr_reverse_test(rule)
+
     def testYearly(self):
         self.assertEqual(list(rrule(YEARLY,
                               count=3,

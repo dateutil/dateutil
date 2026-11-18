@@ -1,0 +1,3 @@
+Fixed serialization of recurrence rules with years before 1000 on platforms
+that omit leading zeros in year formatting. Reported and fixed by
+@shrohan2003 (gh pr #1671).
