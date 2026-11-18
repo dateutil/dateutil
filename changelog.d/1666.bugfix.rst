@@ -1,0 +1,3 @@
+Fixed weekly recurrence rules raising an exception when their final week
+extends past December 31, 9999. Reported by @phillbaker (gh issue #980).
+Fixed by @shrohan2003 (gh pr #1666).
