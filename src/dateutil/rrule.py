@@ -492,6 +492,7 @@ class rrule(rrulebase):
                  " and has been deprecated in dateutil. Future versions will "
                  "raise an error.", DeprecationWarning)
 
+        self._wkst_explicit = wkst is not None
         if wkst is None:
             self._wkst = calendar.firstweekday()
         elif isinstance(wkst, int):
@@ -729,7 +730,7 @@ class rrule(rrulebase):
         if self._interval != 1:
             parts.append('INTERVAL=' + str(self._interval))
 
-        if self._wkst:
+        if self._wkst or getattr(self, "_wkst_explicit", False):
             parts.append('WKST=' + repr(weekday(self._wkst))[0:2])
 
         if self._count is not None:
