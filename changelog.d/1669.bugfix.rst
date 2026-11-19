@@ -1,0 +1,5 @@
+Fixed rrulestr raising IndexError instead of ValueError for input containing
+DTSTART without a recurrence rule. For DTSTART-only input, ``forceset=True``
+returns an empty rruleset, while ``compatible=True`` returns a set containing
+the DTSTART date. Reported by @Driedsandwich (gh issue #1668).
+Fixed by @ada-wh525 (gh pr #1669).
