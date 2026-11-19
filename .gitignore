@@ -29,3 +29,5 @@ tzdata*.tar.gz
 .idea
 .cache
 .mypy_cache
+.cie/
+.forge/
