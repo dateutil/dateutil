@@ -731,7 +731,9 @@ class parser:
 
                 if value is not None:
                     # Numeric token
-                    i = self._parse_numeric_token(l, i, info, ymd, res, fuzzy)
+                    i = self._parse_numeric_token(
+                        l, i, info, ymd, res, fuzzy, skipped_idxs
+                    )
 
                 # Check weekday
                 elif info.weekday(l[i]) is not None:
@@ -866,7 +868,7 @@ class parser:
         else:
             return res, None
 
-    def _parse_numeric_token(self, tokens, idx, info, ymd, res, fuzzy):
+    def _parse_numeric_token(self, tokens, idx, info, ymd, res, fuzzy, skipped_idxs):
         # Token is a number
         value_repr = tokens[idx]
         try:
@@ -931,6 +933,16 @@ class parser:
 
         elif idx + 2 < len_l and tokens[idx + 1] == ':':
             # HH:MM[:SS[.ss]]
+            if fuzzy and res.hour is not None:
+                skipped_idxs.extend([idx, idx + 1, idx + 2])
+
+                if idx + 4 < len_l and tokens[idx + 3] == ':':
+                    skipped_idxs.extend([idx + 3, idx + 4])
+                    idx += 2
+
+                idx += 2
+                return idx
+
             res.hour = int(value)
             value = self._to_decimal(tokens[idx + 2])  # TODO: try/except for this?
             (res.minute, res.second) = self._parse_min_sec(value)
