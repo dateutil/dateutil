@@ -1,0 +1,5 @@
+Fixed a bug where :func:`parser.parse` dropped the year when parsing a date
+written as a month name followed by the day, a comma and a 4-digit year with no
+space, such as ``"may15,2021"``: the comma was treated as a decimal point and
+the year was absorbed as a fraction. Reported in gh issue #1191, fixed by
+@AryanSingh2029.
