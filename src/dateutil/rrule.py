@@ -809,6 +809,26 @@ class rrule(rrulebase):
         byminute = self._byminute
         bysecond = self._bysecond
 
+        if bysetpos:
+            if freq == YEARLY:
+                max_pos = 366 * len(self._timeset)
+            elif freq == MONTHLY:
+                max_pos = 31 * len(self._timeset)
+            elif freq == WEEKLY:
+                max_pos = 7 * len(self._timeset)
+            elif freq == DAILY:
+                max_pos = len(self._timeset)
+            elif freq == HOURLY:
+                max_pos = len(byminute) * len(bysecond)
+            elif freq == MINUTELY:
+                max_pos = len(bysecond)
+            else:
+                max_pos = 1
+
+            if all(abs(pos) > max_pos for pos in bysetpos):
+                self._len = 0
+                return
+
         ii = _iterinfo(self)
         ii.rebuild(year, month)
 
