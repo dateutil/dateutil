@@ -1,0 +1,1 @@
+Clarified that isoparse accepts more than six fractional-second digits and truncates them to microsecond precision. Reported by @tilsche (gh issue #1106). Fixed by @Mrun25 (gh pr #1665).
