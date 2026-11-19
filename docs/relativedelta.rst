@@ -5,6 +5,48 @@ relativedelta
    :members:
    :undoc-members:
 
+Weekday constants
+-----------------
+
+``dateutil.relativedelta`` provides weekday constants for all days of the week.
+They are named with the first two letters of the weekday:
+
+.. list-table::
+   :header-rows: 1
+
+   * - Constant
+     - Weekday
+     - Integer value
+   * - ``MO``
+     - Monday
+     - ``0``
+   * - ``TU``
+     - Tuesday
+     - ``1``
+   * - ``WE``
+     - Wednesday
+     - ``2``
+   * - ``TH``
+     - Thursday
+     - ``3``
+   * - ``FR``
+     - Friday
+     - ``4``
+   * - ``SA``
+     - Saturday
+     - ``5``
+   * - ``SU``
+     - Sunday
+     - ``6``
+
+These constants can be passed to the ``weekday`` argument. They also support
+positional forms such as ``MO(+1)`` or ``FR(-1)`` for selecting the nth weekday
+relative to the date being adjusted.
+
+The ``dateutil.rrule`` module exposes constants with the same names, but they
+are separate weekday instances. Import the constants from the module whose API
+you are using.
+
 .. testsetup:: relativedelta
 
 Examples
