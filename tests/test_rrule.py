@@ -5134,3 +5134,62 @@ def test_cached_rrule_included_twice_in_rruleset():
     rrset.rrule(rr)
 
     assert _list_with_timeout(rrset) == expected
+
+
+@pytest.mark.parametrize(
+    "freq, kwargs",
+    [
+        (MONTHLY, {"bysetpos": 32}),
+        (MONTHLY, {"bysetpos": -32}),
+        (WEEKLY, {"bysetpos": 8}),
+        (WEEKLY, {"bysetpos": (-8, 8)}),
+        (DAILY, {"bysetpos": 2}),
+        (DAILY, {"bysetpos": -2}),
+        (DAILY, {"byhour": (9, 17), "bysetpos": 3}),
+        (HOURLY, {"bysetpos": 2}),
+        (HOURLY, {"byminute": (0, 30), "bysetpos": -3}),
+        (MINUTELY, {"bysetpos": 2, "byweekday": MO}),
+        (MINUTELY, {"bysecond": (15, 45), "bysetpos": 3}),
+        (SECONDLY, {"bysetpos": 2}),
+        (SECONDLY, {"bysetpos": (-2, 2)}),
+    ],
+)
+def test_unreachable_bysetpos_returns_empty(freq, kwargs):
+    rr = rrule(freq, dtstart=datetime(2019, 1, 1, 0, 0), count=1, **kwargs)
+    assert _list_with_timeout(rr, timeout=2) == []
+    assert rr.count() == 0
+
+
+@pytest.mark.parametrize(
+    "freq, kwargs, expected",
+    [
+        (
+            DAILY,
+            {"byhour": (9, 17), "bysetpos": (2, 3)},
+            [datetime(2019, 1, 1, 17, 0)],
+        ),
+        (
+            HOURLY,
+            {"byminute": (0, 30), "bysetpos": (-2, 5)},
+            [datetime(2019, 1, 1, 0, 0)],
+        ),
+        (
+            MINUTELY,
+            {"bysetpos": (1, 2), "byweekday": MO},
+            [datetime(2019, 1, 7, 0, 0)],
+        ),
+        (
+            MINUTELY,
+            {"bysecond": (15, 45), "bysetpos": (2, 3)},
+            [datetime(2019, 1, 1, 0, 0, 45)],
+        ),
+        (
+            SECONDLY,
+            {"bysetpos": (-1, 2)},
+            [datetime(2019, 1, 1, 0, 0, 0)],
+        ),
+    ],
+)
+def test_reachable_and_mixed_bysetpos(freq, kwargs, expected):
+    rr = rrule(freq, dtstart=datetime(2019, 1, 1, 0, 0), count=1, **kwargs)
+    assert list(rr) == expected

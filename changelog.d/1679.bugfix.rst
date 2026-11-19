@@ -1,0 +1,1 @@
+``rrule._iter()`` now returns early instead of scanning to ``datetime.MAXYEAR`` when all ``bysetpos`` values exceed the maximum number of occurrences a single interval can produce. Reported by @matthewgilbert (gh issue #905). Fixed by @EnesKartal (gh pr #1679)
