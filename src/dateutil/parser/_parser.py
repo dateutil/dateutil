@@ -596,12 +596,12 @@ class parser:
 
                 >>> from dateutil.parser import parse
                 >>> from dateutil.tz import gettz
-                >>> tzinfos = {"BRST": -7200, "CST": gettz("America/Chicago")}
+                >>> tzinfos = {"BRST": -7200, "CST": gettz("Etc/GMT+6")}
                 >>> parse("2012-01-19 17:21:00 BRST", tzinfos=tzinfos)
                 datetime.datetime(2012, 1, 19, 17, 21, tzinfo=tzoffset(u'BRST', -7200))
                 >>> parse("2012-01-19 17:21:00 CST", tzinfos=tzinfos)
                 datetime.datetime(2012, 1, 19, 17, 21,
-                                  tzinfo=tzfile('/usr/share/zoneinfo/America/Chicago'))
+                                  tzinfo=tzfile('/usr/share/zoneinfo/Etc/GMT+6'))
 
             This parameter is ignored if ``ignoretz`` is set.
 
@@ -1302,12 +1302,12 @@ def parse(timestr, parserinfo=None, **kwargs):
 
             >>> from dateutil.parser import parse
             >>> from dateutil.tz import gettz
-            >>> tzinfos = {"BRST": -7200, "CST": gettz("America/Chicago")}
+            >>> tzinfos = {"BRST": -7200, "CST": gettz("Etc/GMT+6")}
             >>> parse("2012-01-19 17:21:00 BRST", tzinfos=tzinfos)
             datetime.datetime(2012, 1, 19, 17, 21, tzinfo=tzoffset(u'BRST', -7200))
             >>> parse("2012-01-19 17:21:00 CST", tzinfos=tzinfos)
             datetime.datetime(2012, 1, 19, 17, 21,
-                              tzinfo=tzfile('/usr/share/zoneinfo/America/Chicago'))
+                              tzinfo=tzfile('/usr/share/zoneinfo/Etc/GMT+6'))
 
         This parameter is ignored if ``ignoretz`` is set.
 
