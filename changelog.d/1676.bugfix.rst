@@ -1,0 +1,5 @@
+``relativedelta(dt1, dt2)`` now gives all fields the same sign when ``dt1`` is
+earlier than ``dt2`` by a fractional number of seconds; previously it could
+return e.g. ``relativedelta(seconds=-2, microseconds=+500000)``, which compared
+unequal to the equivalent delta and gave a wrong ``abs()``. Reported and fixed
+by @terry9046 (gh pr #1676)
