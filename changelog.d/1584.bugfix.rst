@@ -1,0 +1,4 @@
+Fixed issue where the relative ``leapdays`` field was not negated,
+subtracted, scaled or absolute-valued like the other relative fields,
+breaking the additive inverse of ``relativedelta``. Reported and fixed
+by @Master-Norna (gh pr #1584)
