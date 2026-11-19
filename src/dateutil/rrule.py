@@ -640,7 +640,7 @@ class rrule(rrulebase):
         # byhour
         if byhour is None:
             if freq < HOURLY:
-                self._byhour = {dtstart.hour}
+                self._byhour = (dtstart.hour,)
             else:
                 self._byhour = None
         else:
@@ -660,7 +660,7 @@ class rrule(rrulebase):
         # byminute
         if byminute is None:
             if freq < MINUTELY:
-                self._byminute = {dtstart.minute}
+                self._byminute = (dtstart.minute,)
             else:
                 self._byminute = None
         else:
@@ -680,7 +680,7 @@ class rrule(rrulebase):
         # bysecond
         if bysecond is None:
             if freq < SECONDLY:
-                self._bysecond = ((dtstart.second,))
+                self._bysecond = (dtstart.second,)
             else:
                 self._bysecond = None
         else:
