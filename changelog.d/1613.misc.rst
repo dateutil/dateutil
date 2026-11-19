@@ -1,0 +1,5 @@
+Sped up fuzzy parsing (~1.17x on noisy-string workloads, ~1.08x strict):
+exception-free ``parserinfo`` misses, bound-method hoisting in the ``_parse``
+token loop, no ``jump()`` call for tokens skipped in fuzzy mode, and a C-level
+all-uppercase check in ``_could_be_tzname``. No behavior change. Reported and
+fixed by @John-Cusack (gh pr #1613)
