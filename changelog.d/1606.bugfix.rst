@@ -1,0 +1,3 @@
+Fixed date-dependent tzical zones raising AttributeError from time.dst()
+and time.tzname(). Return None when no date is available to select an
+observance. Reported and fixed by @fhgffy (gh pr #1606).
