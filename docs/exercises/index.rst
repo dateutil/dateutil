@@ -148,7 +148,7 @@ To solve this exercise, copy-paste this script into a document, change anything 
     from dateutil.parser import parse
     from dateutil import tz
 
-    def parse_func_us_jp_ind():
+    def parse_func_us_jp_ind(dtstr):
         <<YOUR CODE HERE>>
 
     # ---------------------------------- #
@@ -191,10 +191,12 @@ To solve this exercise, copy-paste this script into a document, change anything 
 
     </details>
 
+A solution to this problem is provided :ref:`here <parsing-tzname-p1-solution>`.
+
 
 Problem 2
 *********
-    Given the context that you will *only* be passed dates from India or Ireland, write a function that correctly parses all *unambiguous* time zone strings to aware datetimes localized to the correct IANA zone, and for *ambiguous* time zone strings default to India.
+    Given the context that you will *only* be passed dates from India or Israel, write a function that correctly parses all *unambiguous* time zone strings to aware datetimes localized to the correct IANA zone, and for *ambiguous* time zone strings default to India.
 
 **Test Script**
 
@@ -211,10 +213,12 @@ To solve this exercise, copy-paste this script into a document, change anything 
     from dateutil.parser import parse
     from dateutil import tz
 
-    def parse_func_ind_ire():
+    def parse_func_ind_isr(dtstr):
         <<YOUR CODE HERE>>
 
     # ---------------------------------- #
+    from datetime import datetime
+
     ISRAEL = tz.gettz('Asia/Jerusalem')
     INDIA = tz.gettz('Asia/Kolkata')
     PARSE_IXT_TEST_CASE = [
@@ -228,7 +232,7 @@ To solve this exercise, copy-paste this script into a document, change anything 
 
     def test_parse_ixt():
         for dtstr, dt_exp in PARSE_IXT_TEST_CASE:
-            dt_act = parse_func_ind_ire(dtstr)
+            dt_act = parse_func_ind_isr(dtstr)
             assert dt_act == dt_exp, (dt_act, dt_exp)
             assert dt_act.tzinfo is dt_exp.tzinfo, (dt_act, dt_exp)
 
@@ -240,3 +244,4 @@ To solve this exercise, copy-paste this script into a document, change anything 
 
     </details>
 
+A solution to this problem is provided :ref:`here <parsing-tzname-p2-solution>`.
