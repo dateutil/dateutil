@@ -7,7 +7,7 @@ parser
 Functions
 ---------
 
-.. automethod:: dateutil.parser.parse
+.. autofunction:: dateutil.parser.parse
 
 .. automethod:: dateutil.parser.isoparse
 
