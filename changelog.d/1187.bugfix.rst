@@ -1,0 +1,2 @@
+Add empty slots to ``_resultbase``, whose subclasses have slots.
+Add other missing slots in these subclasses.
