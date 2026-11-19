@@ -11,6 +11,8 @@ switch, and thus all their contributions are dual-licensed.
 
 ## Contributors (alphabetical order)
 
+- 0718lol <wanganchang_2024@qq.com> (gh: @0718lol) **D**
+
 - Aarni Koskela <akx@iki.fi> **D**
 - Adam Chainz <adam@MASKED>
 - Adrien Cossa <cossa@MASKED>
