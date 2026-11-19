@@ -1,0 +1,1 @@
+Fixed tz.gettz raising OSError for keys that cannot be file names, and KeyError on Windows for registry keys that are not zones; it now returns None. Reported and fixed by @b84330808 (gh pr #1664)

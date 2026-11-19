@@ -2407,6 +2407,14 @@ def test_gettz_missing_search_path_entry(zoneinfo_cache, tmp_path):
         "Am" + chr(0xE9) + "rica/New_York",
         "America/" + chr(0xD800),
         chr(0xD800),
+        # Not valid file names on some platforms
+        "a" * 300,
+        "America/" + "a" * 300,
+        "America/New_York*",
+        '"UTC"',
+        "<Bad>",
+        "Bad?",
+        "Bad|Key",
     ],
 )
 def test_tzdata_bad_keys(key):
