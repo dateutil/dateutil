@@ -260,6 +260,8 @@ def test_bytes(isostr, dt):
         ("20120411T033030.123456012:00", ValueError),  # No sign in time zone
         ("2012-W00", ValueError),  # Invalid ISO week
         ("2012-W55", ValueError),  # Invalid ISO week
+        ("2021-W53", ValueError),  # Week 53 in a 52-week ISO year
+        ("2021-W53-1", ValueError),  # Week 53 in a 52-week ISO year
         ("2012-W01-0", ValueError),  # Invalid ISO week day
         ("2012-W01-8", ValueError),  # Invalid ISO week day
         ("2013-000", ValueError),  # Invalid ordinal day

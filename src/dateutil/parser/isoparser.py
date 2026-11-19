@@ -320,19 +320,12 @@ class isoparser:
         :return:
             Returns a :class:`datetime.date`
         """
-        if not 0 < week < 54:
-            raise ValueError('Invalid week: {}'.format(week))
-
-        if not 0 < day < 8:     # Range is 1-7
-            raise ValueError('Invalid weekday: {}'.format(day))
-
-        # Get week 1 for the specific year:
-        jan_4 = date(year, 1, 4)   # Week 1 always has January 4th in it
-        week_1 = jan_4 - timedelta(days=jan_4.isocalendar()[2] - 1)
-
-        # Now add the specific number of weeks and days to get what we want
-        week_offset = (week - 1) * 7 + (day - 1)
-        return week_1 + timedelta(days=week_offset)
+        # ``date.fromisocalendar`` is the exact inverse of
+        # ``date.isocalendar`` and rejects weeks that do not exist in the
+        # given ISO year (e.g. week 53 in a 52-week year), which the previous
+        # manual calculation accepted and silently rolled over into the next
+        # year (see GH #1236).
+        return date.fromisocalendar(year, week, day)
 
     def _parse_isotime(self, timestr):
         len_str = len(timestr)

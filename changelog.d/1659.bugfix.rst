@@ -1,0 +1,4 @@
+Fixed an issue where ``isoparse`` would accept an ISO week-date with a
+week number that does not exist in that ISO year (e.g. ``2021-W53-1``),
+silently rolling it over into the following year instead of raising.
+Reported by @Ev2geny (gh issue #1236). Fixed by @sneha4175 (gh pr #1659)
