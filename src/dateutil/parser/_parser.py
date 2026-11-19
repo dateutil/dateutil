@@ -794,7 +794,7 @@ class parser:
                     # logic so that timezone parsing code will get it
                     # right.
                     if i + 1 < len_l and l[i + 1] in ('+', '-'):
-                        l[i + 1] = ('+', '-')[l[i + 1] == '+']
+                        l[i + 1] = ('-', '+')[l[i + 1] == '+']
                         res.tzoffset = None
                         if info.utczone(res.tzname):
                             # With something like GMT+3, the timezone
