@@ -1,0 +1,4 @@
+Fixed an infinite loop in ``parser.parse`` when passed an object whose
+``read()`` method does not return a string, such as a ``unittest.mock.Mock``.
+It now raises ``TypeError``. Reported by @pete-kirkham (gh issue #1428).
+Fixed by @buzztouniverse (gh pr #1641)
