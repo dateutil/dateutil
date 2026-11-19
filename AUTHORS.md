@@ -94,6 +94,7 @@ switch, and thus all their contributions are dual-licensed.
 - Nick Smith <nick.smith@MASKED>
 - Nor.na (gh: @Master-Norna) **D**
 - Orson Adams <orson.network@MASKED> (gh: @parsethis) **D**
+- Osamaali313 (gh: @Osamaali313)
 - Paul Brown (gh: @pawl) **D**
 - Paul Dickson (gh @prdickson) **D**
 - Paul Ganssle <paul@ganssle.io> (gh: @pganssle) **R**
