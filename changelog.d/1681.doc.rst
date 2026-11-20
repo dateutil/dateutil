@@ -1,0 +1,1 @@
+Fixed the isoparse docstring, which incorrectly said an ISO week without a day defaults to day 0; the default is ISO day 1 (Monday). Reported by @Upua (gh issue #1629). Fixed by @FullStraing (gh pr #1681)
