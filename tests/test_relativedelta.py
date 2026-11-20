@@ -721,6 +721,16 @@ class RelativeDeltaTest(unittest.TestCase):
             date(2021, 5, 30),
         ]
 
+
+@pytest.mark.parametrize("year", [1900, 2000, 2001, 2024])
+def test_yearday_is_ordinal_day(year):
+    first = date(year, 1, 1)
+    days = range(1, 366 + calendar.isleap(year))
+    assert [first + relativedelta(yearday=n) for n in days] == [
+        first + timedelta(days=n - 1) for n in days
+    ]
+
+
 class RelativeDeltaWeeksPropertyGetterTest(unittest.TestCase):
     """Test the weeks property getter"""
 

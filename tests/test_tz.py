@@ -1026,6 +1026,20 @@ def test_tzlocal_offset_unequal(tzvar, tzoff):
         assert not (tz.tzlocal() == tzoff)
 
 
+@mark_tzlocal_nix
+@pytest.mark.parametrize(
+    "tzvar, tzname",
+    [
+        ("UTC", "UTC"),
+        ("EST5", "EST"),
+        ("EST+5EDT,M3.2.0/2,M11.1.0/2", None),
+    ],
+)
+def test_tzlocal_time_only_tzname(tzvar, tzname):
+    with TZEnvContext(tzvar):
+        assert dt_time(13, 20, tzinfo=tz.tzlocal()).tzname() == tzname
+
+
 @pytest.mark.gettz
 class GettzTest(TzSourceMixin, unittest.TestCase, TzFoldMixin):
     gettz = staticmethod(tz.gettz)
@@ -2064,6 +2078,23 @@ class TZICalTest(unittest.TestCase, TzFoldMixin):
 
         keys = sorted(tzic.keys())
         self.assertEqual(keys, ['US-Eastern', 'US-Pacific'])
+
+
+
+@pytest.mark.parametrize(
+    "offset",
+    [
+        "+-500",
+        "--500",
+        "+ 500",
+        "-05 0",
+        "+\u0660\u0665\u0660\u0660",  # Non-ASCII (Arabic-Indic) digits
+    ],
+)
+def test_tzical_offset_non_digit(offset):
+    tz_str = TZICAL_EST5EDT.replace("TZOFFSETTO:-0500", "TZOFFSETTO:" + offset)
+    with pytest.raises(ValueError):
+        tz.tzical(StringIO(tz_str))
 
 
 class TZTest(unittest.TestCase):

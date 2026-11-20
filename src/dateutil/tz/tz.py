@@ -108,7 +108,8 @@ class tzutc(datetime.tzinfo, metaclass=_TzSingleton):
     def __repr__(self):
         return "%s()" % self.__class__.__name__
 
-    __reduce__ = object.__reduce__
+    def __reduce__(self):
+        return (self.__class__, tuple())
 
 
 #: Convenience constant providing a :class:`tzutc()` instance
@@ -178,7 +179,8 @@ class tzoffset(datetime.tzinfo, metaclass=_TzOffsetFactory):
                                repr(self._name),
                                int(self._offset.total_seconds()))
 
-    __reduce__ = object.__reduce__
+    def __reduce__(self):
+        return (self.__class__, (self._name, self._offset))
 
 
 class tzlocal(_tzinfo):
@@ -217,6 +219,9 @@ class tzlocal(_tzinfo):
             return ZERO
 
     def tzname(self, dt):
+        if dt is None and self._hasdst:
+            return None
+
         return self._tznames[self._isdst(dt)]
 
     def is_ambiguous(self, dt):
@@ -745,6 +750,8 @@ class tzical:
             s = s[1:]
         else:
             signal = +1
+        if not (s.isascii() and s.isdigit()):
+            raise ValueError("invalid offset: " + s)
         if len(s) == 4:
             return (int(s[:2]) * 3600 + int(s[2:]) * 60) * signal
         elif len(s) == 6:
