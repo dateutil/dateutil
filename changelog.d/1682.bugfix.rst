@@ -1,0 +1,3 @@
+Fixed ``rrulestr()`` raising ``IndexError`` instead of ``ValueError`` when the
+input has a ``DTSTART`` line but no ``RRULE`` line. Reported by @Driedsandwich
+(gh issue #1668). Fixed by @tony1233200 (gh pr #1682)
