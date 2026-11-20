@@ -1737,6 +1737,9 @@ class _rrulestr:
                     rset.rdate(dtstart)
                 return rset
             else:
+                if not rrulevals:
+                    raise ValueError(
+                        "RRULE, RDATE, EXRULE or EXDATE is required")
                 return self._parse_rfc_rrule(rrulevals[0],
                                              dtstart=dtstart,
                                              cache=cache,
