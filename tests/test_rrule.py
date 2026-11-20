@@ -2664,6 +2664,17 @@ class RRuleTest(unittest.TestCase):
                           datetime(1998, 9, 2, 9, 0),
                           datetime(1999, 9, 2, 9, 0)])
 
+    def testStrNoRule(self):
+        with self.assertRaises(ValueError):
+            rrulestr("DTSTART:20200101")
+
+        with self.assertRaises(ValueError):
+            rrulestr("DTSTART;TZID=UTC:20200101T000000")
+
+        # forceset=True still returns an empty rruleset
+        self.assertEqual(list(rrulestr("DTSTART:20200101",
+                                        forceset=True)), [])
+
     def testXNamed(self):
         self.assertEqual(
             list(
