@@ -1,11 +1,9 @@
-# -*- coding: utf-8 -*-
 import datetime
 import calendar
 
 import operator
 from math import copysign
 
-from six import integer_types
 from warnings import warn
 
 from ._common import weekday
@@ -15,7 +13,7 @@ MO, TU, WE, TH, FR, SA, SU = weekdays = tuple(weekday(x) for x in range(7))
 __all__ = ["relativedelta", "MO", "TU", "WE", "TH", "FR", "SA", "SU"]
 
 
-class relativedelta(object):
+class relativedelta:
     """
     The relativedelta type is designed to be applied to an existing datetime and
     can replace specific components of that datetime, or represents an interval
@@ -200,7 +198,7 @@ class relativedelta(object):
                      "This is not a well-defined condition and will raise " +
                      "errors in future versions.", DeprecationWarning)
 
-            if isinstance(weekday, integer_types):
+            if isinstance(weekday, int):
                 self.weekday = weekdays[weekday]
             else:
                 self.weekday = weekday
@@ -210,7 +208,11 @@ class relativedelta(object):
                 yday = nlyearday
             elif yearday:
                 yday = yearday
-                if yearday > 59:
+                # Days after February are converted as common-year days,
+                # and leapdays=-1 moves them back over Feb 29 in leap
+                # years. Day 366 becomes December 32, which is clamped to
+                # December 31, so it must not be moved back.
+                if 59 < yearday < 366:
                     self.leapdays = -1
             if yday:
                 ydayidx = [31, 59, 90, 120, 151, 181, 212,
@@ -489,8 +491,6 @@ class relativedelta(object):
                     self.minute is None and
                     self.second is None and
                     self.microsecond is None)
-    # Compatibility with Python 2.x
-    __nonzero__ = __bool__
 
     def __mul__(self, other):
         try:
@@ -564,7 +564,7 @@ class relativedelta(object):
             self.microsecond,
         ))
 
-    def __div__(self, other):
+    def __truediv__(self, other):
         try:
             reciprocal = 1 / float(other)
         except TypeError:
@@ -572,7 +572,6 @@ class relativedelta(object):
 
         return self.__mul__(reciprocal)
 
-    __truediv__ = __div__
 
     def __repr__(self):
         l = []

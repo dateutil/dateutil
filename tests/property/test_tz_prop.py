@@ -1,4 +1,3 @@
-import sys
 from datetime import datetime, timedelta
 
 import pytest
@@ -29,9 +28,6 @@ def test_key_property(tz_source):
 
 
 @pytest.mark.gettz
-@pytest.mark.skipif(
-    sys.version_info < (3, 6), reason="Not supported on Python < 3.6"
-)
 # The C library reads the data on TZPATH, so that's what gettz must use too.
 @pytest.mark.skipif(
     tz_source_skip_reason("tzpath") is not None,

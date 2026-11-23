@@ -71,6 +71,7 @@ switch, and thus all their contributions are dual-licensed.
 - John Purviance <jpurviance@MASKED> (gh @jpurviance) **D**
 - Jon Dufresne <jon.dufresne@MASKED> (gh: @jdufresne) **R**
 - Jonas Neubert <jonas@MASKED> (gh: @jonemo) **R**
+- Jordi Masip <jordi@MASKED> (gh: @masipcat)
 - Juan Arias <jdarias3@gmail.com> (gh: @jdarias3) **D**
 - Kevin Nguyen <kvn219@MASKED> **D**
 - Kirit Thadaka <kirit.thadaka@gmail.com> (gh: @kirit93) **D**
@@ -92,6 +93,7 @@ switch, and thus all their contributions are dual-licensed.
 - Nicholas Herrriot <Nicholas.Herriot@gmail.com> **D**
 - Nicolas Évrard (gh: @nicoe) **D**
 - Nick Smith <nick.smith@MASKED>
+- Nor.na (gh: @Master-Norna) **D**
 - Orson Adams <orson.network@MASKED> (gh: @parsethis) **D**
 - Paul Brown (gh: @pawl) **D**
 - Paul Dickson (gh @prdickson) **D**
@@ -113,6 +115,7 @@ switch, and thus all their contributions are dual-licensed.
 - Sherry Zhou (gh: @cssherry) **D**
 - Siping Meng (gh: @smeng10) **D**
 - Stefan Bonchev **D**
+- Terry Cheng (gh: @terry9046) **D**
 - Thierry Bastian <thierryb@MASKED>
 - Thomas A Caswell <tcaswell@MASKED> (gh: @tacaswell) **R**
 - Thomas Achtemichuk <tom@MASKED>
@@ -122,6 +125,7 @@ switch, and thus all their contributions are dual-licensed.
 - Tomasz Kluczkowski (gh: @Tomasz-Kluczkowski) **D**
 - Tomi Pieviläinen <tomi.pievilainen@iki.fi>
 - Unrud <Unrud@MASKED> (gh: @unrud)
+- varun netrakar <varun@security.bugqore.com> (gh: @varun3257) **D**
 - Xavier Lapointe <lapointe.xavier@MASKED> (gh: @lapointexavier) **D**
 - X O <xo@MASKED>
 - Yaron de Leeuw <me@jarondl.net> (gh: @jarondl)

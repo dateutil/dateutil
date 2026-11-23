@@ -1,10 +1,43 @@
 [build-system]
-requires = [
-    "setuptools; python_version != '3.3'",
-    "setuptools<40.0; python_version == '3.3'",
-    "setuptools_scm<8.0"
+requires = ["hatchling>=1.27", "hatch-vcs>=0.4", "hatch-fancy-pypi-readme>=24.1"]
+build-backend = "hatchling.build"
+
+[project]
+name = "python-dateutil"
+description = "Extensions to the standard Python datetime module"
+dynamic = ["version", "readme"]
+requires-python = ">=3.11"
+dependencies = ["tzdata"]
+license = "BSD-3-Clause"
+license-files = ["LICENSE", "AUTHORS.md"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
+    "Programming Language :: Python :: Free Threading :: 2 - Beta",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+    "Topic :: Software Development :: Libraries",
 ]
-build-backend = "setuptools.build_meta"
+
+[[project.authors]]
+name = "Gustavo Niemeyer"
+email = "gustavo@niemeyer.net"
+
+[[project.maintainers]]
+name = "Paul Ganssle"
+email = "dateutil@python.org"
+
+[project.urls]
+Homepage = "https://github.com/dateutil/dateutil"
+Documentation = "https://dateutil.readthedocs.io/en/stable/"
+Source = "https://github.com/dateutil/dateutil"
 
 [tool.towncrier]
     package = "dateutil"
@@ -56,10 +89,67 @@ known_first_party = ["dateutil"]
 known_third_party=[
     "pytest",
     "hypothesis",
-    "six",
     "freezegun",
-    "mock",
 ]
 multi_line_output=3
 use_parentheses=true
 
+[tool.pytest.ini_options]
+python_files = [
+    "test_*.py",
+    "*_test.py",
+    "*_solution.py",
+]
+xfail_strict = true
+filterwarnings = [
+    "error",
+    "error::DeprecationWarning",
+    "error::PendingDeprecationWarning",
+]
+markers = [
+    "gettz",
+    "import_star",
+    "isoparser",
+    "parserinfo",
+    "rrule",
+    "rruleset",
+    "rrulestr",
+    "smoke",
+    "tz_resolve_imaginary",
+    "tzdata_properties",
+    "tzfile",
+    "tzlocal",
+    "tzoffset",
+    "tzstr",
+]
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.build.hooks.vcs]
+version-file = "src/dateutil/_version.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/dateutil"]
+
+[tool.hatch.build.targets.sdist]
+exclude = [
+    "/AGENTS.md",
+    "/RELEASING",
+    "/.github",
+    "/.gitattributes",
+    "**/.gitignore",
+    "/.readthedocs.yml",
+    "/.pre-commit-config.yaml",
+    "/codecov.yml",
+]
+
+[tool.hatch.metadata.hooks.fancy-pypi-readme]
+content-type = "text/x-rst"
+
+[[tool.hatch.metadata.hooks.fancy-pypi-readme.fragments]]
+path = "README.rst"
+
+[[tool.hatch.metadata.hooks.fancy-pypi-readme.substitutions]]
+pattern = "(?m)^\\.\\. doctest[^\\n]*"
+replacement = ".. code-block:: python3"

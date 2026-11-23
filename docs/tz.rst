@@ -19,7 +19,7 @@ Objects
     can be set by the ``PYTHONTZPATH`` environment variable, or updated
     via :func:`reset_tzpath`.
 
-    In Python >= 3.9, this is an alias for :py:data:`zoneinfo.TZPATH`.
+    This is an alias for :py:data:`zoneinfo.TZPATH`.
 
     .. versionadded:: 3.0.0
 
@@ -35,7 +35,7 @@ Functions
 
 .. py:function:: reset_tzpath(to=None)
 
-    Sets the value of :data:`TZPATH`. In Python >= 3.9, this is an alias for
+    Sets the value of :data:`TZPATH`. This is an alias for
     :py:func:`zoneinfo.reset_tzpath`, and calling it *will* reset the
     search path for both ``dateutil`` and :py:mod:`zoneinfo`.
 
@@ -95,13 +95,12 @@ Warnings
 IANA Time Zone Data
 -------------------
 ``dateutil`` attempts to search for time zone data the same way that the
-standard library does. In versions of Python that include the :py:mod:`zoneinfo`
-module, :data:`TZPATH` is a proxy for :py:data:`zoneinfo.TZPATH` and
+standard library does. :data:`TZPATH` is a proxy for
+:py:data:`zoneinfo.TZPATH` and
 :py:func:`reset_tzpath` is an alias for :py:func:`zoneinfo.reset_tzpath`.
 
-``dateutil`` also backports the search path logic to Python versions < 3.9, and
-the environment variable ``PYTHONTZPATH`` can be used (though there is no
-equivalent to the Python compiler option).
+The environment variable ``PYTHONTZPATH`` can be used to configure the search
+path, as described in the :py:mod:`zoneinfo` documentation.
 
 ``dateutil`` also takes an unconditional dependency on the `tzdata
 <https://pypi.org/project/tzdata/>`_ package, which provides a self-contained,

@@ -1,17 +1,14 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
 import copy
 import itertools
 import pickle
 import re
+import threading
 import unittest
 from datetime import date, datetime, timedelta
 from functools import partial
 
 import pytest
 from freezegun import freeze_time
-from six import PY2
 
 from dateutil import tz
 from dateutil.rrule import (
@@ -2299,27 +2296,6 @@ class RRuleTest(unittest.TestCase):
                           datetime(2010, 3, 22, 13, 1),
                           datetime(2010, 3, 22, 14, 1)])
 
-    def testLongIntegers(self):
-        if PY2:  # There are no longs in python3
-            self.assertEqual(list(rrule(MINUTELY,
-                                  count=long(2),
-                                  interval=long(2),
-                                  bymonth=long(2),
-                                  byweekday=long(3),
-                                  byhour=long(6),
-                                  byminute=long(6),
-                                  bysecond=long(6),
-                                  dtstart=datetime(1997, 9, 2, 9, 0))),
-                             [datetime(1998, 2, 5, 6, 6, 6),
-                              datetime(1998, 2, 12, 6, 6, 6)])
-            self.assertEqual(list(rrule(YEARLY,
-                                  count=long(2),
-                                  bymonthday=long(5),
-                                  byweekno=long(2),
-                                  dtstart=datetime(1997, 9, 2, 9, 0))),
-                             [datetime(1998, 1, 5, 9, 0),
-                              datetime(2004, 1, 5, 9, 0)])
-
     def testHourlyBadRRule(self):
         """
         When `byhour` is specified with `freq=HOURLY`, there are certain
@@ -2359,7 +2335,6 @@ class RRuleTest(unittest.TestCase):
         raise a :exception:`ValueError`.
         """
 
-        # In Python 2.7 you can use a context manager for this.
         def make_bad_rrule():
             list(rrule(MINUTELY, interval=120, byhour=(10, 12, 14, 16),
                  count=2, dtstart=datetime(1997, 9, 2, 9, 0)))
@@ -2371,7 +2346,6 @@ class RRuleTest(unittest.TestCase):
         See :func:`testMinutelyBadComboRRule' for details.
         """
 
-        # In Python 2.7 you can use a context manager for this.
         def make_bad_minute_rrule():
             list(rrule(SECONDLY, interval=360, byminute=(10, 28, 49),
                  count=4, dtstart=datetime(1997, 9, 2, 9, 0)))
@@ -4624,24 +4598,6 @@ class RRuleTest(unittest.TestCase):
                               wkst=SU,
                               dtstart=datetime(1997, 9, 2, 9, 0)))
 
-    def testToStrLongIntegers(self):
-        if PY2:  # There are no longs in python3
-            self._rrulestr_reverse_test(rrule(MINUTELY,
-                                  count=long(2),
-                                  interval=long(2),
-                                  bymonth=long(2),
-                                  byweekday=long(3),
-                                  byhour=long(6),
-                                  byminute=long(6),
-                                  bysecond=long(6),
-                                  dtstart=datetime(1997, 9, 2, 9, 0)))
-
-            self._rrulestr_reverse_test(rrule(YEARLY,
-                                  count=long(2),
-                                  bymonthday=long(5),
-                                  byweekno=long(2),
-                                  dtstart=datetime(1997, 9, 2, 9, 0)))
-
     def testReplaceIfSet(self):
         rr = rrule(YEARLY,
                    count=1,
@@ -4923,13 +4879,13 @@ class WeekdayTest(unittest.TestCase):
     def testWeekdayEqualitySubclass(self):
         # Two weekday objects equal if their "weekday" and "n" attributes are
         # available and the same
-        class BasicWeekday(object):
+        class BasicWeekday:
             def __init__(self, weekday):
                 self.weekday = weekday
 
         class BasicNWeekday(BasicWeekday):
             def __init__(self, weekday, n=None):
-                super(BasicNWeekday, self).__init__(weekday)
+                super().__init__(weekday)
                 self.n = n
 
         MO_Basic = BasicWeekday(0)
@@ -5147,3 +5103,45 @@ def test_roundtrip_cache_setting_smoke(roundtrip, kind, state):
         assert restored._cache is None
     assert original._cache == original_cache
     assert list(restored) == list(original)
+
+
+def _list_with_timeout(iterable, timeout=5):
+    # If the cache lock is never released, iterating blocks forever instead
+    # of raising. Iterate in a background thread so the test fails after
+    # ``timeout`` seconds instead of hanging the suite.
+    result = []
+    thread = threading.Thread(
+        target=result.extend, args=(iterable,), daemon=True
+    )
+    thread.start()
+    thread.join(timeout)
+    assert not thread.is_alive(), "Iteration did not finish"
+    return result
+
+
+def test_cached_rrule_iterators_started_before_cache_complete():
+    dtstart = datetime(2024, 1, 1)
+    expected = list(rrule(DAILY, dtstart=dtstart, count=15))
+    rr = rrule(DAILY, dtstart=dtstart, count=15, cache=True)
+
+    started = [iter(rr), iter(rr)]
+    for iterator in started:
+        next(iterator)
+
+    # Exhaust the rule with a new iterator while the two above are still
+    # partway through.
+    assert _list_with_timeout(rr) == expected
+    for iterator in started:
+        assert _list_with_timeout(iterator) == expected[1:]
+
+
+def test_cached_rrule_included_twice_in_rruleset():
+    dtstart = datetime(2024, 1, 1)
+    expected = list(rrule(DAILY, dtstart=dtstart, count=15))
+    rr = rrule(DAILY, dtstart=dtstart, count=15, cache=True)
+
+    rrset = rruleset()
+    rrset.rrule(rr)
+    rrset.rrule(rr)
+
+    assert _list_with_timeout(rrset) == expected

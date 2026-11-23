@@ -25,12 +25,16 @@ on:
       - '*'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   # Run the full validation suite, including installing the sdist on every
   # supported Python. This builds the distributions that are uploaded below,
   # so the files that get published are exactly the files that were tested.
   validate:
-    uses: ./.github/workflows/validate.yml
+    # Reusable workflows resolve at the caller's commit, not from the workspace.
+    uses: ./.github/workflows/validate.yml # zizmor: ignore[self-repository]
     with:
       release: true
 
@@ -42,15 +46,15 @@ jobs:
       id-token: write  # Required for trusted publishing
     steps:
     - name: Download distributions
-      uses: actions/download-artifact@v8
+      uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
       with:
         name: dist
         path: dist/
     - name: Publish package to Test PyPI
       if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
-      uses: pypa/gh-action-pypi-publish@release/v1
+      uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
       with:
         repository-url: https://test.pypi.org/legacy/
     - name: Publish package to PyPI
       if: github.event_name == 'release'
-      uses: pypa/gh-action-pypi-publish@release/v1
+      uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3

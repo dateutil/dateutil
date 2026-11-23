@@ -1,3 +1,56 @@
+Version 4.0.0 (2026-11-01)
+==========================
+
+``dateutil`` 4.0 requires Python 3.11 or later and no longer depends on
+``six``. Apart from that, the changes in this release are bug fixes, but note
+that ``isoparse`` is now stricter about the numeric fields it accepts (see
+below).
+
+
+Deprecations
+------------
+
+- Dropped support for Python versions older than 3.11 and removed the dependency
+  on ``six``, along with Python 2 compatibility helpers that were never part of
+  the public API, such as ``dateutil.tz.tzname_in_python2``. (gh pr #1625)
+
+
+Bugfixes
+--------
+
+- ``parser.isoparse``, and the ``isoparser`` methods ``parse_isodate``,
+  ``parse_isotime`` and ``parse_tzstr``, now require each numeric field to be
+  exactly the expected number of ASCII digits. Strings that were previously
+  accepted, such as ``20200728121240`` (read as 21:24), ``2014- 4-21`` and
+  ``2_14-04-21``, and offsets such as ``+-1:00``, now raise ``ValueError``.
+  ``tzical`` applies the same check to ``TZOFFSETFROM`` and ``TZOFFSETTO``.
+  Reported by @janos-gonye (gh issue #1074). Fixed by @varun3257 (gh pr #1617).
+- Fixed an issue where iterating over a cached ``rrule`` or ``rruleset`` could
+  hang forever if another iterator over the same rule had already completed the
+  cache, for example when a cached ``rrule`` was included twice in an
+  ``rruleset``. Reported by @bysiber (gh pr #1455). Fixed by @pganssle (gh pr
+  #1655).
+- Unpickling a ``tzutc`` now gives the ``dateutil.tz.UTC`` singleton, and
+  unpickling a ``tzoffset`` gives the same object as calling
+  ``tzoffset(name, offset)``. Previously unpickling bypassed the
+  singleton-generation logic. Reported and fixed by @masipcat (gh issue #1051,
+  gh pr #1053).
+- ``relativedelta(yearday=366)`` now resolves to December 31 in leap years.
+  Previously it gave December 30, the same date as ``yearday=365``. Reported
+  and fixed by @Master-Norna (gh pr #1583).
+
+
+Misc
+----
+
+- The build backend is now Hatchling, and the package metadata is in
+  ``pyproject.toml``. Versions are still derived from Git tags and exposed as
+  ``dateutil.__version__``. This mainly affects people building ``dateutil``
+  from source. (gh pr #1637, #1638)
+- Changes to CI, tests and release tooling that do not affect users of the
+  package: gh pr #1636, #1644, #1645, #1646, #1648, #1649, #1650.
+
+
 Version 3.0.0 (2026-10-21)
 ==========================
 

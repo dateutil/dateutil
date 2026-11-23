@@ -1,0 +1,1 @@
+``tzlocal().tzname()`` now returns ``None`` when called without a datetime (e.g. from a ``datetime.time``) in a local zone with DST, as ``utcoffset()`` and ``dst()`` already did, instead of raising ``AttributeError``. Reported and fixed by @terry9046 (gh pr #1674)
