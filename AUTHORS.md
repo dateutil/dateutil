@@ -127,6 +127,7 @@ switch, and thus all their contributions are dual-licensed.
 - varun netrakar <varun@security.bugqore.com> (gh: @varun3257) **D**
 - Xavier Lapointe <lapointe.xavier@MASKED> (gh: @lapointexavier) **D**
 - X O <xo@MASKED>
+- Yashas Dinesh Mahale (gh: @YashasMahale) **D**
 - Yaron de Leeuw <me@jarondl.net> (gh: @jarondl)
 - Yoney <alper_yoney@hotmail.com> **D**
 - Yuan Huang <huangy22@gmail.com> (gh: @huangy22) **D**
