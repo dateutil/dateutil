@@ -1,0 +1,3 @@
+``isoparse()`` now raises ``ValueError`` when an ISO week date or a timestamp
+using ``24:00`` falls beyond year 9999. Reported by @marco8154 (gh issue #1684).
+Fixed by @sulaimwn (gh pr #1685).
