@@ -1,6 +1,7 @@
 import copy
 import itertools
 import pickle
+import re
 import threading
 import unittest
 from datetime import date, datetime, timedelta
@@ -3044,6 +3045,16 @@ class RRuleTest(unittest.TestCase):
                           "FREQ=WEEKLY;"
                           "BYDAY=-1OK;"         # This part is invalid
                           "WKST=SU"))
+
+    def testStrUnsupportedProperty(self):
+        with pytest.raises(ValueError, match=re.escape("X-ABC-MMSUBJ")):
+            rrulestr("X-ABC-MMSUBJ:19970902T090000")
+
+    def testStrDatetimeWithColons(self):
+        # gh issue #960
+        rule = "FREQ=YEARLY;WKST=MO;UNTIL=2019-03-29T00:59:59+01:00"
+        with pytest.raises(ValueError, match=re.escape(rule)):
+            rrulestr(rule)
 
     def testBadBySetPos(self):
         self.assertRaises(ValueError,
