@@ -2075,16 +2075,18 @@ class TZICalTest(unittest.TestCase, TzFoldMixin):
     def testDtstartYearOverflow(self):
         # A DTSTART missing its "T" separator is read as a huge year,
         # which must be reported as ValueError, not OverflowError (GH #1683)
-        tz_str = '\n'.join([
-            'BEGIN:VTIMEZONE',
-            'TZID:US-Eastern',
-            'BEGIN:STANDARD',
-            'DTSTART:1970102503000',
-            'TZOFFSETFROM:-0400',
-            'TZOFFSETTO:-0500',
-            'END:STANDARD',
-            'END:VTIMEZONE',
-        ])
+        tz_str = "\n".join(
+            [
+                "BEGIN:VTIMEZONE",
+                "TZID:US-Eastern",
+                "BEGIN:STANDARD",
+                "DTSTART:1970102503000",
+                "TZOFFSETFROM:-0400",
+                "TZOFFSETTO:-0500",
+                "END:STANDARD",
+                "END:VTIMEZONE",
+            ]
+        )
         with self.assertRaises(ValueError):
             tz.tzical(StringIO(tz_str))
 

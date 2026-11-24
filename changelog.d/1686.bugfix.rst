@@ -1,0 +1,1 @@
+``tz.tzical`` now raises ``ValueError`` instead of ``OverflowError`` when a ``DTSTART`` in a ``VTIMEZONE`` component is malformed, e.g. missing its ``T`` separator. Reported by @marco8154, fixed by @YashasMahale (gh issue #1683, gh pr #1686)

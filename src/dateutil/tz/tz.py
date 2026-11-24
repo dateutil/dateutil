@@ -827,19 +827,28 @@ class tzical:
                         rr = None
                         if rrulelines:
                             try:
-                                rr = rrule.rrulestr("\n".join(rrulelines),
-                                                    compatible=True,
-                                                    ignoretz=True,
-                                                    cache=True)
+                                rr = rrule.rrulestr(
+                                    "\n".join(rrulelines),
+                                    compatible=True,
+                                    ignoretz=True,
+                                    cache=True,
+                                )
                             except OverflowError as e:
                                 # e.g. DTSTART missing the "T" separator
                                 # is read as a year that is far too large
                                 raise ValueError(
-                                    "invalid DTSTART in " + comptype +
-                                    ": " + str(e))
-                        comp = _tzicalvtzcomp(tzoffsetfrom, tzoffsetto,
-                                              (comptype == "DAYLIGHT"),
-                                              tzname, rr)
+                                    "invalid DTSTART in "
+                                    + comptype
+                                    + ": "
+                                    + str(e)
+                                )
+                        comp = _tzicalvtzcomp(
+                            tzoffsetfrom,
+                            tzoffsetto,
+                            (comptype == "DAYLIGHT"),
+                            tzname,
+                            rr,
+                        )
                         comps.append(comp)
                         comptype = None
                     else:
