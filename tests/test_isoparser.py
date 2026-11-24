@@ -161,6 +161,12 @@ def test_full_tzoffsets(tzoffset):
 def test_datetime_midnight(dt_str):
     assert isoparse(dt_str) == datetime(2014, 4, 11, 0, 0, 0, 0)
 
+
+@pytest.mark.parametrize("dt_str", ["9999-12-30T24:00", "9999-W52-5"])
+def test_last_representable_date(dt_str):
+    assert isoparse(dt_str) == datetime(9999, 12, 31)
+
+
 @pytest.mark.parametrize('datestr', [
     '2014-01-01',
     '20140101',
@@ -262,6 +268,10 @@ def test_bytes(isostr, dt):
         ("2012-W55", ValueError),  # Invalid ISO week
         ("2012-W01-0", ValueError),  # Invalid ISO week day
         ("2012-W01-8", ValueError),  # Invalid ISO week day
+        ("9999-W52-6", ValueError),
+        ("9999-W53-1", ValueError),
+        ("9999-12-31T24:00", ValueError),
+        ("9999-365T24:00", ValueError),
         ("2013-000", ValueError),  # Invalid ordinal day
         ("2013-366", ValueError),  # Invalid ordinal day
         ("2013366", ValueError),  # Invalid ordinal day
@@ -398,6 +408,7 @@ def test_parse_isodate(d, dt_fmt, as_bytes):
         ("2014-04-19T", ValueError),  # Unknown components
         ("201202", ValueError),  # Invalid format
         ("2014-W1", ValueError),  # ISO week too short
+        ("9999-W52-6", ValueError),  # ISO week day beyond date.max
         ("2_14-04-21", ValueError),  # Underscore in year
         ("+014-04-21", ValueError),  # Sign in year
         ("2014- 4-21", ValueError),  # Whitespace in month

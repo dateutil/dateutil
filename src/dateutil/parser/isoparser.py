@@ -37,6 +37,13 @@ def _takes_ascii(f):
     return func
 
 
+def _add_days(dt, days):
+    try:
+        return dt + timedelta(days=days)
+    except OverflowError as e:
+        raise ValueError(str(e)) from e
+
+
 class isoparser:
     def __init__(self, sep=None):
         """
@@ -139,7 +146,7 @@ class isoparser:
 
         if len(components) > 3 and components[3] == 24:
             components[3] = 0
-            return datetime(*components) + timedelta(days=1)
+            return _add_days(datetime(*components), 1)
 
         return datetime(*components)
 
@@ -332,7 +339,7 @@ class isoparser:
 
         # Now add the specific number of weeks and days to get what we want
         week_offset = (week - 1) * 7 + (day - 1)
-        return week_1 + timedelta(days=week_offset)
+        return _add_days(week_1, week_offset)
 
     def _parse_isotime(self, timestr):
         len_str = len(timestr)
