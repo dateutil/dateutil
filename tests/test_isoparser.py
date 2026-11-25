@@ -526,3 +526,19 @@ def test_isotime_raises(isostr, exception):
     iparser = isoparser()
     with pytest.raises(exception):
         iparser.parse_isotime(isostr)
+
+
+@pytest.mark.parametrize(
+    "isostr",
+    [
+        "9999-W53-1",
+        "9999-W52-6",
+        "9999-W52-7",
+        "9999-12-31T24:00",
+        "9999-365T24:00",
+    ],
+)
+def test_isoparse_overflow_raises_valueerror(isostr):
+    iparser = isoparser()
+    with pytest.raises(ValueError):
+        iparser.isoparse(isostr)
