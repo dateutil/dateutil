@@ -2738,14 +2738,25 @@ class RRuleTest(unittest.TestCase):
         with self.assertRaises(TzInfoError):
             rrulestr(rrstr, tzids=tzinfos)
 
+    def testStrWithEmptyTZIDName(self):
+        rrstr = "DTSTART;TZID=:19970902T090000\nRRULE:FREQ=YEARLY;COUNT=1"
+
+        def tzids(name):
+            raise AssertionError("unexpected TZID lookup: " + repr(name))
+
+        self.assertEqual(
+            list(rrulestr(rrstr, tzids=tzids)), [datetime(1997, 9, 2, 9, 0)]
+        )
+
     def testStrManyUnterminatedTZIDsIsLinear(self):
-        # A scan that is quadratic in the input length takes much longer
+        # The scan takes about a millisecond at this size; one that is
+        # quadratic in the input length takes several seconds
         start = time.perf_counter()
 
         with self.assertRaises(ValueError):
-            rrulestr("TZID=" * 40000)
+            rrulestr("TZID=" * 20000)
 
-        self.assertLess(time.perf_counter() - start, 5)
+        self.assertLess(time.perf_counter() - start, 2)
 
     def testStrWithConflictingTZID(self):
         # RFC 5545 Section 3.3.5, FORM #2: DATE WITH UTC TIME
