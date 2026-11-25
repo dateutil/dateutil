@@ -1638,10 +1638,14 @@ class _rrulestr:
             forceset = True
             unfold = True
 
-        TZID_NAMES = dict(map(
-            lambda x: (x.upper(), x),
-            re.findall('TZID=(?P<name>[^:]+):', s)
-        ))
+        # The name and the ':' are both optional in the pattern so that every
+        # 'TZID=' matches and consumes its text. If a match could fail, each
+        # 'TZID=' with no ':' after it would rescan the rest of the string.
+        TZID_NAMES = {
+            name.upper(): name
+            for name, colon in re.findall("TZID=([^:]*)(:?)", s)
+            if name and colon
+        }
         s = s.upper()
         if not s.strip():
             raise ValueError("empty string")
