@@ -3010,6 +3010,12 @@ class RRuleTest(unittest.TestCase):
             rr = rrulestr("DTSTART:19970101T000000,19970202T000000\n"
                           "RRULE:FREQ=YEARLY;COUNT=1")
 
+    def testStrDTStartOutOfRange(self):
+        # Malformed DTSTART (missing 'T' separator) must raise ValueError,
+        # not OverflowError (gh issue #1683)
+        with pytest.raises(ValueError):
+            rrulestr("DTSTART:1970102503000\n" "RRULE:FREQ=YEARLY;COUNT=1")
+
     def testStrInvalidUntil(self):
         with self.assertRaises(ValueError):
             list(rrulestr("DTSTART:19970902T090000\n"

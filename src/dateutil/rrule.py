@@ -1614,7 +1614,10 @@ class _rrulestr:
                 value_found = True
 
         for datestr in date_value.split(','):
-            date = parser.parse(datestr, ignoretz=ignoretz, tzinfos=tzinfos)
+            try:
+                date = parser.parse(datestr, ignoretz=ignoretz, tzinfos=tzinfos)
+            except OverflowError:
+                raise ValueError("Date value is out of range: " + datestr)
             if TZID is not None:
                 if date.tzinfo is None:
                     date = date.replace(tzinfo=TZID)
