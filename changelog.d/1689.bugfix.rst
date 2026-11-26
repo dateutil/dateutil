@@ -1,0 +1,1 @@
+Fixed `isoparse` raising `OverflowError` instead of `ValueError` for dates past 9999-12-31. Reported by @marco8154 (gh issue #1684). Fixed by @tony1233200 (gh pr #1689)

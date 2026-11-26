@@ -267,6 +267,11 @@ def test_bytes(isostr, dt):
         ("2013366", ValueError),  # Invalid ordinal day
         ("2014-03-12Т12:30:14", ValueError),  # Cyrillic T
         ("2014-04-21T24:00:01", ValueError),  # Invalid use of 24 for midnight
+        ("9999-W53-1", ValueError),  # Week date past 9999-12-31
+        ("9999-W52-6", ValueError),  # Week date past 9999-12-31
+        ("9999-W52-7", ValueError),  # Week date past 9999-12-31
+        ("9999-12-31T24:00", ValueError),  # Hour 24 past 9999-12-31
+        ("9999-365T24:00", ValueError),  # Hour 24 past 9999-12-31
         ("2014_W01-1", ValueError),  # Invalid separator
         ("2014W01-1", ValueError),  # Inconsistent use of dashes
         ("2014-W011", ValueError),  # Inconsistent use of dashes
@@ -404,6 +409,9 @@ def test_parse_isodate(d, dt_fmt, as_bytes):
         ("2014-04-2 ", ValueError),  # Whitespace in day
         ("2014- 10", ValueError),  # Whitespace in ordinal day
         ("2014-W1 -1", ValueError),  # Whitespace in ISO week
+        ("9999-W53-1", ValueError),  # Week date past 9999-12-31
+        ("9999-W52-6", ValueError),  # Week date past 9999-12-31
+        ("9999-W52-7", ValueError),  # Week date past 9999-12-31
     ],
 )
 def test_isodate_raises(isostr, exception):
