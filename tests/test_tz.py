@@ -2097,6 +2097,25 @@ def test_tzical_offset_non_digit(offset):
         tz.tzical(StringIO(tz_str))
 
 
+def test_tzical_dtstart_malformed():
+    # DTSTART missing its 'T' separator: 1970102503000 instead of
+    # 19701025T030000 (gh issue #1683)
+    tz_str = "\n".join(
+        [
+            "BEGIN:VTIMEZONE",
+            "TZID:Test/Zone",
+            "BEGIN:STANDARD",
+            "DTSTART:1970102503000",
+            "TZOFFSETFROM:+0200",
+            "TZOFFSETTO:+0100",
+            "END:STANDARD",
+            "END:VTIMEZONE",
+        ]
+    )
+    with pytest.raises(ValueError):
+        tz.tzical(StringIO(tz_str))
+
+
 class TZTest(unittest.TestCase):
     def testFileStart1(self):
         tzc = tz.tzfile(BytesIO(base64.b64decode(TZFILE_EST5EDT)))

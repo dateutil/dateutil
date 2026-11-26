@@ -1,0 +1,1 @@
+Fixed `tz.tzical` raising `OverflowError` instead of `ValueError` for a malformed `DTSTART` in a `VTIMEZONE`. Reported by @marco8154 (gh issue #1683). Fixed by @tony1233200 (gh pr #1690)
