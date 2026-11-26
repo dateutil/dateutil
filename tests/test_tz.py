@@ -1568,26 +1568,27 @@ class TZStrTest(unittest.TestCase, TzFoldMixin):
         # POSIX defines the offset as [+|-]hh[:mm[:ss]], so a seconds
         # component must parse instead of being left as an unused token.
         self.assertEqual(
-            datetime(2015, 1, 1,
-                     tzinfo=tz.tzstr('LMT-0:14:44')).utcoffset(),
+            datetime(2015, 1, 1, tzinfo=tz.tzstr("LMT-0:14:44")).utcoffset(),
             timedelta(minutes=14, seconds=44),
         )
 
         self.assertEqual(
-            datetime(2015, 1, 1, tzinfo=tz.tzstr('AAA0:17:15')).utcoffset(),
+            datetime(2015, 1, 1, tzinfo=tz.tzstr("AAA0:17:15")).utcoffset(),
             timedelta(seconds=-(17 * 60 + 15)),
         )
 
         # A DST zone may carry seconds in either offset.
         self.assertEqual(
-            tz.tzstr('AAA0:17:15BBB,M3.2.0,M11.1.0').tzname(
-                datetime(2015, 1, 1)),
-            'AAA',
+            tz.tzstr("AAA0:17:15BBB,M3.2.0,M11.1.0").tzname(
+                datetime(2015, 1, 1)
+            ),
+            "AAA",
         )
         self.assertEqual(
-            tz.tzstr('AAA5BBB-6:44:30,M3.2.0/2,M11.1.0/2').tzname(
-                datetime(2015, 1, 1)),
-            'AAA',
+            tz.tzstr("AAA5BBB-6:44:30,M3.2.0/2,M11.1.0/2").tzname(
+                datetime(2015, 1, 1)
+            ),
+            "AAA",
         )
 
     def testStrInequalityUnsupported(self):

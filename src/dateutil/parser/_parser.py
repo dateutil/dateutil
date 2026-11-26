@@ -1427,7 +1427,7 @@ class _tzparser:
                             offset = int(l[i]) * 3600 + int(l[i + 2]) * 60
                             used_idxs.append(i)
                             i += 2
-                            if i + 2 < len_l and l[i + 1] == ':':
+                            if i + 2 < len_l and l[i + 1] == ":":
                                 used_idxs.append(i)
                                 i += 2
                                 offset += int(l[i])
