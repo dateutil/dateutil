@@ -139,7 +139,10 @@ class isoparser:
 
         if len(components) > 3 and components[3] == 24:
             components[3] = 0
-            return datetime(*components) + timedelta(days=1)
+            try:
+                return datetime(*components) + timedelta(days=1)
+            except OverflowError:
+                raise ValueError("Datetime is out of range")
 
         return datetime(*components)
 
@@ -332,7 +335,10 @@ class isoparser:
 
         # Now add the specific number of weeks and days to get what we want
         week_offset = (week - 1) * 7 + (day - 1)
-        return week_1 + timedelta(days=week_offset)
+        try:
+            return week_1 + timedelta(days=week_offset)
+        except OverflowError:
+            raise ValueError("Week date is out of range")
 
     def _parse_isotime(self, timestr):
         len_str = len(timestr)
