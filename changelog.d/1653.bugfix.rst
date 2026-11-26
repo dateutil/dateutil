@@ -1,0 +1,1 @@
+``tz.tzstr`` now accepts a seconds component in the standard and DST offsets (for example ``LMT-0:14:44``), as allowed by the POSIX ``[+|-]hh[:mm[:ss]]`` format, instead of rejecting the string with ``ValueError``.
