@@ -142,7 +142,7 @@ class isoparser:
             try:
                 return datetime(*components) + timedelta(days=1)
             except OverflowError as e:
-                raise ValueError('date value out of range') from e
+                raise ValueError("date value out of range") from e
 
         return datetime(*components)
 
@@ -338,7 +338,7 @@ class isoparser:
         try:
             return week_1 + timedelta(days=week_offset)
         except OverflowError as e:
-            raise ValueError('date value out of range') from e
+            raise ValueError("date value out of range") from e
 
     def _parse_isotime(self, timestr):
         len_str = len(timestr)
